@@ -3,6 +3,7 @@ import cv2
 import matplotlib.pyplot as plt
 from scipy.optimize import bisect
 from .helper import file_folder
+from .helper import check_file_exists
 
 def gamma_lut(gamma):
     gamma_inv = 1.0/gamma
@@ -39,9 +40,14 @@ def img_histo(image, mask_size=1, plot=True):
     return mean_lumi, hist_lumi
 
 def img_lumi_balance(filename_1, filename_2, input_path, output_path, mask_size=1, plot=True):
-    image_2 = cv2.imread(input_path+filename_2)
+    print('align '+ filename_2+' -> '+ filename_1 + ": ", end='')
+    fname_2 = input_path+"/"+filename_2
+    check_file_exists(fname_2)
+    image_2 = cv2.imread(fname_2)
     if(filename_1 != filename_2):
-        image_1 = cv2.imread(input_path+filename_1)
+        fname_1 = input_path+"/"+filename_1
+        check_file_exists(fname_1)
+        image_1 = cv2.imread(fname_1)
         mean_lumi_1, hist_1 = img_histo(image_1, mask_size, plot)
         mean_lumi_2, hist_2 = img_histo(image_2, mask_size, plot)
         r = mean_lumi_1/mean_lumi_2
@@ -49,13 +55,12 @@ def img_lumi_balance(filename_1, filename_2, input_path, output_path, mask_size=
         gamma = bisect(f, 0.2, 2)
         image_2 = adjust_gamma(image_2, gamma)
         mean_lumi_2, hist_2 = img_histo(image_2, mask_size, plot)
-        print("{:.4f}->{:.4f} ({:+.2%}), gamma = {:.4f}".format(mean_lumi_1, mean_lumi_2, mean_lumi_1/mean_lumi_2-1, gamma))
-    cv2.imwrite(output_path+filename_2, image_2)
+        print("{:.4f}->{:.4f} ({:+.2%}), gamma = {:.4f} ".format(mean_lumi_1, mean_lumi_2, mean_lumi_1/mean_lumi_2-1, gamma))
+    cv2.imwrite(output_path+"/"+filename_2, image_2)
 
 def lumi_balance(input_path, output_path, ref_index=-1, mask_size=1, plot=False):
     fnames = file_folder(input_path)
     if ref_index==-1: ref = fnames[len(fnames)//2]
     fxnames = fnames
     for f in fxnames:
-        print(f)
         img_lumi_balance(ref, f, input_path, output_path, mask_size, plot)

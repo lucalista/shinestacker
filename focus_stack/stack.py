@@ -7,38 +7,6 @@ from .helper import file_folder
 
 def convert_to_grayscale(image):
     return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    
-def align(images, fnames=None, align_dir='', iterations = 5000, epsilon = 1e-10):
-    images = np.array(images, dtype=images[0].dtype)
-    print('align {} images'.format(len(images)))
-    def _get_homography(image_1, image_2):
-        warp_matrix = np.eye(3, 3, dtype=np.float32)
-        criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, iterations,  epsilon)
-        _, homography = cv2.findTransformECC(image_1, image_2, warp_matrix, cv2.MOTION_HOMOGRAPHY, criteria)
-        return homography
-    def _warp(image, shape, homography):
-        return cv2.warpPerspective(image, homography, shape, flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP)
-    def _save_img(index):
-        if(fnames is not None and len(fnames)!= 0 and align_dir != ''):
-            cv2.imwrite(align_dir+"/"+fnames[index], aligned_images[index])
-        
-    gray_images = np.zeros(images.shape[:-1], dtype=np.uint8)
-    gray_image_shape = gray_images[0].shape[::-1]
-    aligned_images = np.zeros(images.shape, dtype=images.dtype)
-    aligned_images[0] = images[0]
-    gray_images[0] = convert_to_grayscale(images[0])
-    _save_img(0)
-    for index in range(1, images.shape[0]):
-        print('align image {}/{}'.format(index+1, images.shape[0]))
-        print('- convert to grayscale')
-        image2_gray = convert_to_grayscale(images[index])
-        print('- get homography')
-        homography = _get_homography(gray_images[0], image2_gray)
-        print('- warp image')
-        aligned_images[index] = _warp(images[index], gray_image_shape, homography)
-        gray_images[index] = convert_to_grayscale(aligned_images[0])
-        _save_img(index)
-    return aligned_images
 
 def blend(images, focus_map):
     return np.sum(images.astype(np.float64) * focus_map[:, :, :, np.newaxis], axis=0).astype(images.dtype)
@@ -123,8 +91,8 @@ def focus_stack(fnames, input_dir, output_dir, postfix='', choice = CHOICE_PYRAM
     print("saving: "+fn)
     cv2.imwrite(fn, s)
     
-def focus_stack_chunks(input_dir, bactch_dir, n_chunks, postfix='', choice = CHOICE_PYRAMID, energy = ENERGY_LAPLACIAN):
-    cnk = chunks(input_dir, n_chunks)
+def focus_stack_chunks(input_dir, bactch_dir, n_chunks, overlap=0, postfix='', choice = CHOICE_PYRAMID, energy = ENERGY_LAPLACIAN):
+    cnk = chunks(input_dir, n_chunks, overlap)
     for c in cnk:
         focus_stack(c, input_dir, bactch_dir, postfix, choice, energy)
         

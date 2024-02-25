@@ -1,5 +1,9 @@
 import os
 import cv2
+import time
+
+def print_elapsed_time(start):
+    print("elapsed time: {:.2f}s".format(time.time() - start))
 
 def mkdir(d):
     if not os.path.exists(d): os.makedirs(d)
@@ -24,6 +28,7 @@ def image_set(src_dir, fnames):
         raise RuntimeError("One or more input files failed to load.")
     return image_files
 
-def chunks(path, l):
+def chunks(path, l, overlap=0):
+    if overlap >= l: raise Exception("Overlap must be smaller than batcjh size")
     fnames = file_folder(path)
-    return [fnames[x:x+l] for x in range(0, len(fnames), l)]
+    return [fnames[x:x+l] for x in range(0, len(fnames), l-overlap)]
