@@ -82,7 +82,7 @@ def stack_focus(
     print('stack done')
     return cv2.convertScaleAbs(stacked_image)
 
-def focus_stack(fnames, input_dir, output_dir, postfix='', choice = CHOICE_PYRAMID, energy = ENERGY_LAPLACIAN):
+def focus_stack(fnames, input_dir, output_dir, postfix='', choice=CHOICE_PYRAMID, energy=ENERGY_LAPLACIAN):
     print('focus stack merge '+input_dir+', {} files: '.format(len(fnames))+', '.join(fnames))
     imgs = image_set(input_dir, fnames)
     s = stack_focus(imgs, choice=choice, energy=energy)
@@ -91,11 +91,11 @@ def focus_stack(fnames, input_dir, output_dir, postfix='', choice = CHOICE_PYRAM
     print("saving: "+fn)
     cv2.imwrite(fn, s)
     
-def focus_stack_chunks(input_dir, bactch_dir, n_chunks, overlap=0, postfix='', choice = CHOICE_PYRAMID, energy = ENERGY_LAPLACIAN):
+def focus_stack_chunks(input_dir, bactch_dir, n_chunks, overlap=0, postfix='', choice=CHOICE_PYRAMID, energy=ENERGY_LAPLACIAN):
     cnk = chunks(input_dir, n_chunks, overlap)
     for c in cnk:
         focus_stack(c, input_dir, bactch_dir, postfix, choice, energy)
         
-def focus_stack_dir(input_dir, output_dir, postfix='_stack_avg', choice = CHOICE_AVERAGE, energy=ENERGY_LAPLACIAN):
+def focus_stack_dir(input_dir, output_dir, postfix='_stack_avg', choice=CHOICE_PYRAMID, energy=ENERGY_LAPLACIAN):
     fnames = file_folder(input_dir)
     focus_stack(fnames, input_dir, output_dir, postfix, choice, energy)

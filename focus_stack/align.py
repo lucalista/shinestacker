@@ -77,5 +77,5 @@ def align_frames(input_path, align_path, step_align=True, ref_idx=-1, detector_m
             fname = fnames[i]
             img_align(fname_ref, fname, ref_path, input_path, align_path, detector_method, descriptor_method, match_method, flann_idx_kdtree, match_threshold, plot)
             fname_ref=fname
-    align_range(ref_idx, range(ref_idx+1, len(fnames)))
+    align_range(ref_idx, range(ref_idx+1, len(fnames)+1))
     align_range(ref_idx, range(ref_idx-1, -1, -1))    

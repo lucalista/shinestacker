@@ -40,7 +40,7 @@ def img_histo(image, mask_size=1, plot=True):
     return mean_lumi, hist_lumi
 
 def img_lumi_balance(filename_1, filename_2, input_path, output_path, mask_size=1, plot=True):
-    print('align '+ filename_2+' -> '+ filename_1 + ": ", end='')
+    print('balance '+ filename_2+' -> '+ filename_1 + ": ", end='')
     fname_2 = input_path+"/"+filename_2
     check_file_exists(fname_2)
     image_2 = cv2.imread(fname_2)
@@ -56,6 +56,8 @@ def img_lumi_balance(filename_1, filename_2, input_path, output_path, mask_size=
         image_2 = adjust_gamma(image_2, gamma)
         mean_lumi_2, hist_2 = img_histo(image_2, mask_size, plot)
         print("{:.4f}->{:.4f} ({:+.2%}), gamma = {:.4f} ".format(mean_lumi_1, mean_lumi_2, mean_lumi_1/mean_lumi_2-1, gamma))
+    else:
+        print("saving file duplicate")
     cv2.imwrite(output_path+"/"+filename_2, image_2)
 
 def lumi_balance(input_path, output_path, ref_index=-1, mask_size=1, plot=False):
