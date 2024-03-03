@@ -4,6 +4,8 @@ from .pyramid import get_pyramid_fusion
 from .helper import image_set
 from .helper import chunks
 from .helper import file_folder
+from .helper import check_file_exists
+from .helper import copy_exif
 
 def convert_to_grayscale(image):
     return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -51,15 +53,7 @@ CHOICE_PYRAMID = "pyramid"
 CHOICE_MAX = "max"
 CHOICE_AVERAGE = "average"
 
-def stack_focus(
-    images,
-    choice = CHOICE_PYRAMID,
-    energy = ENERGY_LAPLACIAN,
-    pyramid_min_size = 32,
-    kernel_size = 5,
-    blur_size = 5,
-    smooth_size = 32
-):
+def stack_focus(images, choice = CHOICE_PYRAMID, energy = ENERGY_LAPLACIAN, pyramid_min_size = 32, kernel_size = 5, blur_size = 5, smooth_size = 32):
     images = np.array(images, dtype=images[0].dtype)
     if choice == CHOICE_PYRAMID:
         stacked_image = get_pyramid_fusion(images, pyramid_min_size, kernel_size)
@@ -82,20 +76,24 @@ def stack_focus(
     print('stack done')
     return cv2.convertScaleAbs(stacked_image)
 
-def focus_stack(fnames, input_dir, output_dir, postfix='', choice=CHOICE_PYRAMID, energy=ENERGY_LAPLACIAN):
+def focus_stack(fnames, input_dir, output_dir, exif_dir='', postfix='', choice=CHOICE_PYRAMID, energy=ENERGY_LAPLACIAN):
     print('focus stack merge '+input_dir+', {} files: '.format(len(fnames))+', '.join(fnames))
     imgs = image_set(input_dir, fnames)
     s = stack_focus(imgs, choice=choice, energy=energy)
     f = fnames[0].split(".")
     fn = output_dir+"/"+f[0]+postfix+'.'+'.'.join(f[1:])
-    print("saving: "+fn)
     cv2.imwrite(fn, s)
+    if exif_dir != '':
+        print("save exif data")
+        ex_fname = exif_dir+'/'+file_folder(exif_dir)[0]
+        check_file_exists(ex_fname)
+        copy_exif(ex_fname, fn, fn)
     
-def focus_stack_chunks(input_dir, bactch_dir, n_chunks, overlap=0, postfix='', choice=CHOICE_PYRAMID, energy=ENERGY_LAPLACIAN):
+def focus_stack_chunks(input_dir, bactch_dir, exif_dir='', n_chunks=10, overlap=0, postfix='', choice=CHOICE_PYRAMID, energy=ENERGY_LAPLACIAN):
     cnk = chunks(input_dir, n_chunks, overlap)
     for c in cnk:
-        focus_stack(c, input_dir, bactch_dir, postfix, choice, energy)
+        focus_stack(c, input_dir, bactch_dir, exif_dir, postfix, choice, energy)
         
-def focus_stack_dir(input_dir, output_dir, postfix='_stack_avg', choice=CHOICE_PYRAMID, energy=ENERGY_LAPLACIAN):
+def focus_stack_dir(input_dir, output_dir, exif_dir='', postfix='_stack_avg', choice=CHOICE_PYRAMID, energy=ENERGY_LAPLACIAN):
     fnames = file_folder(input_dir)
-    focus_stack(fnames, input_dir, output_dir, postfix, choice, energy)
+    focus_stack(fnames, input_dir, output_dir, exif_dir, postfix, choice, energy)

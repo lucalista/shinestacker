@@ -1,9 +1,13 @@
 import os
 import cv2
+from PIL import Image
 import time
 
 def print_elapsed_time(start):
-    print("elapsed time: {:.2f}s".format(time.time() - start))
+    dt = time.time() - start
+    mm = int(dt // 60)
+    ss = dt - mm*60
+    print("elapsed time: {}:{:.2f}s".format(mm, ss))
 
 def mkdir(d):
     if not os.path.exists(d): os.makedirs(d)
@@ -32,3 +36,9 @@ def chunks(path, l, overlap=0):
     if overlap >= l: raise Exception("Overlap must be smaller than batcjh size")
     fnames = file_folder(path)
     return [fnames[x:x+l] for x in range(0, len(fnames), l-overlap)]
+
+def copy_exif(input_exif, input_img, output_img):
+    image = Image.open(input_exif)
+    exif = image.info['exif']
+    image_new = Image.open(input_img)
+    image_new.save(output_img, 'JPEG', exif=exif)
