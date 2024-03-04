@@ -17,12 +17,13 @@ def check_file_exists(filename):
     
 EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
-def file_folder(src_dir):
+def file_folder(src_dir, verbose=True):
     src_contents = os.walk(src_dir)
     dirpath, _, fnames = next(src_contents)
     fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in EXTENSIONS]
-    print("Folder: '" + src_dir + "'")
-    print('- {} files: '.format(len(fnames))+', '.join(fnames))
+    if verbose:
+        print("Folder: '" + src_dir + "'")
+        print('- {} files: '.format(len(fnames))+', '.join(fnames))
     return fnames
 
 def image_set(src_dir, fnames):

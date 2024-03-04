@@ -69,11 +69,11 @@ def stack_focus(images, choice = CHOICE_PYRAMID, energy = ENERGY_LAPLACIAN, pyra
             energy_map = get_laplacian_map(gray_images, kernel_size, blur_size)
         if smooth_size > 0:
             energy_map = smooth_energy_map(energy_map, smooth_size)
-    print('get focus map')
+    print('- get focus map')
     focus_map = get_focus_map(energy_map, choice)
-    print('blend images')
+    print('- blend images')
     stacked_image = blend(images, focus_map)
-    print('stack done')
+    print('- stack done')
     return cv2.convertScaleAbs(stacked_image)
 
 def focus_stack(fnames, input_dir, output_dir, exif_dir='', postfix='', choice=CHOICE_PYRAMID, energy=ENERGY_LAPLACIAN):
@@ -84,8 +84,8 @@ def focus_stack(fnames, input_dir, output_dir, exif_dir='', postfix='', choice=C
     fn = output_dir+"/"+f[0]+postfix+'.'+'.'.join(f[1:])
     cv2.imwrite(fn, s)
     if exif_dir != '':
-        print("save exif data")
-        ex_fname = exif_dir+'/'+file_folder(exif_dir)[0]
+        print("- save exif data")
+        ex_fname = exif_dir+'/'+file_folder(exif_dir, verbose=False)[0]
         check_file_exists(ex_fname)
         copy_exif(ex_fname, fn, fn)
     
