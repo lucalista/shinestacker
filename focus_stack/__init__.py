@@ -7,6 +7,7 @@ from .helper import chunks
 from .helper import print_elapsed_time
 from .align import align_frames
 from .balance import lumi_balance
+from .balance import lumi_balance_rgb
 from .stack import focus_stack_chunks
 from .stack import focus_stack_dir
 
