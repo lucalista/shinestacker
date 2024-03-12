@@ -82,7 +82,7 @@ def focus_stack(fnames, input_dir, output_dir, exif_dir='', postfix='', choice=C
     s = stack_focus(imgs, choice=choice, energy=energy)
     f = fnames[0].split(".")
     fn = output_dir+"/"+f[0]+postfix+'.'+'.'.join(f[1:])
-    cv2.imwrite(fn, s)
+    cv2.imwrite(fn, s, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
     if exif_dir != '':
         print("- save exif data")
         ex_fname = exif_dir+'/'+file_folder(exif_dir, verbose=False)[0]

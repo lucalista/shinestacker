@@ -9,7 +9,7 @@ def img_align(filename_ref, filename_0, ref_path, input_path, align_path, detect
     if img_0 is None: raise Exception("Invalid file: " + input_path+"/"+filename_0)
     if filename_0 == filename_ref:
         print("saving file duplicate")
-        cv2.imwrite(align_path+"/"+filename_0, img_0)
+        cv2.imwrite(align_path+"/"+filename_0, img_0, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
         return
     img_ref = cv2.imread(ref_path+"/"+filename_ref)
     if img_ref is None: raise Exception("Invalid file: " + input_path+"/"+filename_ref)    
@@ -63,7 +63,7 @@ def img_align(filename_ref, filename_0, ref_path, input_path, align_path, detect
         plt.figure(figsize=(20, 10))
         plt.imshow(img_match, 'gray'),
     plt.show()
-    cv2.imwrite(align_path+"/"+filename_0, img_warp)
+    cv2.imwrite(align_path+"/"+filename_0, img_warp, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
     
 def align_frames(input_path, align_path, step_align=True, ref_idx=-1, detector_method='SIFT', descriptor_method='SIFT', match_method='KNN', flann_idx_kdtree=0, match_threshold=0.7, plot=False):
     fnames = file_folder(input_path)

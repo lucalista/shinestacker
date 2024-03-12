@@ -122,7 +122,7 @@ def img_lumi_balance(filename_1, filename_2, input_path, output_path, mask_size=
         print("{:.4f}->{:.4f} ({:+.2%}), gamma = {:.4f} ".format(mean_lumi_1, mean_lumi_2, 1-mean_lumi_1/mean_lumi_2, gamma))
     else:
         print("saving file duplicate")
-    cv2.imwrite(output_path+"/"+filename_2, image_2)
+    cv2.imwrite(output_path+"/"+filename_2, image_2, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
 
 def img_lumi_balance_rgb(filename_1, filename_2, input_path, output_path, mask_size=1, i_min=0, i_max=255, plot=True):
     print('balance '+ filename_2+' -> '+ filename_1)
@@ -145,7 +145,7 @@ def img_lumi_balance_rgb(filename_1, filename_2, input_path, output_path, mask_s
             print("{:.4f}->{:.4f} ({:+.2%}), gamma = {:.4f} ".format(mean_ch_1[c], mean_ch_2[c], 1-mean_ch_1[c]/mean_ch_2[c], gamma[c]))
     else:
         print("saving file duplicate")
-    cv2.imwrite(output_path+"/"+filename_2, image_2)
+    cv2.imwrite(output_path+"/"+filename_2, image_2, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
     
 def img_lumi_balance_hsv(filename_1, filename_2, input_path, output_path, mask_size=1, i_min=0, i_max=255, plot=True):
     print('balance '+ filename_2+' -> '+ filename_1)
@@ -172,7 +172,7 @@ def img_lumi_balance_hsv(filename_1, filename_2, input_path, output_path, mask_s
     else:
         print("saving file duplicate")
     image_2 = cv2.cvtColor(image_hsv_2, cv2.COLOR_HSV2BGR)
-    cv2.imwrite(output_path+"/"+filename_2, image_2)
+    cv2.imwrite(output_path+"/"+filename_2, image_2, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
 
 def lumi_balance(input_path, output_path, ref_index=-1, mask_size=1, i_min=0, i_max=255, plot=False):
     fnames = file_folder(input_path)
