@@ -25,33 +25,39 @@ def adjust_gamma_ch3(image, gamma, ch_range=[0, 1, 2]):
 def lumi_expect(hist, gamma, i_min=0, i_max=255):
     return np.average(gamma_lut(gamma)[i_min:i_max+1], weights=hist.flatten()[i_min:i_max+1])
 
-def img_histo(image, mask_size=1, i_min=0, i_max=255, plot=True,):
-    height, width, channels = image.shape
-    mask = np.zeros(image.shape[:2], dtype="uint8")
-    cv2.circle(mask, (width//2,height//2), int(min(width, height)*mask_size/2),  (255, 255, 255), -1)
+def lumi_mask(image, mask_radius=-1):
+    if mask_radius > 0:
+        height, width, channels = image.shape
+        mask = np.zeros(image.shape[:2], dtype="uint8")
+        cv2.circle(mask, (width//2, height//2), int(min(width, height)*mask_radius/2),  (255, 255, 255), -1)
+    else:
+        mask = np.full(image.shape[:2], 266, dtype="uint8")
+    return mask
+
+def histo_plot(ax, histo, x_label, color):
+    ax.set_ylabel("# of Pixels")
+    ax.set_xlabel(x_label)
+    ax.set_xlim([0, 256])
+    ax.set_yscale('log')
+    ax.plot(histo, color=color)
+
+def img_histo(image, mask_radius=-1, i_min=0, i_max=255, plot=True):
+    mask = lumi_mask(image, mask_radius)
     hist_lumi = cv2.calcHist([cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)], [0], mask, [256], [0, 256])
     if (plot):
         chans = cv2.split(image)
         colors = ("r", "g", "b")
         fig, axs = plt.subplots(1, 2, figsize=(6, 2), sharey=True)
-        for i in range(2):
-            axs[i].set_ylabel("# of Pixels")
-            axs[i].set_yscale('log')
-            axs[i].set_xlim([0, 256])
-        axs[0].set_xlabel("pixel luminosity")
-        axs[1].set_xlabel("r,g,b luminosity")
-        axs[0].plot(hist_lumi, color='black')
+        histo_plot(axs[0], hist_lumi, "pixel luminosity", 'black')
         for (chan, color) in zip(chans, colors):
             hist_col = cv2.calcHist([chan], [0], mask, [256], [0, 256])
-            axs[1].plot(hist_col, color=color)
+            histo_plot(axs[1], hist_col, "r,g,b luminosity", color)
         plt.show()
     mean_lumi = np.average(list(range(256))[i_min:i_max+1], weights=hist_lumi.flatten()[i_min:i_max+1])
     return mean_lumi, hist_lumi
 
-def img_histo_rgb(image, mask_size=1, i_min=0, i_max=255, plot=True):
-    height, width, channels = image.shape
-    mask = np.zeros(image.shape[:2], dtype="uint8")
-    cv2.circle(mask, (width//2,height//2), int(min(width, height)*mask_size/2),  (255, 255, 255), -1)
+def img_histo_rgb(image, mask_radius=-1, i_min=0, i_max=255, plot=True):
+    mask = lumi_mask(image, mask_radius)
     hist_rgb = []
     mean_ch = []
     chans = cv2.split(image)
@@ -64,22 +70,15 @@ def img_histo_rgb(image, mask_size=1, i_min=0, i_max=255, plot=True):
         hist_rgb.append(cv2.calcHist([chan], [0], mask, [256], [0, 256]))
         mean_ch.append(np.average(list(range(256))[i_min:i_max+1], weights=hist_rgb[c].flatten()[i_min:i_max+1]))
         if plot:
-            axs[c].set_ylabel("# of Pixels")
-            axs[c].set_xlabel("pixel luminosity")
-            axs[c].set_xlabel(color+" luminosity")
-            axs[c].set_xlim([0, 256])
-            axs[c].set_yscale('log')
-            axs[c].plot(hist_rgb[c], color=color)
+            histo_plot(axs[c], hist_rgb[c], color+" luminosity", color)
             print('mean, '+color+': {:.4f}'.format(mean_ch[c]))
         c += 1
     if plot:
         plt.show()
     return mean_ch, hist_rgb
 
-def img_histo_hsv(image_hsv, mask_size=1, i_min=0, i_max=255, plot=True):
-    height, width, channels = image_hsv.shape
-    mask = np.zeros(image_hsv.shape[:2], dtype="uint8")
-    cv2.circle(mask, (width//2,height//2), int(min(width, height)*mask_size/2),  (255, 255, 255), -1)
+def img_histo_hsv(image_hsv, mask_radius=-1, i_min=0, i_max=255, plot=True):
+    mask = lumi_mask(image_hsv, mask_radius)
     hist_hsv = []
     mean_ch = []
     chans = cv2.split(image_hsv)
@@ -92,19 +91,14 @@ def img_histo_hsv(image_hsv, mask_size=1, i_min=0, i_max=255, plot=True):
         hist_hsv.append(cv2.calcHist([chan], [0], mask, [256], [0, 256]))
         mean_ch.append(np.average(list(range(256))[i_min:i_max+1], weights=hist_hsv[c].flatten()[i_min:i_max+1]))
         if plot:
-            axs[c].set_ylabel("# of Pixels")
-            axs[c].set_xlabel("pixel luminosity")
-            axs[c].set_xlabel("ch luminosity")
-            axs[c].set_xlim([0, 256])
-            axs[c].set_yscale('log')
-            axs[c].plot(hist_hsv[c], color=color)
+            histo_plot(axs[c], hist_hsv[c],"ch luminosity", color)
             print('mean, '+color+': {:.4f}'.format(mean_ch[c]))
         c += 1
     if plot:
         plt.show()
     return mean_ch, hist_hsv
 
-def img_lumi_balance(filename_1, filename_2, input_path, output_path, mask_size=1, i_min=0, i_max=255, plot=True):
+def img_lumi_balance(filename_1, filename_2, input_path, output_path, mask_radius=-1, i_min=0, i_max=255, plot=True):
     print('balance '+ filename_2+' -> '+ filename_1 + ": ", end='')
     fname_2 = input_path+"/"+filename_2
     check_file_exists(fname_2)
@@ -113,18 +107,18 @@ def img_lumi_balance(filename_1, filename_2, input_path, output_path, mask_size=
         fname_1 = input_path+"/"+filename_1
         check_file_exists(fname_1)
         image_1 = cv2.imread(fname_1)
-        mean_lumi_1, hist_1 = img_histo(image_1, mask_size, i_min, i_max, plot)
-        mean_lumi_2, hist_2 = img_histo(image_2, mask_size, i_min, i_max, plot)
+        mean_lumi_1, hist_1 = img_histo(image_1, mask_radius, i_min, i_max, plot)
+        mean_lumi_2, hist_2 = img_histo(image_2, mask_radius, i_min, i_max, plot)
         f = lambda x: lumi_expect(hist_2, x, i_min, i_max) - mean_lumi_1
         gamma = bisect(f, 0.1, 5)
         image_2 = adjust_gamma(image_2, gamma)
-        mean_lumi_2, hist_2 = img_histo(image_2, mask_size, i_min, i_max, plot)
+        mean_lumi_2, hist_2 = img_histo(image_2, mask_radius, i_min, i_max, plot)
         print("{:.4f}->{:.4f} ({:+.2%}), gamma = {:.4f} ".format(mean_lumi_1, mean_lumi_2, 1-mean_lumi_1/mean_lumi_2, gamma))
     else:
         print("saving file duplicate")
     cv2.imwrite(output_path+"/"+filename_2, image_2, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
 
-def img_lumi_balance_rgb(filename_1, filename_2, input_path, output_path, mask_size=1, i_min=0, i_max=255, plot=True):
+def img_lumi_balance_rgb(filename_1, filename_2, input_path, output_path, mask_radius=-1, i_min=0, i_max=255, plot=True):
     print('balance '+ filename_2+' -> '+ filename_1)
     fname_2 = input_path+"/"+filename_2
     check_file_exists(fname_2)
@@ -133,21 +127,21 @@ def img_lumi_balance_rgb(filename_1, filename_2, input_path, output_path, mask_s
         fname_1 = input_path+"/"+filename_1
         check_file_exists(fname_1)
         image_1 = cv2.imread(fname_1)
-        mean_ch_1, hist_rgb_1 = img_histo_rgb(image_1, mask_size, i_min, i_max, plot)
-        mean_ch_2, hist_rgb_2= img_histo_rgb(image_2, mask_size, i_min, i_max, plot)
+        mean_ch_1, hist_rgb_1 = img_histo_rgb(image_1, mask_radius, i_min, i_max, plot)
+        mean_ch_2, hist_rgb_2= img_histo_rgb(image_2, mask_radius, i_min, i_max, plot)
         gamma = []
         for c in range(3):
             f = lambda x: lumi_expect(hist_rgb_2[c], x, i_min, i_max) - mean_ch_1[c]
             gamma.append(bisect(f, 0.1, 5))
         image_2 = adjust_gamma_ch3(image_2, gamma)
-        mean_ch_2, hist_rgb_2 = img_histo_rgb(image_2, mask_size, i_min, i_max, plot)
+        mean_ch_2, hist_rgb_2 = img_histo_rgb(image_2, mask_radius, i_min, i_max, plot)
         for c in range(3):
             print("{:.4f}->{:.4f} ({:+.2%}), gamma = {:.4f} ".format(mean_ch_1[c], mean_ch_2[c], 1-mean_ch_1[c]/mean_ch_2[c], gamma[c]))
     else:
         print("saving file duplicate")
     cv2.imwrite(output_path+"/"+filename_2, image_2, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
     
-def img_lumi_balance_hsv(filename_1, filename_2, input_path, output_path, mask_size=1, i_min=0, i_max=255, plot=True):
+def img_lumi_balance_hsv(filename_1, filename_2, input_path, output_path, mask_radius=-1, i_min=0, i_max=255, plot=True):
     print('balance '+ filename_2+' -> '+ filename_1)
     fname_2 = input_path+"/"+filename_2
     check_file_exists(fname_2)
@@ -158,39 +152,35 @@ def img_lumi_balance_hsv(filename_1, filename_2, input_path, output_path, mask_s
         check_file_exists(fname_1)
         image_1 = cv2.imread(fname_1)
         image_hsv_1 = cv2.cvtColor(image_1, cv2.COLOR_BGR2HSV)
-        mean_ch_1, hist_hsv_1 = img_histo_hsv(image_hsv_1, mask_size, i_min, i_max, plot)
-        mean_ch_2, hist_hsv_2= img_histo_hsv(image_hsv_2, mask_size, i_min, i_max, plot)
+        mean_ch_1, hist_hsv_1 = img_histo_hsv(image_hsv_1, mask_radius, i_min, i_max, plot)
+        mean_ch_2, hist_hsv_2= img_histo_hsv(image_hsv_2, mask_radius, i_min, i_max, plot)
         gamma = [1, 1, 1]
         ch_range = [1, 2]
         for c in ch_range:
             f = lambda x: lumi_expect(hist_hsv_2[c], x, i_min, i_max) - mean_ch_1[c]
             gamma[c] = bisect(f, 0.1, 5)
         image_hsv_2 = adjust_gamma_ch3(image_hsv_2, gamma, ch_range)
-        mean_ch_2, hist_hsv_2 = img_histo_hsv(image_hsv_2, mask_size, i_min, i_max, plot)
+        mean_ch_2, hist_hsv_2 = img_histo_hsv(image_hsv_2, mask_radius, i_min, i_max, plot)
         for c in ch_range:
             print("{:.4f}->{:.4f} ({:+.2%}), gamma = {:.4f} ".format(mean_ch_1[c], mean_ch_2[c], 1-mean_ch_1[c]/mean_ch_2[c], gamma[c]))
     else:
         print("saving file duplicate")
     image_2 = cv2.cvtColor(image_hsv_2, cv2.COLOR_HSV2BGR)
     cv2.imwrite(output_path+"/"+filename_2, image_2, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
-
-def lumi_balance(input_path, output_path, ref_index=-1, mask_size=1, i_min=0, i_max=255, plot=False):
-    fnames = file_folder(input_path)
-    if ref_index==-1: ref = fnames[len(fnames)//2]
-    fxnames = fnames
-    for f in fxnames:
-        img_lumi_balance(ref, f, input_path, output_path, mask_size, i_min, i_max, plot)
-        
-def lumi_balance_rgb(input_path, output_path, ref_index=-1, mask_size=1, i_min=0, i_max=255, plot=False):
-    fnames = file_folder(input_path)
-    if ref_index==-1: ref = fnames[len(fnames)//2]
-    fxnames = fnames
-    for f in fxnames:
-        img_lumi_balance_rgb(ref, f, input_path, output_path, mask_size, i_min, i_max, plot)
     
-def lumi_balance_hsv(input_path, output_path, ref_index=-1, mask_size=1, i_min=0, i_max=255, plot=False):
+BALANCE_LUMI = "lumi"
+BALANCE_RGB = "rgb"
+BALANCE_SV = "sv"
+BALANCE_LS = "ls"
+
+def lumi_balance(input_path, output_path, mode=BALANCE_LUMI, ref_index=-1, mask_radius=-1, i_min=0, i_max=255, plot=False):
     fnames = file_folder(input_path)
     if ref_index==-1: ref = fnames[len(fnames)//2]
     fxnames = fnames
     for f in fxnames:
-        img_lumi_balance_hsv(ref, f, input_path, output_path, mask_size, i_min, i_max, plot)
+        if mode == BALANCE_LUMI:
+            img_lumi_balance(ref, f, input_path, output_path, mask_radius, i_min, i_max, plot)
+        elif mode == BALANCE_RGB:
+            img_lumi_balance_rgb(ref, f, input_path, output_path, mask_radius, i_min, i_max, plot)
+        elif mode == BALANCE_SV:
+            img_lumi_balance_hsv(ref, f, input_path, output_path, mask_radius, i_min, i_max, plot)

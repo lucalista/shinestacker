@@ -6,7 +6,7 @@ from .helper import image_set
 from .helper import chunks
 from .helper import print_elapsed_time
 from .align import align_frames
-from .balance import lumi_balance, lumi_balance_rgb, lumi_balance_hsv
+from .balance import lumi_balance
 from .stack import focus_stack_chunks, focus_stack_dir
 
 ENERGY_SOBEL = "sobel"
@@ -14,3 +14,7 @@ ENERGY_LAPLACIAN = "laplacian"
 CHOICE_PYRAMID = "pyramid"
 CHOICE_MAX = "max"
 CHOICE_AVERAGE = "average"
+BALANCE_LUMI = "lumi"
+BALANCE_RGB = "rgb"
+BALANCE_SV = "sv"
+BALANCE_LS = "ls"

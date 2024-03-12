@@ -33,10 +33,10 @@ def image_set(src_dir, fnames):
         raise RuntimeError("One or more input files failed to load.")
     return image_files
 
-def chunks(path, l, overlap=0):
-    if overlap >= l: raise Exception("Overlap must be smaller than batcjh size")
+def chunks(path, n_files, overlap=0):
+    if overlap >= n_files: raise Exception("Overlap must be smaller than batch size")
     fnames = file_folder(path)
-    return [fnames[x:x+l] for x in range(0, len(fnames), l-overlap)]
+    return [fnames[x:x + n_files] for x in range(0, len(fnames), n_files - overlap)]
 
 def copy_exif(input_exif, input_img, output_img):
     image = Image.open(input_exif)

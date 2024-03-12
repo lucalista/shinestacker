@@ -19,7 +19,7 @@ def reduce_layer(layer, kernel=generating_kernel(0.4)):
 
 def expand_layer(layer, kernel=generating_kernel(0.4)):
     if len(layer.shape) == 2:
-        expand = np.zeros((2 * layer.shape[0], 2 * layer.shape[1]), dtype=np.float64)
+        expand = np.zeros((2*layer.shape[0], 2*layer.shape[1]), dtype=np.float64)
         expand[::2, ::2] = layer;
         convolution = convolve(expand, kernel)
         return 4.*convolution
@@ -78,7 +78,7 @@ def collapse(pyramid):
 def get_probabilities(gray_image):
     levels, counts = np.unique(gray_image.astype(np.uint8), return_counts = True)
     probabilities = np.zeros((256,), dtype=np.float64)
-    probabilities[levels] = counts.astype(np.float64) / counts.sum()
+    probabilities[levels] = counts.astype(np.float64)/counts.sum()
     return probabilities
 
 def entropy(image, kernel_size):
@@ -86,7 +86,7 @@ def entropy(image, kernel_size):
         levels = area.flatten()
         return -1. * (levels * np.log(probabilities[levels])).sum()
     probabilities = get_probabilities(image)
-    pad_amount = int((kernel_size - 1) / 2)
+    pad_amount = int((kernel_size - 1)/2)
     padded_image = cv2.copyMakeBorder(image,pad_amount,pad_amount,pad_amount,pad_amount,cv2.BORDER_REFLECT101)
     entropies = np.zeros(image.shape[:2], dtype=np.float64)
     offset = np.arange(-pad_amount, pad_amount + 1)
@@ -99,7 +99,7 @@ def entropy(image, kernel_size):
 def deviation(image, kernel_size):
     def _area_deviation(area):
         average = np.average(area).astype(np.float64)
-        return np.square(area - average).sum() / area.size
+        return np.square(area - average).sum()/area.size
     pad_amount = int((kernel_size - 1) / 2)
     padded_image = cv2.copyMakeBorder(image,pad_amount,pad_amount,pad_amount,pad_amount,cv2.BORDER_REFLECT101)
     deviations = np.zeros(image.shape[:2], dtype=np.float64)
@@ -152,9 +152,9 @@ def get_fused_laplacian(laplacians):
 def region_energy(laplacian):
     return convolve(np.square(laplacian))
 
-def get_pyramid_fusion(images, min_size = 32, kernel_size = 5):
+def get_pyramid_fusion(images, min_size=32, kernel_size=5):
     smallest_side = min(images[0].shape[:2])
-    depth = int(np.log2(smallest_side / min_size))
+    depth = int(np.log2(smallest_side/min_size))
     pyramids = laplacian_pyramid(images, depth)
     fusion = fuse_pyramids(pyramids, kernel_size)
     return collapse(fusion)
