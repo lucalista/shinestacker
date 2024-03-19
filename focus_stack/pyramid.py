@@ -52,7 +52,7 @@ def gaussian_pyramid(images, levels):
 def laplacian_pyramid(images, levels):
     gaussian = gaussian_pyramid(images, levels)
     pyramid = [gaussian[-1]]
-    print('- laplacian pyramids, level: ', end='')
+    print('- laplacian pyramids, level:', end='')
     for level in range(len(gaussian) - 1, 0, -1):
         print(' {}'.format(level), end='')
         gauss = gaussian[level - 1]
@@ -129,7 +129,7 @@ def get_fused_base(images, kernel_size):
     return (fused / 2).astype(images.dtype)
 
 def fuse_pyramids(pyramids, kernel_size):
-    print('- fuse pyramids, layer: ', end='')
+    print('- fuse pyramids, layer:', end='')
     fused = [get_fused_base(pyramids[-1], kernel_size)]
     for layer in range(len(pyramids) - 2, -1, -1):
         print(' {}'.format(layer+1), end='')
