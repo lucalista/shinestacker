@@ -42,4 +42,4 @@ def copy_exif(input_exif, input_img, output_img):
     image = Image.open(input_exif)
     exif = image.info['exif']
     image_new = Image.open(input_img)
-    image_new.save(output_img, 'JPEG', exif=exif)
+    image_new.save(output_img, 'JPEG', exif=exif, quality=100)

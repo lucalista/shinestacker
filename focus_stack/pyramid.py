@@ -87,7 +87,7 @@ def entropy(image, kernel_size):
         return -1. * (levels * np.log(probabilities[levels])).sum()
     probabilities = get_probabilities(image)
     pad_amount = int((kernel_size - 1)/2)
-    padded_image = cv2.copyMakeBorder(image,pad_amount,pad_amount,pad_amount,pad_amount,cv2.BORDER_REFLECT101)
+    padded_image = cv2.copyMakeBorder(image, pad_amount, pad_amount, pad_amount, pad_amount, cv2.BORDER_REFLECT101)
     entropies = np.zeros(image.shape[:2], dtype=np.float64)
     offset = np.arange(-pad_amount, pad_amount + 1)
     for row in range(entropies.shape[0]):
@@ -101,7 +101,7 @@ def deviation(image, kernel_size):
         average = np.average(area).astype(np.float64)
         return np.square(area - average).sum()/area.size
     pad_amount = int((kernel_size - 1) / 2)
-    padded_image = cv2.copyMakeBorder(image,pad_amount,pad_amount,pad_amount,pad_amount,cv2.BORDER_REFLECT101)
+    padded_image = cv2.copyMakeBorder(image, pad_amount, pad_amount, pad_amount, pad_amount, cv2.BORDER_REFLECT101)
     deviations = np.zeros(image.shape[:2], dtype=np.float64)
     offset = np.arange(-pad_amount, pad_amount + 1)
     for row in range(deviations.shape[0]):
