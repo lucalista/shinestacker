@@ -33,12 +33,12 @@ def expand_layer(layer, kernel=generating_kernel(0.4)):
 def convolve(image, kernel=generating_kernel(0.4)):
     return ndimage.convolve(image.astype(np.float64), kernel, mode='mirror')
 
-def gaussian_pyramid(images, levels):
-    print('- gaussian pyramids, level:', end='')
+def gaussian_pyramid(images, levels, verbose=True):
+    if verbose: print('- gaussian pyramids, level:', end='')
     pyramid = [images.astype(np.float64)]
     num_images = images.shape[0]
     while levels > 0:
-        print(' {}'.format(levels), end='')
+        if verbose: print(' {}'.format(levels), end='')
         next_layer = reduce_layer(pyramid[-1][0])
         next_layer_size = [num_images] + list(next_layer.shape)
         pyramid.append(np.zeros(next_layer_size, dtype=next_layer.dtype))
@@ -46,15 +46,15 @@ def gaussian_pyramid(images, levels):
         for layer in range(1, images.shape[0]):
             pyramid[-1][layer] = reduce_layer(pyramid[-2][layer])
         levels = levels - 1
-    print(' gaussian pyramids completed')
+    if verbose: print(' gaussian pyramids completed')
     return pyramid
 
-def laplacian_pyramid(images, levels):
-    gaussian = gaussian_pyramid(images, levels)
+def laplacian_pyramid(images, levels, verbose=True):
+    gaussian = gaussian_pyramid(images, levels, verbose=verbose)
     pyramid = [gaussian[-1]]
-    print('- laplacian pyramids, level:', end='')
+    if verbose: print('- laplacian pyramids, level:', end='')
     for level in range(len(gaussian) - 1, 0, -1):
-        print(' {}'.format(level), end='')
+        if verbose: print(' {}'.format(level), end='')
         gauss = gaussian[level - 1]
         pyramid.append(np.zeros(gauss.shape, dtype=gauss.dtype))
         for layer in range(images.shape[0]):
@@ -63,7 +63,7 @@ def laplacian_pyramid(images, levels):
             if expanded.shape != gauss_layer.shape:
                 expanded = expanded[:gauss_layer.shape[0],:gauss_layer.shape[1]]
             pyramid[-1][layer] = gauss_layer - expanded
-    print(' laplacian pyramids completed')
+    if verbose: print(' laplacian pyramids completed')
     return pyramid[::-1]
 
 def collapse(pyramid):
@@ -128,13 +128,13 @@ def get_fused_base(images, kernel_size):
         fused += np.where(best_d[:,:,np.newaxis] == layer, images[layer], 0)
     return (fused / 2).astype(images.dtype)
 
-def fuse_pyramids(pyramids, kernel_size):
-    print('- fuse pyramids, layer:', end='')
+def fuse_pyramids(pyramids, kernel_size, verbose=True):
+    if verbose: print('- fuse pyramids, layer:', end='')
     fused = [get_fused_base(pyramids[-1], kernel_size)]
     for layer in range(len(pyramids) - 2, -1, -1):
-        print(' {}'.format(layer+1), end='')
+        if verbose: print(' {}'.format(layer+1), end='')
         fused.append(get_fused_laplacian(pyramids[layer]))
-    print(' fuse pyramids completed ')
+    if verbose: print(' fuse pyramids completed ')
     return fused[::-1]
 
 def get_fused_laplacian(laplacians):
@@ -152,9 +152,9 @@ def get_fused_laplacian(laplacians):
 def region_energy(laplacian):
     return convolve(np.square(laplacian))
 
-def get_pyramid_fusion(images, min_size=32, kernel_size=5):
+def get_pyramid_fusion(images, min_size=32, kernel_size=5, verbose=True):
     smallest_side = min(images[0].shape[:2])
     depth = int(np.log2(smallest_side/min_size))
-    pyramids = laplacian_pyramid(images, depth)
-    fusion = fuse_pyramids(pyramids, kernel_size)
+    pyramids = laplacian_pyramid(images, depth, verbose=verbose)
+    fusion = fuse_pyramids(pyramids, kernel_size, verbose=verbose)
     return collapse(fusion)

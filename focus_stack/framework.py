@@ -12,7 +12,6 @@ def elapsed_time_str(start):
 
 class Timer:
     __t0 = None
-    __name = None
     def __init__(self, name):
         self.name = name
     def run(self):

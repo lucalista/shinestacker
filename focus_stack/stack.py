@@ -53,11 +53,11 @@ CHOICE_PYRAMID = "pyramid"
 CHOICE_MAX = "max"
 CHOICE_AVERAGE = "average"
 
-def stack_focus(images, choice=CHOICE_PYRAMID, energy=ENERGY_LAPLACIAN, pyramid_min_size=32, kernel_size=5, blur_size=5, smooth_size=32):
+def stack_focus(images, choice=CHOICE_PYRAMID, energy=ENERGY_LAPLACIAN, pyramid_min_size=32, kernel_size=5, blur_size=5, smooth_size=32, verbose=True):
     images = np.array(images, dtype=images[0].dtype)
     if choice == CHOICE_PYRAMID:
-        stacked_image = get_pyramid_fusion(images, pyramid_min_size, kernel_size)
-        print('stack done')
+        stacked_image = get_pyramid_fusion(images, pyramid_min_size, kernel_size, verbose=verbose)
+        if verbose: print('stack done')
         return cv2.convertScaleAbs(stacked_image)
     else:
         gray_images =np.zeros(images.shape[:-1], dtype=np.uint8)
@@ -69,33 +69,33 @@ def stack_focus(images, choice=CHOICE_PYRAMID, energy=ENERGY_LAPLACIAN, pyramid_
             energy_map = get_laplacian_map(gray_images, kernel_size, blur_size)
         if smooth_size > 0:
             energy_map = smooth_energy_map(energy_map, smooth_size)
-    print('- get focus map')
+    if verbose: print('- get focus map')
     focus_map = get_focus_map(energy_map, choice)
-    print('- blend images')
+    if verbose: print('- blend images')
     stacked_image = blend(images, focus_map)
-    print('- stack done')
+    if verbose: print('- stack done')
     return cv2.convertScaleAbs(stacked_image)
 
-def focus_stack(fnames, input_dir, output_dir, exif_dir='', postfix='', denoise=0, choice=CHOICE_PYRAMID, energy=ENERGY_LAPLACIAN, pyramid_min_size=32, kernel_size=5, blur_size=5, smooth_size=32):
-    print('focus stack merge '+input_dir+', {} files: '.format(len(fnames))+', '.join(fnames))
+def focus_stack(fnames, input_dir, output_dir, exif_dir='', postfix='', denoise=0, choice=CHOICE_PYRAMID, energy=ENERGY_LAPLACIAN, pyramid_min_size=32, kernel_size=5, blur_size=5, smooth_size=32, verbose=True):
+    if verbose: print('focus stack merge '+input_dir+', {} files: '.format(len(fnames))+', '.join(fnames))
     imgs = image_set(input_dir, fnames)
-    s = stack_focus(imgs, choice=choice, energy=energy, pyramid_min_size=pyramid_min_size, kernel_size=kernel_size, blur_size=blur_size, smooth_size=smooth_size)
+    s = stack_focus(imgs, choice=choice, energy=energy, pyramid_min_size=pyramid_min_size, kernel_size=kernel_size, blur_size=blur_size, smooth_size=smooth_size, verbose=verbose)
     f = fnames[0].split(".")
     fn = output_dir+"/"+f[0]+postfix+'.'+'.'.join(f[1:])
     if denoise>0:
         s = cv2.fastNlMeansDenoisingColored(s, None, denoise, denoise, 7, 21)
     cv2.imwrite(fn, s, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
     if exif_dir != '':
-        print("- save exif data")
+        if verbose: print("- save exif data")
         ex_fname = exif_dir+'/'+file_folder(exif_dir, verbose=False)[0]
         check_file_exists(ex_fname)
         copy_exif(ex_fname, fn, fn)
     
-def focus_stack_chunks(input_dir, bactch_dir, exif_dir='', frames=10, overlap=0, postfix='', denoise=0, choice=CHOICE_PYRAMID, energy=ENERGY_LAPLACIAN, pyramid_min_size=32, kernel_size=5, blur_size=5, smooth_size=32):
+def focus_stack_chunks(input_dir, bactch_dir, exif_dir='', frames=10, overlap=0, postfix='', denoise=0, choice=CHOICE_PYRAMID, energy=ENERGY_LAPLACIAN, pyramid_min_size=32, kernel_size=5, blur_size=5, smooth_size=32, verbose=True):
     cnk = chunks(input_dir, frames, overlap)
     for c in cnk:
-        focus_stack(c, input_dir, bactch_dir, exif_dir, postfix, denoise, choice=choice, energy=energy, pyramid_min_size=pyramid_min_size, kernel_size=kernel_size, blur_size=blur_size, smooth_size=smooth_size)
+        focus_stack(c, input_dir, bactch_dir, exif_dir, postfix, denoise, choice=choice, energy=energy, pyramid_min_size=pyramid_min_size, kernel_size=kernel_size, blur_size=blur_size, smooth_size=smooth_size, verbose=verbose)
         
-def focus_stack_dir(input_dir, output_dir, exif_dir='', postfix='_stack_avg', denoise=0, choice=CHOICE_PYRAMID, energy=ENERGY_LAPLACIAN, pyramid_min_size=32, kernel_size=5, blur_size=5, smooth_size=32):
+def focus_stack_dir(input_dir, output_dir, exif_dir='', postfix='_stack_avg', denoise=0, choice=CHOICE_PYRAMID, energy=ENERGY_LAPLACIAN, pyramid_min_size=32, kernel_size=5, blur_size=5, smooth_size=32, verbose=True):
     fnames = file_folder(input_dir)
-    focus_stack(fnames, input_dir, output_dir, exif_dir, postfix, denoise, choice=choice, energy=energy, pyramid_min_size=pyramid_min_size, kernel_size=kernel_size, blur_size=blur_size, smooth_size=smooth_size)
+    focus_stack(fnames, input_dir, output_dir, exif_dir, postfix, denoise, choice=choice, energy=energy, pyramid_min_size=pyramid_min_size, kernel_size=kernel_size, blur_size=blur_size, smooth_size=smooth_size,verbose=verbose)
