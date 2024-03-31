@@ -50,6 +50,7 @@ class ActionList(Timer):
         else:
             raise StopIteration
     def run_core(self):
+        cprint("run " + self.name, "blue", attrs=["bold"])
         bar = tqdm_notebook(desc=self.name, total=self.counts)
         for x in iter(self):
             bar.update(1)
