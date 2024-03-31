@@ -47,7 +47,7 @@ def img_align(filename_ref, filename_0, ref_path, input_path, align_path, detect
         good = bf.match(des_0, des_1)
         good = sorted(good, key=lambda x: x.distance)
     print("matches: {} ".format(len(good)))
-    MIN_MATCH_COUNT = 3
+    MIN_MATCH_COUNT = 4 if method==ALIGN_HOMOGRAPHY else 3
     if len(good) > MIN_MATCH_COUNT:
         src_pts = np.float32([kp_0[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
         dst_pts = np.float32([kp_1[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
