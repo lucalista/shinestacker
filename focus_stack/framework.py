@@ -19,7 +19,7 @@ class Timer:
         self.__t0 = time.time()
         self.run_core()
         cprint(self.name + ":", "green", attrs=["bold"], end='')
-        cprint(" elapsed time: " + elapsed_time_str(self.__t0), "green")
+        cprint(" elapsed time: {}                    ".format(elapsed_time_str(self.__t0)), "green")
         
 class Job(Timer):
     __actions = None
@@ -43,8 +43,8 @@ class ActionList(Timer):
         return self
     def __next__(self):
         if self.count <= self.counts:
-            x = self.count
             self.run_step()
+            x = self.count
             self.count += 1
             return x
         else:

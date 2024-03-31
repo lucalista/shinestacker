@@ -7,7 +7,9 @@ def print_elapsed_time(start):
     dt = time.time() - start
     mm = int(dt // 60)
     ss = dt - mm*60
-    print("elapsed time: {}:{:.2f}s".format(mm, ss))
+    hh = mm // 60
+    mm -= hh*60
+    return ("{:02d}:{:02d}:{:05.2f}s".format(hh, mm, ss))
 
 def mkdir(d):
     if not os.path.exists(d): os.makedirs(d)

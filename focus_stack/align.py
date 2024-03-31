@@ -6,12 +6,12 @@ from .helper import file_folder
 ALIGN_HOMOGRAPHY = "homography"
 ALIGN_RIGID = "rigid"
 
-def img_align(filename_ref, filename_0, ref_path, input_path, align_path, detector_method='SIFT',  descriptor_method='SIFT', match_method='KNN', flann_idx_kdtree=0, match_threshold=0.7, method=ALIGN_HOMOGRAPHY, plot=False):
-    print('align '+ filename_0+' -> '+ filename_ref + ": ", end='')
+def img_align(filename_ref, filename_0, ref_path, input_path, align_path, detector_method='SIFT',  descriptor_method='SIFT', match_method='KNN', flann_idx_kdtree=0, match_threshold=0.7, method=ALIGN_HOMOGRAPHY, plot=False, verbose=True):
+    if verbose: print('align '+ filename_0+' -> '+ filename_ref + ": ", end='')
     img_0 = cv2.imread(input_path+"/"+filename_0)
     if img_0 is None: raise Exception("Invalid file: " + input_path+"/"+filename_0)
     if filename_0 == filename_ref:
-        print("saving file duplicate")
+        if verbose: print("saving file duplicate")
         cv2.imwrite(align_path+"/"+filename_0, img_0, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
         return
     img_ref = cv2.imread(ref_path+"/"+filename_ref)
@@ -46,7 +46,7 @@ def img_align(filename_ref, filename_0, ref_path, input_path, align_path, detect
         bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
         good = bf.match(des_0, des_1)
         good = sorted(good, key=lambda x: x.distance)
-    print("matches: {} ".format(len(good)))
+    if verbose: print("matches: {} ".format(len(good)))
     MIN_MATCH_COUNT = 4 if method==ALIGN_HOMOGRAPHY else 3
     if len(good) > MIN_MATCH_COUNT:
         src_pts = np.float32([kp_0[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
@@ -64,7 +64,7 @@ def img_align(filename_ref, filename_0, ref_path, input_path, align_path, detect
         elif method==ALIGN_RIGID:
             img_warp = cv2.warpAffine(img_0, M, (img_0.shape[1], img_0.shape[0]))
     else:
-        print("Not enough matches are found - {}/{}".format(len(good), MIN_MATCH_COUNT))
+        if verbose: print("Not enough matches are found - {}/{}".format(len(good), MIN_MATCH_COUNT))
         matchesMask = None
     if(plot):
         draw_params = dict(matchColor = (0,255,0), singlePointColor=None, matchesMask=matchesMask, flags = 2)

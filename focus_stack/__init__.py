@@ -5,7 +5,7 @@ from .helper import mkdir
 from .helper import image_set
 from .helper import chunks
 from .helper import print_elapsed_time
-from .align import align_frames
+from .align import align_frames, img_align
 from .balance import lumi_balance
 from .stack import focus_stack_chunks, focus_stack_dir
 from .framework import Job, ActionList
