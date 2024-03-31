@@ -3,7 +3,10 @@ import cv2
 import numpy as np
 from .helper import file_folder
 
-def img_align(filename_ref, filename_0, ref_path, input_path, align_path, detector_method='SIFT',  descriptor_method='SIFT', match_method='KNN', flann_idx_kdtree=0, match_threshold=0.7, plot=False):
+ALIGN_HOMOGRAPHY = "homography"
+ALIGN_RIGID = "rigid"
+
+def img_align(filename_ref, filename_0, ref_path, input_path, align_path, detector_method='SIFT',  descriptor_method='SIFT', match_method='KNN', flann_idx_kdtree=0, match_threshold=0.7, method=ALIGN_HOMOGRAPHY, plot=False):
     print('align '+ filename_0+' -> '+ filename_ref + ": ", end='')
     img_0 = cv2.imread(input_path+"/"+filename_0)
     if img_0 is None: raise Exception("Invalid file: " + input_path+"/"+filename_0)
@@ -44,28 +47,34 @@ def img_align(filename_ref, filename_0, ref_path, input_path, align_path, detect
         good = bf.match(des_0, des_1)
         good = sorted(good, key=lambda x: x.distance)
     print("matches: {} ".format(len(good)))
-    MIN_MATCH_COUNT = 4
+    MIN_MATCH_COUNT = 3
     if len(good) > MIN_MATCH_COUNT:
         src_pts = np.float32([kp_0[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
         dst_pts = np.float32([kp_1[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
-        M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
+        if method==ALIGN_HOMOGRAPHY:
+            M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
+        elif method==ALIGN_RIGID:
+            M, mask = cv2.estimateAffinePartial2D(src_pts, dst_pts, method=cv2.RANSAC, ransacReprojThreshold=5.0)
         matchesMask = mask.ravel().tolist()
         h, w = img_bw_1.shape
-        pts = np.float32([[0, 0], [0, h-1], [w-1, h-1], [w-1, 0] ]).reshape(-1, 1 ,2)
-        dst = cv2.perspectiveTransform(pts, M)
-        img_warp = cv2.warpPerspective(img_0, M, (w, h), borderMode=cv2.BORDER_CONSTANT, borderValue=(0, 0, 0, 0))
+        pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0] ]).reshape(-1, 1 ,2)
+        if method==ALIGN_HOMOGRAPHY:
+            dst = cv2.perspectiveTransform(pts, M)
+            img_warp = cv2.warpPerspective(img_0, M, (w, h), borderMode=cv2.BORDER_CONSTANT, borderValue=(0, 0, 0, 0))
+        elif method==ALIGN_RIGID:
+            img_warp = cv2.warpAffine(img_0, M, (img_0.shape[1], img_0.shape[0]))
     else:
         print("Not enough matches are found - {}/{}".format(len(good), MIN_MATCH_COUNT))
         matchesMask = None
     if(plot):
-        draw_params = dict(matchColor = (0,255,0), singlePointColor = None, matchesMask = matchesMask, flags = 2)
+        draw_params = dict(matchColor = (0,255,0), singlePointColor=None, matchesMask=matchesMask, flags = 2)
         img_match = cv2.drawMatches(img_0, kp_0, img_ref, kp_1, good, None, **draw_params)
         plt.figure(figsize=(20, 10))
         plt.imshow(img_match, 'gray'),
     plt.show()
     cv2.imwrite(align_path+"/"+filename_0, img_warp, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
     
-def align_frames(input_path, align_path, step_align=True, ref_idx=-1, detector_method='SIFT', descriptor_method='SIFT', match_method='KNN', flann_idx_kdtree=0, match_threshold=0.7, plot=False):
+def align_frames(input_path, align_path, step_align=True, ref_idx=-1, detector_method='SIFT', descriptor_method='SIFT', match_method='KNN', flann_idx_kdtree=0, match_threshold=0.7, method=ALIGN_HOMOGRAPHY, plot=False):
     fnames = file_folder(input_path)
     if ref_idx == -1: ref_idx = len(fnames)//2
     fname_ref = fnames[ref_idx]
@@ -75,7 +84,7 @@ def align_frames(input_path, align_path, step_align=True, ref_idx=-1, detector_m
         fname_ref = fnames[ref_idx]
         for i in rng:
             fname = fnames[i]
-            img_align(fname_ref, fname, ref_path, input_path, align_path, detector_method, descriptor_method, match_method, flann_idx_kdtree, match_threshold, plot)
+            img_align(fname_ref, fname, ref_path, input_path, align_path, detector_method, descriptor_method, match_method, flann_idx_kdtree, match_threshold, method, plot)
             fname_ref=fname
     align_range(ref_idx, range(ref_idx+1, len(fnames)))
     align_range(ref_idx, range(ref_idx-1, -1, -1))    
