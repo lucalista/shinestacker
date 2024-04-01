@@ -188,25 +188,148 @@ def lumi_balance(input_path, output_path, mode=BALANCE_LUMI, ref_index=-1, mask_
             img_lumi_balance_hsv(ref, f, input_path, output_path, mask_radius, i_min, i_max, plot)
             
 class BalanceLayers(FramesRefActions):
-    BALANCE_LUMI = "lumi"
-    BALANCE_RGB = "rgb"
-    BALANCE_SV = "sv"
-    BALANCE_LS = "ls"
-    def __init__(self, wdir, name, input_path, output_path='', ref_idx=-1, method=BALANCE_LUMI, mask_radius=-1, i_min=0, i_max=255, plot=False):
+    def __init__(self, wdir, name, input_path, output_path='', ref_idx=-1, mask_radius=-1, i_min=0, i_max=255, plot_histograms=False):
         FramesRefActions.__init__(self, wdir, name, input_path, output_path, ref_idx, step_process=False)
-        self.method = method
         self.mask_radius = mask_radius
         self.i_min = i_min
         self.i_max = i_max
-        self.plot = plot
+        self.plot_histograms = plot_histograms
     def run_frame(self, idx, ref_idx):
         print("balancing frame: {}, file: {}                    ".format(self.count, idx, ref_idx, self.filenames[idx]), end='\r')
-        if self.method ==BalanceLayers.BALANCE_LUMI:
-            img_lumi_balance(self.filenames[ref_idx], self.filenames[idx], self.input_dir, self.output_dir, self.mask_radius, self.i_min, self.i_max, self.plot, verbose=False)
-        elif self.method == BalanceLayers.BALANCE_RGB:
-            img_lumi_balance_rgb(self.filenames[ref_idx], self.filenames[idx], self.input_dir, self.output_dir, self.mask_radius, self.i_min, self.i_max, self.plot, verbose=False)
-        elif self.method == BalanceLayers.BALANCE_SV:
-            img_lumi_balance_hsv(self.filenames[ref_idx], self.filenames[idx], self.input_dir, self.output_dir, self.mask_radius, self.i_min, self.i_max, self.plot, verbose=False)
-        else: 
-            raise Exceltion("invalid method: " + self.method)
-            
+        self.balance(idx)
+    def begin(self):
+        FramesRefActions.begin(self)
+        self.image_ref = self.preprocess(cv2.imread(self.input_dir + "/" + self.filenames[self.ref_idx]))
+        self.mean_ref, self.hist_ref = self.get_histos(self.image_ref)
+    def balance(self, idx):
+        image = cv2.imread(self.input_dir + "/" + self.filenames[idx])
+        if(idx != self.ref_idx):
+            image = self.preprocess(image)
+            image = self.adjust_gamma(image)
+        cv2.imwrite(self.output_dir + "/" + self.filenames[idx], image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+    def preprocess(self, image):
+        return image
+    def get_histos(self, image):
+        assert(False), 'abstract method'
+    def adjust_gamma(self, image):
+        assert(False), 'abstract method'
+    def end(self):
+        pass
+    
+class BalanceLayersLumi(BalanceLayers):
+    def __init__(self, wdir, name, input_path, output_path='', ref_idx=-1, mask_radius=-1, i_min=0, i_max=255, plot_histograms=False):
+        BalanceLayers.__init__(self, wdir, name, input_path, output_path, ref_idx, mask_radius, i_min, i_max, plot_histograms)
+    def get_histos(self, image):
+        mask = lumi_mask(image, self.mask_radius)
+        hist_lumi = cv2.calcHist([cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)], [0], mask, [256], [0, 256])
+        if self.plot_histograms:
+            chans = cv2.split(image)
+            colors = ("r", "g", "b")
+            fig, axs = plt.subplots(1, 2, figsize=(6, 2), sharey=True)
+            histo_plot(axs[0], hist_lumi, "pixel luminosity", 'black')
+            for (chan, color) in zip(chans, colors):
+                hist_col = cv2.calcHist([chan], [0], mask, [256], [0, 256])
+                histo_plot(axs[1], hist_col, "r,g,b luminosity", color)
+            plt.show()
+        mean_lumi = np.average(list(range(256))[self.i_min:self.i_max + 1], weights=hist_lumi.flatten()[self.i_min:self.i_max + 1])
+        return mean_lumi, hist_lumi
+    def adjust_gamma(self, image):
+        mean, hist = self.get_histos(image)
+        f = lambda x: lumi_expect(hist, x, self.i_min, self.i_max) - self.mean_ref
+        gamma = bisect(f, 0.1, 5)
+        return adjust_gamma(image, gamma)
+
+class BalanceLayersRGB(BalanceLayers):
+    def __init__(self, wdir, name, input_path, output_path='', ref_idx=-1, mask_radius=-1, i_min=0, i_max=255, plot_histograms=False):
+        BalanceLayers.__init__(self, wdir, name, input_path, output_path, ref_idx, mask_radius, i_min, i_max, plot_histograms)
+    def get_histos(self, image):
+        mask = lumi_mask(image, self.mask_radius)
+        hist = []
+        mean = []
+        chans = cv2.split(image)
+        colors = ("r", "g", "b")
+        if self.plot_histograms:
+            fig, axs = plt.subplots(1, 3, figsize=(6, 2), sharey=True)
+        c = 0
+        for (chan, color) in zip(chans, colors):
+            hist.append(cv2.calcHist([chan], [0], mask, [256], [0, 256]))
+            mean.append(np.average(list(range(256))[self.i_min:self.i_max + 1], weights=hist[c].flatten()[self.i_min:self.i_max + 1]))
+            if self.plot_histograms:
+                histo_plot(axs[c], hist[c], color + " luminosity", color)
+            c += 1
+        if self.plot_histograms:
+            plt.show()
+        return mean, hist
+    def adjust_gamma(self, image):
+        mean, hist = self.get_histos(image)
+        gamma = []
+        for c in range(3):
+            f = lambda x: lumi_expect(hist[c], x, self.i_min, self.i_max) - self.mean_ref[c]
+            gamma.append(bisect(f, 0.1, 5))
+        return adjust_gamma_ch3(image, gamma)
+    
+class BalanceLayersSV(BalanceLayers):
+    def __init__(self, wdir, name, input_path, output_path='', ref_idx=-1, mask_radius=-1, i_min=0, i_max=255, plot_histograms=False):
+        BalanceLayers.__init__(self, wdir, name, input_path, output_path, ref_idx, mask_radius, i_min, i_max, plot_histograms)
+    def preprocess(self, image):
+        return cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    def get_histos(self, image):
+        mask = lumi_mask(image, self.mask_radius)
+        hist = []
+        mean = []
+        chans = cv2.split(image)
+        colors = ("pink", "red", "black")
+        ch_labels = ("H", "S", "V")
+        if self.plot_histograms:
+            fig, axs = plt.subplots(1, 3, figsize=(6, 2), sharey=True)
+        c = 0
+        for (chan, color, label) in zip(chans, colors, ch_labels):
+            hist.append(cv2.calcHist([chan], [0], mask, [256], [0, 256]))
+            mean.append(np.average(list(range(256))[self.i_min:self.i_max + 1], weights=hist[c].flatten()[self.i_min:self.i_max + 1]))
+            if self.plot_histograms:
+                histo_plot(axs[c], hist[c], label, color)
+            c += 1
+        if self.plot_histograms:
+            plt.show()
+        return mean, hist
+    def adjust_gamma(self, image):
+        mean, hist = self.get_histos(image)
+        gamma = [1, 1, 1]
+        ch_range = [1, 2]
+        for c in ch_range:
+            f = lambda x: lumi_expect(hist[c], x,self. i_min, self.i_max) - self.mean_ref[c]
+            gamma[c] = bisect(f, 0.1, 5)
+        return  cv2.cvtColor(adjust_gamma_ch3(image, gamma, ch_range), cv2.COLOR_HSV2BGR)
+    
+class BalanceLayersLS(BalanceLayers):
+    def __init__(self, wdir, name, input_path, output_path='', ref_idx=-1, mask_radius=-1, i_min=0, i_max=255, plot_histograms=False):
+        BalanceLayers.__init__(self, wdir, name, input_path, output_path, ref_idx, mask_radius, i_min, i_max, plot_histograms)
+    def preprocess(self, image):
+        return cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
+    def get_histos(self, image):
+        mask = lumi_mask(image, self.mask_radius)
+        hist = []
+        mean = []
+        chans = cv2.split(image)
+        colors = ("pink", "black", "red")
+        ch_labels = ("H", "L", "S")
+        if self.plot_histograms:
+            fig, axs = plt.subplots(1, 3, figsize=(6, 2), sharey=True)
+        c = 0
+        for (chan, color, label) in zip(chans, colors, ch_labels):
+            hist.append(cv2.calcHist([chan], [0], mask, [256], [0, 256]))
+            mean.append(np.average(list(range(256))[self.i_min:self.i_max + 1], weights=image[c].flatten()[self.i_min:self.i_max + 1]))
+            if self.plot_histograms:
+                histo_plot(axs[c], image[c], label, color)
+            c += 1
+        if self.plot_histograms:
+            plt.show()
+        return mean, image
+    def adjust_gamma(self, image):
+        mean, hist = self.get_histos(image)
+        gamma = [1, 1, 1]
+        ch_range = [1, 2]
+        for c in ch_range:
+            f = lambda x: lumi_expect(hist[c], x,self. i_min, self.i_max) - self.mean_ref[c]
+            gamma[c] = bisect(f, 0.1, 5)
+        return  cv2.cvtColor(adjust_gamma_ch3(image, gamma, ch_range), cv2.COLOR_HLS2BGR)
