@@ -17,9 +17,10 @@ class Timer:
     def run(self):
         self.__t0 = time.time()
         self.run_core()
-        cprint(self.name + ":", "green", attrs=["bold"], end='')
-        cprint(" elapsed time: {}                    ".format(elapsed_time_str(self.__t0)), "green")
-        
+        cprint(self.name + ": ", "green", attrs=["bold"], end='')
+        cprint("elapsed time: {}                    ".format(elapsed_time_str(self.__t0)), "green")
+        cprint(self.name + " completed                    ", "green")
+
 class Job(Timer):
     __actions = None
     def __init__(self, name):
@@ -34,9 +35,11 @@ class Job(Timer):
             a.run()
 
 class ActionList(Timer):
-    def __init__(self, name, counts):
+    counts = None
+    def __init__(self, name):
         Timer.__init__(self, name)
-        self.counts = counts
+    def begin(self):
+        pass
     def __iter__(self):
         self.count = 1
         return self
@@ -49,7 +52,8 @@ class ActionList(Timer):
         else:
             raise StopIteration
     def run_core(self):
-        cprint("run " + self.name, "blue", attrs=["bold"])
+        cprint("running " + self.name, "blue", attrs=["bold"])
+        self.begin()
         bar = tqdm_notebook(desc=self.name, total=self.counts)
         for x in iter(self):
             bar.update(1)
