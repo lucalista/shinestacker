@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from scipy.optimize import bisect
 from .helper import file_folder
 from .helper import check_file_exists
+from focus_stack.stack_framework import *
+from termcolor import colored, cprint
 
 def gamma_lut(gamma):
     gamma_inv = 1.0/gamma
@@ -184,3 +186,27 @@ def lumi_balance(input_path, output_path, mode=BALANCE_LUMI, ref_index=-1, mask_
             img_lumi_balance_rgb(ref, f, input_path, output_path, mask_radius, i_min, i_max, plot)
         elif mode == BALANCE_SV:
             img_lumi_balance_hsv(ref, f, input_path, output_path, mask_radius, i_min, i_max, plot)
+            
+class BalanceLayers(FramesRefActions):
+    BALANCE_LUMI = "lumi"
+    BALANCE_RGB = "rgb"
+    BALANCE_SV = "sv"
+    BALANCE_LS = "ls"
+    def __init__(self, wdir, name, input_path, output_path='', ref_idx=-1, method=BALANCE_LUMI, mask_radius=-1, i_min=0, i_max=255, plot=False):
+        FramesRefActions.__init__(self, wdir, name, input_path, output_path, ref_idx, step_process=False)
+        self.method = method
+        self.mask_radius = mask_radius
+        self.i_min = i_min
+        self.i_max = i_max
+        self.plot = plot
+    def run_frame(self, idx, ref_idx):
+        print("balancing frame: {}, file: {}                    ".format(self.count, idx, ref_idx, self.filenames[idx]), end='\r')
+        if self.method ==BalanceLayers.BALANCE_LUMI:
+            img_lumi_balance(self.filenames[ref_idx], self.filenames[idx], self.input_dir, self.output_dir, self.mask_radius, self.i_min, self.i_max, self.plot, verbose=False)
+        elif self.method == BalanceLayers.BALANCE_RGB:
+            img_lumi_balance_rgb(self.filenames[ref_idx], self.filenames[idx], self.input_dir, self.output_dir, self.mask_radius, self.i_min, self.i_max, self.plot, verbose=False)
+        elif self.method == BalanceLayers.BALANCE_SV:
+            img_lumi_balance_hsv(self.filenames[ref_idx], self.filenames[idx], self.input_dir, self.output_dir, self.mask_radius, self.i_min, self.i_max, self.plot, verbose=False)
+        else: 
+            raise Exceltion("invalid method: " + self.method)
+            

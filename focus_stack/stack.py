@@ -6,6 +6,7 @@ from .helper import chunks
 from .helper import file_folder
 from .helper import check_file_exists
 from .helper import copy_exif
+from focus_stack.stack_framework import *
 
 def convert_to_grayscale(image):
     return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -99,3 +100,58 @@ def focus_stack_chunks(input_dir, bactch_dir, exif_dir='', frames=10, overlap=0,
 def focus_stack_dir(input_dir, output_dir, exif_dir='', postfix='_stack_avg', denoise=0, choice=CHOICE_PYRAMID, energy=ENERGY_LAPLACIAN, pyramid_min_size=32, kernel_size=5, blur_size=5, smooth_size=32, verbose=True):
     fnames = file_folder(input_dir)
     focus_stack(fnames, input_dir, output_dir, exif_dir, postfix, denoise, choice=choice, energy=energy, pyramid_min_size=pyramid_min_size, kernel_size=kernel_size, blur_size=blur_size, smooth_size=smooth_size,verbose=verbose)
+
+class FocusStackBase:
+    ENERGY_SOBEL = "sobel"
+    ENERGY_LAPLACIAN = "laplacian"
+    METHOD_PYRAMID = "pyramid"
+    METHOD_MAX = "max"
+    METHOD_AVERAGE = "average"
+    def __init__(self, exif_dir='', postfix='', denoise=0, method=METHOD_PYRAMID, energy=ENERGY_LAPLACIAN, pyramid_min_size=32, kernel_size=5, blur_size=5, smooth_size=32):
+        self.exif_dir = exif_dir
+        self.postfix = postfix
+        self.denoise = denoise
+        self.method = method
+        self.energy = energy
+        self.pyramid_min_size = pyramid_min_size
+        self.kernel_size = kernel_size
+        self.blur_size = blur_size
+        self.smooth_size = smooth_size
+        
+class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
+    ENERGY_SOBEL = "sobel"
+    ENERGY_LAPLACIAN = "laplacian"
+    METHOD_PYRAMID = "pyramid"
+    METHOD_MAX = "max"
+    METHOD_AVERAGE = "average"
+    def __init__(self, wdir, name, input_path, output_path='', exif_dir='', frames=10, overlap=0, postfix='', denoise=0, method=METHOD_PYRAMID, energy=ENERGY_LAPLACIAN, pyramid_min_size=32, kernel_size=5, blur_size=5, smooth_size=32):
+        FrameDirectory.__init__(self, wdir, name, input_path, output_path)
+        ActionList.__init__(self, name)
+        FocusStackBase.__init__(self, exif_dir, postfix, denoise, method, energy, pyramid_min_size, kernel_size, blur_size, smooth_size)
+        if overlap >= frames: raise Exception("Overlap must be smaller than batch size")
+        self.frames = frames
+        self.overlap = overlap
+    def begin(self):
+        fnames = self.folder_filelist(self.input_dir)
+        self.__chunks = [fnames[x:x + self.frames] for x in range(0, len(fnames), self.frames - self.overlap)]
+        self.counts = len(self.__chunks)
+    def run_step(self):
+        print("bunch: {}                    ".format(self.count), end='\r')
+        focus_stack(self.__chunks[self.count - 1], self.input_dir, self.output_dir, self.working_directory + self.exif_dir, self.postfix, self.denoise, choice=self.method, energy=self.energy, pyramid_min_size=self.pyramid_min_size, kernel_size=self.kernel_size, blur_size=self.blur_size, smooth_size=self.smooth_size, verbose=False)
+        
+class FocusStack(FrameDirectory, Timer):
+    ENERGY_SOBEL = "sobel"
+    ENERGY_LAPLACIAN = "laplacian"
+    METHOD_PYRAMID = "pyramid"
+    METHOD_MAX = "max"
+    METHOD_AVERAGE = "average"
+    def __init__(self, wdir, name, input_path, output_path='', exif_dir='', postfix='', denoise=0, method=METHOD_PYRAMID, energy=ENERGY_LAPLACIAN, pyramid_min_size=32, kernel_size=5, blur_size=5, smooth_size=32):
+        self.name = name
+        FrameDirectory.__init__(self, wdir, name, input_path, output_path)
+        Timer.__init__(self, name)
+        FocusStackBase.__init__(self, exif_dir, postfix, denoise, method, energy, pyramid_min_size, kernel_size, blur_size, smooth_size)
+    def run_core(self):
+        cprint("running " + self.name, "blue", attrs=["bold"])
+        self.set_filelist()
+        focus_stack(self.filenames, self.input_dir, self.output_dir, self.working_directory + self.exif_dir, self.postfix, self.denoise, choice=self.method, energy=self.energy, pyramid_min_size=self.pyramid_min_size, kernel_size=self.kernel_size, blur_size=self.blur_size, smooth_size=self.smooth_size, verbose=False)
+    
