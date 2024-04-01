@@ -40,6 +40,8 @@ class ActionList(Timer):
         Timer.__init__(self, name)
     def begin(self):
         pass
+    def end(self):
+        pass
     def __iter__(self):
         self.count = 1
         return self
@@ -58,3 +60,4 @@ class ActionList(Timer):
         for x in iter(self):
             bar.update(1)
         bar.close()
+        self.end()

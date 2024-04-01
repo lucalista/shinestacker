@@ -1,6 +1,5 @@
 from .framework import  Job, ActionList, Timer
 from .helper import chunks
-from .align import img_align
 from .balance import lumi_balance, img_lumi_balance, img_lumi_balance_rgb, img_lumi_balance_hsv
 from .stack import focus_stack
 from termcolor import colored, cprint
@@ -31,11 +30,11 @@ class FrameDirectory:
         cprint("{} files ".format(len(self.filenames)) + "in folder: '" + self.input_dir + "'", 'blue')
         
 class FramesRefActions(FrameDirectory, ActionList):
-    def __init__(self, wdir, name, input_path, output_path='', ref_idx=-1, step_align=True):
+    def __init__(self, wdir, name, input_path, output_path='', ref_idx=-1, step_process=True):
         FrameDirectory.__init__(self, wdir, name, input_path, output_path)
         ActionList.__init__(self, name)
         self.ref_idx = ref_idx
-        self.step_align = step_align
+        self.step_process = step_process
         assert  os.path.exists(wdir + input_path), 'path does not exist: ' + wdir + input_path
     def begin(self):
         self.set_filelist()
@@ -44,35 +43,18 @@ class FramesRefActions(FrameDirectory, ActionList):
     def run_step(self):
         cprint("action: {} ".format(self.filenames[self.count - 1]), "blue", end='\r')
         if self.count == 1:
-            self.__idx = self.ref_idx if self.step_align else 0
+            self.__idx = self.ref_idx if self.step_process else 0
             self.__ref_idx = self.ref_idx
             self.__idx_step = +1
         self.run_frame(self.__idx, self.__ref_idx)
         ll = len(self.filenames)
         if(self.__idx < ll):
-            if self.step_align: self.__ref_idx = self.__idx
+            if self.step_process: self.__ref_idx = self.__idx
             self.__idx += self.__idx_step
         if(self.__idx == ll):
             self.__idx = self.ref_idx - 1
-            if self.step_align: self.__ref_idx = self.ref_idx
+            if self.step_process: self.__ref_idx = self.ref_idx
             self.__idx_step = -1
-            
-class AlignLayers(FramesRefActions):
-    ALIGN_HOMOGRAPHY = "homography"
-    ALIGN_RIGID = "rigid"
-    def __init__(self, wdir, name, input_path, output_path='', ref_idx=-1, step_align=True, detector_method='SIFT', descriptor_method='SIFT', match_method='KNN', flann_idx_kdtree=0, match_threshold=0.7, method=ALIGN_HOMOGRAPHY, plot=False):
-        FramesRefActions.__init__(self, wdir, name, input_path, output_path, ref_idx, step_align)
-        self.detector_method = detector_method
-        self.descriptor_method = descriptor_method
-        self.match_method = match_method
-        self.flann_idx_kdtree = flann_idx_kdtree
-        self.match_threshold = match_threshold
-        self.method = method
-        self.plot = plot
-    def run_frame(self, idx, ref_idx):
-        print("frame: {}, index: {}, reference: {}, align file: {}                    ".format(self.count, idx, ref_idx, self.filenames[idx]), end='\r')
-        ref_dir = self.output_dir if self.step_align else self.input_dir
-        img_align(self.filenames[ref_idx], self.filenames[idx], ref_dir, self.input_dir, self.output_dir, self.detector_method, self.descriptor_method, self.match_method, self.flann_idx_kdtree, self.match_threshold, self.method, self.plot, verbose=False)
         
 class BalanceLayers(FramesRefActions):
     BALANCE_LUMI = "lumi"
