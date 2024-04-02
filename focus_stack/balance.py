@@ -63,19 +63,18 @@ def img_histo_rgb(image, mask_radius=-1, i_min=0, i_max=255, plot=True):
     hist_rgb = []
     mean_ch = []
     chans = cv2.split(image)
-    colors = ("r", "g", "b")
-    if plot:
-        fig, axs = plt.subplots(1, 3, figsize=(6, 2), sharey=True, verbose=True)
-        if verbose: print('')
+    colors = ("b", "g", "r")
     c = 0
     for (chan, color) in zip(chans, colors):
         hist_rgb.append(cv2.calcHist([chan], [0], mask, [256], [0, 256]))
         mean_ch.append(np.average(list(range(256))[i_min:i_max+1], weights=hist_rgb[c].flatten()[i_min:i_max+1]))
-        if plot:
-            histo_plot(axs[c], hist_rgb[c], color+" luminosity", color)
-            if verbose: print('mean, '+color+': {:.4f}'.format(mean_ch[c]))
         c += 1
     if plot:
+        fig, axs = plt.subplots(1, 3, figsize=(6, 2), sharey=True, verbose=True)
+        if verbose: print('')        
+        for c in [2, 1, 0]:
+            histo_plot(axs[c], hist_rgb[c], colors[c]+" luminosity", colors[c])
+            if verbose: print('mean, '+color+': {:.4f}'.format(mean_ch[c]))
         plt.show()
     return mean_ch, hist_rgb
 
@@ -85,18 +84,18 @@ def img_histo_hsv(image_hsv, mask_radius=-1, i_min=0, i_max=255, plot=True, verb
     mean_ch = []
     chans = cv2.split(image_hsv)
     colors = ("pink", "red", "black")
-    if plot:
-        fig, axs = plt.subplots(1, 3, figsize=(6, 2), sharey=True)
-        if verbose: print('')
     c = 0
     for (chan, color) in zip(chans, colors):
         hist_hsv.append(cv2.calcHist([chan], [0], mask, [256], [0, 256]))
         mean_ch.append(np.average(list(range(256))[i_min:i_max+1], weights=hist_hsv[c].flatten()[i_min:i_max+1]))
-        if plot:
-            histo_plot(axs[c], hist_hsv[c],"ch luminosity", color)
-            if verbose: print('mean, '+color+': {:.4f}'.format(mean_ch[c]))
         c += 1
     if plot:
+        fig, axs = plt.subplots(1, 3, figsize=(6, 2), sharey=True)
+        if plot:
+            for c in range(3):
+                histo_plot(axs[c], hist_hsv[c],"ch luminosity", colors[c])
+                if verbose: print('mean, '+color+': {:.4f}'.format(mean_ch[c]))
+        if verbose: print('')
         plt.show()
     return mean_ch, hist_hsv
 
@@ -248,16 +247,13 @@ class BalanceLayersRGB(BalanceLayers):
         mean = []
         chans = cv2.split(image)
         colors = ("r", "g", "b")
-        if self.plot_histograms:
-            fig, axs = plt.subplots(1, 3, figsize=(6, 2), sharey=True)
-        c = 0
         for (chan, color) in zip(chans, colors):
             hist.append(cv2.calcHist([chan], [0], mask, [256], [0, 256]))
-            mean.append(np.average(list(range(256))[self.i_min:self.i_max + 1], weights=hist[c].flatten()[self.i_min:self.i_max + 1]))
-            if self.plot_histograms:
-                histo_plot(axs[c], hist[c], color + " luminosity", color)
-            c += 1
+            mean.append(np.average(list(range(256))[self.i_min:self.i_max + 1], weights=hist[-1].flatten()[self.i_min:self.i_max + 1]))
         if self.plot_histograms:
+            fig, axs = plt.subplots(1, 3, figsize=(6, 2), sharey=True)
+            for c in [2, 1, 0]:
+                histo_plot(axs[c], hist[c], colors[c] + " luminosity", colors[c])
             plt.show()
         return mean, hist
     def adjust_gamma(self, image):
@@ -268,28 +264,27 @@ class BalanceLayersRGB(BalanceLayers):
             gamma.append(bisect(f, 0.1, 5))
         return adjust_gamma_ch3(image, gamma)
     
-class BalanceLayersSV(BalanceLayers):
+class BalanceLayersCh2(BalanceLayers):
     def __init__(self, wdir, name, input_path, output_path='', ref_idx=-1, mask_radius=-1, i_min=0, i_max=255, plot_histograms=False):
         BalanceLayers.__init__(self, wdir, name, input_path, output_path, ref_idx, mask_radius, i_min, i_max, plot_histograms)
     def preprocess(self, image):
-        return cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        assert(False), 'abstract method'
+    def get_labels(self):
+        assert(False), 'abstract method'
     def get_histos(self, image):
         mask = lumi_mask(image, self.mask_radius)
         hist = []
         mean = []
         chans = cv2.split(image)
         colors = ("pink", "red", "black")
-        ch_labels = ("H", "S", "V")
-        if self.plot_histograms:
-            fig, axs = plt.subplots(1, 3, figsize=(6, 2), sharey=True)
-        c = 0
-        for (chan, color, label) in zip(chans, colors, ch_labels):
+        for (chan, color) in zip(chans, colors):
             hist.append(cv2.calcHist([chan], [0], mask, [256], [0, 256]))
-            mean.append(np.average(list(range(256))[self.i_min:self.i_max + 1], weights=hist[c].flatten()[self.i_min:self.i_max + 1]))
-            if self.plot_histograms:
-                histo_plot(axs[c], hist[c], label, color)
-            c += 1
+            mean.append(np.average(list(range(256))[self.i_min:self.i_max + 1], weights=hist[-1].flatten()[self.i_min:self.i_max + 1]))
         if self.plot_histograms:
+            ch_labels = self.get_labels()
+            fig, axs = plt.subplots(1, 3, figsize=(6, 2), sharey=True)
+            for c in range(3):
+                histo_plot(axs[c], hist[c], ch_labels[c], colors[c])
             plt.show()
         return mean, hist
     def adjust_gamma(self, image):
@@ -299,37 +294,24 @@ class BalanceLayersSV(BalanceLayers):
         for c in ch_range:
             f = lambda x: lumi_expect(hist[c], x,self. i_min, self.i_max) - self.mean_ref[c]
             gamma[c] = bisect(f, 0.1, 5)
-        return  cv2.cvtColor(adjust_gamma_ch3(image, gamma, ch_range), cv2.COLOR_HSV2BGR)
+        return self.preprocess(adjust_gamma_ch3(image, gamma, ch_range))
     
-class BalanceLayersLS(BalanceLayers):
+class BalanceLayersSV(BalanceLayersCh2):
     def __init__(self, wdir, name, input_path, output_path='', ref_idx=-1, mask_radius=-1, i_min=0, i_max=255, plot_histograms=False):
-        BalanceLayers.__init__(self, wdir, name, input_path, output_path, ref_idx, mask_radius, i_min, i_max, plot_histograms)
+        BalanceLayersCh2.__init__(self, wdir, name, input_path, output_path, ref_idx, mask_radius, i_min, i_max, plot_histograms)
+    def preprocess(self, image):
+        return cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    def postprocess(self, image):
+        return cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
+    def get_labels(self):
+        return ("H", "S", "V")
+    
+class BalanceLayersLS(BalanceLayersCh2):
+    def __init__(self, wdir, name, input_path, output_path='', ref_idx=-1, mask_radius=-1, i_min=0, i_max=255, plot_histograms=False):
+        BalanceLayersCh2.__init__(self, wdir, name, input_path, output_path, ref_idx, mask_radius, i_min, i_max, plot_histograms)
     def preprocess(self, image):
         return cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
-    def get_histos(self, image):
-        mask = lumi_mask(image, self.mask_radius)
-        hist = []
-        mean = []
-        chans = cv2.split(image)
-        colors = ("pink", "black", "red")
-        ch_labels = ("H", "L", "S")
-        if self.plot_histograms:
-            fig, axs = plt.subplots(1, 3, figsize=(6, 2), sharey=True)
-        c = 0
-        for (chan, color, label) in zip(chans, colors, ch_labels):
-            hist.append(cv2.calcHist([chan], [0], mask, [256], [0, 256]))
-            mean.append(np.average(list(range(256))[self.i_min:self.i_max + 1], weights=image[c].flatten()[self.i_min:self.i_max + 1]))
-            if self.plot_histograms:
-                histo_plot(axs[c], image[c], label, color)
-            c += 1
-        if self.plot_histograms:
-            plt.show()
-        return mean, image
-    def adjust_gamma(self, image):
-        mean, hist = self.get_histos(image)
-        gamma = [1, 1, 1]
-        ch_range = [1, 2]
-        for c in ch_range:
-            f = lambda x: lumi_expect(hist[c], x,self. i_min, self.i_max) - self.mean_ref[c]
-            gamma[c] = bisect(f, 0.1, 5)
-        return  cv2.cvtColor(adjust_gamma_ch3(image, gamma, ch_range), cv2.COLOR_HLS2BGR)
+    def preprocess(self, image):
+        return cv2.cvtColor(image, cv2.COLOR_HLS2BGR)
+    def get_labels(self):
+        return ("H", "L", "S")

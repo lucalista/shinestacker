@@ -160,6 +160,9 @@ class AlignLayers(FramesRefActions):
         if img_0 is None: raise Exception("Invalid file: " + self.input_dir + "/" + filename_0)
         if filename_0 == filename_ref:
             cv2.imwrite(self.output_dir + "/" + filename_0, img_0, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+            if(self.plot_matches):
+                print('')
+                print("reference image unchanged")
             return
         img_ref = cv2.imread(self.input_dir + "/" + filename_ref)
         if img_ref is None: raise Exception("Invalid file: " + self.input_dir + "/" + filename_ref)    
@@ -191,7 +194,9 @@ class AlignLayers(FramesRefActions):
             cprint("image " + filename_0 + " not aligned, too few matches found: {}         ".format(n_good_matches), "red")
         if(self.plot_matches):
             draw_params = dict(matchColor = (0,255,0), singlePointColor=None, matchesMask=matches_mask, flags = 2)
-            img_match = cv2.drawMatches(img_0, kp_0, img_ref, kp_1, good_matches, None, **draw_params)
+            img_match = cv2.cvtColor(cv2.drawMatches(img_0, kp_0, img_ref, kp_1, good_matches, None, **draw_params), cv2.COLOR_BGR2RGB)
+            print('')
+            print("matches: {}".format(n_good_matches))
             plt.figure(figsize=(10, 5))
             plt.imshow(img_match, 'gray'),
             plt.show()
