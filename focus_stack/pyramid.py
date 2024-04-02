@@ -6,6 +6,9 @@ def generating_kernel(a):
     kernel = np.array([0.25 - a/2.0, 0.25, a, 0.25, 0.25 - a/2.0])
     return np.outer(kernel, kernel)
 
+def convolve(image, kernel=generating_kernel(0.4)):
+    return ndimage.convolve(image.astype(np.float64), kernel, mode='mirror')
+
 def reduce_layer(layer, kernel=generating_kernel(0.4)):
     if len(layer.shape) == 2:
         convolution = convolve(layer, kernel)
@@ -29,9 +32,6 @@ def expand_layer(layer, kernel=generating_kernel(0.4)):
     for channel in range(1, layer.shape[2]):
         next_layer[:, :, channel] = expand_layer(layer[:,:,channel])
     return next_layer
-
-def convolve(image, kernel=generating_kernel(0.4)):
-    return ndimage.convolve(image.astype(np.float64), kernel, mode='mirror')
 
 def gaussian_pyramid(images, levels, verbose=True):
     if verbose: print('- gaussian pyramids, level:', end='')
