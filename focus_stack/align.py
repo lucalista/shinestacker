@@ -94,7 +94,7 @@ def align_frames(input_path, align_path, step_align=True, ref_idx=-1, detector_m
 class AlignLayers(FramesRefActions):
     ALIGN_HOMOGRAPHY = "homography"
     ALIGN_RIGID = "rigid"
-    def __init__(self, wdir, name, input_path, output_path='', step_align=True, ref_idx=-1, detector='SIFT', descriptor='SIFT', match_method='KNN', flann_idx_kdtree=0, flann_trees=5, flann_checks=50, match_threshold=0.7, method=ALIGN_RIGID, rans_threshold=5.0, plot_matches=False):
+    def __init__(self, wdir, name, input_path, output_path='', step_align=True, ref_idx=-1, detector='SIFT', descriptor='SIFT', match_method='KNN', flann_idx_kdtree=2, flann_trees=5, flann_checks=50, match_threshold=0.75, method=ALIGN_RIGID, rans_threshold=5.0, plot_matches=False):
         FramesRefActions.__init__(self, wdir, name, input_path, output_path, ref_idx, step_align)
         self.detector = detector
         self.descriptor = descriptor
@@ -166,7 +166,7 @@ class AlignLayers(FramesRefActions):
                 print('')
                 print("reference image unchanged")
             return
-        img_ref = cv2.imread(self.input_dir + "/" + filename_ref)
+        img_ref = cv2.imread((self.output_dir if self.step_process else self.input_dir)  + "/" + filename_ref)
         if img_ref is None: raise Exception("Invalid file: " + self.input_dir + "/" + filename_ref)    
         img_bw_0 = cv2.cvtColor(img_0, cv2.COLOR_BGR2GRAY)
         img_bw_1 = cv2.cvtColor(img_ref, cv2.COLOR_BGR2GRAY)

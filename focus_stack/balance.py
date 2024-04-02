@@ -194,7 +194,7 @@ class BalanceLayers(FramesRefActions):
         self.i_max = i_max
         self.plot_histograms = plot_histograms
     def run_frame(self, idx, ref_idx):
-        print("balancing frame: {}, file: {}                    ".format(self.count, idx, ref_idx, self.filenames[idx]), end='\r')
+        print("balancing frame: {}, file: {}                    ".format(self.count, idx, self.filenames[idx]), end='\r')
         self.balance(idx)
     def begin(self):
         FramesRefActions.begin(self)
