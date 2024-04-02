@@ -212,8 +212,6 @@ class BalanceLayers(FramesRefActions):
         assert(False), 'abstract method'
     def adjust_gamma(self, image):
         assert(False), 'abstract method'
-    def end(self):
-        pass
     
 class BalanceLayersLumi(BalanceLayers):
     def __init__(self, wdir, name, input_path, output_path='', ref_idx=-1, mask_radius=-1, i_min=0, i_max=255, plot_histograms=False):
@@ -236,8 +234,25 @@ class BalanceLayersLumi(BalanceLayers):
         mean, hist = self.get_histos(image)
         f = lambda x: lumi_expect(hist, x, self.i_min, self.i_max) - self.mean_ref
         gamma = bisect(f, 0.1, 5)
+        self.gamma[self.count - 1] = gamma
         return adjust_gamma(image, gamma)
-
+    def begin(self):
+        BalanceLayers.begin(self)
+        self.gamma = np.ones(self.counts)
+    def end(self):
+        plt.figure(figsize=(10, 5))
+        x = np.arange(1, len(self.gamma) + 1, dtype=int)
+        y = self.gamma
+        plt.plot([self.ref_idx + 1, self.ref_idx + 1], [0, 1], color='cornflowerblue', linestyle='--', label='reference frame')
+        plt.plot([x[0], x[-1]], [1, 1], color='lightgray', linestyle='--', label='no correction')
+        plt.plot(x, y, color='navy', label='luminosity gamma correction')
+        plt.xlabel('frame')
+        plt.ylabel('gamma correction')
+        plt.legend()
+        plt.xlim(x[0], x[-1])
+        plt.ylim(0)
+        plt.show()
+        
 class BalanceLayersRGB(BalanceLayers):
     def __init__(self, wdir, name, input_path, output_path='', ref_idx=-1, mask_radius=-1, i_min=0, i_max=255, plot_histograms=False):
         BalanceLayers.__init__(self, wdir, name, input_path, output_path, ref_idx, mask_radius, i_min, i_max, plot_histograms)
@@ -262,7 +277,26 @@ class BalanceLayersRGB(BalanceLayers):
         for c in range(3):
             f = lambda x: lumi_expect(hist[c], x, self.i_min, self.i_max) - self.mean_ref[c]
             gamma.append(bisect(f, 0.1, 5))
+        self.gamma[self.count - 1] = gamma
         return adjust_gamma_ch3(image, gamma)
+    def begin(self):
+        BalanceLayers.begin(self)
+        self.gamma = np.ones((self.counts, 3))
+    def end(self):
+        plt.figure(figsize=(10, 5))
+        x = np.arange(1, len(self.gamma) + 1, dtype=int)
+        y = self.gamma
+        plt.plot([self.ref_idx + 1, self.ref_idx + 1], [0, 1], color='cornflowerblue', linestyle='--', label='reference frame')
+        plt.plot([x[0], x[-1]], [1, 1], color='lightgray', linestyle='--', label='no correction')
+        plt.plot(x, y[:, 0], color='r', label='R gamma correction')
+        plt.plot(x, y[:, 1], color='g', label='G gamma correction')
+        plt.plot(x, y[:, 2], color='b', label='B gamma correction')
+        plt.xlabel('frame')
+        plt.ylabel('gamma correction')
+        plt.legend()
+        plt.xlim(x[0], x[-1])
+        plt.ylim(0)
+        plt.show()
     
 class BalanceLayersCh2(BalanceLayers):
     def __init__(self, wdir, name, input_path, output_path='', ref_idx=-1, mask_radius=-1, i_min=0, i_max=255, plot_histograms=False):
@@ -276,15 +310,13 @@ class BalanceLayersCh2(BalanceLayers):
         hist = []
         mean = []
         chans = cv2.split(image)
-        colors = ("pink", "red", "black")
-        for (chan, color) in zip(chans, colors):
+        for (chan, color) in zip(chans, self.colors):
             hist.append(cv2.calcHist([chan], [0], mask, [256], [0, 256]))
             mean.append(np.average(list(range(256))[self.i_min:self.i_max + 1], weights=hist[-1].flatten()[self.i_min:self.i_max + 1]))
         if self.plot_histograms:
-            ch_labels = self.get_labels()
             fig, axs = plt.subplots(1, 3, figsize=(6, 2), sharey=True)
             for c in range(3):
-                histo_plot(axs[c], hist[c], ch_labels[c], colors[c])
+                histo_plot(axs[c], hist[c], self.labels[c], colors[c])
             plt.show()
         return mean, hist
     def adjust_gamma(self, image):
@@ -294,24 +326,42 @@ class BalanceLayersCh2(BalanceLayers):
         for c in ch_range:
             f = lambda x: lumi_expect(hist[c], x,self. i_min, self.i_max) - self.mean_ref[c]
             gamma[c] = bisect(f, 0.1, 5)
+        self.gamma[self.count - 1] = gamma[1:]
         return self.preprocess(adjust_gamma_ch3(image, gamma, ch_range))
-    
+    def begin(self):
+        BalanceLayers.begin(self)
+        self.gamma = np.ones((self.counts, 2))
+    def end(self):
+        plt.figure(figsize=(10, 5))
+        x = np.arange(1, len(self.gamma) + 1, dtype=int)
+        y = self.gamma
+        plt.plot([self.ref_idx + 1, self.ref_idx + 1], [0, 1], color='cornflowerblue', linestyle='--', label='reference frame')
+        plt.plot([x[0], x[-1]], [1, 1], color='lightgray', linestyle='--', label='no correction')
+        plt.plot(x, y[:, 0], color=self.colors[1], label=self.labels[1] + ' gamma correction')
+        plt.plot(x, y[:, 1], color=self.colors[2], label=self.labels[2] + ' gamma correction')
+        plt.xlabel('frame')
+        plt.ylabel('gamma correction')
+        plt.legend()
+        plt.xlim(x[0], x[-1])
+        plt.ylim(0)
+        plt.show()
+        
 class BalanceLayersSV(BalanceLayersCh2):
     def __init__(self, wdir, name, input_path, output_path='', ref_idx=-1, mask_radius=-1, i_min=0, i_max=255, plot_histograms=False):
         BalanceLayersCh2.__init__(self, wdir, name, input_path, output_path, ref_idx, mask_radius, i_min, i_max, plot_histograms)
+        self.labels = ("H", "S", "V")
+        self.colors = ("hotpink", "forestgreen", "navy")
     def preprocess(self, image):
         return cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     def postprocess(self, image):
         return cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
-    def get_labels(self):
-        return ("H", "S", "V")
     
 class BalanceLayersLS(BalanceLayersCh2):
     def __init__(self, wdir, name, input_path, output_path='', ref_idx=-1, mask_radius=-1, i_min=0, i_max=255, plot_histograms=False):
         BalanceLayersCh2.__init__(self, wdir, name, input_path, output_path, ref_idx, mask_radius, i_min, i_max, plot_histograms)
+        self.labels = ("H", "L", "S")
+        self.colors = ("hotpink", "navy", "forestgreen")
     def preprocess(self, image):
         return cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
     def preprocess(self, image):
         return cv2.cvtColor(image, cv2.COLOR_HLS2BGR)
-    def get_labels(self):
-        return ("H", "L", "S")

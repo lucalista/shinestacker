@@ -209,9 +209,9 @@ class AlignLayers(FramesRefActions):
         no_ref = (x != self.ref_idx + 1)
         x = x[no_ref]
         y = self.n_matches[no_ref]
-        plt.plot(x, y, label='matches')
-        plt.plot([self.ref_idx + 1, self.ref_idx + 1], [0, y.max()], 'r--', label='reference')
-        plt.plot([x[0], x[-1]], [self.min_matches, self.min_matches], 'g--', label='min. matches')
+        plt.plot([self.ref_idx + 1, self.ref_idx + 1], [0, y.max()], color='cornflowerblue', linestyle='--', label='reference frame')
+        plt.plot([x[0], x[-1]], [self.min_matches, self.min_matches], color='lightgray', linestyle='--', label='min. matches')
+        plt.plot(x, y, color='navy', label='matches')
         plt.xlabel('frame')
         plt.ylabel('n. of matches')
         plt.legend()
