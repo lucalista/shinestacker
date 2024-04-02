@@ -74,7 +74,7 @@ def img_align(filename_ref, filename_0, ref_path, input_path, align_path, detect
         plt.figure(figsize=(20, 10))
         plt.imshow(img_match, 'gray'),
     plt.show()
-    cv2.imwrite(align_path+"/"+filename_0, img_warp, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+    cv2.imwrite(align_path + "/" + filename_0, img_warp, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
     
 def align_frames(input_path, align_path, step_align=True, ref_idx=-1, detector_method='SIFT', descriptor_method='SIFT', match_method='KNN', flann_idx_kdtree=0, match_threshold=0.7, method=ALIGN_HOMOGRAPHY, plot=False):
     fnames = file_folder(input_path)
@@ -94,7 +94,7 @@ def align_frames(input_path, align_path, step_align=True, ref_idx=-1, detector_m
 class AlignLayers(FramesRefActions):
     ALIGN_HOMOGRAPHY = "homography"
     ALIGN_RIGID = "rigid"
-    def __init__(self, wdir, name, input_path, output_path='', step_align=True, ref_idx=-1, detector='SIFT', descriptor='SIFT', match_method='KNN', flann_idx_kdtree=0, flann_trees=5, flann_checks=50, match_threshold=0.7, method=ALIGN_HOMOGRAPHY, rans_threshold=5.0, plot_matches=False):
+    def __init__(self, wdir, name, input_path, output_path='', step_align=True, ref_idx=-1, detector='SIFT', descriptor='SIFT', match_method='KNN', flann_idx_kdtree=0, flann_trees=5, flann_checks=50, match_threshold=0.7, method=ALIGN_RIGID, rans_threshold=5.0, plot_matches=False):
         FramesRefActions.__init__(self, wdir, name, input_path, output_path, ref_idx, step_align)
         self.detector = detector
         self.descriptor = descriptor
@@ -108,7 +108,7 @@ class AlignLayers(FramesRefActions):
         self.rans_threshold = rans_threshold
         self.plot_matches = plot_matches
     def run_frame(self, idx, ref_idx):
-        print("aligning frame: {}, file: {}                    ".format(self.count, self.filenames[idx]), end='\r')
+        print("aligning frame: {}, file: {}                    ".format(self.count, ref_idx, self.filenames[idx]), end='\r')
         self.align_images(ref_idx, idx)
     def create_detector(self):
         detector = None
@@ -153,6 +153,8 @@ class AlignLayers(FramesRefActions):
             M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, self.rans_threshold)
         elif self.method==ALIGN_RIGID:
             M, mask = cv2.estimateAffinePartial2D(src_pts, dst_pts, method=cv2.RANSAC, ransacReprojThreshold=self.rans_threshold)
+        else:
+            assert(false), "invalid align method: " + self.method
         return M, mask        
     def align_images(self, ref_idx, idx):
         filename_ref, filename_0 = self.filenames[ref_idx], self.filenames[idx]

@@ -83,7 +83,7 @@ def focus_stack(fnames, input_dir, output_dir, exif_dir='', postfix='', denoise=
     s = stack_focus(imgs, choice=choice, energy=energy, pyramid_min_size=pyramid_min_size, kernel_size=kernel_size, blur_size=blur_size, smooth_size=smooth_size, verbose=verbose)
     f = fnames[0].split(".")
     fn = output_dir+"/"+f[0]+postfix+'.'+'.'.join(f[1:])
-    if denoise>0:
+    if denoise > 0:
         s = cv2.fastNlMeansDenoisingColored(s, None, denoise, denoise, 7, 21)
     cv2.imwrite(fn, s, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
     if exif_dir != '':
@@ -100,23 +100,69 @@ def focus_stack_chunks(input_dir, bactch_dir, exif_dir='', frames=10, overlap=0,
 def focus_stack_dir(input_dir, output_dir, exif_dir='', postfix='_stack_avg', denoise=0, choice=CHOICE_PYRAMID, energy=ENERGY_LAPLACIAN, pyramid_min_size=32, kernel_size=5, blur_size=5, smooth_size=32, verbose=True):
     fnames = file_folder(input_dir)
     focus_stack(fnames, input_dir, output_dir, exif_dir, postfix, denoise, choice=choice, energy=energy, pyramid_min_size=pyramid_min_size, kernel_size=kernel_size, blur_size=blur_size, smooth_size=smooth_size,verbose=verbose)
+    
+class DepthMapStack:
+    ENERGY_SOBEL = "sobel"
+    ENERGY_LAPLACIAN = "laplacian"
+    MAP_MAX = "max"
+    MAP_AVERAGE = "average"
+    def __init__(self, map_type=MAP_MAX, energy=ENERGY_LAPLACIAN, kernel_size=5, blur_size=5, smooth_size=32):
+        self.choice = choice
+        self.energy = energy
+        self.kernel_size = kernel_size
+        self.blur_size = blur_size
+        self.smooth_size = smooth_size
+    def focus_stack(self, images):
+        gray_images = np.zeros(images.shape[:-1], dtype=np.uint8)
+        for index in range(images.shape[0]):
+            gray_images[index] = convert_to_grayscale(images[index])
+        if self.energy == ENERGY_SOBEL:
+            energy_map = get_sobel_map(gray_images)
+        elif self.energy == ENERGY_LAPLACIAN:
+            energy_map = get_laplacian_map(gray_images, kernel_size, blur_size)
+        else:
+            assert(False), 'invalid energy parameter: ' + self.energy
+        if smooth_size > 0:
+            energy_map = smooth_energy_map(energy_map, smooth_size)
+        focus_map = get_focus_map(energy_map, self.map_type)
+        stacked_image = blend(images, focus_map)
+        return cv2.convertScaleAbs(stacked_image)
 
+class PyramidStack:
+    def __init__(self, pyramid_min_size=32, kernel_size=5):
+        self.pyramid_min_size = pyramid_min_size
+        self.kernel_size = kernel_size
+    def focus_stack(self, images):
+        stacked_image = get_pyramid_fusion(images, self.pyramid_min_size, self.kernel_size, verbose=False)
+        return cv2.convertScaleAbs(stacked_image)  
+    
 class FocusStackBase:
     ENERGY_SOBEL = "sobel"
     ENERGY_LAPLACIAN = "laplacian"
     METHOD_PYRAMID = "pyramid"
     METHOD_MAX = "max"
     METHOD_AVERAGE = "average"
-    def __init__(self, exif_dir='', postfix='', denoise=0, method=METHOD_PYRAMID, energy=ENERGY_LAPLACIAN, pyramid_min_size=32, kernel_size=5, blur_size=5, smooth_size=32):
-        self.exif_dir = exif_dir
+    def __init__(self, wdir, stack_algo, exif_dir='', postfix='', denoise=0):
+        self.stack_algo = stack_algo
+        self.exif_dir = '' if exif_dir=='' else wdir + "/" + exif_dir
         self.postfix = postfix
         self.denoise = denoise
-        self.method = method
-        self.energy = energy
-        self.pyramid_min_size = pyramid_min_size
-        self.kernel_size = kernel_size
-        self.blur_size = blur_size
-        self.smooth_size = smooth_size
+    def focus_stack(self, filenames):
+        img_files = sorted([os.path.join(self.input_dir, name) for name in filenames])
+        img_files = [cv2.imread(name) for name in img_files]
+        if any([img is None for img in img_files]):
+            raise RuntimeError("failed to load one or more image files.")
+        img_files = np.array(img_files, dtype=img_files[0].dtype)
+        stacked_img = self.stack_algo.focus_stack(img_files)
+        in_filename = filenames[0].split(".")
+        out_filename = self.output_dir + "/" + in_filename[0] + self.postfix + '.' + '.'.join(in_filename[1:])
+        if self.denoise > 0:
+            s = cv2.fastNlMeansDenoisingColored(stacked_img, None, self.denoise, self.denoise, 7, 21)
+        cv2.imwrite(out_filename, s, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+        if self.exif_dir != '':
+            exif_filename = self.exif_dir + '/' + file_folder(self.exif_dir, verbose=False)[0]
+            check_file_exists(exif_filename)
+            copy_exif(exif_filename, out_filename, out_filename)
         
 class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
     ENERGY_SOBEL = "sobel"
@@ -124,10 +170,10 @@ class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
     METHOD_PYRAMID = "pyramid"
     METHOD_MAX = "max"
     METHOD_AVERAGE = "average"
-    def __init__(self, wdir, name, input_path, output_path='', exif_dir='', frames=10, overlap=0, postfix='', denoise=0, method=METHOD_PYRAMID, energy=ENERGY_LAPLACIAN, pyramid_min_size=32, kernel_size=5, blur_size=5, smooth_size=32):
+    def __init__(self, wdir, name, stack_algo, input_path, output_path='', exif_dir='', frames=10, overlap=0, postfix='', denoise=0):
         FrameDirectory.__init__(self, wdir, name, input_path, output_path)
         ActionList.__init__(self, name)
-        FocusStackBase.__init__(self, exif_dir, postfix, denoise, method, energy, pyramid_min_size, kernel_size, blur_size, smooth_size)
+        FocusStackBase.__init__(self, wdir, stack_algo, exif_dir, postfix, denoise)
         if overlap >= frames: raise Exception("Overlap must be smaller than batch size")
         self.frames = frames
         self.overlap = overlap
@@ -137,21 +183,21 @@ class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
         self.counts = len(self.__chunks)
     def run_step(self):
         print("bunch: {}                    ".format(self.count), end='\r')
-        focus_stack(self.__chunks[self.count - 1], self.input_dir, self.output_dir, self.working_directory + self.exif_dir, self.postfix, self.denoise, choice=self.method, energy=self.energy, pyramid_min_size=self.pyramid_min_size, kernel_size=self.kernel_size, blur_size=self.blur_size, smooth_size=self.smooth_size, verbose=False)
+        self.focus_stack(self.__chunks[self.count - 1])
         
-class FocusStack(FrameDirectory, Timer):
+class FocusStack(FrameDirectory, Timer, FocusStackBase):
     ENERGY_SOBEL = "sobel"
     ENERGY_LAPLACIAN = "laplacian"
     METHOD_PYRAMID = "pyramid"
     METHOD_MAX = "max"
     METHOD_AVERAGE = "average"
-    def __init__(self, wdir, name, input_path, output_path='', exif_dir='', postfix='', denoise=0, method=METHOD_PYRAMID, energy=ENERGY_LAPLACIAN, pyramid_min_size=32, kernel_size=5, blur_size=5, smooth_size=32):
+    def __init__(self, wdir, name, stack_algo, input_path, output_path='', exif_dir='', postfix='', denoise=0):
         self.name = name
         FrameDirectory.__init__(self, wdir, name, input_path, output_path)
         Timer.__init__(self, name)
-        FocusStackBase.__init__(self, exif_dir, postfix, denoise, method, energy, pyramid_min_size, kernel_size, blur_size, smooth_size)
+        FocusStackBase.__init__(self, wdir, stack_algo, exif_dir, postfix, denoise)
     def run_core(self):
         cprint("running " + self.name, "blue", attrs=["bold"])
         self.set_filelist()
-        focus_stack(self.filenames, self.input_dir, self.output_dir, self.working_directory + self.exif_dir, self.postfix, self.denoise, choice=self.method, energy=self.energy, pyramid_min_size=self.pyramid_min_size, kernel_size=self.kernel_size, blur_size=self.blur_size, smooth_size=self.smooth_size, verbose=False)
+        self.focus_stack(self.filenames)
     

@@ -205,8 +205,11 @@ class BalanceLayers(FramesRefActions):
         if(idx != self.ref_idx):
             image = self.preprocess(image)
             image = self.adjust_gamma(image)
+            image = self.postprocess(image)
         cv2.imwrite(self.output_dir + "/" + self.filenames[idx], image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
     def preprocess(self, image):
+        return image
+    def postprocess(self, image):
         return image
     def get_histos(self, image):
         assert(False), 'abstract method'
@@ -327,7 +330,7 @@ class BalanceLayersCh2(BalanceLayers):
             f = lambda x: lumi_expect(hist[c], x,self. i_min, self.i_max) - self.mean_ref[c]
             gamma[c] = bisect(f, 0.1, 5)
         self.gamma[self.count - 1] = gamma[1:]
-        return self.preprocess(adjust_gamma_ch3(image, gamma, ch_range))
+        return adjust_gamma_ch3(image, gamma, ch_range)
     def begin(self):
         BalanceLayers.begin(self)
         self.gamma = np.ones((self.counts, 2))
@@ -363,5 +366,5 @@ class BalanceLayersLS(BalanceLayersCh2):
         self.colors = ("hotpink", "navy", "forestgreen")
     def preprocess(self, image):
         return cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
-    def preprocess(self, image):
+    def postprocess(self, image):
         return cv2.cvtColor(image, cv2.COLOR_HLS2BGR)
