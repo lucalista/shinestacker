@@ -11,7 +11,7 @@ Pyramid methods in image processing
 * [Align with OpenCV](https://magamig.github.io/posts/accurate-image-alignment-and-registration-using-opencv/)
 * [Balancing contrast and brightness between stitched images](https://itecnote.com/tecnote/opencv-balancing-contrast-and-brightness-between-stitched-images/)
 
-Usage example:
+### Usage example:
 
 ```python
 from focus_stack import *
@@ -22,3 +22,13 @@ job.add_action(FocusStackBunch(job.working_directory, "batches", PyramidStack(),
 job.add_action(FocusStack(job.working_directory, "stack", PyramidStack(), input_path="batches", exif_dir="Immagini modificate", postfix='_stack_pyr', denoise=0.8))
 job.run()
 ```
+### Required software:
+
+* python
+* open cv
+* numpy
+* scipy
+* matplotlib
+* termcolor
+* tqdm
+* PIL
