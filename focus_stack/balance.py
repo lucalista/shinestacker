@@ -200,6 +200,8 @@ class BalanceLayers(FramesRefActions):
         FramesRefActions.begin(self)
         self.image_ref = self.preprocess(cv2.imread(self.input_dir + "/" + self.filenames[self.ref_idx]))
         self.mean_ref, self.hist_ref = self.get_histos(self.image_ref)
+    def end(self):
+        print("                                 ")
     def balance(self, idx):
         image = cv2.imread(self.input_dir + "/" + self.filenames[idx])
         if(idx != self.ref_idx):
@@ -243,6 +245,7 @@ class BalanceLayersLumi(BalanceLayers):
         BalanceLayers.begin(self)
         self.gamma = np.ones(self.counts)
     def end(self):
+        BalanceLayers.end(self)
         plt.figure(figsize=(10, 5))
         x = np.arange(1, len(self.gamma) + 1, dtype=int)
         y = self.gamma
@@ -286,6 +289,7 @@ class BalanceLayersRGB(BalanceLayers):
         BalanceLayers.begin(self)
         self.gamma = np.ones((self.counts, 3))
     def end(self):
+        BalanceLayers.end(self)
         plt.figure(figsize=(10, 5))
         x = np.arange(1, len(self.gamma) + 1, dtype=int)
         y = self.gamma
@@ -335,6 +339,7 @@ class BalanceLayersCh2(BalanceLayers):
         BalanceLayers.begin(self)
         self.gamma = np.ones((self.counts, 2))
     def end(self):
+        BalanceLayers.end(self)
         plt.figure(figsize=(10, 5))
         x = np.arange(1, len(self.gamma) + 1, dtype=int)
         y = self.gamma

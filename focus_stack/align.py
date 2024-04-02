@@ -206,6 +206,7 @@ class AlignLayers(FramesRefActions):
         FramesRefActions.begin(self)
         self.n_matches = np.zeros(self.counts)
     def end(self):
+        print("                                 ")
         plt.figure(figsize=(10, 5))
         x = np.arange(1, len(self.n_matches) + 1, dtype=int)
         no_ref = (x != self.ref_idx + 1)
