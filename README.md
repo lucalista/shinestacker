@@ -1,6 +1,6 @@
 # Focus stacking with image batches
 
-based on [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar. The origina code was used under permission of the author.
+based on [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar. The original code was used under permission of the author.
 
 **Resources:**
 
