@@ -8,8 +8,6 @@ based on [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) 
 Pyramid methods in image processing
 * [A Multi-focus Image Fusion Method Based on Laplacian Pyramid](http://www.jcomputers.us/vol6/jcp0612-07.pdf), Wencheng Wang, Faliang Chang, Journal of Computers 6 (12), 2559, December 2011
 * Another [original implementation on GitHub](https://github.com/bznick98/Focus_Stacking) by Zongnan Bao
-* [Align with OpenCV](https://magamig.github.io/posts/accurate-image-alignment-and-registration-using-opencv/)
-* [Balancing contrast and brightness between stitched images](https://itecnote.com/tecnote/opencv-balancing-contrast-and-brightness-between-stitched-images/)
 
 ### Usage example:
 
