@@ -21,7 +21,7 @@ class AlignLayers(FramesRefActions):
         self.rans_threshold = rans_threshold
         self.plot_matches = plot_matches
     def run_frame(self, idx, ref_idx):
-        print("aligning frame: {}, file: {}                    ".format(self.count, ref_idx, self.filenames[idx]), end='\r')
+        print("aligning frame: {}, file: {}                    ".format(self.count, self.filenames[idx]), end='\r')
         self.align_images(ref_idx, idx)
     def create_detector(self):
         detector = None
