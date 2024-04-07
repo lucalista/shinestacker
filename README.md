@@ -45,7 +45,7 @@ arguments are:
 * ```working_directory```: the directory that contains input and output images, organized in subdirectories as specified by each action
 * ```name```: the name of the job, used for printout
 
-Schedule automatic alignment with:
+Schedule automatic image registration, i.e.: scale, tanslation and rotation correction, or full perspective correction, with:
 
 ```python
 job.add_action(AlignLayers(working_directory, name, input_path, *arguments))
@@ -57,6 +57,9 @@ arguments are:
 * ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
 * ```ref_idx``` (optional): the index of the image used as reference. Images are numbered starting from zero. If not specified, it is the index of to the middle image.
 * ```step_align``` (optional): if equal to ```True``` (default), each image is aligned with respect to the previous or next image, depending if it is after or befor the reference image.
+* ```transform```: the transformation applied to register images. Possible values are:
+  * ```ALIGN_RIGID``` (default): allow scale, tanslation and rotation correction. This should be used for image acquired with tripode or microscope.
+  * ``` ALIGN_HOMOGRAPHY```: allow full perspective correction. This should be used for images taken with hand camera.
 * ```detector``` (optional): the feature detector is used to find matches. See [Feature Detection and Description](https://docs.opencv.org/4.x/db/d27/tutorial_py_table_of_contents_feature2d.html) for more details. Possible values are:
   * ```SIFT``` (default): [Scale-Invariant Feature Transform](https://docs.opencv.org/4.x/da/df5/tutorial_py_sift_intro.html)]
   * ```ORB```: [Oriented FAST and Rotated BRIEF](https://docs.opencv.org/4.x/d1/d89/tutorial_py_orb.html)
@@ -69,11 +72,11 @@ arguments are:
 * ```match_method``` (optional): the method used to find matches. See [Feature Matching](https://docs.opencv.org/4.x/dc/dc3/tutorial_py_matcher.html) for more details. Possible values are:
   * ```KNN``` (default): [Feature Matching with FLANN](https://docs.opencv.org/3.4/d5/d6f/tutorial_feature_flann_matcher.html)
   * ```NORM_HAMMING```: 
-* ```flann_idx_kdtree```=2
-* ```flann_tree```s=5
-* ```flann_checks```=50
-* ```match_threshold```=0.75
-* ```method```=ALIGN_RIGID
-* ```rans_threshold```=5.0
-*``` plot_matches```=False
+* ```flann_idx_kdtree``` (optional, default: 2): parameter used by the FLANN matching algorithm.
+* ```flann_tree``` (optional, default: 5): parameter used by the FLANN matching algorithm.
+* ```flann_checks``` (optional, default: 50): parameter used by the FLANN matching algorithm.
+* ```match_threshold``` (optional, default: 0.75): parameter used to select good matches. See [Feature Matching](https://docs.opencv.org/4.x/dc/dc3/tutorial_py_matcher.html) for more details. 
+* ```rans_threshold```  (optional, default: 5.0): parameter used if ``` ALIGN_HOMOGRAPHY``` is choosen as tansformation, see [Feature Matching + Homography to find Objects
+](https://docs.opencv.org/3.4/d1/de0/tutorial_py_feature_homography.html) for more details
+*``` plot_matches``` (optiona, default: ```False```): if ```True```, for each image the matches identified with respect to the reference image are plotted. May be needed for inspection and debugging.
 
