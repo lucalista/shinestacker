@@ -61,8 +61,11 @@ arguments are:
   * ```SIFT``` (default): [Scale-Invariant Feature Transform](https://docs.opencv.org/4.x/da/df5/tutorial_py_sift_intro.html)]
   * ```ORB```: [Oriented FAST and Rotated BRIEF](https://docs.opencv.org/4.x/d1/d89/tutorial_py_orb.html)
   * ```SURF```: [Speeded-Up Robust Features](https://docs.opencv.org/3.4/df/dd2/tutorial_py_surf_intro.html)
-  * ```AKAZE```; [AKAZE local features matching](https://docs.opencv.org/3.4/db/d70/tutorial_akaze_matching.html)
-* ```descriptor```='SIFT'
+  * ```AKAZE```: [AKAZE local features matching](https://docs.opencv.org/3.4/db/d70/tutorial_akaze_matching.html)
+* ```descriptor``` (optional): specifies which feature descriptor is used to find matches. Possible values are:
+  * ```SIFT``` (default)
+  * ```ORB```
+  * ```AKAZE```
 * ```match_method```='KNN'
 * ```flann_idx_kdtree```=2
 * ```flann_tree```s=5
