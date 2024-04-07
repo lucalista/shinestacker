@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 from .pyramid import get_pyramid_fusion
+from focus_stack.utils import read_img, write_img
 from focus_stack.stack_framework import *
 from PIL import Image
 
@@ -89,7 +90,7 @@ class FocusStackBase:
         self.denoise = denoise
     def focus_stack(self, filenames):
         img_files = sorted([os.path.join(self.input_dir, name) for name in filenames])
-        img_files = [cv2.imread(name) for name in img_files]
+        img_files = [read_img(name) for name in img_files]
         if any([img is None for img in img_files]):
             raise RuntimeError("failed to load one or more image files.")
         img_files = np.array(img_files, dtype=img_files[0].dtype)
@@ -98,7 +99,7 @@ class FocusStackBase:
         out_filename = self.output_dir + "/" + in_filename[0] + self.postfix + '.' + '.'.join(in_filename[1:])
         if self.denoise > 0:
             s = cv2.fastNlMeansDenoisingColored(stacked_img, None, self.denoise, self.denoise, 7, 21)
-        cv2.imwrite(out_filename, s, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+        write_img(out_filename, s)
         if self.exif_dir != '':
             dirpath, _, fnames = next(os.walk(self.exif_dir))
             fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in EXTENSIONS]
@@ -107,8 +108,14 @@ class FocusStackBase:
             image = Image.open(exif_filename)
             exif = image.info['exif']
             image_new = Image.open(out_filename)
-            image_new.save(out_filename, 'JPEG', exif=exif, quality=100)
-            
+            ext = out_filename.split(".")[-1]
+            if ext == 'jpeg' or ext == 'jpg':
+                image_new.save(out_filename, 'JPEG', exif=exif, quality=100)
+            elif ext == 'tiff' or ext == 'tif':
+                image_new.save(out_filename, 'TIFF', exif=exif)
+            elif ext == 'png':
+                image_new.save(out_filename, 'PNG', exif=exif, quality=100)
+
 class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
     def __init__(self, wdir, name, stack_algo, input_path, output_path='', exif_dir='', frames=10, overlap=0, postfix='', denoise=0):
         FrameDirectory.__init__(self, wdir, name, input_path, output_path)

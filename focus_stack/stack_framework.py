@@ -3,7 +3,7 @@ from termcolor import colored, cprint
 import os
 
 class StackJob(Job):
-    def __init__(self, name, wdir):
+    def __init__(self, wdir, name):
         assert  os.path.exists(wdir), 'Path does not exist: ' + wdir
         self.working_directory = wdir
         Job.__init__(self, name)
@@ -13,10 +13,10 @@ class FrameDirectory:
     def __init__(self, wdir, name, input_path, output_path=''):
         assert  os.path.exists(wdir), 'Path does not exist: ' + wdir
         self.working_directory = wdir
-        self.input_dir = wdir + input_path
+        self.input_dir = wdir + ('' if wdir[-1] == '/' else '/') + input_path
         assert  os.path.exists(self.input_dir), 'path does not exist: ' + self.input_dir
         if output_path=='': output_path = name
-        self.output_dir = wdir + output_path
+        self.output_dir = wdir + ('' if wdir[-1] == '/' else '/') +  output_path
         if not os.path.exists(self.output_dir): os.makedirs(self.output_dir)
     def folder_filelist(self, path):
         src_contents = os.walk(self.input_dir)
@@ -32,7 +32,6 @@ class FramesRefActions(FrameDirectory, ActionList):
         ActionList.__init__(self, name)
         self.ref_idx = ref_idx
         self.step_process = step_process
-        assert  os.path.exists(wdir + input_path), 'path does not exist: ' + wdir + input_path
     def begin(self):
         self.set_filelist()
         self.counts = len(self.filenames)
