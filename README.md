@@ -35,7 +35,7 @@ job.run()
 
 Schedule the desired actions in a job, then run the job.
 
-Create the job with:
+### Job creation
 
 ```python
 job = StackJob(name, working_directory)
@@ -45,7 +45,7 @@ arguments are:
 * ```working_directory```: the directory that contains input and output images, organized in subdirectories as specified by each action
 * ```name```: the name of the job, used for printout
 
-Schedule automatic image registration, i.e.: scale, tanslation and rotation correction, or full perspective correction, with:
+### Image registration, i.e.: scale, tanslation and rotation correction, or full perspective correction
 
 ```python
 job.add_action(AlignLayers(working_directory, name, input_path, *arguments))
@@ -78,5 +78,26 @@ arguments are:
 * ```match_threshold``` (optional, default: 0.75): parameter used to select good matches. See [Feature Matching](https://docs.opencv.org/4.x/dc/dc3/tutorial_py_matcher.html) for more details. 
 * ```rans_threshold```  (optional, default: 5.0): parameter used if ``` ALIGN_HOMOGRAPHY``` is choosen as tansformation, see [Feature Matching + Homography to find Objects
 ](https://docs.opencv.org/3.4/d1/de0/tutorial_py_feature_homography.html) for more details
-*``` plot_matches``` (optiona, default: ```False```): if ```True```, for each image the matches identified with respect to the reference image are plotted. May be needed for inspection and debugging.
+*``` plot_matches``` (optional, default: ```False```): if ```True```, for each image the matches identified with respect to the reference image are plotted. May be needed for inspection and debugging.
 
+### Luminosity and color balance
+
+There are four possible luminosity and color balance methods:
+* ```BalanceLayersLumi```: balance luminosity equally for R, G and B channels. It should be fine for most of the cases.
+* ```BalanceLayersRGB```: balance luminosity separately for R, G and B channels. It may be needed if some but not all of the images have a undesired color dominance.
+* ```BalanceLayersLumiSV```: balance saturation a luminosity value in the HSV (Hue, Saturation, brightness Value) representation. It may be needed in cases of extreme luminosity variation that affects saturation.
+* ```BalanceLayersLS```: balance saturation a luminosity value in the HLS (Hue, Lightness, Saturation) representation. It may be needed in cases of extreme luminosity variation that affects saturation.
+
+```python
+job.add_action(BalanceLayersLumi(job.working_directory, name, *arguments))
+```
+arguments are:
+* ```working_directory```: the directory that contains input and output images, normaly it is the same as ```job.working_directory```.
+* ```name```: the name of the action, used for printout.
+* ```input_path```: the subdirectory within ```working_directory``` that contains input images to be aligned.
+* ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
+* ```ref_idx``` (optional): the index of the image used as reference. Images are numbered starting from zero. If not specified, it is the index of to the middle image.
+* ```mask_size``` (optional): if specified, luminosity and color balance is only applied to pixels within a rircle of radius equal to the minimum between the image width and height times ```mask_size```, i.e: 0.8 means 80% of a portrait image height. It may beuseful for images with vignetting, in order to remove the outer darker pixels.
+* ```i_min``` (optional): if specifies, only pixels with content greater pr equal tham ```i_min``` are used. It may be useful to remove black areas.
+* ```i_max``` (optional): if specifies, only pixels with content less pr equal tham ```i_max``` are used. It may be useful to remove white areas.
+* ```plot_histograms```  (optional, default: ```False```): if ```True```, for each image and for the reference image histograms with pixel content are plotted. May be needed for inspection and debugging.
