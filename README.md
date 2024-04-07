@@ -113,7 +113,10 @@ arguments are:
 * ```stacker```: an object defining the focus stacking algorithm. See below for possible classes.
 * ```input_path```: the subdirectory within ```working_directory``` that contains input images to be aligned.
 * ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
-* 
+* ```exif_dir``` (optional): if specified, EXIF data are copied to the output file from file in the specified directory. Usually, it is the source directory used as input for the first action.
+* ```postfix``` (optional): if specified, the specified string is appended to the file name. May be useful if more algorithms are ran, and different file names are used for the output of different algorithms.
+* ```denoise``` (optoinal): if specified, a denois algorithm is applied. See [Image Denoising](https://docs.opencv.org/3.4/d5/d69/tutorial_py_non_local_means.html) for more details
+
 ### Bunch Focus Stacking
 
 ```python
@@ -125,3 +128,8 @@ arguments are:
 * ```stacker```: an object defining the focus stacking algorithm. See below for possible classes.
 * ```input_path```: the subdirectory within ```working_directory``` that contains input images to be aligned.
 * ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
+* ```frames``` (optional, default: 10): the number of frames in each bunch that are stacked together.
+* ```overlap``` (optional, default: 0): the number of overlapping frames between a bunch and the following one. 
+* ```exif_dir``` (optional): if specified, EXIF data are copied to the output file from file in the specified directory. Usually, it is the source directory used as input for the first action.
+* ```postfix``` (optional): if specified, the specified string is appended to the file name. May be useful if more algorithms are ran, and different file names are used for the output of different algorithms.
+* ```denoise``` (optoinal): if specified, a denois algorithm is applied. See [Image Denoising](https://docs.opencv.org/3.4/d5/d69/tutorial_py_non_local_means.html) for more details
