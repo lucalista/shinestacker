@@ -140,8 +140,8 @@ arguments are:
    * ```pyramid_min_size``` (optiohnal, default: 32)
    * ```kernel_size``` (optional, default: 5) 
 * ```DepthMapStack```, arguments are:
-   * ```map_type``` (optional default: ```MAP_MAX```)
-   * ```energy``` (optional default: ```ENERGY_LAPLACIAN```)
+   * ```map_type``` (optional), possible values are  ```MAP_MAX``` (default) and ```MAP_AVERAGE```.
+   * ```energy``` (optional), possible values are ```ENERGY_LAPLACIAN``` (default) and ```ENERGY_SOBEL```.
    * ```kernel_size``` (optional, default: 5) 
    * ```blur_size``` (optional, default: 5) 
    * ```smooth_size``` (optional, default: 32) 
