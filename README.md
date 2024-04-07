@@ -48,7 +48,7 @@ arguments are:
 ### Image registration, i.e.: scale, tanslation and rotation correction, or full perspective correction
 
 ```python
-job.add_action(AlignLayers(working_directory, name, input_path, *arguments))
+job.add_action(AlignLayers(working_directory, name, input_path, *options))
 ```
 arguments are:
 * ```working_directory```: the directory that contains input and output images, normaly it is the same as ```job.working_directory```.
@@ -89,7 +89,7 @@ There are four possible luminosity and color balance methods:
 * ```BalanceLayersLS```: balance saturation a luminosity value in the HLS (Hue, Lightness, Saturation) representation. It may be needed in cases of extreme luminosity variation that affects saturation.
 
 ```python
-job.add_action(BalanceLayersLumi(job.working_directory, name, *arguments))
+job.add_action(BalanceLayersLumi(working_directory, name, *options))
 ```
 arguments are:
 * ```working_directory```: the directory that contains input and output images, normaly it is the same as ```job.working_directory```.
@@ -101,3 +101,27 @@ arguments are:
 * ```i_min``` (optional): if specifies, only pixels with content greater pr equal tham ```i_min``` are used. It may be useful to remove black areas.
 * ```i_max``` (optional): if specifies, only pixels with content less pr equal tham ```i_max``` are used. It may be useful to remove white areas.
 * ```plot_histograms```  (optional, default: ```False```): if ```True```, for each image and for the reference image histograms with pixel content are plotted. May be needed for inspection and debugging.
+
+### Focus Stacking
+
+```python
+job.add_action(FocusStack(working_directory, name, stacker, input_path, *options))
+```
+arguments are:
+* ```working_directory```: the directory that contains input and output images, normaly it is the same as ```job.working_directory```.
+* ```name```: the name of the action, used for printout.
+* ```stacker```: an object defining the focus stacking algorithm. See below for possible classes.
+* ```input_path```: the subdirectory within ```working_directory``` that contains input images to be aligned.
+* ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
+* 
+### Bunch Focus Stacking
+
+```python
+job.add_action(FocusStackBunch(working_directory, name,  stacker, input_path, *options))
+```
+arguments are:
+* ```working_directory```: the directory that contains input and output images, normaly it is the same as ```job.working_directory```.
+* ```name```: the name of the action, used for printout.
+* ```stacker```: an object defining the focus stacking algorithm. See below for possible classes.
+* ```input_path```: the subdirectory within ```working_directory``` that contains input images to be aligned.
+* ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
