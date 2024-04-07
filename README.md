@@ -30,3 +30,17 @@ job.run()
 * termcolor
 * tqdm
 * PIL
+
+## Documentation
+
+Schedule the desired actions in a job, then run the job.
+
+Create the job with:
+
+```python
+job = StackJob(name, working_directory)
+```
+
+where:
+* ```name``` is the name of the job, used for printout
+* ```working_directory``` is the directory that contains input and output images, organized in subdirectories as specified by each action
