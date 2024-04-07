@@ -41,6 +41,30 @@ Create the job with:
 job = StackJob(name, working_directory)
 ```
 
-where:
-* ```name``` is the name of the job, used for printout
-* ```working_directory``` is the directory that contains input and output images, organized in subdirectories as specified by each action
+arguments are:
+* ```working_directory```: the directory that contains input and output images, organized in subdirectories as specified by each action
+* ```name```: the name of the job, used for printout
+
+Schedule automatic alignment with:
+
+```python
+job.add_action(AlignLayers(working_directory, name, input_path, *arguments))
+```
+arguments are:
+* ```working_directory```: the directory that contains input and output images, normaly it is the same as ```job.working_directory```.
+* ```name```: the name of the action, used for printout.
+* ```input_path```: the subdirectory within ```working_directory``` that contains input images to be aligned.
+* ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
+* ```ref_idx``` (optional): the index of the image used as reference. Images are numbered starting from zero. If not specified, it is the index of to the middle image.
+* ```step_align```=True
+* ```detector```='SIFT'
+* ```descriptor```='SIFT'
+* ```match_method```='KNN'
+* ```flann_idx_kdtree```=2
+* ```flann_tree```s=5
+* ```flann_checks```=50
+* ```match_threshold```=0.75
+* ```method```=ALIGN_RIGID
+* ```rans_threshold```=5.0
+*``` plot_matches```=False
+
