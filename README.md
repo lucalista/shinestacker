@@ -22,7 +22,6 @@ job.run()
 ```
 ### Required python modules:
 
-* python
 * open cv
 * numpy
 * scipy
