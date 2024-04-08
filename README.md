@@ -115,7 +115,7 @@ arguments are:
 * ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
 * ```exif_dir``` (optional): if specified, EXIF data are copied to the output file from file in the specified directory. Usually, it is the source directory used as input for the first action.
 * ```postfix``` (optional): if specified, the specified string is appended to the file name. May be useful if more algorithms are ran, and different file names are used for the output of different algorithms.
-* ```denoise``` (optoinal): if specified, a denois algorithm is applied. See [Image Denoising](https://docs.opencv.org/3.4/d5/d69/tutorial_py_non_local_means.html) for more details
+* ```denoise``` (optoinal): if specified, a denois algorithm is applied. A value of 0.75 to 1.00 does not reduce details in an appreciable way, and is suitable for modest noise reduction. See [Image Denoising](https://docs.opencv.org/3.4/d5/d69/tutorial_py_non_local_means.html) for more details
 
 ### Bunch Focus Stacking
 
@@ -132,16 +132,21 @@ arguments are:
 * ```overlap``` (optional, default: 0): the number of overlapping frames between a bunch and the following one. 
 * ```exif_dir``` (optional): if specified, EXIF data are copied to the output file from file in the specified directory. Usually, it is the source directory used as input for the first action.
 * ```postfix``` (optional): if specified, the specified string is appended to the file name. May be useful if more algorithms are ran, and different file names are used for the output of different algorithms.
-* ```denoise``` (optoinal): if specified, a denois algorithm is applied. See [Image Denoising](https://docs.opencv.org/3.4/d5/d69/tutorial_py_non_local_means.html) for more details
+* ```denoise``` (optoinal): if specified, a denois algorithm is applied. A value of 0.75 to 1.00 does not reduce details in an appreciable way, and is suitable for modest noise reduction. See [Image Denoising](https://docs.opencv.org/3.4/d5/d69/tutorial_py_non_local_means.html) for more details
 
 #### Stack algorithm classes
 
-* ```PyramidStack```, constructor arguments are:
+* ```PyramidStack```, based on [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar. Constructor arguments are:
    * ```pyramid_min_size``` (optiohnal, default: 32)
    * ```kernel_size``` (optional, default: 5) 
-* ```DepthMapStack```, arguments are:
-   * ```map_type``` (optional), possible values are  ```MAP_MAX``` (default) and ```MAP_AVERAGE```.
+* ```DepthMapStack```, based on [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar. Constructor arguments are:
+   * ```map_type``` (optional), possible values are  ```MAP_MAX``` (default) and ```MAP_AVERAGE```. ```MAP_MAX``` select for wach pixel the layer which has the best focus. ```MAP_AVERAGE``` performs for each pixel an average of all layers weighted by the quality of focus.
    * ```energy``` (optional), possible values are ```ENERGY_LAPLACIAN``` (default) and ```ENERGY_SOBEL```.
    * ```kernel_size``` (optional, default: 5) 
    * ```blur_size``` (optional, default: 5) 
    * ```smooth_size``` (optional, default: 32) 
+
+## Issues
+
+* Automatic luminosity and color balance fails with 16 bits images due to assertion failures in the Open CV library.
+* Focus stacking is untested at the moment with 16 bits images.
