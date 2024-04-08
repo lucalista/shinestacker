@@ -44,7 +44,7 @@ arguments are:
 * ```working_directory```: the directory that contains input and output images, organized in subdirectories as specified by each action
 * ```name```: the name of the job, used for printout
 
-### Image registration, i.e.: scale, tanslation and rotation correction, or full perspective correction
+### Image registration: scale, tanslation and rotation correction, or full perspective correction
 
 ```python
 job.add_action(AlignLayers(working_directory, name, input_path, *options))
