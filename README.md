@@ -9,7 +9,7 @@ Pyramid methods in image processing
 * [A Multi-focus Image Fusion Method Based on Laplacian Pyramid](http://www.jcomputers.us/vol6/jcp0612-07.pdf), Wencheng Wang, Faliang Chang, Journal of Computers 6 (12), 2559, December 2011
 * Another [original implementation on GitHub](https://github.com/bznick98/Focus_Stacking) by Zongnan Bao
 
-### Usage example:
+### Usage example with jupyter notebook:
 
 ```python
 from focus_stack import *
@@ -20,7 +20,7 @@ job.add_action(FocusStackBunch(job.working_directory, "batches", PyramidStack(),
 job.add_action(FocusStack(job.working_directory, "stack", PyramidStack(), input_path="batches", exif_dir="Immagini modificate", postfix='_stack_pyr', denoise=0.8))
 job.run()
 ```
-### Required software:
+### Required python modules:
 
 * python
 * open cv
