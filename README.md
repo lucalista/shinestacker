@@ -15,7 +15,7 @@ Pyramid methods in image processing
 from focus_stack import *
 job = StackJob("job", "E:/Focus stacking/My image directory/")
 job.add_action(AlignLayers(job.working_directory, "align", input_path="source"))
-job.add_action(BalanceLayersLumi(job.working_directory, "balance", input_path="align", mask_radius=0.8, i_min=10, i_max=255))
+job.add_action(BalanceLayersLumi(job.working_directory, "balance", input_path="align", mask_size=0.8, i_min=10, i_max=255))
 job.add_action(FocusStackBunch(job.working_directory, "batches", PyramidStack(), input_path="balance", exif_dir="Immagini modificate", frames=10, overlap=2, denoise=0.8))
 job.add_action(FocusStack(job.working_directory, "stack", PyramidStack(), input_path="batches", exif_dir="Immagini modificate", postfix='_stack_pyr', denoise=0.8))
 job.run()
