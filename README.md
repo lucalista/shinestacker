@@ -110,7 +110,7 @@ job.add_action(FocusStack(working_directory, name, stacker, input_path, *options
 arguments are:
 * ```working_directory```: the directory that contains input and output images, normaly it is the same as ```job.working_directory```.
 * ```name```: the name of the action, used for printout.
-* ```stacker```: an object defining the focus stacking algorithm. Can be ```PyramidStack``` or ```DepthMapStack```, see below for possible classes. 
+* ```stacker```: an object defining the focus stacking algorithm. Can be ```PyramidStack``` or ```DepthMapStack```, see below for possible algorithms. 
 * ```input_path```: the subdirectory within ```working_directory``` that contains input images to be aligned.
 * ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
 * ```exif_dir``` (optional): if specified, EXIF data are copied to the output file from file in the specified directory. Usually, it is the source directory used as input for the first action.
@@ -125,7 +125,7 @@ job.add_action(FocusStackBunch(working_directory, name,  stacker, input_path, *o
 arguments are:
 * ```working_directory```: the directory that contains input and output images, normaly it is the same as ```job.working_directory```.
 * ```name```: the name of the action, used for printout.
-* ```stacker```: an object defining the focus stacking algorithm. See below for possible classes.
+* ```stacker```: an object defining the focus stacking algorithm. See below for possible algorithms.
 * ```input_path```: the subdirectory within ```working_directory``` that contains input images to be aligned.
 * ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
 * ```frames``` (optional, default: 10): the number of frames in each bunch that are stacked together.
@@ -134,12 +134,12 @@ arguments are:
 * ```postfix``` (optional): if specified, the specified string is appended to the file name. May be useful if more algorithms are ran, and different file names are used for the output of different algorithms.
 * ```denoise``` (optoinal): if specified, a denois algorithm is applied. A value of 0.75 to 1.00 does not reduce details in an appreciable way, and is suitable for modest noise reduction. See [Image Denoising](https://docs.opencv.org/3.4/d5/d69/tutorial_py_non_local_means.html) for more details
 
-#### Stack algorithm classes
+#### Stack algorithms
 
-* ```PyramidStack```, based on [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar. Constructor arguments are:
+* ```PyramidStack```, based on [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar. Arguments are:
    * ```pyramid_min_size``` (optiohnal, default: 32)
    * ```kernel_size``` (optional, default: 5) 
-* ```DepthMapStack```, based on [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar. Constructor arguments are:
+* ```DepthMapStack```, based on [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar. Arguments are:
    * ```map_type``` (optional), possible values are  ```MAP_MAX``` (default) and ```MAP_AVERAGE```. ```MAP_MAX``` select for wach pixel the layer which has the best focus. ```MAP_AVERAGE``` performs for each pixel an average of all layers weighted by the quality of focus.
    * ```energy``` (optional), possible values are ```ENERGY_LAPLACIAN``` (default) and ```ENERGY_SOBEL```.
    * ```kernel_size``` (optional, default: 5) 
