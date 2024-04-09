@@ -147,5 +147,7 @@ arguments are:
 
 ## Issues
 
-* Automatic luminosity and color balance fails with 16 bits images due to assertion failures in the Open CV library.
-* Focus stacking is untested at the moment with 16 bits images.
+The support of 16 bits images is still missing. In particular, with 16 bits images:
+* Automatic luminosity and color balance fails due to assertion failures in the Open CV library.
+* Focus stacking modules produce incorrect outputs
+* Focus stacking modules crashes if  ```exif_dir``` is provided.
