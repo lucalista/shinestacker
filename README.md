@@ -149,5 +149,5 @@ arguments are:
 
 The support of 16 bits images is still missing. In particular, with 16 bits images:
 * Automatic luminosity and color balance fails due to assertion failures in the Open CV library.
-* Focus stacking modules produce incorrect outputs
-* Focus stacking modules crashes if  ```exif_dir``` is provided.
+* Focus stacking modules crashes if  ```denoise``` is differnt from zero due to assertion failures in the Open CV library.
+* Focus stacking modules crashes if  ```exif_dir``` is provided and the directory contains TIFF images. It works if the directory contains JPEG images.

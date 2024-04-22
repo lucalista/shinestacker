@@ -1,87 +1,13 @@
 import numpy as np
 import cv2
-from .pyramid import get_pyramid_fusion
+from .pyramid import PyramidStack
+from .depth_map import DepthMapStack
 from focus_stack.utils import read_img, write_img
 from focus_stack.stack_framework import *
 from PIL import Image
 
 EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
-def convert_to_grayscale(image):
-    return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-def blend(images, focus_map):
-    return np.sum(images.astype(np.float64) * focus_map[:, :, :, np.newaxis], axis=0).astype(images.dtype)
-
-def get_sobel_map(images):
-    energies = np.zeros(images.shape, dtype=np.float32)
-    for index in range(images.shape[0]):
-        image = images[index]
-        energies[index] = np.abs(cv2.Sobel(image, cv2.CV_64F, 1, 0)) + np.abs(cv2.Sobel(image, cv2.CV_64F, 0, 1))
-    return energies
-
-def get_laplacian_map(images, kernel_size, blur_size):
-    laplacian = np.zeros(images.shape, dtype=np.float32)
-    for index in range(images.shape[0]):
-        gaussian = cv2.GaussianBlur(images[index], (blur_size, blur_size), 0)
-        laplacian[index] = np.abs(cv2.Laplacian(gaussian, cv2.CV_64F, ksize = kernel_size))
-    return laplacian
-
-def smooth_energy_map(energies, smooth_size):
-    smoothed = np.zeros(energies.shape, dtype=energies.dtype)
-    if (smooth_size > 0):
-        for index in range(energies.shape[0]):
-            smoothed[index] = cv2.bilateralFilter(energies[index], smooth_size, 25, 25)
-    return smoothed
-
-def get_focus_map(energies, choice):
-    if (choice == CHOICE_AVERAGE):
-        tile_shape = np.array(energies.shape)
-        tile_shape[1:] = 1
-
-        sum_energies = np.tile(np.sum(energies, axis=0), tile_shape)
-        return np.divide(energies, sum_energies, where=sum_energies!=0)
-    focus_map = np.zeros(energies.shape, dtype=np.float64)
-    best_layer = np.argmax(energies, axis=0)
-    for index in range(energies.shape[0]):
-        focus_map[index] = best_layer == index
-    return focus_map
-
-class DepthMapStack:
-    ENERGY_SOBEL = "sobel"
-    ENERGY_LAPLACIAN = "laplacian"
-    MAP_MAX = "max"
-    MAP_AVERAGE = "average"
-    def __init__(self, map_type=MAP_MAX, energy=ENERGY_LAPLACIAN, kernel_size=5, blur_size=5, smooth_size=32):
-        self.choice = choice
-        self.energy = energy
-        self.kernel_size = kernel_size
-        self.blur_size = blur_size
-        self.smooth_size = smooth_size
-    def focus_stack(self, images):
-        gray_images = np.zeros(images.shape[:-1], dtype=np.uint8)
-        for index in range(images.shape[0]):
-            gray_images[index] = convert_to_grayscale(images[index])
-        if self.energy == DepthMapStack.ENERGY_SOBEL:
-            energy_map = get_sobel_map(gray_images)
-        elif self.energy == DepthMapStack.ENERGY_LAPLACIAN:
-            energy_map = get_laplacian_map(gray_images, kernel_size, blur_size)
-        else:
-            assert(False), 'invalid energy parameter: ' + self.energy
-        if smooth_size > 0:
-            energy_map = smooth_energy_map(energy_map, smooth_size)
-        focus_map = get_focus_map(energy_map, self.map_type)
-        stacked_image = blend(images, focus_map)
-        return cv2.convertScaleAbs(stacked_image)
-
-class PyramidStack:
-    def __init__(self, pyramid_min_size=32, kernel_size=5):
-        self.pyramid_min_size = pyramid_min_size
-        self.kernel_size = kernel_size
-    def focus_stack(self, images):
-        stacked_image = get_pyramid_fusion(images, self.pyramid_min_size, self.kernel_size, verbose=False)
-        return cv2.convertScaleAbs(stacked_image)  
-    
 class FocusStackBase:
     def __init__(self, wdir, stack_algo, exif_dir='', postfix='', denoise=0):
         self.stack_algo = stack_algo
@@ -98,15 +24,15 @@ class FocusStackBase:
         in_filename = filenames[0].split(".")
         out_filename = self.output_dir + "/" + in_filename[0] + self.postfix + '.' + '.'.join(in_filename[1:])
         if self.denoise > 0:
-            s = cv2.fastNlMeansDenoisingColored(stacked_img, None, self.denoise, self.denoise, 7, 21)
-        write_img(out_filename, s)
+            stacked_img = cv2.fastNlMeansDenoisingColored(stacked_img, None, self.denoise, self.denoise, 7, 21)
+        write_img(out_filename, stacked_img)
         if self.exif_dir != '':
             dirpath, _, fnames = next(os.walk(self.exif_dir))
             fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in EXTENSIONS]
             exif_filename = self.exif_dir + '/' + fnames[0]
             if(not os.path.isfile(exif_filename)): raise Exception("File does not exist: " + exif_filename)
             image = Image.open(exif_filename)
-            exif = image.info['exif']
+            exif = image.getexif() # alternative syntax: image.info['exif']
             image_new = Image.open(out_filename)
             ext = out_filename.split(".")[-1]
             if ext == 'jpeg' or ext == 'jpg':
