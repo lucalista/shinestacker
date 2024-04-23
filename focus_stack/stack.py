@@ -2,9 +2,9 @@ import numpy as np
 import cv2
 from .pyramid import PyramidStack
 from .depth_map import DepthMapStack
+from .utils import copy_exif
 from focus_stack.utils import read_img, write_img
 from focus_stack.stack_framework import *
-from PIL import Image
 
 EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
@@ -30,17 +30,7 @@ class FocusStackBase:
             dirpath, _, fnames = next(os.walk(self.exif_dir))
             fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in EXTENSIONS]
             exif_filename = self.exif_dir + '/' + fnames[0]
-            if(not os.path.isfile(exif_filename)): raise Exception("File does not exist: " + exif_filename)
-            image = Image.open(exif_filename)
-            exif = image.getexif() # alternative syntax: image.info['exif']
-            image_new = Image.open(out_filename)
-            ext = out_filename.split(".")[-1]
-            if ext == 'jpeg' or ext == 'jpg':
-                image_new.save(out_filename, 'JPEG', exif=exif, quality=100)
-            elif ext == 'tiff' or ext == 'tif':
-                image_new.save(out_filename, 'TIFF', exif=exif)
-            elif ext == 'png':
-                image_new.save(out_filename, 'PNG', exif=exif, quality=100)
+            copy_exif(exif_filename, out_filename)
 
 class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
     def __init__(self, wdir, name, stack_algo, input_path, output_path='', exif_dir='', frames=10, overlap=0, postfix='', denoise=0):

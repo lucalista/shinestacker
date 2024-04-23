@@ -1,6 +1,9 @@
 import cv2
 import os
 import numpy as np
+from PIL import Image, ExifTags
+from PIL.ExifTags import TAGS
+import warnings
 
 def read_img(file_path):
     if not os.path.isfile(file_path): raise Exception("File does not exist: " + file_path)
@@ -23,3 +26,18 @@ def img_8bit(img):
         return (img >> 8).astype('uint8')
     else:
         return img
+
+def copy_exif(exif_filename, out_filename):
+    if(not os.path.isfile(exif_filename)): raise Exception("File does not exist: " + exif_filename)
+    if(not os.path.isfile(out_filename)): raise Exception("File does not exist: " + out_filename)
+    image = Image.open(exif_filename)
+    exif = image.getexif()
+    image_new = Image.open(out_filename)
+    ext = out_filename.split(".")[-1]
+    if ext == 'jpeg' or ext == 'jpg':
+        image_new.save(out_filename, 'JPEG', exif=exif, quality=100)
+    elif ext == 'tiff' or ext == 'tif':
+        for k in [33723, 34665]: del exif[k]
+        image_new.save(out_filename, 'TIFF', exif=exif)
+    elif ext == 'png':
+        image_new.save(out_filename, 'PNG', exif=exif, quality=100)
