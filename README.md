@@ -149,5 +149,5 @@ arguments are:
 
 The support of 16 bits images is still partial. In particular, with 16 bits images:
 * Automatic luminosity and color balance crashes due to an assertion failure in the Open CV library.
-* Focus stacking modules crashes if  ```denoise``` is different from zero due to an assertion failure in the Open CV library. This is similar to a [known issue on stackoverflow](https://stackoverflow.com/questions/76647895/opencv-fastnlmeansdenoisingmulti-should-support-16-bit-images-but-does-it)
+* Focus stacking modules crashes if  ```denoise``` is different from zero due to an assertion failure in the Open CV library. This is similar to a [known issue on stackoverflow](https://stackoverflow.com/questions/76647895/opencv-fastnlmeansdenoisingmulti-should-support-16-bit-images-but-does-it).
 * Focus stacking modules may crashes if  ```exif_dir``` is provided and if the directory contains TIFF images, depending on the content of EXIF data. A couple of identified problematic keys, namely 33723, 34665, cause a crash in the PIL library.
