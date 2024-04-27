@@ -149,20 +149,14 @@ Pyramid methods in image processing
 
 ## Issues
 
-<<<<<<< Updated upstream
 The support of 16 bits TIFF images is still partial. In particular, with 16 bits images:
 * Automatic luminosity and color balance crash due to an assertion failure in the Open CV library. This limitation is described in a [known issue on stackoverflow](https://stackoverflow.com/questions/71734861/opencv-python-lut-for-16bit-image), and should be overcome implementing an alternative to the OpenCV LUT method.
 * Focus stacking modules crashes if  ```denoise``` is different from zero due to an assertion failure in the Open CV library. This is similar to a [known issue on stackoverflow](https://stackoverflow.com/questions/76647895/opencv-fastnlmeansdenoisingmulti-should-support-16-bit-images-but-does-it).
 * Focus stacking modules may crashes if  ```exif_dir``` is provided and if the directory contains TIFF images, depending on the content of EXIF data. A couple of problematic keys in EXIF data have been identified, namely 33723, 34665, that cause a crash in the PIL library. Those keys are dropped from EXIF data for TIFF files.
 
 PNG files have not been tested so far.
-=======
-The support of 16 bits images is still partial. In particular, with 16 bits images:
-* Automatic luminosity and color balance fails due to an assertion failures in the Open CV library.
-* Focus stacking modules crashes if  ```denoise``` is different from zero due to an assertion failures in the Open CV library.
-* Focus stacking modules may crashes if  ```exif_dir``` is provided and if the directory contains TIFF images, depending on the content of EXIF data. A couple of identified problematic keys, namely 33723, 34665, cause a crash in the PIL library.
 
 ## License
 
 The software is provided as is under the [GNU Lesser General Public License v3.0](https://choosealicense.com/licenses/lgpl-3.0/).
->>>>>>> Stashed changes
+
