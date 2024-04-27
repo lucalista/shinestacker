@@ -5,6 +5,9 @@ from PIL import Image, ExifTags
 from PIL.ExifTags import TAGS
 import warnings
 
+def check_path_exists(path):
+    assert os.path.exists(path), 'path does not exist: ' + path
+
 def read_img(file_path):
     if not os.path.isfile(file_path): raise Exception("File does not exist: " + file_path)
     ext = file_path.split(".")[-1]

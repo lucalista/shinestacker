@@ -53,8 +53,8 @@ def histo_plot(ax, histo, x_label, color, two_n):
     ax.plot(histo, color=color)
 
 class BalanceLayers(FramesRefActions):
-    def __init__(self, wdir, name, input_path, output_path='', ref_idx=-1, mask_size=-1, i_min=0, i_max=-1, plot_histograms=False):
-        FramesRefActions.__init__(self, wdir, name, input_path, output_path, ref_idx, step_process=False)
+    def __init__(self, name, input_path=None, output_path=None, working_directory=None, ref_idx=-1, mask_size=-1, i_min=0, i_max=-1, plot_histograms=False):
+        FramesRefActions.__init__(self, name, input_path, output_path, working_directory, ref_idx, step_process=False)
         self.mask_size = mask_size
         self.i_min = i_min
         self.i_max = i_max
@@ -85,8 +85,8 @@ class BalanceLayers(FramesRefActions):
         assert(False), 'abstract method'
     
 class BalanceLayersLumi(BalanceLayers):
-    def __init__(self, wdir, name, input_path, output_path='', ref_idx=-1, mask_size=-1, i_min=0, i_max=-1, plot_histograms=False):
-        BalanceLayers.__init__(self, wdir, name, input_path, output_path, ref_idx, mask_size, i_min, i_max, plot_histograms)
+    def __init__(self, name, input_path=None, output_path=None, working_directory=None, ref_idx=-1, mask_size=-1, i_min=0, i_max=-1, plot_histograms=False):
+        BalanceLayers.__init__(self, name, input_path, output_path, working_directory, ref_idx, mask_size, i_min, i_max, plot_histograms)
     def get_histos(self, image):
         two_n = 256 if image.dtype == np.uint8 else 65536
         mask = lumi_mask(image, self.mask_size)
@@ -128,8 +128,8 @@ class BalanceLayersLumi(BalanceLayers):
         plt.show()
         
 class BalanceLayersRGB(BalanceLayers):
-    def __init__(self, wdir, name, input_path, output_path='', ref_idx=-1, mask_size=-1, i_min=0, i_max=-1, plot_histograms=False):
-        BalanceLayers.__init__(self, wdir, name, input_path, output_path, ref_idx, mask_size, i_min, i_max, plot_histograms)
+    def __init__(self, name, input_path=None, output_path=None, working_directory=None, ref_idx=-1, mask_size=-1, i_min=0, i_max=-1, plot_histograms=False):
+        BalanceLayers.__init__(self, name, input_path, output_path, working_directory, ref_idx, mask_size, i_min, i_max, plot_histograms)
     def get_histos(self, image):
         two_n = 256 if image.dtype == np.uint8 else 65536
         mask = lumi_mask(image, self.mask_size)
@@ -178,8 +178,8 @@ class BalanceLayersRGB(BalanceLayers):
         plt.show()
     
 class BalanceLayersCh2(BalanceLayers):
-    def __init__(self, wdir, name, input_path, output_path='', ref_idx=-1, mask_size=-1, i_min=0, i_max=-1, plot_histograms=False):
-        BalanceLayers.__init__(self, wdir, name, input_path, output_path, ref_idx, mask_size, i_min, i_max, plot_histograms)
+    def __init__(self, name, input_path=None, output_path=None, working_directory=None, ref_idx=-1, mask_size=-1, i_min=0, i_max=-1, plot_histograms=False):
+        BalanceLayers.__init__(self, name, input_path, output_path, working_directory, ref_idx, mask_size, i_min, i_max, plot_histograms)
     def preprocess(self, image):
         assert(False), 'abstract method'
     def get_labels(self):
@@ -229,8 +229,8 @@ class BalanceLayersCh2(BalanceLayers):
         plt.show()
         
 class BalanceLayersSV(BalanceLayersCh2):
-    def __init__(self, wdir, name, input_path, output_path='', ref_idx=-1, mask_size=-1, i_min=0, i_max=-1, plot_histograms=False):
-        BalanceLayersCh2.__init__(self, wdir, name, input_path, output_path, ref_idx, mask_size, i_min, i_max, plot_histograms)
+    def __init__(self, name, input_path=None, output_path=None, working_directory=None, ref_idx=-1, mask_size=-1, i_min=0, i_max=-1, plot_histograms=False):
+        BalanceLayersCh2.__init__(self, name, input_path, output_path, working_directory, ref_idx, mask_size, i_min, i_max, plot_histograms)
         self.labels = ("H", "S", "V")
         self.colors = ("hotpink", "forestgreen", "navy")
     def preprocess(self, image):
@@ -239,8 +239,8 @@ class BalanceLayersSV(BalanceLayersCh2):
         return cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
     
 class BalanceLayersLS(BalanceLayersCh2):
-    def __init__(self, wdir, name, input_path, output_path='', ref_idx=-1, mask_size=-1, i_min=0, i_max=-1, plot_histograms=False):
-        BalanceLayersCh2.__init__(self, wdir, name, input_path, output_path, ref_idx, mask_size, i_min, i_max, plot_histograms)
+    def __init__(self, name, input_path=None, output_path=None, working_directory=None, ref_idx=-1, mask_size=-1, i_min=0, i_max=-1, plot_histograms=False):
+        BalanceLayersCh2.__init__(self, name, input_path, output_path, working_directory, ref_idx, mask_size, i_min, i_max, plot_histograms)
         self.labels = ("H", "L", "S")
         self.colors = ("hotpink", "navy", "forestgreen")
     def preprocess(self, image):

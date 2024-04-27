@@ -1,23 +1,24 @@
 from .framework import  Job, ActionList, Timer
+from .utils import check_path_exists
 from termcolor import colored, cprint
 import os
 
 class StackJob(Job):
-    def __init__(self, wdir, name):
-        assert  os.path.exists(wdir), 'Path does not exist: ' + wdir
-        self.working_directory = wdir
+    def __init__(self, name, working_directory):
+        check_path_exists(working_directory)
+        self.working_directory = working_directory
+        self.paths = []
         Job.__init__(self, name)
-        
+    def init(self, a):
+        a.init(self)
+
 class FrameDirectory:
     EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
-    def __init__(self, wdir, name, input_path, output_path=''):
-        assert  os.path.exists(wdir), 'Path does not exist: ' + wdir
-        self.working_directory = wdir
-        self.input_dir = wdir + ('' if wdir[-1] == '/' else '/') + input_path
-        assert  os.path.exists(self.input_dir), 'path does not exist: ' + self.input_dir
-        if output_path=='': output_path = name
-        self.output_dir = wdir + ('' if wdir[-1] == '/' else '/') +  output_path
-        if not os.path.exists(self.output_dir): os.makedirs(self.output_dir)
+    def __init__(self, name, input_path=None, output_path=None, working_directory=None):
+        self.name = name
+        self.working_directory = working_directory
+        self.input_path = input_path
+        self.output_path = output_path
     def folder_filelist(self, path):
         src_contents = os.walk(self.input_dir)
         dirpath, _, filenames = next(src_contents)
@@ -25,10 +26,22 @@ class FrameDirectory:
     def set_filelist(self):
         self.filenames = self.folder_filelist(self.input_dir)
         cprint("{} files ".format(len(self.filenames)) + "in folder: '" + self.input_dir + "'", 'blue')
+    def init(self, job):
+        if self.working_directory is None: self.working_directory = job.working_directory
+        check_path_exists(self.working_directory)
+        if self.input_path is None:
+            assert len(job.paths)>0, "No input path has been specified in " + job.name
+            self.input_path = job.paths[-1]
+        self.input_dir = self.working_directory + ('' if self.working_directory[-1] == '/' else '/') + self.input_path
+        check_path_exists(self.input_dir)
+        if self.output_path is None: self.output_path = self.name
+        self.output_dir = self.working_directory + ('' if self.working_directory[-1] == '/' else '/') + self.output_path
+        if not os.path.exists(self.output_dir): os.makedirs(self.output_dir)        
+        job.paths.append(self.output_path)
         
 class FramesRefActions(FrameDirectory, ActionList):
-    def __init__(self, wdir, name, input_path, output_path='', ref_idx=-1, step_process=False):
-        FrameDirectory.__init__(self, wdir, name, input_path, output_path)
+    def __init__(self, name, input_path=None, output_path=None, working_directory=None, ref_idx=-1, step_process=False):
+        FrameDirectory.__init__(self, name, input_path, output_path, working_directory)
         ActionList.__init__(self, name)
         self.ref_idx = ref_idx
         self.step_process = step_process

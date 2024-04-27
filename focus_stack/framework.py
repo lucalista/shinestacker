@@ -28,7 +28,10 @@ class Job(Timer):
         self.__actions = []
     def time(self):
         return time.time() - self.__t0
+    def init(self, a):
+        pass
     def add_action(self, a):
+        self.init(a)
         self.__actions.append(a)
     def run_core(self):
         for a in self.__actions:

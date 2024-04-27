@@ -1,23 +1,15 @@
 # Focus stacking framework
 
-based on [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar. The original code was used under permission of the author.
-
-**Resources:**
-
-* [Pyramid Methods in Image Processing](https://www.researchgate.net/publication/246727904_Pyramid_Methods_in_Image_Processing), E. H. Adelson, C. H. Anderson,  J. R. Bergen, P. J. Burt, J. M. Ogden, RCA Engineer, 29-6, Nov/Dec 1984
-Pyramid methods in image processing
-* [A Multi-focus Image Fusion Method Based on Laplacian Pyramid](http://www.jcomputers.us/vol6/jcp0612-07.pdf), Wencheng Wang, Faliang Chang, Journal of Computers 6 (12), 2559, December 2011
-* Another [original implementation on GitHub](https://github.com/bznick98/Focus_Stacking) by Zongnan Bao
-
 ### Usage example with jupyter notebook:
 
 ```python
 from focus_stack import *
 job = StackJob("job", "E:/Focus stacking/My image directory/")
-job.add_action(AlignLayers(job.working_directory, "align", input_path="source"))
-job.add_action(BalanceLayersLumi(job.working_directory, "balance", input_path="align", mask_size=0.8, i_min=10, i_max=255))
-job.add_action(FocusStackBunch(job.working_directory, "batches", PyramidStack(), input_path="balance", exif_dir="Immagini modificate", frames=10, overlap=2, denoise=0.8))
-job.add_action(FocusStack(job.working_directory, "stack", PyramidStack(), input_path="batches", exif_dir="Immagini modificate", postfix='_stack_pyr', denoise=0.8))
+job.add_action(AlignLayers("align", input_path="source"))
+job.add_action(BalanceLayersLumi("balance", mask_size=0.5, i_min=10, i_max=255))
+job.add_action(FocusStackBunch("batches", PyramidStack(), frames=10, overlap=2, denoise=0.8))
+job.add_action(FocusStack("stack", PyramidStack(), postfix='_py', denoise=0.8))
+job.add_action(FocusStack("stack", DepthMapStack(), input_path='batches', postfix='_dm', denoise=0.8))
 job.run()
 ```
 ### Required python modules:
@@ -47,13 +39,13 @@ arguments are:
 ### Image registration: scale, tanslation and rotation correction, or full perspective correction
 
 ```python
-job.add_action(AlignLayers(working_directory, name, input_path, *options))
+job.add_action(AlignLayers(name, *options))
 ```
 arguments are:
-* ```working_directory```: the directory that contains input and output images, normaly it is the same as ```job.working_directory```.
-* ```name```: the name of the action, used for printout.
-* ```input_path```: the subdirectory within ```working_directory``` that contains input images to be aligned.
+* ```name```: the name of the action, used for printout, and possibly for output path
+* ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images to be aligned. If not specified, the last output path is used. At least the first action must specify an  ```input_path```.
 * ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
+* ```working_directory```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_directory```.
 * ```ref_idx``` (optional): the index of the image used as reference. Images are numbered starting from zero. If not specified, it is the index of the middle image.
 * ```step_align``` (optional): if equal to ```True``` (default), each image is aligned with respect to the previous or next image, depending if it is after or befor the reference image.
 * ```transform``` (optional): the transformation applied to register images. Possible values are:
@@ -91,10 +83,10 @@ There are four possible luminosity and color balance methods:
 job.add_action(BalanceLayersLumi(working_directory, name, *options))
 ```
 arguments are:
-* ```working_directory```: the directory that contains input and output images, normaly it is the same as ```job.working_directory```.
-* ```name```: the name of the action, used for printout.
-* ```input_path```: the subdirectory within ```working_directory``` that contains input images to be aligned.
+* ```name```: the name of the action, used for printout, and possibly for output path
+* ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images to be aligned. If not specified, the last output path is used. At least the first action must specify an  ```input_path```.
 * ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
+* ```working_directory```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_directory```.
 * ```ref_idx``` (optional): the index of the image used as reference. Images are numbered starting from zero. If not specified, it is the index of the middle image.
 * ```mask_size``` (optional): if specified, luminosity and color balance is only applied to pixels within a circle of radius equal to the minimum between the image width and height times ```mask_size```, i.e: 0.8 means 80% of a portrait image height. It may beuseful for images with vignetting, in order to remove the outer darker pixels.
 * ```i_min``` (optional): if specifies, only pixels with content greater pr equal tham ```i_min``` are used. It may be useful to remove black areas.
@@ -107,12 +99,12 @@ arguments are:
 job.add_action(FocusStack(working_directory, name, stacker, input_path, *options))
 ```
 arguments are:
-* ```working_directory```: the directory that contains input and output images, normaly it is the same as ```job.working_directory```.
-* ```name```: the name of the action, used for printout.
+* ```name```: the name of the action, used for printout, and possibly for output path
 * ```stacker```: an object defining the focus stacking algorithm. Can be ```PyramidStack``` or ```DepthMapStack```, see below for possible algorithms. 
-* ```input_path```: the subdirectory within ```working_directory``` that contains input images to be aligned.
+* ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images to be aligned. If not specified, the last output path is used. At least the first action must specify an  ```input_path```.
 * ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
-* ```exif_dir``` (optional): if specified, EXIF data are copied to the output file from file in the specified directory. Usually, it is the source directory used as input for the first action.
+* ```working_directory```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_directory```.
+* ```exif_dir``` (optional): if specified, EXIF data are copied to the output file from file in the specified directory. If not specified, it is the source directory used as input for the first action. If set equal to ```''``` no EXIF data is saved.
 * ```postfix``` (optional): if specified, the specified string is appended to the file name. May be useful if more algorithms are ran, and different file names are used for the output of different algorithms.
 * ```denoise``` (optoinal): if specified, a denois algorithm is applied. A value of 0.75 to 1.00 does not reduce details in an appreciable way, and is suitable for modest noise reduction. See [Image Denoising](https://docs.opencv.org/3.4/d5/d69/tutorial_py_non_local_means.html) for more details
 
@@ -122,14 +114,13 @@ arguments are:
 job.add_action(FocusStackBunch(working_directory, name,  stacker, input_path, *options))
 ```
 arguments are:
-* ```working_directory```: the directory that contains input and output images, normaly it is the same as ```job.working_directory```.
-* ```name```: the name of the action, used for printout.
-* ```stacker```: an object defining the focus stacking algorithm. See below for possible algorithms.
-* ```input_path```: the subdirectory within ```working_directory``` that contains input images to be aligned.
+* ```name```: the name of the action, used for printout, and possibly for output path
+* ```stacker```: an object defining the focus stacking algorithm. Can be ```PyramidStack``` or ```DepthMapStack```, see below for possible algorithms. 
+* ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images to be aligned. If not specified, the last output path is used. At least the first action must specify an  ```input_path```.
 * ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
-* ```frames``` (optional, default: 10): the number of frames in each bunch that are stacked together.
+* ```working_directory```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_directory```.
+* ```exif_dir``` (optional): if specified, EXIF data are copied to the output file from file in the specified directory. If not specified, it is the source directory used as * ```frames``` (optional, default: 10): the number of frames in each bunch that are stacked together.
 * ```overlap``` (optional, default: 0): the number of overlapping frames between a bunch and the following one. 
-* ```exif_dir``` (optional): if specified, EXIF data are copied to the output file from file in the specified directory. Usually, it is the source directory used as input for the first action.
 * ```postfix``` (optional): if specified, the specified string is appended to the file name. May be useful if more algorithms are ran, and different file names are used for the output of different algorithms.
 * ```denoise``` (optoinal): if specified, a denois algorithm is applied. A value of 0.75 to 1.00 does not reduce details in an appreciable way, and is suitable for modest noise reduction. See [Image Denoising](https://docs.opencv.org/3.4/d5/d69/tutorial_py_non_local_means.html) for more details
 
@@ -143,13 +134,35 @@ arguments are:
    * ```energy``` (optional), possible values are ```ENERGY_LAPLACIAN``` (default) and ```ENERGY_SOBEL```.
    * ```kernel_size``` (optional, default: 5) 
    * ```blur_size``` (optional, default: 5) 
-   * ```smooth_size``` (optional, default: 32) 
+   * ```smooth_size``` (optional, default: 32)
+   
+### Credits:
+
+based on [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar. The original code was used under permission of the author.
+
+**Resources:**
+
+* [Pyramid Methods in Image Processing](https://www.researchgate.net/publication/246727904_Pyramid_Methods_in_Image_Processing), E. H. Adelson, C. H. Anderson,  J. R. Bergen, P. J. Burt, J. M. Ogden, RCA Engineer, 29-6, Nov/Dec 1984
+Pyramid methods in image processing
+* [A Multi-focus Image Fusion Method Based on Laplacian Pyramid](http://www.jcomputers.us/vol6/jcp0612-07.pdf), Wencheng Wang, Faliang Chang, Journal of Computers 6 (12), 2559, December 2011
+* Another [original implementation on GitHub](https://github.com/bznick98/Focus_Stacking) by Zongnan Bao
 
 ## Issues
 
+<<<<<<< Updated upstream
 The support of 16 bits TIFF images is still partial. In particular, with 16 bits images:
 * Automatic luminosity and color balance crash due to an assertion failure in the Open CV library. This limitation is described in a [known issue on stackoverflow](https://stackoverflow.com/questions/71734861/opencv-python-lut-for-16bit-image), and should be overcome implementing an alternative to the OpenCV LUT method.
 * Focus stacking modules crashes if  ```denoise``` is different from zero due to an assertion failure in the Open CV library. This is similar to a [known issue on stackoverflow](https://stackoverflow.com/questions/76647895/opencv-fastnlmeansdenoisingmulti-should-support-16-bit-images-but-does-it).
 * Focus stacking modules may crashes if  ```exif_dir``` is provided and if the directory contains TIFF images, depending on the content of EXIF data. A couple of problematic keys in EXIF data have been identified, namely 33723, 34665, that cause a crash in the PIL library. Those keys are dropped from EXIF data for TIFF files.
 
 PNG files have not been tested so far.
+=======
+The support of 16 bits images is still partial. In particular, with 16 bits images:
+* Automatic luminosity and color balance fails due to an assertion failures in the Open CV library.
+* Focus stacking modules crashes if  ```denoise``` is different from zero due to an assertion failures in the Open CV library.
+* Focus stacking modules may crashes if  ```exif_dir``` is provided and if the directory contains TIFF images, depending on the content of EXIF data. A couple of identified problematic keys, namely 33723, 34665, cause a crash in the PIL library.
+
+## License
+
+The software is provided as is under the [GNU Lesser General Public License v3.0](https://choosealicense.com/licenses/lgpl-3.0/).
+>>>>>>> Stashed changes

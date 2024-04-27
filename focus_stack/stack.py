@@ -9,9 +9,9 @@ from focus_stack.stack_framework import *
 EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
 class FocusStackBase:
-    def __init__(self, wdir, stack_algo, exif_dir='', postfix='', denoise=0):
+    def __init__(self, stack_algo, exif_dir=None, postfix='', denoise=0):
         self.stack_algo = stack_algo
-        self.exif_dir = '' if exif_dir=='' else wdir + "/" + exif_dir
+        self.exif_dir = exif_dir
         self.postfix = postfix
         self.denoise = denoise
     def focus_stack(self, filenames):
@@ -31,31 +31,39 @@ class FocusStackBase:
             fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in EXTENSIONS]
             exif_filename = self.exif_dir + '/' + fnames[0]
             copy_exif(exif_filename, out_filename)
-
+    def init(self, job, working_directory):
+        if self.exif_dir is None: self.exif_dir = job.paths[0]
+        if self.exif_dir != '': self.exif_dir = working_directory + "/" + self.exif_dir
+        
 class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
-    def __init__(self, wdir, name, stack_algo, input_path, output_path='', exif_dir='', frames=10, overlap=0, postfix='', denoise=0):
-        FrameDirectory.__init__(self, wdir, name, input_path, output_path)
+    def __init__(self, name, stack_algo, input_path=None, output_path=None, working_directory=None, exif_dir=None, postfix='', frames=10, overlap=0, denoise=0):
+        FrameDirectory.__init__(self, name, input_path, output_path, working_directory)
         ActionList.__init__(self, name)
-        FocusStackBase.__init__(self, wdir, stack_algo, exif_dir, postfix, denoise)
+        FocusStackBase.__init__(self, stack_algo, exif_dir, postfix, denoise)
         if overlap >= frames: raise Exception("Overlap must be smaller than batch size")
         self.frames = frames
         self.overlap = overlap
     def begin(self):
         fnames = self.folder_filelist(self.input_dir)
-        self.__chunks = [fnames[x:x + self.frames] for x in range(0, len(fnames), self.frames - self.overlap)]
+        self.__chunks = [fnames[x:x + self.frames] for x in range(0, len(fnames) - self.overlap, self.frames - self.overlap)]
         self.counts = len(self.__chunks)
     def run_step(self):
         print("bunch: {}                    ".format(self.count), end='\r')
         self.focus_stack(self.__chunks[self.count - 1])
+    def init(self, job):
+        FrameDirectory.init(self, job)
+        FocusStackBase.init(self, job, self.working_directory)
         
 class FocusStack(FrameDirectory, Timer, FocusStackBase):
-    def __init__(self, wdir, name, stack_algo, input_path, output_path='', exif_dir='', postfix='', denoise=0):
+    def __init__(self, name, stack_algo, input_path=None, output_path=None, working_directory=None, exif_dir=None, postfix='', denoise=0):
         self.name = name
-        FrameDirectory.__init__(self, wdir, name, input_path, output_path)
+        FrameDirectory.__init__(self, name, input_path, output_path, working_directory)
         Timer.__init__(self, name)
-        FocusStackBase.__init__(self, wdir, stack_algo, exif_dir, postfix, denoise)
+        FocusStackBase.__init__(self, stack_algo, exif_dir, postfix, denoise)
     def run_core(self):
         cprint("running " + self.name, "blue", attrs=["bold"])
         self.set_filelist()
         self.focus_stack(self.filenames)
-    
+    def init(self, job):
+        FrameDirectory.init(self, job)
+        FocusStackBase.init(self, job, self.working_directory)

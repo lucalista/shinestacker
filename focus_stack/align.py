@@ -8,8 +8,8 @@ from termcolor import colored, cprint
 class AlignLayers(FramesRefActions):
     ALIGN_HOMOGRAPHY = "homography"
     ALIGN_RIGID = "rigid"
-    def __init__(self, wdir, name, input_path, output_path='', step_align=True, ref_idx=-1, detector='SIFT', descriptor='SIFT', match_method='KNN', flann_idx_kdtree=2, flann_trees=5, flann_checks=50, match_threshold=0.75, transform=ALIGN_RIGID, rans_threshold=5.0, plot_matches=False):
-        FramesRefActions.__init__(self, wdir, name, input_path, output_path, ref_idx, step_align)
+    def __init__(self,  name, input_path=None, output_path=None, working_directory=None, step_align=True, ref_idx=-1, detector='SIFT', descriptor='SIFT', match_method='KNN', flann_idx_kdtree=2, flann_trees=5, flann_checks=50, match_threshold=0.75, transform=ALIGN_RIGID, rans_threshold=5.0, plot_matches=False):
+        FramesRefActions.__init__(self, name, input_path, output_path, working_directory, ref_idx, step_align)
         self.detector = detector
         self.descriptor = descriptor
         self.match_method = match_method
