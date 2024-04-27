@@ -19,16 +19,22 @@ def gamma_lut(gamma, dtype):
     return (((np.arange(0, two_n) / two_n_1) ** gamma_inv) * two_n_1).astype(dtype)
 
 def adjust_gamma(image, gamma):
-    return cv2.LUT(image, gamma_lut(gamma, image.dtype))
-
+    lut =  gamma_lut(gamma, image.dtype)
+    if image.dtype==np.uint8: image_adj = cv2.LUT(image, lut)
+    else: image_adj = np.take(lut, image)
+    return image_adj;
+    
 def adjust_gamma_ch3(image, gamma, ch_range):
     chans = cv2.split(image)
     ch_out = []
     for c in range(3):
         if c in ch_range:
-            ch_out.append(cv2.LUT(chans[c], gamma_lut(gamma[c], image.dtype)))
+            lut = gamma_lut(gamma[c], image.dtype)
+            if image.dtype==np.uint8: image_adj = cv2.LUT(chans[c], lut)
+            else: image_adj = np.take(lut, image)
         else:
-            ch_out.append(chans[c])
+            image_adj = chans[c]
+        ch_out.append(image_adj)
     return cv2.merge(ch_out)
 
 def lumi_expect(hist, gamma, dtype, i_min, i_max):
