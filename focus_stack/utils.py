@@ -5,6 +5,8 @@ from PIL import Image, ExifTags
 from PIL.ExifTags import TAGS
 import warnings
 
+BAD_EXIF_KEYS_16BITS_TIFF = [33723, 34665]
+
 def check_path_exists(path):
     assert os.path.exists(path), 'path does not exist: ' + path
 
@@ -40,7 +42,8 @@ def copy_exif(exif_filename, out_filename):
     if ext == 'jpeg' or ext == 'jpg':
         image_new.save(out_filename, 'JPEG', exif=exif, quality=100)
     elif ext == 'tiff' or ext == 'tif':
-        for k in [33723, 34665]: del exif[k]
+        for k in BAD_EXIF_KEYS_16BITS_TIFF:
+            if k in exif: del exif[k]
         image_new.save(out_filename, 'TIFF', exif=exif)
     elif ext == 'png':
         image_new.save(out_filename, 'PNG', exif=exif, quality=100)
