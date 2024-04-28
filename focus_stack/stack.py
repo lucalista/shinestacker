@@ -9,9 +9,9 @@ from focus_stack.stack_framework import *
 EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
 class FocusStackBase:
-    def __init__(self, stack_algo, exif_dir=None, postfix='', denoise=0):
+    def __init__(self, stack_algo, exif_path=None, postfix='', denoise=0):
         self.stack_algo = stack_algo
-        self.exif_dir = exif_dir
+        self.exif_path = exif_path
         self.postfix = postfix
         self.denoise = denoise
     def focus_stack(self, filenames):
@@ -26,20 +26,20 @@ class FocusStackBase:
         if self.denoise > 0:
             stacked_img = cv2.fastNlMeansDenoisingColored(stacked_img, None, self.denoise, self.denoise, 7, 21)
         write_img(out_filename, stacked_img)
-        if self.exif_dir != '':
-            dirpath, _, fnames = next(os.walk(self.exif_dir))
+        if self.exif_path != '':
+            dirpath, _, fnames = next(os.walk(self.exif_path))
             fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in EXTENSIONS]
-            exif_filename = self.exif_dir + '/' + fnames[0]
+            exif_filename = self.exif_path + '/' + fnames[0]
             copy_exif(exif_filename, out_filename)
     def init(self, job, working_directory):
-        if self.exif_dir is None: self.exif_dir = job.paths[0]
-        if self.exif_dir != '': self.exif_dir = working_directory + "/" + self.exif_dir
+        if self.exif_path is None: self.exif_path = job.paths[0]
+        if self.exif_path != '': self.exif_path = working_directory + "/" + self.exif_path
         
 class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
-    def __init__(self, name, stack_algo, input_path=None, output_path=None, working_directory=None, exif_dir=None, postfix='', frames=10, overlap=0, denoise=0):
+    def __init__(self, name, stack_algo, input_path=None, output_path=None, working_directory=None, exif_path=None, postfix='', frames=10, overlap=0, denoise=0):
         FrameDirectory.__init__(self, name, input_path, output_path, working_directory)
         ActionList.__init__(self, name)
-        FocusStackBase.__init__(self, stack_algo, exif_dir, postfix, denoise)
+        FocusStackBase.__init__(self, stack_algo, exif_path, postfix, denoise)
         if overlap >= frames: raise Exception("Overlap must be smaller than batch size")
         self.frames = frames
         self.overlap = overlap
@@ -55,11 +55,11 @@ class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
         FocusStackBase.init(self, job, self.working_directory)
         
 class FocusStack(FrameDirectory, Timer, FocusStackBase):
-    def __init__(self, name, stack_algo, input_path=None, output_path=None, working_directory=None, exif_dir=None, postfix='', denoise=0):
+    def __init__(self, name, stack_algo, input_path=None, output_path=None, working_directory=None, exif_path=None, postfix='', denoise=0):
         self.name = name
         FrameDirectory.__init__(self, name, input_path, output_path, working_directory)
         Timer.__init__(self, name)
-        FocusStackBase.__init__(self, stack_algo, exif_dir, postfix, denoise)
+        FocusStackBase.__init__(self, stack_algo, exif_path, postfix, denoise)
     def run_core(self):
         cprint("running " + self.name, "blue", attrs=["bold"])
         self.set_filelist()
