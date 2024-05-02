@@ -8,7 +8,7 @@ from termcolor import colored, cprint
 class AlignLayers(FramesRefActions):
     ALIGN_HOMOGRAPHY = "homography"
     ALIGN_RIGID = "rigid"
-    def __init__(self,  name, input_path=None, output_path=None, working_directory=None, step_align=True, ref_idx=-1, detector='SIFT', descriptor='SIFT', match_method='KNN', flann_idx_kdtree=2, flann_trees=5, flann_checks=50, match_threshold=0.75, transform=ALIGN_RIGID, rans_threshold=5.0, plot_matches=False):
+    def __init__(self,  name, input_path=None, output_path=None, working_directory=None, step_align=True, ref_idx=-1, detector='SIFT', descriptor='SIFT', match_method='KNN', flann_idx_kdtree=2, flann_trees=5, flann_checks=50, match_threshold=0.75, transform=ALIGN_RIGID, rans_threshold=5.0, border_mode=cv2.BORDER_REPLICATE, border_value=(0, 0, 0, 0), plot_matches=False):
         FramesRefActions.__init__(self, name, input_path, output_path, working_directory, ref_idx, step_align)
         self.detector = detector
         self.descriptor = descriptor
@@ -20,6 +20,8 @@ class AlignLayers(FramesRefActions):
         self.transform = transform
         self.min_matches = 4 if self.transform==AlignLayers.ALIGN_HOMOGRAPHY else 3
         self.rans_threshold = rans_threshold
+        self.border_mode = border_mode
+        self.border_value = border_value
         self.plot_matches = plot_matches
     def run_frame(self, idx, ref_idx):
         print("aligning frame: {}, file: {}                    ".format(self.count, self.filenames[idx]), end='\r')
@@ -99,9 +101,9 @@ class AlignLayers(FramesRefActions):
             pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0] ]).reshape(-1, 1 ,2)
             if self.transform==AlignLayers.ALIGN_HOMOGRAPHY:
                 dst = cv2.perspectiveTransform(pts, M)
-                img_warp = cv2.warpPerspective(img_0, M, (w, h), borderMode=cv2.BORDER_CONSTANT, borderValue=(0, 0, 0, 0))
+                img_warp = cv2.warpPerspective(img_0, M, (w, h), borderMode=self.border_mode, borderValue=self.border_value)
             elif self.transform==AlignLayers.ALIGN_RIGID:
-                img_warp = cv2.warpAffine(img_0, M, (img_0.shape[1], img_0.shape[0]))
+                img_warp = cv2.warpAffine(img_0, M, (img_0.shape[1], img_0.shape[0]), borderMode=self.border_mode, borderValue=self.border_value)
             write_img(self.output_dir + "/" + filename_0, img_warp)
         else:
             img_warp = None

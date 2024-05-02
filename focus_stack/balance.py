@@ -6,12 +6,6 @@ from focus_stack.utils import read_img, write_img, img_8bit
 from focus_stack.stack_framework import *
 from termcolor import colored, cprint
 
-# Issues:
-#
-# LUT as an issue with 16 bits images
-# 16 bit masks have an ussue
-#
-
 def gamma_lut(gamma, dtype):
     gamma_inv = 1.0/gamma
     two_n = 256 if dtype == np.uint8 else 65536
@@ -41,16 +35,6 @@ def lumi_expect(hist, gamma, dtype, i_min, i_max):
     if i_max == -1: i_max = 255 if dtype==np.uint8 else 65535
     return np.average(gamma_lut(gamma, dtype)[i_min:i_max+1], weights=hist.flatten()[i_min:i_max+1])
 
-def lumi_mask(image, mask_size):
-    two_n_1 = 255 if image.dtype == np.uint8 else 65535
-    if mask_size > 0:
-        height, width, channels = image.shape
-        mask = np.zeros(image.shape[:2], dtype=image.dtype)
-        cv2.circle(mask, (width//2, height//2), int(min(width, height)*mask_size/2),  (two_n_1, two_n_1, two_n_1), -1)
-    else:
-        mask = None
-    return mask
-
 def histo_plot(ax, histo, x_label, color, two_n):
     ax.set_ylabel("# of Pixels")
     ax.set_xlabel(x_label)
@@ -66,7 +50,7 @@ class BalanceLayers(FramesRefActions):
         self.i_max = i_max
         self.plot_histograms = plot_histograms
     def run_frame(self, idx, ref_idx):
-        print("balancing frame: {}, file: {}                    ".format(self.count, idx, self.filenames[idx]), end='\r')
+        print("balancing frame: {}, file: {}                    ".format(self.count, self.filenames[idx]), end='\r')
         self.balance(idx)
     def begin(self):
         FramesRefActions.begin(self)
@@ -89,21 +73,28 @@ class BalanceLayers(FramesRefActions):
         assert(False), 'abstract method'
     def adjust_gamma(self, image):
         assert(False), 'abstract method'
-    
+    def calc_hist(self, image):
+        two_n = 256 if image.dtype == np.uint8 else 65536
+        image_bw = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        height, width = image_bw.shape[:2]
+        xv, yv = np.meshgrid(np.linspace(0, width, width), np.linspace(0, height, height))
+        hist, bins =np.histogram(image_bw[(xv - width/2)**2 + (yv - height/2)**2 <= (min(width, height)*self.mask_size/2)**2], bins=np.linspace(-0.5, two_n - 0.5, two_n))
+        return hist
+
 class BalanceLayersLumi(BalanceLayers):
     def __init__(self, name, input_path=None, output_path=None, working_directory=None, ref_idx=-1, mask_size=-1, i_min=0, i_max=-1, plot_histograms=False):
         BalanceLayers.__init__(self, name, input_path, output_path, working_directory, ref_idx, mask_size, i_min, i_max, plot_histograms)
     def get_histos(self, image):
         two_n = 256 if image.dtype == np.uint8 else 65536
-        mask = lumi_mask(image, self.mask_size)
-        hist_lumi = cv2.calcHist([cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)], [0], mask, [two_n], [0, two_n])
+        hist_lumi = self.calc_hist(image)
         if self.plot_histograms:
             chans = cv2.split(image)
             colors = ("r", "g", "b")
             fig, axs = plt.subplots(1, 2, figsize=(6, 2), sharey=True)
             histo_plot(axs[0], hist_lumi, "pixel luminosity", 'black', two_n)
             for (chan, color) in zip(chans, colors):
-                hist_col = cv2.calcHist([chan], [0], mask, [two_n], [0, two_n])
+                #hist_col = cv2.calcHist([chan], [0], mask, [two_n], [0, two_n])
+                hist_col = self.calc_hist(chan)
                 histo_plot(axs[1], hist_col, "r,g,b luminosity", color, two_n)
             plt.show()
         i_end = self.i_max + 1 if self.i_max >=0 else 65536 
@@ -138,13 +129,12 @@ class BalanceLayersRGB(BalanceLayers):
         BalanceLayers.__init__(self, name, input_path, output_path, working_directory, ref_idx, mask_size, i_min, i_max, plot_histograms)
     def get_histos(self, image):
         two_n = 256 if image.dtype == np.uint8 else 65536
-        mask = lumi_mask(image, self.mask_size)
         hist = []
         mean = []
         chans = cv2.split(image)
         colors = ("r", "g", "b")
         for (chan, color) in zip(chans, colors):
-            hist.append(cv2.calcHist([chan], [0], mask, [two_n], [0, two_n]))
+            hist.append(self.calc_hist(chan))
             i_end = self.i_max + 1 if self.i_max >=0 else 65536 
             mean.append(np.average(list(range(two_n))[self.i_min:i_end], weights=hist[-1].flatten()[self.i_min:i_end]))
         if self.plot_histograms:
@@ -192,13 +182,12 @@ class BalanceLayersCh2(BalanceLayers):
         assert(False), 'abstract method'
     def get_histos(self, image):
         two_n = 256 if image.dtype == np.uint8 else 65536
-        mask = lumi_mask(image, self.mask_size)
         hist = []
         mean = []
         chans = cv2.split(image)
         i_end = self.i_max + 1 if self.i_max >=0 else 65536 
         for (chan, color) in zip(chans, self.colors):
-            hist.append(cv2.calcHist([chan], [0], mask, [two_n], [0, two_n]))
+            hist.append(self.calc_hist(chan))
             mean.append(np.average(list(range(two_n))[self.i_min:i_end], weights=hist[-1].flatten()[self.i_min:i_end1]))
         if self.plot_histograms:
             fig, axs = plt.subplots(1, 3, figsize=(6, 2), sharey=True)

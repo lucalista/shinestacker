@@ -67,8 +67,9 @@ arguments are:
 * ```flann_tree``` (optional, default: 5): parameter used by the FLANN matching algorithm.
 * ```flann_checks``` (optional, default: 50): parameter used by the FLANN matching algorithm.
 * ```match_threshold``` (optional, default: 0.75): parameter used to select good matches. See [Feature Matching](https://docs.opencv.org/4.x/dc/dc3/tutorial_py_matcher.html) for more details. 
-* ```rans_threshold```  (optional, default: 5.0): parameter used if ```ALIGN_HOMOGRAPHY``` is choosen as tansformation, see [Feature Matching + Homography to find Objects
-](https://docs.opencv.org/3.4/d1/de0/tutorial_py_feature_homography.html) for more details
+* ```rans_threshold``` (optional, default: 5.0): parameter used if ```ALIGN_HOMOGRAPHY``` is choosen as tansformation, see [Feature Matching + Homography to find Objects](https://docs.opencv.org/3.4/d1/de0/tutorial_py_feature_homography.html) for more details.
+* ```border_mode``` (optional, default: ```cv2.BORDER_REPLICATE```): border mode. See [Adding borders to your images](https://docs.opencv.org/3.4/dc/da3/tutorial_copyMakeBorder.html) for more details. 
+* ```border_value``` (optional, default: ```(0, 0, 0, 0)```): border value. See [Adding borders to your images](https://docs.opencv.org/3.4/dc/da3/tutorial_copyMakeBorder.html) for more details. 
 *``` plot_matches``` (optional, default: ```False```): if ```True```, for each image the matches identified with respect to the reference image are plotted. May be needed for inspection and debugging.
 
 ### Luminosity and color balance
