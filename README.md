@@ -4,8 +4,8 @@
 
 ```python
 from focus_stack import *
-job = StackJob("job", "E:/Focus stacking/My image directory/")
-job.add_action(AlignLayers("align", input_path="source"))
+job = StackJob("job", "E:/Focus stacking/My image directory/", input_path="source")
+job.add_action(AlignLayers("align"))
 job.add_action(BalanceLayersLumi("balance", mask_size=0.5, i_min=10, i_max=255))
 job.add_action(FocusStackBunch("batches", PyramidStack(), frames=10, overlap=2, denoise=0.8))
 job.add_action(FocusStack("stack", PyramidStack(), postfix='_py', denoise=0.8))
