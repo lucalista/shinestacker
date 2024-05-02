@@ -35,6 +35,7 @@ job = StackJob(name, working_directory)
 arguments are:
 * ```working_directory```: the directory that contains input and output images, organized in subdirectories as specified by each action
 * ```name```: the name of the job, used for printout
+* ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images for subsequent action. If not specified, at least the first action must specify an ```input_path```.
 
 ### Image registration: scale, tanslation and rotation correction, or full perspective correction
 
@@ -43,7 +44,7 @@ job.add_action(AlignLayers(name, *options))
 ```
 arguments are:
 * ```name```: the name of the action, used for printout, and possibly for output path
-* ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images to be aligned. If not specified, the last output path is used. At least the first action must specify an  ```input_path```.
+* ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images to be aligned. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If not specified the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
 * ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
 * ```working_directory```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_directory```.
 * ```ref_idx``` (optional): the index of the image used as reference. Images are numbered starting from zero. If not specified, it is the index of the middle image.
@@ -85,8 +86,7 @@ job.add_action(BalanceLayersLumi(working_directory, name, *options))
 ```
 arguments are:
 * ```name```: the name of the action, used for printout, and possibly for output path
-* ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images to be aligned. If not specified, the last output path is used. At least the first action must specify an  ```input_path```.
-* ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
+* ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images to be aligned. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If not specified the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.* ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
 * ```working_directory```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_directory```.
 * ```ref_idx``` (optional): the index of the image used as reference. Images are numbered starting from zero. If not specified, it is the index of the middle image.
 * ```mask_size``` (optional): if specified, luminosity and color balance is only applied to pixels within a circle of radius equal to the minimum between the image width and height times ```mask_size```, i.e: 0.8 means 80% of a portrait image height. It may beuseful for images with vignetting, in order to remove the outer darker pixels.
@@ -102,8 +102,7 @@ job.add_action(FocusStack(working_directory, name, stacker, input_path, *options
 arguments are:
 * ```name```: the name of the action, used for printout, and possibly for output path
 * ```stacker```: an object defining the focus stacking algorithm. Can be ```PyramidStack``` or ```DepthMapStack```, see below for possible algorithms. 
-* ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images to be aligned. If not specified, the last output path is used. At least the first action must specify an  ```input_path```.
-* ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
+* ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images to be aligned. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If not specified the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.* ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
 * ```working_directory```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_directory```.
 * ```exif_path``` (optional): if specified, EXIF data are copied to the output file from file in the specified directory. If not specified, it is the source directory used as input for the first action. If set equal to ```''``` no EXIF data is saved.
 * ```postfix``` (optional): if specified, the specified string is appended to the file name. May be useful if more algorithms are ran, and different file names are used for the output of different algorithms.
@@ -117,8 +116,7 @@ job.add_action(FocusStackBunch(working_directory, name,  stacker, input_path, *o
 arguments are:
 * ```name```: the name of the action, used for printout, and possibly for output path
 * ```stacker```: an object defining the focus stacking algorithm. Can be ```PyramidStack``` or ```DepthMapStack```, see below for possible algorithms. 
-* ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images to be aligned. If not specified, the last output path is used. At least the first action must specify an  ```input_path```.
-* ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
+* ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images to be aligned. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If not specified the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.* ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
 * ```working_directory```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_directory```.
 * ```exif_path``` (optional): if specified, EXIF data are copied to the output file from file in the specified directory. If not specified, it is the source directory used as * ```frames``` (optional, default: 10): the number of frames in each bunch that are stacked together.
 * ```overlap``` (optional, default: 0): the number of overlapping frames between a bunch and the following one. 

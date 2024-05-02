@@ -4,10 +4,11 @@ from termcolor import colored, cprint
 import os
 
 class StackJob(Job):
-    def __init__(self, name, working_directory):
+    def __init__(self, name, working_directory, input_path=None):
         check_path_exists(working_directory)
         self.working_directory = working_directory
-        self.paths = []
+        if input_path is None or input_path == '': self.paths = []
+        else: self.paths = [input_path]
         Job.__init__(self, name)
     def init(self, a):
         a.init(self)
