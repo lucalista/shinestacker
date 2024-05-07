@@ -31,14 +31,33 @@ def img_8bit(img):
         return (img >> 8).astype('uint8')
     else:
         return img
-
-def copy_exif(exif_filename, out_filename):
+    
+def print_exif(exif, ext):
+    if exif is None:
+        print('image has no exif data.')
+    else:
+        for tag_id in exif:
+            if (ext == 'tiff' or ext == 'tif') and (tag_id in BAD_EXIF_KEYS_16BITS_TIFF):
+                print(f'<<< skipped >>>           [#{tag_id}]: <<< bad key for TIFF format in PIL module >>>')
+            else:
+                tag = TAGS.get(tag_id, tag_id)
+                data = exif.get(tag_id)
+                if isinstance(data, bytes):
+                    try:
+                        data = data.decode()
+                    except:
+                        data = '<<< decode error >>>'
+                print(f"{tag:25} [#{tag_id}]: {data}")
+                
+def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
+    if out_filename is None: out_filename = in_filename
     if(not os.path.isfile(exif_filename)): raise Exception("File does not exist: " + exif_filename)
-    if(not os.path.isfile(out_filename)): raise Exception("File does not exist: " + out_filename)
+    if(not os.path.isfile(in_filename)): raise Exception("File does not exist: " + in_filename)
     image = Image.open(exif_filename)
-    exif = image.getexif()
-    image_new = Image.open(out_filename)
-    ext = out_filename.split(".")[-1]
+    exif = image.tag_v2 #getexif()
+    ext = in_filename.split(".")[-1]
+    if verbose: print_exif(exif, ext)
+    image_new = Image.open(in_filename)
     if ext == 'jpeg' or ext == 'jpg':
         image_new.save(out_filename, 'JPEG', exif=exif, quality=100)
     elif ext == 'tiff' or ext == 'tif':

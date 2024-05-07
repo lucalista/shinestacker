@@ -50,14 +50,14 @@ class BalanceLayers(FramesRefActions):
         self.i_max = i_max
         self.plot_histograms = plot_histograms
     def run_frame(self, idx, ref_idx):
-        print("balancing frame: {}, file: {}                    ".format(self.count, self.filenames[idx]), end='\r')
+        print("balancing frame: {}, file: {}                          ".format(self.count, self.filenames[idx]), end='\r')
         self.balance(idx)
     def begin(self):
         FramesRefActions.begin(self)
         self.image_ref = self.preprocess(read_img(self.input_dir + "/" + self.filenames[self.ref_idx]))
         self.mean_ref, self.hist_ref = self.get_histos(self.image_ref)
     def end(self):
-        print("                                 ")
+        print("                                         ")
     def balance(self, idx):
         image = read_img(self.input_dir + "/" + self.filenames[idx])
         if(idx != self.ref_idx):
