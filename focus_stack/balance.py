@@ -31,10 +31,6 @@ def adjust_gamma_ch3(image, gamma, ch_range):
         ch_out.append(image_adj)
     return cv2.merge(ch_out)
 
-def lumi_expect(hist, gamma, dtype, i_min, i_max):
-    if i_max == -1: i_max = 255 if dtype==np.uint8 else 65535
-    return np.average(gamma_lut(gamma, dtype)[i_min:i_max+1], weights=hist.flatten()[i_min:i_max+1])
-
 def histo_plot(ax, histo, x_label, color, two_n):
     ax.set_ylabel("# of Pixels")
     ax.set_xlabel(x_label)
@@ -48,6 +44,7 @@ class BalanceLayers(FramesRefActions):
         self.mask_size = mask_size
         self.i_min = i_min
         self.i_max = i_max
+        self.i_end = self.i_max + 1 if self.i_max >=0 else 65536
         self.plot_histograms = plot_histograms
     def run_frame(self, idx, ref_idx):
         print("balancing frame: {}, file: {}                          ".format(self.count, self.filenames[idx]), end='\r')
@@ -73,6 +70,8 @@ class BalanceLayers(FramesRefActions):
         assert(False), 'abstract method'
     def adjust_gamma(self, image):
         assert(False), 'abstract method'
+    def lumi_expect(self, hist, gamma, dtype):
+        return np.average(gamma_lut(gamma, dtype)[self.i_min:self.i_end], weights=hist.flatten()[self.i_min:self.i_end])
     def calc_hist(self, image):
         two_n = 256 if image.dtype == np.uint8 else 65536
         image_bw = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -82,7 +81,7 @@ class BalanceLayers(FramesRefActions):
             height, width = image_bw.shape[:2]
             xv, yv = np.meshgrid(np.linspace(0, width - 1, width), np.linspace(0, height - 1, height))
             image_sel = image_bw[(xv - width//2)**2 + (yv - height//2)**2 <= (min(width, height)*self.mask_size/2)**2]
-        hist, bins = np.histogram(image_sel, bins=np.linspace(-0.5, two_n - 0.5, two_n))
+        hist, bins = np.histogram(image_sel, bins=np.linspace(-0.5, two_n - 0.5, two_n + 1))
         return hist
 
 class BalanceLayersLumi(BalanceLayers):
@@ -101,12 +100,11 @@ class BalanceLayersLumi(BalanceLayers):
                 hist_col = self.calc_hist(chan)
                 histo_plot(axs[1], hist_col, "r,g,b luminosity", color, two_n)
             plt.show()
-        i_end = self.i_max + 1 if self.i_max >=0 else 65536 
-        mean_lumi = np.average(list(range(two_n))[self.i_min:i_end], weights=hist_lumi.flatten()[self.i_min:i_end])
+        mean_lumi = np.average(list(range(two_n))[self.i_min:self.i_end], weights=hist_lumi.flatten()[self.i_min:self.i_end])
         return mean_lumi, hist_lumi
     def adjust_gamma(self, image):
         mean, hist = self.get_histos(image)
-        f = lambda x: lumi_expect(hist, x, image.dtype, self.i_min, self.i_max) - self.mean_ref
+        f = lambda x: self.lumi_expect(hist, x, image.dtype) - self.mean_ref
         gamma = bisect(f, 0.1, 5)
         self.gamma[self.count - 1] = gamma
         return adjust_gamma(image, gamma)
@@ -139,8 +137,7 @@ class BalanceLayersRGB(BalanceLayers):
         colors = ("r", "g", "b")
         for (chan, color) in zip(chans, colors):
             hist.append(self.calc_hist(chan))
-            i_end = self.i_max + 1 if self.i_max >=0 else 65536 
-            mean.append(np.average(list(range(two_n))[self.i_min:i_end], weights=hist[-1].flatten()[self.i_min:i_end]))
+            mean.append(np.average(list(range(two_n))[self.i_min:self.i_end], weights=hist[-1].flatten()[self.i_min:self.i_end]))
         if self.plot_histograms:
             fig, axs = plt.subplots(1, 3, figsize=(6, 2), sharey=True)
             for c in [2, 1, 0]:
@@ -151,9 +148,8 @@ class BalanceLayersRGB(BalanceLayers):
         mean, hist = self.get_histos(image)
         gamma = []
         ch_range = [0, 1, 2]
-        i_end = self.i_max + 1 if self.i_max >=0 else 65536 
         for c in range(3):
-            f = lambda x: lumi_expect(hist[c], x, image.dtype, self.i_min,i_end) - self.mean_ref[c]
+            f = lambda x: self.lumi_expect(hist[c], x, image.dtype) - self.mean_ref[c]
             gamma.append(bisect(f, 0.1, 5))
         self.gamma[self.count - 1] = gamma
         return adjust_gamma_ch3(image, gamma, ch_range)
@@ -189,10 +185,9 @@ class BalanceLayersCh2(BalanceLayers):
         hist = []
         mean = []
         chans = cv2.split(image)
-        i_end = self.i_max + 1 if self.i_max >=0 else 65536 
         for (chan, color) in zip(chans, self.colors):
             hist.append(self.calc_hist(chan))
-            mean.append(np.average(list(range(two_n))[self.i_min:i_end], weights=hist[-1].flatten()[self.i_min:i_end1]))
+            mean.append(np.average(list(range(two_n))[self.i_min:self.i_end], weights=hist[-1].flatten()[self.i_min:self.i_end1]))
         if self.plot_histograms:
             fig, axs = plt.subplots(1, 3, figsize=(6, 2), sharey=True)
             for c in range(3):
@@ -204,7 +199,7 @@ class BalanceLayersCh2(BalanceLayers):
         gamma = [1, 1, 1]
         ch_range = [1, 2]
         for c in ch_range:
-            f = lambda x: lumi_expect(hist[c], x, image.dtype, self. i_min, self.i_max) - self.mean_ref[c]
+            f = lambda x: self.lumi_expect(hist[c], x, image.dtype) - self.mean_ref[c]
             gamma[c] = bisect(f, 0.1, 5)
         self.gamma[self.count - 1] = gamma[1:]
         return adjust_gamma_ch3(image, gamma, ch_range)
