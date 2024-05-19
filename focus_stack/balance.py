@@ -25,7 +25,7 @@ def adjust_gamma_ch3(image, gamma, ch_range):
         if c in ch_range:
             lut = gamma_lut(gamma[c], image.dtype)
             if image.dtype==np.uint8: image_adj = cv2.LUT(chans[c], lut)
-            else: image_adj = np.take(lut, image)
+            else: image_adj = np.take(lut, chans[c])
         else:
             image_adj = chans[c]
         ch_out.append(image_adj)
@@ -72,32 +72,32 @@ class BalanceLayers(FramesRefActions):
         assert(False), 'abstract method'
     def lumi_expect(self, hist, gamma, dtype):
         return np.average(gamma_lut(gamma, dtype)[self.i_min:self.i_end], weights=hist.flatten()[self.i_min:self.i_end])
-    def calc_hist(self, image):
+    def calc_hist_1ch(self, image):
         two_n = 256 if image.dtype == np.uint8 else 65536
-        image_bw = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         if self.mask_size is None:
-            image_sel = image_bw
+            image_sel = image
         else:
-            height, width = image_bw.shape[:2]
+            height, width = image.shape[:2]
             xv, yv = np.meshgrid(np.linspace(0, width - 1, width), np.linspace(0, height - 1, height))
-            image_sel = image_bw[(xv - width//2)**2 + (yv - height//2)**2 <= (min(width, height)*self.mask_size/2)**2]
+            image_sel = image[(xv - width//2)**2 + (yv - height//2)**2 <= (min(width, height)*self.mask_size/2)**2]
         hist, bins = np.histogram(image_sel, bins=np.linspace(-0.5, two_n - 0.5, two_n + 1))
         return hist
+    def calc_hist_rgb(self, image):
+        return self.calc_hist_1ch(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY))
 
 class BalanceLayersLumi(BalanceLayers):
     def __init__(self, name, input_path=None, output_path=None, working_directory=None, ref_idx=-1, mask_size=-1, i_min=0, i_max=-1, plot_histograms=False):
         BalanceLayers.__init__(self, name, input_path, output_path, working_directory, ref_idx, mask_size, i_min, i_max, plot_histograms)
     def get_histos(self, image):
         two_n = 256 if image.dtype == np.uint8 else 65536
-        hist_lumi = self.calc_hist(image)
+        hist_lumi = self.calc_hist_rgb(image)
         if self.plot_histograms:
             chans = cv2.split(image)
             colors = ("r", "g", "b")
             fig, axs = plt.subplots(1, 2, figsize=(6, 2), sharey=True)
             histo_plot(axs[0], hist_lumi, "pixel luminosity", 'black', two_n)
             for (chan, color) in zip(chans, colors):
-                #hist_col = cv2.calcHist([chan], [0], mask, [two_n], [0, two_n])
-                hist_col = self.calc_hist(chan)
+                hist_col = self.calc_hist_1ch(chan)
                 histo_plot(axs[1], hist_col, "r,g,b luminosity", color, two_n)
             plt.show()
         mean_lumi = np.average(list(range(two_n))[self.i_min:self.i_end], weights=hist_lumi.flatten()[self.i_min:self.i_end])
@@ -136,7 +136,7 @@ class BalanceLayersRGB(BalanceLayers):
         chans = cv2.split(image)
         colors = ("r", "g", "b")
         for (chan, color) in zip(chans, colors):
-            hist.append(self.calc_hist(chan))
+            hist.append(self.calc_hist_1ch(chan))
             mean.append(np.average(list(range(two_n))[self.i_min:self.i_end], weights=hist[-1].flatten()[self.i_min:self.i_end]))
         if self.plot_histograms:
             fig, axs = plt.subplots(1, 3, figsize=(6, 2), sharey=True)
@@ -186,7 +186,7 @@ class BalanceLayersCh2(BalanceLayers):
         mean = []
         chans = cv2.split(image)
         for (chan, color) in zip(chans, self.colors):
-            hist.append(self.calc_hist(chan))
+            hist.append(self.calc_hist_1ch(chan))
             mean.append(np.average(list(range(two_n))[self.i_min:self.i_end], weights=hist[-1].flatten()[self.i_min:self.i_end1]))
         if self.plot_histograms:
             fig, axs = plt.subplots(1, 3, figsize=(6, 2), sharey=True)
