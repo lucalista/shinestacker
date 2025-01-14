@@ -8,7 +8,10 @@ from termcolor import colored, cprint
 class AlignLayers(FramesRefActions):
     ALIGN_HOMOGRAPHY = "homography"
     ALIGN_RIGID = "rigid"
-    def __init__(self,  name, input_path=None, output_path=None, working_directory=None, step_align=True, ref_idx=-1, detector='SIFT', descriptor='SIFT', match_method='KNN', flann_idx_kdtree=2, flann_trees=5, flann_checks=50, match_threshold=0.75, transform=ALIGN_RIGID, rans_threshold=5.0, border_mode=cv2.BORDER_REPLICATE, border_value=(0, 0, 0, 0), plot_matches=False):
+    BORDER_CONSTANT = "BORDER_CONSTANT"
+    BORDER_REPLICATE = "BORDER_REPLICATE"
+    BORDER_REPLICATE_BLUR = "BORDER_REPLICATE_BLUR"
+    def __init__(self,  name, input_path=None, output_path=None, working_directory=None, step_align=True, ref_idx=-1, detector='SIFT', descriptor='SIFT', match_method='KNN', flann_idx_kdtree=2, flann_trees=5, flann_checks=50, match_threshold=0.75, transform=ALIGN_RIGID, rans_threshold=5.0, border_mode=BORDER_REPLICATE_BLUR, border_value=(0, 0, 0, 0),  border_blur=50, plot_matches=False):
         FramesRefActions.__init__(self, name, input_path, output_path, working_directory, ref_idx, step_align)
         self.detector = detector
         self.descriptor = descriptor
@@ -21,6 +24,11 @@ class AlignLayers(FramesRefActions):
         self.min_matches = 4 if self.transform==AlignLayers.ALIGN_HOMOGRAPHY else 3
         self.rans_threshold = rans_threshold
         self.border_mode = border_mode
+        match self.border_mode:
+            case self.BORDER_CONSTANT: self.cv2_border_mode = cv2.BORDER_CONSTANT
+            case self.BORDER_REPLICATE: self.cv2_border_mode = cv2.BORDER_REPLICATE
+            case self.BORDER_REPLICATE_BLUR: self.cv2_border_mode = cv2.BORDER_REPLICATE
+        self.border_blur = border_blur
         self.border_value = border_value
         self.plot_matches = plot_matches
     def run_frame(self, idx, ref_idx):
@@ -101,9 +109,18 @@ class AlignLayers(FramesRefActions):
             pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0] ]).reshape(-1, 1 ,2)
             if self.transform==AlignLayers.ALIGN_HOMOGRAPHY:
                 dst = cv2.perspectiveTransform(pts, M)
-                img_warp = cv2.warpPerspective(img_0, M, (w, h), borderMode=self.border_mode, borderValue=self.border_value)
+                img_warp = cv2.warpPerspective(img_0, M, (w, h), borderMode=self.cv2_border_mode, borderValue=self.border_value)
+                if self.border_mode == self.BORDER_REPLICATE_BLUR:
+                    mask = cv2.warpPerspective(np.ones_like(img_0, dtype=np.uint8), M, (w, h), borderMode=cv2.BORDER_CONSTANT, borderValue=0)
             elif self.transform==AlignLayers.ALIGN_RIGID:
-                img_warp = cv2.warpAffine(img_0, M, (img_0.shape[1], img_0.shape[0]), borderMode=self.border_mode, borderValue=self.border_value)
+                dst =  cv2.transform(pts, M)
+                img_warp = cv2.warpAffine(img_0, M, (img_0.shape[1], img_0.shape[0]), borderMode=self.cv2_border_mode, borderValue=self.border_value)
+                if self.border_mode == self.BORDER_REPLICATE_BLUR:
+                    mask = cv2.warpAffine(np.ones_like(img_0, dtype=np.uint8), M, (w, h), borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+            if self.border_mode == self.BORDER_REPLICATE_BLUR:
+                mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+                blurred_warp = cv2.GaussianBlur(img_warp, (21, 21), sigmaX=self.border_blur)
+                img_warp[mask == 0] = blurred_warp[mask == 0]
             write_img(self.output_dir + "/" + filename_0, img_warp)
         else:
             img_warp = None

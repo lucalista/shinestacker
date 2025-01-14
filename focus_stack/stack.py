@@ -48,7 +48,7 @@ class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
         self.__chunks = [fnames[x:x + self.frames] for x in range(0, len(fnames) - self.overlap, self.frames - self.overlap)]
         self.counts = len(self.__chunks)
     def run_step(self):
-        print("bunch: {}                    ".format(self.count), end='\r')
+        print("fusing bunch: {}                    ".format(self.count), end='\r')
         self.focus_stack(self.__chunks[self.count - 1])
     def init(self, job):
         FrameDirectory.init(self, job)
