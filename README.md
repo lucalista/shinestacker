@@ -83,7 +83,7 @@ arguments are:
 There are four possible luminosity and color balance methods:
 * ```BalanceLayersLumi```: balance luminosity equally for R, G and B channels. It should be fine for most of the cases.
 * ```BalanceLayersRGB```: balance luminosity separately for R, G and B channels. It may be needed if some but not all of the images have a undesired color dominance.
-* ```BalanceLayersLumiSV```: balance saturation a luminosity value in the HSV (Hue, Saturation, brightness Value) representation. It may be needed in cases of extreme luminosity variation that affects saturation.
+* ```BalanceLayersSV```: balance saturation a luminosity value in the HSV (Hue, Saturation, brightness Value) representation. It may be needed in cases of extreme luminosity variation that affects saturation.
 * ```BalanceLayersLS```: balance saturation a luminosity value in the HLS (Hue, Lightness, Saturation) representation. It may be needed in cases of extreme luminosity variation that affects saturation.
 
 ```python
