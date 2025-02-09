@@ -1,14 +1,18 @@
 import numpy as np
 from scipy import ndimage
 import cv2
+# from CGPT
+from scipy.ndimage import generic_filter
+
 
 def generating_kernel(a):
     kernel = np.array([0.25 - a/2.0, 0.25, a, 0.25, 0.25 - a/2.0])
     return np.outer(kernel, kernel)
 
 def convolve(image, kernel=generating_kernel(0.4)):
-    return ndimage.convolve(image.astype(np.float64), kernel, mode='mirror')
-
+    #return ndimage.convolve(image.astype(np.float64), kernel, mode='mirror')
+    return cv2.filter2D(image, -1, kernel, borderType=cv2.BORDER_REFLECT)
+    
 def reduce_layer(layer, kernel=generating_kernel(0.4)):
     if len(layer.shape) == 2:
         convolution = convolve(layer, kernel)
@@ -85,8 +89,7 @@ class PyramidStack:
         offset = np.arange(-pad_amount, pad_amount + 1)
         for row in range(entropies.shape[0]):
             for column in range(entropies.shape[1]):
-                area = padded_image[row + pad_amount + offset[:, np.newaxis], column + pad_amount + offset]
-                entropies[row, column] = self.area_entropy(area, probabilities)
+                entropies[row, column] = self.area_entropy(padded_image[row + pad_amount + offset[:, np.newaxis], column + pad_amount + offset], probabilities)
         return entropies
     def area_deviation(self, area):
         average = np.average(area).astype(np.float64)
@@ -98,17 +101,15 @@ class PyramidStack:
         offset = np.arange(-pad_amount, pad_amount + 1)
         for row in range(deviations.shape[0]):
             for column in range(deviations.shape[1]):
-                area = padded_image[row + pad_amount + offset[:, np.newaxis], column + pad_amount + offset]
-                deviations[row, column] = self.area_deviation(area)
+                deviations[row, column] = self.area_deviation(padded_image[row + pad_amount + offset[:, np.newaxis], column + pad_amount + offset])
         return deviations
     def get_fused_base(self, images):
-        layers = images.shape[0]
+        layers, height, width, _ = images.shape
         entropies = np.zeros(images.shape[:3], dtype=np.float64)
         deviations = np.copy(entropies)
-        for layer in range(layers):
-            gray_image = cv2.cvtColor(images[layer].astype(np.float32), cv2.COLOR_BGR2GRAY).astype(self.dtype)
-            entropies[layer] = self.entropy(gray_image)
-            deviations[layer] = self.deviation(gray_image)
+        gray_images = np.array([cv2.cvtColor(images[layer].astype(np.float32), cv2.COLOR_BGR2GRAY).astype(self.dtype) for layer in range(layers)])
+        entropies = np.array([self.entropy(img) for img in gray_images])
+        deviations = np.array([self.deviation(img) for img in gray_images])
         best_e = np.argmax(entropies, axis=0)
         best_d = np.argmax(deviations, axis=0)
         fused = np.zeros(images.shape[1:], dtype=np.float64)
@@ -121,9 +122,8 @@ class PyramidStack:
             return convolve(np.square(laplacian))
         layers = laplacians.shape[0]
         region_energies = np.zeros(laplacians.shape[:3], dtype=np.float64)
-        for layer in range(layers):
-            gray_lap = cv2.cvtColor(laplacians[layer].astype(np.float32), cv2.COLOR_BGR2GRAY)
-            region_energies[layer] = _region_energy(gray_lap)
+        gray_laps = [cv2.cvtColor(laplacians[layer].astype(np.float32), cv2.COLOR_BGR2GRAY) for layer in range(layers)]
+        region_energies = np.array([_region_energy(gray_lap) for gray_lap in gray_laps])
         best_re = np.argmax(region_energies, axis = 0)
         fused = np.zeros(laplacians.shape[1:], dtype=laplacians.dtype)
         for layer in range(layers):
