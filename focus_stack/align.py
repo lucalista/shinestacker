@@ -11,8 +11,8 @@ class AlignLayers(FramesRefActions):
     BORDER_CONSTANT = "BORDER_CONSTANT"
     BORDER_REPLICATE = "BORDER_REPLICATE"
     BORDER_REPLICATE_BLUR = "BORDER_REPLICATE_BLUR"
-    def __init__(self,  name, input_path=None, output_path=None, working_directory=None, step_align=True, ref_idx=-1, detector='SIFT', descriptor='SIFT', match_method='KNN', flann_idx_kdtree=2, flann_trees=5, flann_checks=50, match_threshold=0.75, transform=ALIGN_RIGID, rans_threshold=5.0, border_mode=BORDER_REPLICATE_BLUR, border_value=(0, 0, 0, 0),  border_blur=50, plot_matches=False):
-        FramesRefActions.__init__(self, name, input_path, output_path, working_directory, ref_idx, step_align)
+    def __init__(self,  name, input_path=None, output_path=None, working_directory=None, resample=1, step_align=True, ref_idx=-1, detector='SIFT', descriptor='SIFT', match_method='KNN', flann_idx_kdtree=2, flann_trees=5, flann_checks=50, match_threshold=0.75, transform=ALIGN_RIGID, rans_threshold=5.0, border_mode=BORDER_REPLICATE_BLUR, border_value=(0, 0, 0, 0),  border_blur=50, plot_matches=False):
+        FramesRefActions.__init__(self, name, input_path, output_path, working_directory, resample, ref_idx, step_align)
         self.detector = detector
         self.descriptor = descriptor
         self.match_method = match_method

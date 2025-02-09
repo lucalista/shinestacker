@@ -36,8 +36,8 @@ class FocusStackBase:
         if self.exif_path != '': self.exif_path = working_directory + "/" + self.exif_path
         
 class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
-    def __init__(self, name, stack_algo, input_path=None, output_path=None, working_directory=None, exif_path=None, postfix='', frames=10, overlap=0, denoise=0):
-        FrameDirectory.__init__(self, name, input_path, output_path, working_directory)
+    def __init__(self, name, stack_algo, input_path=None, output_path=None, working_directory=None, resample=1, exif_path=None, postfix='', frames=10, overlap=0, denoise=0):
+        FrameDirectory.__init__(self, name, input_path, output_path, working_directory, resample)
         ActionList.__init__(self, name)
         FocusStackBase.__init__(self, stack_algo, exif_path, postfix, denoise)
         if overlap >= frames: raise Exception("Overlap must be smaller than batch size")
@@ -55,9 +55,9 @@ class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
         FocusStackBase.init(self, job, self.working_directory)
         
 class FocusStack(FrameDirectory, Timer, FocusStackBase):
-    def __init__(self, name, stack_algo, input_path=None, output_path=None, working_directory=None, exif_path=None, postfix='', denoise=0):
+    def __init__(self, name, stack_algo, input_path=None, output_path=None, working_directory=None, resample=1, exif_path=None, postfix='', denoise=0):
         self.name = name
-        FrameDirectory.__init__(self, name, input_path, output_path, working_directory)
+        FrameDirectory.__init__(self, name, input_path, output_path, working_directory, resample)
         Timer.__init__(self, name)
         FocusStackBase.__init__(self, stack_algo, exif_path, postfix, denoise)
     def run_core(self):

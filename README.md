@@ -47,6 +47,7 @@ arguments are:
 * ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images to be aligned. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If not specified the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
 * ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
 * ```working_directory```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_directory```.
+* ```resample``` (optione, default: 1): take every *n*<sup>th</sup> frame in the selected directory. Default: take all frames.
 * ```ref_idx``` (optional): the index of the image used as reference. Images are numbered starting from zero. If not specified, it is the index of the middle image.
 * ```step_align``` (optional): if equal to ```True``` (default), each image is aligned with respect to the previous or next image, depending if it is after or befor the reference image.
 * ```transform``` (optional): the transformation applied to register images. Possible values are:

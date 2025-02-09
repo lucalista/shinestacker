@@ -15,15 +15,18 @@ class StackJob(Job):
 
 class FrameDirectory:
     EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
-    def __init__(self, name, input_path=None, output_path=None, working_directory=None):
+    def __init__(self, name, input_path=None, output_path=None, working_directory=None, resample=1):
         self.name = name
         self.working_directory = working_directory
         self.input_path = input_path
         self.output_path = output_path
+        self.resample = resample
     def folder_filelist(self, path):
         src_contents = os.walk(self.input_dir)
         dirpath, _, filenames = next(src_contents)
-        return [name for name in filenames if os.path.splitext(name)[-1][1:].lower() in FrameDirectory.EXTENSIONS]
+        filelist = [name for name in filenames if os.path.splitext(name)[-1][1:].lower() in FrameDirectory.EXTENSIONS]
+        if self.resample > 1: filelist = filelist[0::self.resample]
+        return filelist
     def set_filelist(self):
         self.filenames = self.folder_filelist(self.input_dir)
         cprint("{} files ".format(len(self.filenames)) + "in folder: '" + self.input_dir + "'", 'blue')
@@ -41,8 +44,8 @@ class FrameDirectory:
         job.paths.append(self.output_path)
         
 class FramesRefActions(FrameDirectory, ActionList):
-    def __init__(self, name, input_path=None, output_path=None, working_directory=None, ref_idx=-1, step_process=False):
-        FrameDirectory.__init__(self, name, input_path, output_path, working_directory)
+    def __init__(self, name, input_path=None, output_path=None, working_directory=None, resample=1, ref_idx=-1, step_process=False):
+        FrameDirectory.__init__(self, name, input_path, output_path, working_directory, resample)
         ActionList.__init__(self, name)
         self.ref_idx = ref_idx
         self.step_process = step_process
