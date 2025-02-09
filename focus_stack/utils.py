@@ -54,7 +54,7 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
     if(not os.path.isfile(exif_filename)): raise Exception("File does not exist: " + exif_filename)
     if(not os.path.isfile(in_filename)): raise Exception("File does not exist: " + in_filename)
     image = Image.open(exif_filename)
-    exif = image.tag_v2 #getexif()
+    exif = image.tag_v2 if hasattr(image, 'tag_v2') else image.getexif()
     ext = in_filename.split(".")[-1]
     if verbose: print_exif(exif, ext)
     image_new = Image.open(in_filename)
