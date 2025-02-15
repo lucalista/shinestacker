@@ -187,7 +187,7 @@ class BalanceLayersCh2(BalanceLayers):
         chans = cv2.split(image)
         for (chan, color) in zip(chans, self.colors):
             hist.append(self.calc_hist_1ch(chan))
-            mean.append(np.average(list(range(two_n))[self.i_min:self.i_end], weights=hist[-1].flatten()[self.i_min:self.i_end1]))
+            mean.append(np.average(list(range(two_n))[self.i_min:self.i_end], weights=hist[-1].flatten()[self.i_min:self.i_end]))
         if self.plot_histograms:
             fig, axs = plt.subplots(1, 3, figsize=(6, 2), sharey=True)
             for c in range(3):
