@@ -1,17 +1,15 @@
 import numpy as np
 from scipy import ndimage
 import cv2
-# from CGPT
-from scipy.ndimage import generic_filter
-
 
 def generating_kernel(a):
     kernel = np.array([0.25 - a/2.0, 0.25, a, 0.25, 0.25 - a/2.0])
     return np.outer(kernel, kernel)
 
 def convolve(image, kernel=generating_kernel(0.4)):
-    return cv2.filter2D(image, -1, kernel, borderType=cv2.BORDER_REFLECT101)
-    
+#    return cv2.filter2D(image, -1, kernel, borderType=cv2.BORDER_REFLECT101)
+    return ndimage.convolve(image.astype(np.float64), kernel, mode='mirror')
+
 def reduce_layer(layer, kernel=generating_kernel(0.4)):
     if len(layer.shape) == 2:
         convolution = convolve(layer, kernel)
@@ -40,8 +38,6 @@ class PyramidStack:
     def __init__(self, min_size=32, kernel_size=5, verbose=False):
         self.min_size = min_size
         self.kernel_size = kernel_size
-        self.pad_amount = int((self.kernel_size - 1)/2)
-        self.offset = np.arange(-self.pad_amount, self.pad_amount + 1)
         self.verbose = verbose
     def gaussian_pyramid(self, images, levels):
         if self.verbose: print('- gaussian pyramids, level:', end='')
@@ -76,31 +72,44 @@ class PyramidStack:
         return pyramid[::-1]
     def area_entropy(self, area, probabilities):
         levels = area.flatten()
-        return np.float64(-1.*(levels*np.log(probabilities[levels])).sum())
+        return -1.*(levels*np.log(probabilities[levels])).sum()
     def get_probabilities(self, gray_image):
         levels, counts = np.unique(gray_image.astype(self.dtype), return_counts=True)
         probabilities = np.zeros((self.n_values), dtype=np.float64)
         probabilities[levels] = counts.astype(np.float64)/counts.sum()
         return probabilities
-    def get_pad(self, padded_image, row, column):
-        return padded_image[row + self.pad_amount + self.offset[:, np.newaxis], column + self.pad_amount + self.offset]
     def entropy(self, image):
         probabilities = self.get_probabilities(image)
-        padded_image = cv2.copyMakeBorder(image, self.pad_amount, self.pad_amount, self.pad_amount, self.pad_amount, cv2.BORDER_REFLECT101)
-        return np.fromfunction(np.vectorize(lambda row, column: self.area_entropy(self.get_pad(padded_image, row, column), probabilities)), image.shape[:2], dtype=int)
+        pad_amount = int((self.kernel_size - 1)/2)
+        padded_image = cv2.copyMakeBorder(image, pad_amount, pad_amount, pad_amount, pad_amount, cv2.BORDER_REFLECT101)
+        entropies = np.zeros(image.shape[:2], dtype=np.float64)
+        offset = np.arange(-pad_amount, pad_amount + 1)
+        for row in range(entropies.shape[0]):
+            for column in range(entropies.shape[1]):
+                area = padded_image[row + pad_amount + offset[:, np.newaxis], column + pad_amount + offset]
+                entropies[row, column] = self.area_entropy(area, probabilities)
+        return entropies
     def area_deviation(self, area):
         average = np.average(area).astype(np.float64)
         return np.square(area - average).sum()/area.size
     def deviation(self, image):
-        padded_image = cv2.copyMakeBorder(image, self.pad_amount, self.pad_amount, self.pad_amount, self.pad_amount, cv2.BORDER_REFLECT101)
-        return np.fromfunction(np.vectorize(lambda row, column: self.area_deviation(self.get_pad(padded_image, row, column))), image.shape[:2], dtype=int)
+        pad_amount = int((self.kernel_size - 1)/2)
+        padded_image = cv2.copyMakeBorder(image, pad_amount, pad_amount, pad_amount, pad_amount, cv2.BORDER_REFLECT101)
+        deviations = np.zeros(image.shape[:2], dtype=np.float64)
+        offset = np.arange(-pad_amount, pad_amount + 1)
+        for row in range(deviations.shape[0]):
+            for column in range(deviations.shape[1]):
+                area = padded_image[row + pad_amount + offset[:, np.newaxis], column + pad_amount + offset]
+                deviations[row, column] = self.area_deviation(area)
+        return deviations
     def get_fused_base(self, images):
-        layers, height, width, _ = images.shape
+        layers = images.shape[0]
         entropies = np.zeros(images.shape[:3], dtype=np.float64)
         deviations = np.copy(entropies)
-        gray_images = np.array([cv2.cvtColor(images[layer].astype(np.float32), cv2.COLOR_BGR2GRAY).astype(self.dtype) for layer in range(layers)])
-        entropies = np.array([self.entropy(img) for img in gray_images])
-        deviations = np.array([self.deviation(img) for img in gray_images])
+        for layer in range(layers):
+            gray_image = cv2.cvtColor(images[layer].astype(np.float32), cv2.COLOR_BGR2GRAY).astype(self.dtype)
+            entropies[layer] = self.entropy(gray_image)
+            deviations[layer] = self.deviation(gray_image)
         best_e = np.argmax(entropies, axis=0)
         best_d = np.argmax(deviations, axis=0)
         fused = np.zeros(images.shape[1:], dtype=np.float64)
@@ -109,10 +118,13 @@ class PyramidStack:
             fused += np.where(best_d[:, :, np.newaxis]==layer, images[layer], 0)
         return (fused/2).astype(images.dtype)
     def get_fused_laplacian(self, laplacians):
+        def _region_energy(laplacian):
+            return convolve(np.square(laplacian))
         layers = laplacians.shape[0]
         region_energies = np.zeros(laplacians.shape[:3], dtype=np.float64)
-        gray_laps = [cv2.cvtColor(laplacians[layer].astype(np.float32), cv2.COLOR_BGR2GRAY) for layer in range(layers)]
-        region_energies = np.array([convolve(np.square(gray_lap)) for gray_lap in gray_laps])
+        for layer in range(layers):
+            gray_lap = cv2.cvtColor(laplacians[layer].astype(np.float32), cv2.COLOR_BGR2GRAY)
+            region_energies[layer] = _region_energy(gray_lap)
         best_re = np.argmax(region_energies, axis = 0)
         fused = np.zeros(laplacians.shape[1:], dtype=laplacians.dtype)
         for layer in range(layers):
