@@ -14,6 +14,7 @@ class FocusStackBase:
         self.exif_path = exif_path
         self.postfix = postfix
         self.denoise = denoise
+        self.stack_algo.messenger(self)
     def focus_stack(self, filenames):
         img_files = sorted([os.path.join(self.input_dir, name) for name in filenames])
         img_files = [read_img(name) for name in img_files]
@@ -48,7 +49,7 @@ class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
         self.__chunks = [fnames[x:x + self.frames] for x in range(0, len(fnames) - self.overlap, self.frames - self.overlap)]
         self.counts = len(self.__chunks)
     def run_step(self):
-        JobBase.message(self, "fusing bunch: {}                    ".format(self.count), "blue", end='\r')
+        self.print_message("fusing bunch: {} ".format(self.count), "blue", end='\r')
         self.focus_stack(self.__chunks[self.count - 1])
     def init(self, job):
         FrameDirectory.init(self, job)
@@ -61,7 +62,7 @@ class FocusStack(FrameDirectory, JobBase, FocusStackBase):
         JobBase.__init__(self, name)
         FocusStackBase.__init__(self, stack_algo, exif_path, postfix, denoise)
     def run_core(self):
-        JobBase.message(self, '', "blue", attrs=["bold"])
+        self.print_message('', "blue", attrs=["bold"])
         self.set_filelist()
         self.focus_stack(self.filenames)
     def init(self, job):

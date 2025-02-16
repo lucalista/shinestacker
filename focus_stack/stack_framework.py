@@ -59,7 +59,7 @@ class FramesRefActions(FrameDirectory, ActionList):
             self.__ref_idx = self.ref_idx
             self.__idx_step = +1
         ll = len(self.filenames)
-        JobBase.message(self, "step {}/{}: process file: {}, reference: {}     ".format(self.count, ll, self.filenames[self.__idx], self.filenames[self.__ref_idx]), "blue", attrs=["bold"], end='\r')
+        self.print_message("step {}/{}: process file: {}, reference: {}     ".format(self.count, ll, self.filenames[self.__idx], self.filenames[self.__ref_idx]), "blue", attrs=["bold"], end='\r')
         self.run_frame(self.__idx, self.__ref_idx)
         if(self.__idx < ll):
             if self.step_process: self.__ref_idx = self.__idx

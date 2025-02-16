@@ -14,19 +14,19 @@ class JobBase:
     __t0 = None
     def __init__(self, name):
         self.name = name
-        self.message = ''
+        self.base_message = ''
     def run(self):
         self.__t0 = time.time()
         self.run_core()
         cprint(self.name + ": ", "green", attrs=["bold"], end='')
         cprint("elapsed time: {}                    ".format(elapsed_time_str(self.__t0)), "green")
         cprint(self.name + " completed                    ", "green")
-    def message(self, msg='', col="blue", attrs=[], end='\n'):
-        self.message = "running " + self.name
-        if msg != '': self.message += ': ' + msg
-        cprint(self.message, col, attrs=attrs, end=end)
+    def print_message(self, msg='', col="blue", attrs=[], end='\n'):
+        self.base_message = "running " + self.name
+        if msg != '': self.base_message += (': ' + msg)
+        cprint(self.base_message, col, attrs=attrs, end=end)
     def sub_message(self, msg, col="blue", attrs=[], end='\n'):
-        cprint(self.message + msg, col, attrs=attrs, end=end)
+        cprint(self.base_message + msg, col, attrs=attrs, end=end)
         
 class Job(JobBase):
     __actions = None
@@ -64,7 +64,7 @@ class ActionList(JobBase):
         else:
             raise StopIteration
     def run_core(self):
-        super().message('', attrs=["bold"], end='\r')
+        self.print_message('', "blue", ["bold"], '\r')
         self.begin()
         bar = tqdm_notebook(desc=self.name, total=self.counts)
         for x in iter(self):

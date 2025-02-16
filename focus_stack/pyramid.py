@@ -36,18 +36,20 @@ def expand_layer(layer, kernel=generating_kernel(0.4)):
     return next_layer
 
 class PyramidStack:
-    def __init__(self, min_size=32, kernel_size=5, verbose=False):
+    def __init__(self, min_size=32, kernel_size=5):
         self.min_size = min_size
         self.kernel_size = kernel_size
         self.pad_amount = int((self.kernel_size - 1)/2)
         self.offset = np.arange(-self.pad_amount, self.pad_amount + 1)
-        self.verbose = verbose
+    def messenger(self, messenger):
+        self.messenger = messenger
+    def print_message(self, msg):
+        self.messenger.sub_message(msg, col="blue", attrs=[], end='\r')
     def gaussian_pyramid(self, images, levels):
-        if self.verbose: print('- gaussian pyramids, level:', end='')
         pyramid = [images.astype(np.float64)]
         num_images = images.shape[0]
         while levels > 0:
-            if self.verbose: print(' {}'.format(levels), end='')
+            self.print_message(' - gaussian pyramids, level: {} '.format(levels))
             next_layer = reduce_layer(pyramid[-1][0])
             next_layer_size = [num_images] + list(next_layer.shape)
             pyramid.append(np.zeros(next_layer_size, dtype=next_layer.dtype))
@@ -55,14 +57,13 @@ class PyramidStack:
             for layer in range(1, images.shape[0]):
                 pyramid[-1][layer] = reduce_layer(pyramid[-2][layer])
             levels = levels - 1
-        if self.verbose: print(' gaussian pyramids completed')
+        self.print_message(' - gaussian pyramids completed ')
         return pyramid
     def laplacian_pyramid(self, images, levels):
         gaussian = self.gaussian_pyramid(images, levels)
         pyramid = [gaussian[-1]]
-        if self.verbose: print('- laplacian pyramids, level:', end='')
         for level in range(len(gaussian) - 1, 0, -1):
-            if self.verbose: print(' {}'.format(level), end='')
+            self.print_message(' - laplacian pyramids, level: {}     '.format(levels))
             gauss = gaussian[level - 1]
             pyramid.append(np.zeros(gauss.shape, dtype=gauss.dtype))
             for layer in range(images.shape[0]):
@@ -71,7 +72,7 @@ class PyramidStack:
                 if expanded.shape != gauss_layer.shape:
                     expanded = expanded[:gauss_layer.shape[0], :gauss_layer.shape[1]]
                 pyramid[-1][layer] = gauss_layer - expanded
-        if self.verbose: print(' laplacian pyramids completed')
+        self.print_message(' - laplacian pyramids completed ')
         return pyramid[::-1]
     def area_entropy(self, area, probabilities):
         levels = area.flatten()
@@ -118,12 +119,11 @@ class PyramidStack:
             fused += np.where(best_re[:, :, np.newaxis]==layer, laplacians[layer], 0)
         return fused
     def fuse_pyramids(self, pyramids):
-        if self.verbose: print('- fuse pyramids, layer:', end='')
         fused = [self.get_fused_base(pyramids[-1])]
         for layer in range(len(pyramids) - 2, -1, -1):
-            if self.verbose: print(' {}'.format(layer + 1), end='')
+            self.print_message(' - fuse pyramids, layer: {} '.format(layer))
             fused.append(self.get_fused_laplacian(pyramids[layer]))
-        if self.verbose: print(' fuse pyramids completed ')
+        self.print_message(' - pyramids fusion completed ')
         return fused[::-1]
     def collapse(self, pyramid):
         image = pyramid[-1]

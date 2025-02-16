@@ -25,6 +25,10 @@ class DepthMapStack:
         self.kernel_size = kernel_size
         self.blur_size = blur_size
         self.smooth_size = smooth_size
+    def messenger(self, messenger):
+        self.messenger = messenger
+    def print_message(self, msg):
+        self.messenger.sub_message(msg, col="blue", attrs=[], end='\r')
     def get_laplacian_map(self, images):
         laplacian = np.zeros(images.shape, dtype=np.float32)
         for index in range(images.shape[0]):
@@ -57,6 +61,7 @@ class DepthMapStack:
         gray_images = np.zeros(images.shape[:-1], dtype=t)
         for index in range(images.shape[0]):
             gray_images[index] = convert_to_grayscale(images[index])
+        self.print_message(' - compute energy map          ')
         if self.energy == DepthMapStack.ENERGY_SOBEL:
             energy_map = get_sobel_map(gray_images)
         elif self.energy == DepthMapStack.ENERGY_LAPLACIAN:
@@ -64,8 +69,11 @@ class DepthMapStack:
         else:
             assert(False), 'invalid energy parameter: ' + self.energy
         if self.smooth_size > 0:
+            self.print_message(' - smooth energy map ')
             energy_map = self.smooth_energy_map(energy_map)
+        self.print_message(' - compute focus map ')
         focus_map = self.get_focus_map(energy_map)
+        self.print_message(' - blend images ')
         stacked_image = blend(images, focus_map)
         return np.clip(np.absolute(stacked_image), 0, n_values - 1).astype(t)
     
