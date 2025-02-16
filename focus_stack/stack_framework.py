@@ -1,4 +1,4 @@
-from .framework import  Job, ActionList, Timer
+from .framework import  Job, ActionList, JobBase
 from .utils import check_path_exists
 from termcolor import colored, cprint
 import os
@@ -54,13 +54,13 @@ class FramesRefActions(FrameDirectory, ActionList):
         self.counts = len(self.filenames)
         if self.ref_idx == -1: self.ref_idx = len(self.filenames) // 2
     def run_step(self):
-        cprint("action: {} ".format(self.filenames[self.count - 1]), "blue", end='\r')
         if self.count == 1:
             self.__idx = self.ref_idx if self.step_process else 0
             self.__ref_idx = self.ref_idx
             self.__idx_step = +1
-        self.run_frame(self.__idx, self.__ref_idx)
         ll = len(self.filenames)
+        JobBase.message(self, "step {}/{}: process file: {}, reference: {}     ".format(self.count, ll, self.filenames[self.__idx], self.filenames[self.__ref_idx]), "blue", attrs=["bold"], end='\r')
+        self.run_frame(self.__idx, self.__ref_idx)
         if(self.__idx < ll):
             if self.step_process: self.__ref_idx = self.__idx
             self.__idx += self.__idx_step

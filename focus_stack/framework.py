@@ -10,21 +10,28 @@ def elapsed_time_str(start):
     mm -= hh*60
     return ("{:02d}:{:02d}:{:05.2f}s".format(hh, mm, ss))
 
-class Timer:
+class JobBase:
     __t0 = None
     def __init__(self, name):
         self.name = name
+        self.message = ''
     def run(self):
         self.__t0 = time.time()
         self.run_core()
         cprint(self.name + ": ", "green", attrs=["bold"], end='')
         cprint("elapsed time: {}                    ".format(elapsed_time_str(self.__t0)), "green")
         cprint(self.name + " completed                    ", "green")
-
-class Job(Timer):
+    def message(self, msg='', col="blue", attrs=[], end='\n'):
+        self.message = "running " + self.name
+        if msg != '': self.message += ': ' + msg
+        cprint(self.message, col, attrs=attrs, end=end)
+    def sub_message(self, msg, col="blue", attrs=[], end='\n'):
+        cprint(self.message + msg, col, attrs=attrs, end=end)
+        
+class Job(JobBase):
     __actions = None
     def __init__(self, name):
-        Timer.__init__(self, name)
+        JobBase.__init__(self, name)
         self.__actions = []
     def time(self):
         return time.time() - self.__t0
@@ -37,10 +44,10 @@ class Job(Timer):
         for a in self.__actions:
             a.run()
 
-class ActionList(Timer):
+class ActionList(JobBase):
     counts = None
     def __init__(self, name):
-        Timer.__init__(self, name)
+        JobBase.__init__(self, name)
     def begin(self):
         pass
     def end(self):
@@ -57,7 +64,7 @@ class ActionList(Timer):
         else:
             raise StopIteration
     def run_core(self):
-        cprint("running " + self.name, "blue", attrs=["bold"])
+        super().message('', attrs=["bold"], end='\r')
         self.begin()
         bar = tqdm_notebook(desc=self.name, total=self.counts)
         for x in iter(self):

@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import cv2
 import numpy as np
 from focus_stack.utils import read_img, write_img, img_8bit
+from focus_stack.framework import JobBase
 from focus_stack.stack_framework import FramesRefActions
 from termcolor import colored, cprint
     
@@ -32,7 +33,6 @@ class AlignLayers(FramesRefActions):
         self.border_value = border_value
         self.plot_matches = plot_matches
     def run_frame(self, idx, ref_idx):
-        print("aligning frame: {}, file: {}                    ".format(self.count, self.filenames[idx]), end='\r')
         self.align_images(ref_idx, idx)
     def create_detector(self):
         detector = None
@@ -138,7 +138,7 @@ class AlignLayers(FramesRefActions):
         FramesRefActions.begin(self)
         self.n_matches = np.zeros(self.counts)
     def end(self):
-        print("                                           ")
+        #print("                                           ")
         plt.figure(figsize=(10, 5))
         x = np.arange(1, len(self.n_matches) + 1, dtype=int)
         no_ref = (x != self.ref_idx + 1)

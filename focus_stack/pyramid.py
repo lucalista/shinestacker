@@ -4,7 +4,6 @@ import cv2
 # from CGPT
 from scipy.ndimage import generic_filter
 
-
 def generating_kernel(a):
     kernel = np.array([0.25 - a/2.0, 0.25, a, 0.25, 0.25 - a/2.0])
     return np.outer(kernel, kernel)
