@@ -11,52 +11,53 @@ def generating_kernel(a):
 def convolve(image, kernel=generating_kernel(0.4)):
     return cv2.filter2D(image, -1, kernel, borderType=cv2.BORDER_REFLECT101)
     
-def reduce_layer(layer, kernel=generating_kernel(0.4)):
+def reduce_layer(layer, kernel):
     if len(layer.shape) == 2:
         convolution = convolve(layer, kernel)
         return convolution[::2, ::2]
-    ch_layer = reduce_layer(layer[:, :, 0])
+    ch_layer = reduce_layer(layer[:, :, 0], kernel)
     next_layer = np.zeros(list(ch_layer.shape) + [layer.shape[2]], dtype = ch_layer.dtype)
     next_layer[:, :, 0] = ch_layer
     for channel in range(1, layer.shape[2]):
-        next_layer[:, :, channel] = reduce_layer(layer[:, :, channel])
+        next_layer[:, :, channel] = reduce_layer(layer[:, :, channel], kernel)
     return next_layer
 
-def expand_layer(layer, kernel=generating_kernel(0.4)):
+def expand_layer(layer, kernel):
     if len(layer.shape) == 2:
         expand = np.zeros((2*layer.shape[0], 2*layer.shape[1]), dtype=np.float64)
         expand[::2, ::2] = layer;
         convolution = convolve(expand, kernel)
         return 4.*convolution
-    ch_layer = expand_layer(layer[:, :, 0])
+    ch_layer = expand_layer(layer[:, :, 0], kernel)
     next_layer = np.zeros(list(ch_layer.shape) + [layer.shape[2]], dtype=ch_layer.dtype)
     next_layer[:, :, 0] = ch_layer
     for channel in range(1, layer.shape[2]):
-        next_layer[:, :, channel] = expand_layer(layer[:, :, channel])
+        next_layer[:, :, channel] = expand_layer(layer[:, :, channel], kernel)
     return next_layer
 
 class PyramidStack:
-    def __init__(self, min_size=32, kernel_size=5):
+    def __init__(self, min_size=32, kernel_size=5, gen_kernel=0.4):
         self.min_size = min_size
         self.kernel_size = kernel_size
         self.pad_amount = int((self.kernel_size - 1)/2)
         self.offset = np.arange(-self.pad_amount, self.pad_amount + 1)
+        self.gen_kernel = generating_kernel(gen_kernel)
     def messenger(self, messenger):
         self.messenger = messenger
     def print_message(self, msg):
         self.messenger.sub_message(colored(msg, "light_blue"), end='\r')
-    def gaussian_pyramid(self, images, levels):
+    def gaussian_pyramid(self, images, levels, kernel=generating_kernel(0.4)):
         self.print_message(' - begin gaussian pyramids ')
         pyramid = [images.astype(np.float64)]
         num_images = images.shape[0]
         while levels > 0:
             self.print_message(' - gaussian pyramids, level: {} '.format(levels))
-            next_layer = reduce_layer(pyramid[-1][0])
+            next_layer = reduce_layer(pyramid[-1][0], kernel)
             next_layer_size = [num_images] + list(next_layer.shape)
             pyramid.append(np.zeros(next_layer_size, dtype=next_layer.dtype))
             pyramid[-1][0] = next_layer
             for layer in range(1, images.shape[0]):
-                pyramid[-1][layer] = reduce_layer(pyramid[-2][layer])
+                pyramid[-1][layer] = reduce_layer(pyramid[-2][layer], kernel)
             levels = levels - 1
         self.print_message(' - gaussian pyramids completed ')
         return pyramid
@@ -69,7 +70,7 @@ class PyramidStack:
             pyramid.append(np.zeros(gauss.shape, dtype=gauss.dtype))
             for layer in range(images.shape[0]):
                 gauss_layer = gauss[layer]
-                expanded = expand_layer(gaussian[level][layer])
+                expanded = expand_layer(gaussian[level][layer], self.gen_kernel)
                 if expanded.shape != gauss_layer.shape:
                     expanded = expanded[:gauss_layer.shape[0], :gauss_layer.shape[1]]
                 pyramid[-1][layer] = gauss_layer - expanded
@@ -132,7 +133,7 @@ class PyramidStack:
     def collapse(self, pyramid):
         image = pyramid[-1]
         for layer in pyramid[-2::-1]:
-            expanded = expand_layer(image)
+            expanded = expand_layer(image, self.gen_kernel)
             if expanded.shape != layer.shape:
                 expanded = expanded[:layer.shape[0], :layer.shape[1]]
             image = expanded + layer
