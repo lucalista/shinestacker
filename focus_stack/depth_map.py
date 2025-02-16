@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+from termcolor import colored
 
 def convert_to_grayscale(image):
     return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -28,7 +29,7 @@ class DepthMapStack:
     def messenger(self, messenger):
         self.messenger = messenger
     def print_message(self, msg):
-        self.messenger.sub_message(msg, col="blue", attrs=[], end='\r')
+        self.messenger.sub_message(colored(msg, "light_blue"), end='\r')
     def get_laplacian_map(self, images):
         laplacian = np.zeros(images.shape, dtype=np.float32)
         for index in range(images.shape[0]):

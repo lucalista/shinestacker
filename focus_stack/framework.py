@@ -1,5 +1,5 @@
 import time
-from termcolor import colored, cprint
+from termcolor import colored
 from tqdm.notebook import tqdm_notebook
 
 def elapsed_time_str(start):
@@ -18,15 +18,15 @@ class JobBase:
     def run(self):
         self.__t0 = time.time()
         self.run_core()
-        cprint(self.name + ": ", "green", attrs=["bold"], end='')
-        cprint("elapsed time: {}                    ".format(elapsed_time_str(self.__t0)), "green")
-        cprint(self.name + " completed                    ", "green")
-    def print_message(self, msg='', col="blue", attrs=[], end='\n'):
-        self.base_message = "running " + self.name
+        print(colored(self.name + ": ", "green", attrs=["bold"]), end='')
+        print(colored("elapsed time: {}                    ".format(elapsed_time_str(self.__t0)), "green"))
+        print(colored(self.name + " completed                    ", "green"))
+    def print_message(self, msg='', end='\n'):
+        self.base_message = colored("running " + self.name, "blue", attrs=["bold"])
         if msg != '': self.base_message += (': ' + msg)
-        cprint(self.base_message, col, attrs=attrs, end=end)
-    def sub_message(self, msg, col="blue", attrs=[], end='\n'):
-        cprint(self.base_message + msg, col, attrs=attrs, end=end)
+        print(colored(self.base_message, 'blue', attrs=['bold']), end=end)
+    def sub_message(self, msg, end='\n'):
+        print(self.base_message + msg, end=end)
         
 class Job(JobBase):
     __actions = None
@@ -64,7 +64,7 @@ class ActionList(JobBase):
         else:
             raise StopIteration
     def run_core(self):
-        self.print_message('', "blue", ["bold"], '\r')
+        self.print_message('', '\r')
         self.begin()
         bar = tqdm_notebook(desc=self.name, total=self.counts)
         for x in iter(self):

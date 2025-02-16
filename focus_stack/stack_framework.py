@@ -1,6 +1,6 @@
 from .framework import  Job, ActionList, JobBase
 from .utils import check_path_exists
-from termcolor import colored, cprint
+from termcolor import colored
 import os
 
 class StackJob(Job):
@@ -29,7 +29,7 @@ class FrameDirectory:
         return filelist
     def set_filelist(self):
         self.filenames = self.folder_filelist(self.input_dir)
-        cprint("{} files ".format(len(self.filenames)) + "in folder: '" + self.input_dir + "'", 'blue')
+        print(colored("{} files ".format(len(self.filenames)) + "in folder: '" + self.input_dir + "'", 'blue'))
     def init(self, job):
         if self.working_directory is None: self.working_directory = job.working_directory
         check_path_exists(self.working_directory)
@@ -59,7 +59,7 @@ class FramesRefActions(FrameDirectory, ActionList):
             self.__ref_idx = self.ref_idx
             self.__idx_step = +1
         ll = len(self.filenames)
-        self.print_message("step {}/{}: process file: {}, reference: {}     ".format(self.count, ll, self.filenames[self.__idx], self.filenames[self.__ref_idx]), "blue", attrs=["bold"], end='\r')
+        self.print_message(colored("step {}/{}: process file: {}, reference: {} ".format(self.count, ll, self.filenames[self.__idx], self.filenames[self.__ref_idx]), "blue"), end='\r')
         self.run_frame(self.__idx, self.__ref_idx)
         if(self.__idx < ll):
             if self.step_process: self.__ref_idx = self.__idx

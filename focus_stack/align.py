@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
 import cv2
 import numpy as np
+from termcolor import colored
 from focus_stack.utils import read_img, write_img, img_8bit
 from focus_stack.framework import JobBase
 from focus_stack.stack_framework import FramesRefActions
-from termcolor import colored, cprint
     
 class AlignLayers(FramesRefActions):
     ALIGN_HOMOGRAPHY = "homography"
@@ -81,6 +81,7 @@ class AlignLayers(FramesRefActions):
             assert(false), "invalid align method: " + self.method
         return M, mask        
     def align_images(self, ref_idx, idx):
+        self.sub_message(colored('- find matches', 'light_blue'), end='\r')
         filename_ref, filename_0 = self.filenames[ref_idx], self.filenames[idx]
         img_0 = read_img(self.input_dir + "/" + filename_0)
         if img_0 is None: raise Exception("Invalid file: " + self.input_dir + "/" + filename_0)
@@ -107,6 +108,7 @@ class AlignLayers(FramesRefActions):
             if(self.plot_matches): matches_mask = mask.ravel().tolist()
             h, w = img_bw_1.shape
             pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0] ]).reshape(-1, 1 ,2)
+            self.sub_message(colored('- align images', 'light_blue'), end='\r')
             if self.transform==AlignLayers.ALIGN_HOMOGRAPHY:
                 dst = cv2.perspectiveTransform(pts, M)
                 img_warp = cv2.warpPerspective(img_0, M, (w, h), borderMode=self.cv2_border_mode, borderValue=self.border_value)
@@ -118,6 +120,7 @@ class AlignLayers(FramesRefActions):
                 if self.border_mode == self.BORDER_REPLICATE_BLUR:
                     mask = cv2.warpAffine(np.ones_like(img_0, dtype=np.uint8), M, (w, h), borderMode=cv2.BORDER_CONSTANT, borderValue=0)
             if self.border_mode == self.BORDER_REPLICATE_BLUR:
+                self.sub_message(colored('- blur borders', 'light_blue'), end='\r')
                 mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
                 blurred_warp = cv2.GaussianBlur(img_warp, (21, 21), sigmaX=self.border_blur)
                 img_warp[mask == 0] = blurred_warp[mask == 0]
@@ -125,7 +128,7 @@ class AlignLayers(FramesRefActions):
         else:
             img_warp = None
             if(self.plot_matches): matches_mask = None
-            cprint("image " + filename_0 + " not aligned, too few matches found: {}           ".format(n_good_matches), "red")
+            self.sub_message(colored("- image " + filename_0 + " not aligned, too few matches found: {}           ".format(n_good_matches), "red"))
         if(self.plot_matches):
             draw_params = dict(matchColor = (0,255,0), singlePointColor=None, matchesMask=matches_mask, flags = 2)
             img_match = cv2.cvtColor(cv2.drawMatches(img_0, kp_0, img_ref, kp_1, good_matches, None, **draw_params), cv2.COLOR_BGR2RGB)

@@ -53,7 +53,7 @@ class BalanceLayers(FramesRefActions):
         self.image_ref = self.preprocess(read_img(self.input_dir + "/" + self.filenames[self.ref_idx]))
         self.mean_ref, self.hist_ref = self.get_histos(self.image_ref)
     def end(self):
-        print("                                         ")
+        self.print_message("                                                                ")
     def balance(self, idx):
         image = read_img(self.input_dir + "/" + self.filenames[idx])
         if(idx != self.ref_idx):
