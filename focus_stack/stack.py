@@ -48,20 +48,20 @@ class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
         self.__chunks = [fnames[x:x + self.frames] for x in range(0, len(fnames) - self.overlap, self.frames - self.overlap)]
         self.counts = len(self.__chunks)
     def run_step(self):
-        print("fusing bunch: {}                    ".format(self.count), end='\r')
+        JobBase.message(self, "fusing bunch: {}                    ".format(self.count), "blue", end='\r')
         self.focus_stack(self.__chunks[self.count - 1])
     def init(self, job):
         FrameDirectory.init(self, job)
         FocusStackBase.init(self, job, self.working_directory)
         
-class FocusStack(FrameDirectory, Timer, FocusStackBase):
+class FocusStack(FrameDirectory, JobBase, FocusStackBase):
     def __init__(self, name, stack_algo, input_path=None, output_path=None, working_directory=None, resample=1, exif_path=None, postfix='', denoise=0):
         self.name = name
         FrameDirectory.__init__(self, name, input_path, output_path, working_directory, resample)
-        Timer.__init__(self, name)
+        JobBase.__init__(self, name)
         FocusStackBase.__init__(self, stack_algo, exif_path, postfix, denoise)
     def run_core(self):
-        cprint("running " + self.name, "blue", attrs=["bold"])
+        JobBase.message(self, '', "blue", attrs=["bold"])
         self.set_filelist()
         self.focus_stack(self.filenames)
     def init(self, job):
