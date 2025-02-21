@@ -20,8 +20,7 @@ class PyramidStack:
         return cv2.filter2D(image, -1, self.gen_kernel, borderType=cv2.BORDER_REFLECT101)
     def reduce_layer(self, layer):
         if len(layer.shape) == 2:
-            convolution = self.convolve(layer)
-            return convolution[::2, ::2]
+            return self.convolve(layer)[::2, ::2]
         ch_layer = self.reduce_layer(layer[:, :, 0])
         next_layer = np.zeros(list(ch_layer.shape) + [layer.shape[2]], dtype = ch_layer.dtype)
         next_layer[:, :, 0] = ch_layer
@@ -32,8 +31,7 @@ class PyramidStack:
         if len(layer.shape) == 2:
             expand = np.zeros((2*layer.shape[0], 2*layer.shape[1]), dtype=np.float64)
             expand[::2, ::2] = layer;
-            convolution = self.convolve(expand)
-            return 4.*convolution
+            return 4.*self.convolve(expand)
         ch_layer = self.expand_layer(layer[:, :, 0])
         next_layer = np.zeros(list(ch_layer.shape) + [layer.shape[2]], dtype=ch_layer.dtype)
         next_layer[:, :, 0] = ch_layer
@@ -64,7 +62,7 @@ class PyramidStack:
             pyramid.append(np.zeros(gauss.shape, dtype=gauss.dtype))
             n_layers = images.shape[0]
             for layer in range(n_layers):
-                self.print_message(' - laplacian pyramids, level: {}, layer: {}/{} '.format(levels, layer + 1, n_layers))
+                self.print_message(' - laplacian pyramids, level: {}, layer: {}/{} '.format(level, layer + 1, n_layers))
                 gauss_layer = gauss[layer]
                 expanded = self.expand_layer(gaussian[level][layer])
                 if expanded.shape != gauss_layer.shape:
@@ -102,8 +100,9 @@ class PyramidStack:
         best_d = np.argmax(deviations, axis=0)
         fused = np.zeros(images.shape[1:], dtype=np.float64)
         for layer in range(layers):
-            fused += np.where(best_e[:, :, np.newaxis]==layer, images[layer], 0)
-            fused += np.where(best_d[:, :, np.newaxis]==layer, images[layer], 0)
+            img = images[layer]
+            fused += np.where(best_e[:, :, np.newaxis]==layer, img, 0)
+            fused += np.where(best_d[:, :, np.newaxis]==layer, img, 0)
         return (fused/2).astype(images.dtype)
     def get_fused_laplacian(self, laplacians):
         layers = laplacians.shape[0]
