@@ -45,7 +45,7 @@ class PyramidStack:
         pyramid = [images.astype(np.float64)]
         num_images = images.shape[0]
         while levels > 0:
-            self.print_message(' - gaussian pyramids, level: {} - begin '.format(levels))
+            self.print_message(' - gaussian pyramids, level: {} '.format(levels))
             next_layer = self.reduce_layer(pyramid[-1][0])
             next_layer_size = [num_images] + list(next_layer.shape)
             pyramid.append(np.zeros(next_layer_size, dtype=next_layer.dtype))
@@ -70,7 +70,7 @@ class PyramidStack:
                 if expanded.shape != gauss_layer.shape:
                     expanded = expanded[:gauss_layer.shape[0], :gauss_layer.shape[1]]
                 pyramid[-1][layer] = gauss_layer - expanded
-        self.print_message(' - laplacian pyramids completed             ')
+        self.print_message(' - laplacian pyramids completed ')
         return pyramid[::-1]
     def area_entropy(self, area, probabilities):
         levels = area.flatten()

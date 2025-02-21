@@ -31,7 +31,7 @@ class FocusStackBase:
             stacked_img = cv2.fastNlMeansDenoisingColored(stacked_img, None, self.denoise, self.denoise, 7, 21)
         write_img(out_filename, stacked_img)
         if self.exif_path != '':
-            self.sub_message(colored(' - copying exif data    ', "light_blue"), end='\r')
+            self.sub_message(colored(' - copying exif data ', "light_blue"), end='\r')
             dirpath, _, fnames = next(os.walk(self.exif_path))
             fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in EXTENSIONS]
             exif_filename = self.exif_path + '/' + fnames[0]
