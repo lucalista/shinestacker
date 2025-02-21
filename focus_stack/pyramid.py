@@ -45,7 +45,7 @@ class PyramidStack:
         pyramid = [images.astype(np.float64)]
         num_images = images.shape[0]
         while levels > 0:
-            self.print_message(' - gaussian pyramids, level: {} '.format(levels))
+            self.print_message(' - gaussian pyramids, level: {} - begin '.format(levels))
             next_layer = self.reduce_layer(pyramid[-1][0])
             next_layer_size = [num_images] + list(next_layer.shape)
             pyramid.append(np.zeros(next_layer_size, dtype=next_layer.dtype))
@@ -59,16 +59,18 @@ class PyramidStack:
         gaussian = self.gaussian_pyramid(images, levels)
         pyramid = [gaussian[-1]]
         for level in range(len(gaussian) - 1, 0, -1):
-            self.print_message(' - laplacian pyramids, level: {} '.format(levels))
+            self.print_message(' - laplacian pyramids, level: {} - begin '.format(levels))
             gauss = gaussian[level - 1]
             pyramid.append(np.zeros(gauss.shape, dtype=gauss.dtype))
-            for layer in range(images.shape[0]):
+            n_layers = images.shape[0]
+            for layer in range(n_layers):
+                self.print_message(' - laplacian pyramids, level: {}, layer: {}/{} '.format(levels, layer + 1, n_layers))
                 gauss_layer = gauss[layer]
                 expanded = self.expand_layer(gaussian[level][layer])
                 if expanded.shape != gauss_layer.shape:
                     expanded = expanded[:gauss_layer.shape[0], :gauss_layer.shape[1]]
                 pyramid[-1][layer] = gauss_layer - expanded
-        self.print_message(' - laplacian pyramids completed ')
+        self.print_message(' - laplacian pyramids completed             ')
         return pyramid[::-1]
     def area_entropy(self, area, probabilities):
         levels = area.flatten()
@@ -85,8 +87,7 @@ class PyramidStack:
         padded_image = cv2.copyMakeBorder(image, self.pad_amount, self.pad_amount, self.pad_amount, self.pad_amount, cv2.BORDER_REFLECT101)
         return np.fromfunction(np.vectorize(lambda row, column: self.area_entropy(self.get_pad(padded_image, row, column), probabilities)), image.shape[:2], dtype=int)
     def area_deviation(self, area):
-        average = np.average(area).astype(np.float64)
-        return np.square(area - average).sum()/area.size
+        return np.square(area - np.average(area).astype(np.float64)).sum()/area.size
     def deviation(self, image):
         padded_image = cv2.copyMakeBorder(image, self.pad_amount, self.pad_amount, self.pad_amount, self.pad_amount, cv2.BORDER_REFLECT101)
         return np.fromfunction(np.vectorize(lambda row, column: self.area_deviation(self.get_pad(padded_image, row, column))), image.shape[:2], dtype=int)
@@ -122,7 +123,7 @@ class PyramidStack:
         for layer in range(len(pyramids) - 2, -1, -1):
             self.print_message(' - fuse pyramids, layer: {} '.format(layer + 1))
             fused.append(self.get_fused_laplacian(pyramids[layer]))
-        self.print_message(' - pyramids fusion completed    ')
+        self.print_message(' - pyramids fusion completed ')
         return fused[::-1]
     def collapse(self, pyramid):
         image = pyramid[-1]
@@ -137,9 +138,5 @@ class PyramidStack:
         if self.dtype == np.uint8: self.n_values = 256
         elif self.dtype == np.uint16: self.n_values = 65536
         else: Exception("Invalid image type: " + self.dtype.str)
-        smallest_side = min(images[0].shape[:2])
-        depth = int(np.log2(smallest_side/self.min_size))
-        pyramids = self.laplacian_pyramid(images, depth)
-        fusion = self.fuse_pyramids(pyramids)
-        stacked_image = self.collapse(fusion)
+        stacked_image = self.collapse(self.fuse_pyramids(self.laplacian_pyramid(images, int(np.log2(min(images[0].shape[:2])/self.min_size)))))
         return np.clip(np.absolute(stacked_image), 0, self.n_values - 1).astype(self.dtype)
