@@ -15,7 +15,7 @@ class PyramidStack:
     def messenger(self, messenger):
         self.messenger = messenger
     def print_message(self, msg):
-        self.messenger.sub_message(colored(msg, "light_blue"), end='\r')
+        self.messenger.sub_message(msg, end='\r')
     def convolve(self, image):
         return cv2.filter2D(image, -1, self.gen_kernel, borderType=cv2.BORDER_REFLECT101)
     def reduce_layer(self, layer):
@@ -39,11 +39,11 @@ class PyramidStack:
             next_layer[:, :, channel] = self.expand_layer(layer[:, :, channel])
         return next_layer
     def gaussian_pyramid(self, images, levels):
-        self.print_message(' - begin gaussian pyramids ')
+        self.print_message(' - begin gaussian pyramids               ')
         pyramid = [images.astype(np.float64)]
         num_images = images.shape[0]
         while levels > 0:
-            self.print_message(' - gaussian pyramids, level: {} '.format(levels))
+            self.print_message(' - gaussian pyramids, level: {}     '.format(levels))
             next_layer = self.reduce_layer(pyramid[-1][0])
             next_layer_size = [num_images] + list(next_layer.shape)
             pyramid.append(np.zeros(next_layer_size, dtype=next_layer.dtype))
@@ -51,24 +51,24 @@ class PyramidStack:
             for layer in range(1, images.shape[0]):
                 pyramid[-1][layer] = self.reduce_layer(pyramid[-2][layer])
             levels = levels - 1
-        self.print_message(' - gaussian pyramids completed ')
+        self.print_message(' - gaussian pyramids completed               ')
         return pyramid
     def laplacian_pyramid(self, images, levels):
         gaussian = self.gaussian_pyramid(images, levels)
         pyramid = [gaussian[-1]]
         for level in range(len(gaussian) - 1, 0, -1):
-            self.print_message(' - laplacian pyramids, level: {} - begin '.format(levels))
+            self.print_message(' - laplacian pyramids, level: {} - begin     '.format(levels))
             gauss = gaussian[level - 1]
             pyramid.append(np.zeros(gauss.shape, dtype=gauss.dtype))
             n_layers = images.shape[0]
             for layer in range(n_layers):
-                self.print_message(' - laplacian pyramids, level: {}, layer: {}/{} '.format(level, layer + 1, n_layers))
+                self.print_message(' - laplacian pyramids, level: {}, layer: {}/{}     '.format(level, layer + 1, n_layers))
                 gauss_layer = gauss[layer]
                 expanded = self.expand_layer(gaussian[level][layer])
                 if expanded.shape != gauss_layer.shape:
                     expanded = expanded[:gauss_layer.shape[0], :gauss_layer.shape[1]]
                 pyramid[-1][layer] = gauss_layer - expanded
-        self.print_message(' - laplacian pyramids completed ')
+        self.print_message(' - laplacian pyramids completed               ')
         return pyramid[::-1]
     def area_entropy(self, area, probabilities):
         levels = area.flatten()
@@ -104,25 +104,24 @@ class PyramidStack:
             fused += np.where(best_e[:, :, np.newaxis]==layer, img, 0)
             fused += np.where(best_d[:, :, np.newaxis]==layer, img, 0)
         return (fused/2).astype(images.dtype)
-    def get_fused_laplacian(self, laplacians):
-        layers = laplacians.shape[0]
-        region_energies = np.zeros(laplacians.shape[:3], dtype=np.float64)
-        gray_laps = [cv2.cvtColor(laplacians[layer].astype(np.float32), cv2.COLOR_BGR2GRAY) for layer in range(layers)]
-        region_energies = np.array([self.convolve(np.square(gray_lap)) for gray_lap in gray_laps])
-        best_re = np.argmax(region_energies, axis = 0)
-        self.print_message(' - compute fused laplacian ')
-        fused = np.zeros(laplacians.shape[1:], dtype=laplacians.dtype)
-        for layer in range(layers):
-            fused += np.where(best_re[:, :, np.newaxis]==layer, laplacians[layer], 0)
-        return fused
-        #optimized, but requires more memory
-        #return np.array([np.where(best_re[:, :, np.newaxis]==layer, laplacians[layer], 0) for layer in range(layers)]).sum(axis=0)
     def fuse_pyramids(self, pyramids):
         fused = [self.get_fused_base(pyramids[-1])]
         for layer in range(len(pyramids) - 2, -1, -1):
-            self.print_message(' - fuse pyramids, layer: {} '.format(layer + 1))
-            fused.append(self.get_fused_laplacian(pyramids[layer]))
-        self.print_message(' - pyramids fusion completed ')
+            laplacians = pyramids[layer]
+            layers = laplacians.shape[0]
+            self.print_message(' - fuse pyramids, layer: {}     '.format(layer + 1))
+            region_energies = np.zeros(laplacians.shape[:3], dtype=np.float64)
+            gray_laps = [cv2.cvtColor(laplacians[layer].astype(np.float32), cv2.COLOR_BGR2GRAY) for layer in range(layers)]
+            region_energies = np.array([self.convolve(np.square(gray_lap)) for gray_lap in gray_laps])
+            best_re = np.argmax(region_energies, axis = 0)
+            self.print_message(' - compute fused laplacian: {}     '.format(layer + 1))
+            fused_lapl = np.zeros(laplacians.shape[1:], dtype=laplacians.dtype)
+            for layer in range(layers):
+                fused_lapl += np.where(best_re[:, :, np.newaxis]==layer, laplacians[layer], 0)
+            #optimized, but requires more memory
+            #return np.array([np.where(best_re[:, :, np.newaxis]==layer, laplacians[layer], 0) for layer in range(layers)]).sum(axis=0)
+            fused.append(fused_lapl)
+        self.print_message(' - pyramids fusion completed              ')
         return fused[::-1]
     def collapse(self, pyramid):
         image = pyramid[-1]
