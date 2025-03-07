@@ -1,6 +1,7 @@
 from .framework import  Job, ActionList, JobBase
 from .utils import check_path_exists
 from termcolor import colored
+from focus_stack.utils import read_img, write_img
 import os
 
 class StackJob(Job):
@@ -53,6 +54,8 @@ class FramesRefActions(FrameDirectory, ActionList):
         self.set_filelist()
         self.counts = len(self.filenames)
         if self.ref_idx == -1: self.ref_idx = len(self.filenames) // 2
+    def run_frame(self, idx, ref_idx):
+        assert(False), 'abstract method'
     def run_step(self):
         if self.count == 1:
             self.__idx = self.ref_idx if self.step_process else 0
@@ -69,4 +72,33 @@ class FramesRefActions(FrameDirectory, ActionList):
             if self.step_process: self.__ref_idx = self.ref_idx
             self.__idx_step = -1
             
-        
+class MultiRefActions(FramesRefActions):
+    def __init__(self, name, input_path=None, output_path=None, working_directory=None, resample=1, ref_idx=-1, step_process=True, actions=None):
+        FramesRefActions.__init__(self, name, input_path, output_path, working_directory, resample, ref_idx, step_process)
+        self.__actions = []
+        for a in actions:
+            self.__actions.append(a)
+    def begin(self):
+        FramesRefActions.begin(self)
+        for a in self.__actions:
+            a.begin(self)
+    def img_ref(self, idx):
+        filename = self.filenames[idx]
+        img = read_img((self.output_dir if self.step_process else self.input_dir)  + "/" + filename)
+        if img is None: raise Exception("Invalid file: " + self.input_dir + "/" + filename)
+        return img 
+    def run_frame(self, idx, ref_idx):
+        filename = self.filenames[idx]
+        self.sub_message(colored('- read image     ', 'light_blue'), end='\r')
+        img = read_img(self.input_dir + "/" + filename)
+        if img is None: raise Exception("Invalid file: " + self.input_dir + "/" + filename)
+        if idx == ref_idx:
+            write_img(self.output_dir + "/" + filename, img)
+            return
+        for a in self.__actions:
+            img = a.run_frame(idx, ref_idx, img)
+        self.sub_message(colored('- write image     ', 'light_blue'), end='\r')
+        write_img(self.output_dir + "/" + filename, img)
+    def end(self):
+        for a in self.__actions:
+            a.end()

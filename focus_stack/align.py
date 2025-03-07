@@ -5,15 +5,14 @@ from termcolor import colored
 from focus_stack.utils import read_img, write_img, img_8bit
 from focus_stack.framework import JobBase
 from focus_stack.stack_framework import FramesRefActions
-    
-class AlignLayers(FramesRefActions):
+
+class AlignLayers:
     ALIGN_HOMOGRAPHY = "homography"
     ALIGN_RIGID = "rigid"
     BORDER_CONSTANT = "BORDER_CONSTANT"
     BORDER_REPLICATE = "BORDER_REPLICATE"
     BORDER_REPLICATE_BLUR = "BORDER_REPLICATE_BLUR"
-    def __init__(self,  name, input_path=None, output_path=None, working_directory=None, resample=1, step_align=True, ref_idx=-1, detector='SIFT', descriptor='SIFT', match_method='KNN', flann_idx_kdtree=2, flann_trees=5, flann_checks=50, match_threshold=0.75, transform=ALIGN_RIGID, rans_threshold=5.0, border_mode=BORDER_REPLICATE_BLUR, border_value=(0, 0, 0, 0),  border_blur=50, plot_matches=False):
-        FramesRefActions.__init__(self, name, input_path, output_path, working_directory, resample, ref_idx, step_align)
+    def __init__(self, detector='SIFT', descriptor='SIFT', match_method='KNN', flann_idx_kdtree=2, flann_trees=5, flann_checks=50, match_threshold=0.75, transform=ALIGN_RIGID, rans_threshold=5.0, border_mode=BORDER_REPLICATE_BLUR, border_value=(0, 0, 0, 0),  border_blur=50, plot_matches=False):
         self.detector = detector
         self.descriptor = descriptor
         self.match_method = match_method
@@ -32,8 +31,6 @@ class AlignLayers(FramesRefActions):
         self.border_blur = border_blur
         self.border_value = border_value
         self.plot_matches = plot_matches
-    def run_frame(self, idx, ref_idx):
-        self.align_images(ref_idx, idx)
     def create_detector(self):
         detector = None
         if self.detector=='SIFT': detector = cv2.SIFT_create()
@@ -80,19 +77,9 @@ class AlignLayers(FramesRefActions):
         else:
             assert(false), "invalid align method: " + self.method
         return M, mask        
-    def align_images(self, ref_idx, idx):
-        self.sub_message(colored('- find matches', 'light_blue'), end='\r')
-        filename_ref, filename_0 = self.filenames[ref_idx], self.filenames[idx]
-        img_0 = read_img(self.input_dir + "/" + filename_0)
-        if img_0 is None: raise Exception("Invalid file: " + self.input_dir + "/" + filename_0)
-        if filename_0 == filename_ref:
-            write_img(self.output_dir + "/" + filename_0, img_0)
-            if(self.plot_matches):
-                print('')
-                print("reference image unchanged")
-            return
-        img_ref = read_img((self.output_dir if self.step_process else self.input_dir)  + "/" + filename_ref)
-        if img_ref is None: raise Exception("Invalid file: " + self.input_dir + "/" + filename_ref)    
+    def run_frame(self, idx, ref_idx, img_0):
+        self.process.sub_message(colored('- find matches ', 'light_blue'), end='\r')
+        img_ref = self.process.img_ref(ref_idx)
         img_bw_0 = cv2.cvtColor(img_8bit(img_0), cv2.COLOR_BGR2GRAY)
         img_bw_1 = cv2.cvtColor(img_8bit(img_ref).astype('uint8'), cv2.COLOR_BGR2GRAY)
         detector = self.create_detector()
@@ -108,7 +95,7 @@ class AlignLayers(FramesRefActions):
             if(self.plot_matches): matches_mask = mask.ravel().tolist()
             h, w = img_bw_1.shape
             pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0] ]).reshape(-1, 1 ,2)
-            self.sub_message(colored('- align images', 'light_blue'), end='\r')
+            self.process.sub_message(colored('- align images ', 'light_blue'), end='\r')
             if self.transform==AlignLayers.ALIGN_HOMOGRAPHY:
                 dst = cv2.perspectiveTransform(pts, M)
                 img_warp = cv2.warpPerspective(img_0, M, (w, h), borderMode=self.cv2_border_mode, borderValue=self.border_value)
@@ -120,15 +107,16 @@ class AlignLayers(FramesRefActions):
                 if self.border_mode == self.BORDER_REPLICATE_BLUR:
                     mask = cv2.warpAffine(np.ones_like(img_0, dtype=np.uint8), M, (w, h), borderMode=cv2.BORDER_CONSTANT, borderValue=0)
             if self.border_mode == self.BORDER_REPLICATE_BLUR:
-                self.sub_message(colored('- blur borders', 'light_blue'), end='\r')
+                self.process.sub_message(colored('- blur borders ', 'light_blue'), end='\r')
                 mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
                 blurred_warp = cv2.GaussianBlur(img_warp, (21, 21), sigmaX=self.border_blur)
                 img_warp[mask == 0] = blurred_warp[mask == 0]
-            write_img(self.output_dir + "/" + filename_0, img_warp)
+            return img_warp
         else:
             img_warp = None
             if(self.plot_matches): matches_mask = None
-            self.sub_message(colored("- image " + filename_0 + " not aligned, too few matches found: {}           ".format(n_good_matches), "red"))
+            self.process.sub_message(colored("- image not aligned, too few matches found: {}           ".format(n_good_matches), "red"))
+            return None
         if(self.plot_matches):
             draw_params = dict(matchColor = (0,255,0), singlePointColor=None, matchesMask=matches_mask, flags = 2)
             img_match = cv2.cvtColor(cv2.drawMatches(img_0, kp_0, img_ref, kp_1, good_matches, None, **draw_params), cv2.COLOR_BGR2RGB)
@@ -137,17 +125,18 @@ class AlignLayers(FramesRefActions):
             plt.figure(figsize=(10, 5))
             plt.imshow(img_match, 'gray'),
             plt.show()
-    def begin(self):
-        FramesRefActions.begin(self)
-        self.n_matches = np.zeros(self.counts)
+        return img_warp
+    def begin(self, process):
+        self.process = process
+        self.n_matches = np.zeros(process.counts)
     def end(self):
         #print("                                           ")
         plt.figure(figsize=(10, 5))
         x = np.arange(1, len(self.n_matches) + 1, dtype=int)
-        no_ref = (x != self.ref_idx + 1)
+        no_ref = (x != self.process.ref_idx + 1)
         x = x[no_ref]
         y = self.n_matches[no_ref]
-        plt.plot([self.ref_idx + 1, self.ref_idx + 1], [0, y.max()], color='cornflowerblue', linestyle='--', label='reference frame')
+        plt.plot([self.process.ref_idx + 1, self.process.ref_idx + 1], [0, y.max()], color='cornflowerblue', linestyle='--', label='reference frame')
         plt.plot([x[0], x[-1]], [self.min_matches, self.min_matches], color='lightgray', linestyle='--', label='min. matches')
         plt.plot(x, y, color='navy', label='matches')
         plt.xlabel('frame')

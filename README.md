@@ -5,8 +5,8 @@
 ```python
 from focus_stack import *
 job = StackJob("job", "E:/Focus stacking/My image directory/", input_path="source")
-job.add_action(AlignLayers("align"))
-job.add_action(BalanceLayersLumi("balance", mask_size=0.5, i_min=10, i_max=255))
+job.add_action(MultiRefActions("align", actions=[AlignLayers(),
+                                                 BalanceLayersLumi(mask_size=0.8, i_min=150, i_max=65385)]))
 job.add_action(FocusStackBunch("batches", PyramidStack(), frames=10, overlap=2, denoise=0.8))
 job.add_action(FocusStack("stack", PyramidStack(), postfix='_py', denoise=0.8))
 job.add_action(FocusStack("stack", DepthMapStack(), input_path='batches', postfix='_dm', denoise=0.8))
@@ -37,19 +37,27 @@ arguments are:
 * ```name```: the name of the job, used for printout
 * ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images for subsequent action. If not specified, at least the first action must specify an ```input_path```.
 
-### Image registration: scale, tanslation and rotation correction, or full perspective correction
+### Schedule multiple actions based on a reference image: align and/or balance images
 
 ```python
-job.add_action(AlignLayers(name, *options))
+job.add_action(MultiRefActions(name, actions=[...], *options))
 ```
-arguments are:
+
 * ```name```: the name of the action, used for printout, and possibly for output path
+* ```actions```: list of action object to be applied in cascade 
 * ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images to be aligned. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If not specified the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
 * ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
 * ```working_directory```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_directory```.
 * ```resample``` (optione, default: 1): take every *n*<sup>th</sup> frame in the selected directory. Default: take all frames.
 * ```ref_idx``` (optional): the index of the image used as reference. Images are numbered starting from zero. If not specified, it is the index of the middle image.
-* ```step_align``` (optional): if equal to ```True``` (default), each image is aligned with respect to the previous or next image, depending if it is after or befor the reference image.
+* ```step_process``` (optional): if equal to ```True``` (default), each image is aligned with respect to the previous or next image, depending if it is after or befor the reference image.
+
+### Image registration: scale, tanslation and rotation correction, or full perspective correction
+
+```python
+AlignLayers(*options)
+```
+arguments are:
 * ```transform``` (optional): the transformation applied to register images. Possible values are:
   * ```ALIGN_RIGID``` (default): allow scale, tanslation and rotation correction. This should be used for image acquired with tripode or microscope.
   * ```ALIGN_HOMOGRAPHY```: allow full perspective correction. This should be used for images taken with hand camera.
@@ -87,13 +95,9 @@ There are four possible luminosity and color balance methods:
 * ```BalanceLayersLS```: balance saturation a luminosity value in the HLS (Hue, Lightness, Saturation) representation. It may be needed in cases of extreme luminosity variation that affects saturation.
 
 ```python
-job.add_action(BalanceLayersLumi(working_directory, name, *options))
+BalanceLayersLumi(*options))
 ```
 arguments are:
-* ```name```: the name of the action, used for printout, and possibly for output path
-* ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images to be aligned. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If not specified the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.* ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
-* ```working_directory```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_directory```.
-* ```ref_idx``` (optional): the index of the image used as reference. Images are numbered starting from zero. If not specified, it is the index of the middle image.
 * ```mask_size``` (optional): if specified, luminosity and color balance is only applied to pixels within a circle of radius equal to the minimum between the image width and height times ```mask_size```, i.e: 0.8 means 80% of a portrait image height. It may beuseful for images with vignetting, in order to remove the outer darker pixels.
 * ```i_min``` (optional): if specifies, only pixels with content greater pr equal tham ```i_min``` are used. It may be useful to remove black areas.
 * ```i_max``` (optional): if specifies, only pixels with content less pr equal tham ```i_max``` are used. It may be useful to remove white areas. Note that for 8-bit images ```i_max``` should be less or equal to 255, while for 16-bit images ```i_max``` should be less or equal to 65535.

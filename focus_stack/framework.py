@@ -11,7 +11,6 @@ def elapsed_time_str(start):
     return ("{:02d}:{:02d}:{:05.2f}s".format(hh, mm, ss))
 
 class JobBase:
-    __t0 = None
     def __init__(self, name):
         self.name = name
         self.base_message = ''
@@ -29,7 +28,6 @@ class JobBase:
         print(self.base_message + msg, end=end)
         
 class Job(JobBase):
-    __actions = None
     def __init__(self, name):
         JobBase.__init__(self, name)
         self.__actions = []
@@ -45,7 +43,6 @@ class Job(JobBase):
             a.run()
 
 class ActionList(JobBase):
-    counts = None
     def __init__(self, name):
         JobBase.__init__(self, name)
     def begin(self):
