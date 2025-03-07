@@ -44,7 +44,7 @@ job.add_action(MultiRefActions(name, actions=[...], *options))
 ```
 
 * ```name```: the name of the action, used for printout, and possibly for output path
-* ```actions```: list of action object to be applied in cascade 
+* ```actions```: array of action object to be applied in cascade 
 * ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images to be aligned. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If not specified the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
 * ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
 * ```working_directory```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_directory```.
