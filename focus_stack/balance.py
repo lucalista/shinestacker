@@ -60,7 +60,7 @@ class BalanceLayers:
             self.process.sub_message(colored('- preprocess image    ', 'light_blue'), end='\r')
             image = self.preprocess(image)
             self.process.sub_message(colored('- balance image     ', 'light_blue'), end='\r')
-            image = self.adjust_gamma(image)
+            image = self.adjust_gamma(image, idx)
             self.process.sub_message(colored('- postprocess image      ', 'light_blue'), end='\r')
             image = self.postprocess(image)
         return image
@@ -70,7 +70,7 @@ class BalanceLayers:
         return image
     def get_histos(self, image):
         assert(False), 'abstract method'
-    def adjust_gamma(self, image):
+    def adjust_gamma(self, image, idx):
         assert(False), 'abstract method'
     def lumi_expect(self, hist, gamma, dtype):
         return np.average(gamma_lut(gamma, dtype)[self.i_min:self.i_end], weights=hist.flatten()[self.i_min:self.i_end])
@@ -104,11 +104,11 @@ class BalanceLayersLumi(BalanceLayers):
             plt.show()
         mean_lumi = np.average(list(range(two_n))[self.i_min:self.i_end], weights=hist_lumi.flatten()[self.i_min:self.i_end])
         return mean_lumi, hist_lumi
-    def adjust_gamma(self, image):
+    def adjust_gamma(self, image, idx):
         mean, hist = self.get_histos(image)
         f = lambda x: self.lumi_expect(hist, x, image.dtype) - self.mean_ref
         gamma = bisect(f, 0.1, 5)
-        self.gamma[self.process.count - 1] = gamma
+        self.gamma[idx] = gamma
         return adjust_gamma(image, gamma)
     def begin(self, process):
         BalanceLayers.begin(self, process)
@@ -146,14 +146,14 @@ class BalanceLayersRGB(BalanceLayers):
                 histo_plot(axs[c], hist[c], colors[c] + " luminosity", colors[c], two_n)
             plt.show()
         return mean, hist
-    def adjust_gamma(self, image):
+    def adjust_gamma(self, image, idx):
         mean, hist = self.get_histos(image)
         gamma = []
         ch_range = [0, 1, 2]
         for c in range(3):
             f = lambda x: self.lumi_expect(hist[c], x, image.dtype) - self.mean_ref[c]
             gamma.append(bisect(f, 0.1, 5))
-        self.gamma[self.process.count - 1] = gamma
+        self.gamma[idx] = gamma
         return adjust_gamma_ch3(image, gamma, ch_range)
     def begin(self, process):
         BalanceLayers.begin(self, process)
@@ -196,14 +196,14 @@ class BalanceLayersCh2(BalanceLayers):
                 histo_plot(axs[c], hist[c], self.labels[c], colors[c], two_n)
             plt.show()
         return mean, hist
-    def adjust_gamma(self, image):
+    def adjust_gamma(self, image, idx):
         mean, hist = self.get_histos(image)
         gamma = [1, 1, 1]
         ch_range = [1, 2]
         for c in ch_range:
             f = lambda x: self.lumi_expect(hist[c], x, image.dtype) - self.mean_ref[c]
             gamma[c] = bisect(f, 0.1, 5)
-        self.gamma[self.process.count - 1] = gamma[1:]
+        self.gamma[idx] = gamma[1:]
         return adjust_gamma_ch3(image, gamma, ch_range)
     def begin(self, process):
         BalanceLayers.begin(self, process)
