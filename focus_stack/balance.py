@@ -7,7 +7,7 @@ from focus_stack.utils import read_img, write_img, img_8bit
 from focus_stack.stack_framework import *
 from termcolor import colored, cprint
 
-default_img_scale = 10
+default_img_scale = 8
 
 def gamma_lut(gamma, dtype):
     gamma_inv = 1.0/gamma
