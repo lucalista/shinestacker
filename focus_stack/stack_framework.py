@@ -1,6 +1,5 @@
 from .framework import  Job, ActionList, JobBase
 from .utils import check_path_exists
-from termcolor import colored
 from focus_stack.utils import read_img, write_img
 import os
 
@@ -89,7 +88,7 @@ class MultiRefActions(FramesRefActions):
         return img 
     def run_frame(self, idx, ref_idx):
         filename = self.filenames[idx]
-        self.sub_message(colored('- read image     ', 'light_blue'), end='\r')
+        self.sub_message('- read image        ', end='\r')
         img = read_img(self.input_dir + "/" + filename)
         if img is None: raise Exception("Invalid file: " + self.input_dir + "/" + filename)
         if idx == ref_idx:
@@ -97,7 +96,7 @@ class MultiRefActions(FramesRefActions):
             return
         for a in self.__actions:
             img = a.run_frame(idx, ref_idx, img)
-        self.sub_message(colored('- write image     ', 'light_blue'), end='\r')
+        self.sub_message('- write image        ', end='\r')
         write_img(self.output_dir + "/" + filename, img)
     def end(self):
         for a in self.__actions:

@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 from scipy.optimize import bisect
 from focus_stack.utils import read_img, write_img, img_8bit
 from focus_stack.stack_framework import *
-from termcolor import colored, cprint
 
 default_img_scale = 8
 
@@ -57,11 +56,11 @@ class BalanceLayers:
         self.process.print_message('                                                                                 ')
     def run_frame(self, idx, ref_idx, image):
         if(idx != self.process.ref_idx):
-            self.process.sub_message(colored('- preprocess image    ', 'light_blue'), end='\r')
+            self.process.sub_message('- preprocess image    ', end='\r')
             image = self.preprocess(image)
-            self.process.sub_message(colored('- balance image     ', 'light_blue'), end='\r')
+            self.process.sub_message('- balance image     ', end='\r')
             image = self.adjust_gamma(image, idx)
-            self.process.sub_message(colored('- postprocess image      ', 'light_blue'), end='\r')
+            self.process.sub_message('- postprocess image      ', end='\r')
             image = self.postprocess(image)
         return image
     def preprocess(self, image):

@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import cv2
 import numpy as np
-from termcolor import colored
 from focus_stack.utils import read_img, write_img, img_8bit
 from focus_stack.framework import JobBase
 from focus_stack.stack_framework import FramesRefActions
@@ -78,7 +77,7 @@ class AlignLayers:
             assert(false), "invalid align method: " + self.method
         return M, mask        
     def run_frame(self, idx, ref_idx, img_0):
-        self.process.sub_message(colored('- find matches ', 'light_blue'), end='\r')
+        self.process.sub_message('- find matches ', 'light_blue', end='\r')
         img_ref = self.process.img_ref(ref_idx)
         img_bw_0 = cv2.cvtColor(img_8bit(img_0), cv2.COLOR_BGR2GRAY)
         img_bw_1 = cv2.cvtColor(img_8bit(img_ref).astype('uint8'), cv2.COLOR_BGR2GRAY)
@@ -115,7 +114,7 @@ class AlignLayers:
         else:
             img_warp = None
             if(self.plot_matches): matches_mask = None
-            self.process.sub_message(colored("- image not aligned, too few matches found: {}           ".format(n_good_matches), "red"))
+            self.process.sub_message("- image not aligned, too few matches found: {}           ".format(n_good_matches))
             return None
         if(self.plot_matches):
             draw_params = dict(matchColor = (0,255,0), singlePointColor=None, matchesMask=matches_mask, flags = 2)
