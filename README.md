@@ -1,5 +1,7 @@
 # Focus stacking framework
 
+<img src='img/flies.gif' width=400/>  <img src='img/flies_stack.jpg' width=400/>
+
 ### Usage example with jupyter notebook:
 
 ```python
