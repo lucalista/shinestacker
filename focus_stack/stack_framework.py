@@ -1,6 +1,7 @@
 from .framework import  Job, ActionList, JobBase
 from .utils import check_path_exists
 from focus_stack.utils import read_img, write_img
+from termcolor import colored
 import os
 
 class StackJob(Job):
