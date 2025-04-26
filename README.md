@@ -8,7 +8,7 @@
 from focus_stack import *
 job = StackJob("job", "E:/Focus stacking/My image directory/", input_path="source")
 job.add_action(MultiRefActions("align", actions=[AlignLayers(),
-                                                 BalanceLayersLumi(mask_size=0.8, i_min=150, i_max=65385)]))
+                                                 Balance(LumiCorrection(mask_size=0.8, i_min=150, i_max=65385))]))
 job.add_action(FocusStackBunch("batches", PyramidStack(), frames=10, overlap=2, denoise=0.8))
 job.add_action(FocusStack("stack", PyramidStack(), postfix='_py', denoise=0.8))
 job.add_action(FocusStack("stack", DepthMapStack(), input_path='batches', postfix='_dm', denoise=0.8))
@@ -90,20 +90,17 @@ arguments are:
 
 ### Luminosity and color balance
 
-There are four possible luminosity and color balance methods:
-* ```BalanceLayersLumi```: balance luminosity equally for R, G and B channels. It should be fine for most of the cases.
-* ```BalanceLayersRGB```: balance luminosity separately for R, G and B channels. It may be needed if some but not all of the images have a undesired color dominance.
-* ```BalanceLayersSV```: balance saturation a luminosity value in the HSV (Hue, Saturation, brightness Value) representation. It may be needed in cases of extreme luminosity variation that affects saturation.
-* ```BalanceLayersLS```: balance saturation a luminosity value in the HLS (Hue, Lightness, Saturation) representation. It may be needed in cases of extreme luminosity variation that affects saturation.
-
-```python
-BalanceLayersLumi(*options))
-```
+The module ```Balance``` accepts a correction object at constructor. There are four possible luminosity and color balance correctors:
+* ```LumiCorrection```: balance luminosity equally for R, G and B channels. It should be fine for most of the cases.
+* ```RGBCorrection```: balance luminosity separately for R, G and B channels. It may be needed if some but not all of the images have a undesired color dominance.
+* ```SVCorrection```: balance saturation a luminosity value in the HSV (Hue, Saturation, brightness Value) representation. It may be needed in cases of extreme luminosity variation that affects saturation.
+* ```LSCorrection```: balance saturation a luminosity value in the HLS (Hue, Lightness, Saturation) representation. It may be needed in cases of extreme luminosity variation that affects saturation.
 arguments are:
 * ```mask_size``` (optional): if specified, luminosity and color balance is only applied to pixels within a circle of radius equal to the minimum between the image width and height times ```mask_size```, i.e: 0.8 means 80% of a portrait image height. It may beuseful for images with vignetting, in order to remove the outer darker pixels.
 * ```i_min``` (optional): if specifies, only pixels with content greater pr equal tham ```i_min``` are used. It may be useful to remove black areas.
 * ```i_max``` (optional): if specifies, only pixels with content less pr equal tham ```i_max``` are used. It may be useful to remove white areas. Note that for 8-bit images ```i_max``` should be less or equal to 255, while for 16-bit images ```i_max``` should be less or equal to 65535.
 * ```img_scale``` (optional, default: 10): gets luminosity histogram using every n-th pixel in each dimension. By default, it takes one every 10 pixels in horizontal and vertical directions, i.e.: one every 100 pixels in total.  
+* ```corr_map``` (optional, default: ```Correction.LINEAR```, possible values: ```'Correction.LINEAR'``` and ```'Correction.GAMMA'```): applies either a linear mapping or a gamma correction. The gamma correction avoids saturation of high luminosity pixels, but may introduce more distortion than a linear mapping.
 * ```plot_histograms```  (optional, default: ```False```): if ```True```, for each image and for the reference image histograms with pixel content are plotted. May be useful for inspection and debugging.
 
 ### Focus Stacking
