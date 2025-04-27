@@ -47,7 +47,7 @@ class LinearMap(CorrectionMap):
     def lut(self, scale):
         return (np.arange(0, self.two_n) * scale).astype(self.dtype)
     def correction(self, hist):
-        return [r/self.mid_val(self.id_lut, h) for h, r in zip(hist, self.reference)]
+        return [r / self.mid_val(self.id_lut, h) for h, r in zip(hist, self.reference)]
 
 LINEAR = "LINEAR"
 GAMMA = "GAMMA"
@@ -82,8 +82,6 @@ class Correction:
             image_sel = image[(xv - width//2)**2 + (yv - height//2)**2 <= (min(width, height)*self.mask_size/2)**2]
         hist, bins = np.histogram((image_sel if self.img_scale==1 else image_sel[::self.img_scale][::self.img_scale]), bins=np.linspace(-0.5, self.two_n - 0.5, self.two_n + 1))
         return hist
-    def correction(self, hist):
-        return bisect(lambda x: self.lumi_expect(hist, x, self.dtype) - self.reference, 0.1, 5)
     def balance(self, image):
         correction = self.corr_map.correction(self.get_hist(image))
         return correction, self.corr_map.adjust(image, correction)
