@@ -12,7 +12,7 @@ class CorrectionMap:
         self.two_n = 256 if dtype == np.uint8 else 65536
         self.i_min = i_min
         self.i_max = i_max
-        self.i_end = self.i_max + 1 if self.i_max >=0 else 65536
+        self.i_end = self.i_max + 1 if self.i_max >=0 else self.two_n
         self.channels = len(ref_hist) 
         self.id_lut = list(range(self.two_n))
         self.reference = [self.mid_val(self.id_lut, h) for h in ref_hist]
@@ -110,12 +110,12 @@ class Correction:
         return image
     def get_histos_exp(self, histos):
         return [np.average(list(range(self.two_n))[self.i_min:self.i_end], weights=h.flatten()[self.i_min:self.i_end]) for h in histos]
-    def histo_plot(self, ax, histo, x_label, color):
+    def histo_plot(self, ax, histo, x_label, color, alpha=1):
         ax.set_ylabel("# of Pixels")
         ax.set_xlabel(x_label)
         ax.set_xlim([0, self.two_n])
         ax.set_yscale('log')
-        ax.plot(histo, color=color)
+        ax.plot(histo, color=color, alpha=alpha)
     
 class LumiCorrection(Correction):
     def __init__(self, mask_size=None, i_min=0, i_max=-1, img_scale=default_img_scale, corr_map=LINEAR, plot_histograms=False):
@@ -130,7 +130,7 @@ class LumiCorrection(Correction):
             self.histo_plot(axs[0], hist, "pixel luminosity", 'black')
             for (chan, color) in zip(chans, colors):
                 hist_col = self.calc_hist_1ch(chan)
-                self.histo_plot(axs[1], hist_col, "r,g,b luminosity", color)
+                self.histo_plot(axs[1], hist_col, "r,g,b luminosity", color, alpha=0.5)
             plt.xlim(0, self.two_n)
             plt.show()
         return [hist]
@@ -224,7 +224,7 @@ class LSCorrection(Ch2Correction):
     def __init__(self, mask_size=None, i_min=0, i_max=-1, img_scale=default_img_scale, corr_map=LINEAR, plot_histograms=False):
         Ch2Correction.__init__(self,mask_size, i_min, i_max, img_scale, corr_map, plot_histograms)
         self.labels = ("H", "L", "S")
-        self.colors = ("hotpink", "orange", "navy")
+        self.colors = ("hotpink", "navy", "orange")
     def preprocess(self, image):
         return cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
     def postprocess(self, image):
