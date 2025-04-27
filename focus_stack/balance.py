@@ -11,8 +11,7 @@ class CorrectionMap:
         self.dtype = dtype
         self.two_n = 256 if dtype == np.uint8 else 65536
         self.i_min = i_min
-        self.i_max = i_max
-        self.i_end = self.i_max + 1 if self.i_max >=0 else self.two_n
+        self.i_end = i_max + 1 if i_max >=0 else self.two_n
         self.channels = len(ref_hist) 
         self.id_lut = list(range(self.two_n))
         self.reference = [self.mid_val(self.id_lut, h) for h in ref_hist]
@@ -59,7 +58,6 @@ class Correction:
         self.mask_size = mask_size
         self.i_min = i_min
         self.i_max = i_max
-        self.i_end = self.i_max + 1 if self.i_max >=0 else 65536
         self.plot_histograms = plot_histograms
         self.img_scale = img_scale
         self.corr_map = corr_map
