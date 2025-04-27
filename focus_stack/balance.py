@@ -100,7 +100,7 @@ class Correction:
     def postprocess(self, image):
         return image
     def histo_plot(self, ax, hist, x_label, color, alpha=1):
-        ax.set_ylabel("# of Pixels")
+        ax.set_ylabel("# of pixels")
         ax.set_xlabel(x_label)
         ax.set_xlim([0, self.two_n])
         ax.set_yscale('log')
