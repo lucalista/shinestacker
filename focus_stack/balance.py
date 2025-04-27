@@ -27,7 +27,7 @@ class CorrectionMap:
         else:
             chans = cv2.split(image)
             if self.channels == 2:
-                ch_out = [(chans[0] if c==0 else self.apply_lut(correction[c - 1], chans[c])) for c in range(3)]
+                ch_out = [chans[0]] + [self.apply_lut(correction[c - 1], chans[c]) for c in range(1, 3)]
             elif self.channels == 3:
                 ch_out = [self.apply_lut(correction[c], chans[c]) for c in range(3)]
             return cv2.merge(ch_out)
@@ -131,6 +131,7 @@ class LumiCorrection(Correction):
             for (chan, color) in zip(chans, colors):
                 hist_col = self.calc_hist_1ch(chan)
                 self.histo_plot(axs[1], hist_col, "r,g,b luminosity", color)
+            plt.xlim(0, self.two_n)
             plt.show()
         return [hist]
     def end(self, ref_idx):
@@ -158,6 +159,7 @@ class RGBCorrection(Correction):
             fig, axs = plt.subplots(1, 3, figsize=(6, 2), sharey=True)
             for c in [2, 1, 0]:
                 self.histo_plot(axs[c], hist[c], colors[c] + " luminosity", colors[c])
+            plt.xlim(0, self.two_n)
             plt.show()
         return hist
     def end(self, ref_idx):
@@ -190,6 +192,7 @@ class Ch2Correction(Correction):
             fig, axs = plt.subplots(1, 3, figsize=(6, 2), sharey=True)
             for c in range(3):
                 self.histo_plot(axs[c], hist[c], self.labels[c], self.colors[c])
+            plt.xlim(0, self.two_n)
             plt.show()
         return hist[1:]
     def end(self, ref_idx):
@@ -238,6 +241,6 @@ class Balance:
         self.corrector.end(self.process.ref_idx)
     def run_frame(self, idx, ref_idx, image):
         if(idx != self.process.ref_idx):
-            self.process.sub_message('- process image    ', end='\r')
+            self.process.sub_message('- balance image    ', end='\r')
             image = self.corrector.process(idx, image)
         return image
