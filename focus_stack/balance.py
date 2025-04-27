@@ -33,8 +33,8 @@ class CorrectionMap:
             return cv2.merge(ch_out)
 
 class GammaMap(CorrectionMap):
-    def __init__(self, dtype, ref_histos, i_min=0, i_max=-1):
-        CorrectionMap.__init__(self, dtype, ref_histos, i_min, i_max)
+    def __init__(self, dtype, ref_hist, i_min=0, i_max=-1):
+        CorrectionMap.__init__(self, dtype, ref_hist, i_min, i_max)
         self.two_n_1 = self.two_n - 1
     def correction(self, hist):
         return [bisect(lambda x: self.mid_val(self.lut(x), h) - r, 0.1, 5) for h, r in zip(hist, self.reference)]
@@ -43,8 +43,8 @@ class GammaMap(CorrectionMap):
         return (((np.arange(0, self.two_n) / self.two_n_1) ** gamma_inv) * self.two_n_1).astype(self.dtype)   
 
 class LinearMap(CorrectionMap):
-    def __init__(self, dtype, ref_histos, i_min=0, i_max=-1):
-        CorrectionMap.__init__(self, dtype, ref_histos, i_min, i_max)
+    def __init__(self, dtype, ref_hist, i_min=0, i_max=-1):
+        CorrectionMap.__init__(self, dtype, ref_hist, i_min, i_max)
     def lut(self, scale):
         return (np.arange(0, self.two_n) * scale).astype(self.dtype)
     def correction(self, hist):
@@ -67,12 +67,11 @@ class Correction:
     def begin(self, ref_image, size):
         self.dtype = ref_image.dtype
         self.two_n = 256 if ref_image.dtype == np.uint8 else 65536
-        histos = self.get_histos(self.preprocess(ref_image))
-        self.reference = self.get_histos_exp(histos)
+        hist = self.get_hist(self.preprocess(ref_image))
         if self.corr_map == LINEAR:
-            self.corr_map = LinearMap(self.dtype, histos, self.i_min, self.i_max)
+            self.corr_map = LinearMap(self.dtype, hist, self.i_min, self.i_max)
         elif self.corr_map == GAMMA:
-            self.corr_map = GammaMap(self.dtype, histos, self.i_min, self.i_max)
+            self.corr_map = GammaMap(self.dtype, hist, self.i_min, self.i_max)
         else:
             raise Exception("Invalid correction map type: " + self.corr_map)
         self.corrections = np.ones((size, self.channels))
@@ -85,16 +84,12 @@ class Correction:
             image_sel = image[(xv - width//2)**2 + (yv - height//2)**2 <= (min(width, height)*self.mask_size/2)**2]
         hist, bins = np.histogram((image_sel if self.img_scale==1 else image_sel[::self.img_scale][::self.img_scale]), bins=np.linspace(-0.5, self.two_n - 0.5, self.two_n + 1))
         return hist
-    def calc_hist_rgb(self, image):
-        return self.calc_hist_1ch(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY))
     def correction(self, hist):
         return bisect(lambda x: self.lumi_expect(hist, x, self.dtype) - self.reference, 0.1, 5)
     def balance(self, image):
-        correction = self.corr_map.correction(self.get_histos(image))
+        correction = self.corr_map.correction(self.get_hist(image))
         return correction, self.corr_map.adjust(image, correction)
-    def get_histos(self, image):
-        assert(False), 'abstract method'
-    def get_histos_exp(self, hist):
+    def get_hist(self, image):
         assert(False), 'abstract method'
     def end(self):
         assert(False), 'abstract method'
@@ -108,21 +103,19 @@ class Correction:
         return image
     def postprocess(self, image):
         return image
-    def get_histos_exp(self, histos):
-        return [np.average(list(range(self.two_n))[self.i_min:self.i_end], weights=h.flatten()[self.i_min:self.i_end]) for h in histos]
-    def histo_plot(self, ax, histo, x_label, color, alpha=1):
+    def histo_plot(self, ax, hist, x_label, color, alpha=1):
         ax.set_ylabel("# of Pixels")
         ax.set_xlabel(x_label)
         ax.set_xlim([0, self.two_n])
         ax.set_yscale('log')
-        ax.plot(histo, color=color, alpha=alpha)
+        ax.plot(hist, color=color, alpha=alpha)
     
 class LumiCorrection(Correction):
     def __init__(self, mask_size=None, i_min=0, i_max=-1, img_scale=default_img_scale, corr_map=LINEAR, plot_histograms=False):
         Correction.__init__(self, 1, mask_size, i_min, i_max, img_scale, corr_map, plot_histograms)
-    def get_histos(self, image):
+    def get_hist(self, image):
         if self.dtype != image.dtype: raise Exception("Images must be all of 8 bit or 16 bit")
-        hist = self.calc_hist_rgb(image)
+        hist = self.calc_hist_1ch(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY))
         if self.plot_histograms:
             chans = cv2.split(image)
             colors = ("r", "g", "b")
@@ -151,7 +144,7 @@ class LumiCorrection(Correction):
 class RGBCorrection(Correction):
     def __init__(self, mask_size=None, i_min=0, i_max=-1, img_scale=default_img_scale, corr_map=LINEAR, plot_histograms=False):
         Correction.__init__(self, 3, mask_size, i_min, i_max, img_scale, corr_map, plot_histograms)
-    def get_histos(self, image):
+    def get_hist(self, image):
         if self.dtype != image.dtype: raise Exception("Images must be all of 8 bit or 16 bit")
         hist = [self.calc_hist_1ch(chan) for chan in cv2.split(image)]
         colors = ("r", "g", "b")
@@ -185,7 +178,7 @@ class Ch2Correction(Correction):
         assert(False), 'abstract method'
     def get_labels(self):
         assert(False), 'abstract method'
-    def get_histos(self, image):
+    def get_hist(self, image):
         if self.dtype != image.dtype: raise Exception("Images must be all of 8 bit or 16 bit")
         hist = [self.calc_hist_1ch(chan) for chan in cv2.split(image)]
         if self.plot_histograms:
