@@ -38,31 +38,29 @@ class PyramidStack:
         for channel in range(1, layer.shape[2]):
             next_layer[:, :, channel] = self.expand_layer(layer[:, :, channel])
         return next_layer
-    def gaussian_pyramid(self, images, levels):
+    def gaussian_pyramid(self, levels):
         self.print_message(' - begin gaussian pyramids               ')
-        pyramid = [images.astype(np.float64)]
-        num_images = images.shape[0]
+        pyramid = [self.images.astype(np.float64)]
         while levels > 0:
             self.print_message(' - gaussian pyramids, level: {}     '.format(levels))
             next_layer = self.reduce_layer(pyramid[-1][0])
-            next_layer_size = [num_images] + list(next_layer.shape)
+            next_layer_size = [self.num_images] + list(next_layer.shape)
             pyramid.append(np.zeros(next_layer_size, dtype=next_layer.dtype))
             pyramid[-1][0] = next_layer
-            for layer in range(1, images.shape[0]):
+            for layer in range(1, self.num_images):
                 pyramid[-1][layer] = self.reduce_layer(pyramid[-2][layer])
             levels = levels - 1
         self.print_message(' - gaussian pyramids completed               ')
         return pyramid
-    def laplacian_pyramid(self, images, levels):
-        gaussian = self.gaussian_pyramid(images, levels)
+    def laplacian_pyramid(self, levels):
+        gaussian = self.gaussian_pyramid(levels)
         pyramid = [gaussian[-1]]
         for level in range(len(gaussian) - 1, 0, -1):
             self.print_message(' - laplacian pyramids, level: {} - begin     '.format(levels))
             gauss = gaussian[level - 1]
             pyramid.append(np.zeros(gauss.shape, dtype=gauss.dtype))
-            n_layers = images.shape[0]
-            for layer in range(n_layers):
-                self.print_message(' - laplacian pyramids, level: {}, layer: {}/{}     '.format(level, layer + 1, n_layers))
+            for layer in range(self.num_images):
+                self.print_message(' - laplacian pyramids, level: {}, layer: {}/{}     '.format(level, layer + 1, self.num_images))
                 gauss_layer = gauss[layer]
                 expanded = self.expand_layer(gaussian[level][layer])
                 if expanded.shape != gauss_layer.shape:
@@ -132,9 +130,11 @@ class PyramidStack:
             image = expanded + layer
         return image    
     def focus_stack(self, images):
+        self.images = images
+        self.num_images = images.shape[0]
         self.dtype = images[0].dtype
         if self.dtype == np.uint8: self.n_values = 256
         elif self.dtype == np.uint16: self.n_values = 65536
         else: Exception("Invalid image type: " + self.dtype.str)
-        stacked_image = self.collapse(self.fuse_pyramids(self.laplacian_pyramid(images, int(np.log2(min(images[0].shape[:2])/self.min_size)))))
+        stacked_image = self.collapse(self.fuse_pyramids(self.laplacian_pyramid(int(np.log2(min(images[0].shape[:2])/self.min_size)))))
         return np.clip(np.absolute(stacked_image), 0, self.n_values - 1).astype(self.dtype)
