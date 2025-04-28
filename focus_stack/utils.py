@@ -26,9 +26,9 @@ def write_img(file_path, img):
     if ext == 'jpeg' or ext == 'jpg':
         cv2.imwrite(file_path, img, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
     elif ext == 'tiff' or ext == 'tif':
-        cv2.imwrite(file_path, img)
+        cv2.imwrite(file_path, img, [int(cv2.IMWRITE_TIFF_COMPRESSION), 1])
     elif ext == 'png':
-        cv2.imwrite(file_path, img [int(cv.IMWRITE_TIFF_COMPRESSION), 1]) 
+        cv2.imwrite(file_path, img) 
         
 def img_8bit(img):
     if img.dtype == np.uint16:
