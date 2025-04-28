@@ -14,15 +14,18 @@ job.add_action(FocusStack("stack", PyramidStack(), postfix='_py', denoise=0.8))
 job.add_action(FocusStack("stack", DepthMapStack(), input_path='batches', postfix='_dm', denoise=0.8))
 job.run()
 ```
-### Required python modules:
+### Requirements
 
-* open cv
+* python version 3.10 or greater
+
+The following python modules:
+* open cv (opencv-python)
 * numpy
 * scipy
 * matplotlib
 * termcolor
 * tqdm
-* PIL
+* PIL (pillow)
 
 ## Documentation
 
