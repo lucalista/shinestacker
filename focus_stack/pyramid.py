@@ -132,7 +132,7 @@ class PyramidStack:
     def focus_stack(self, images):
         self.images = images
         self.num_images = images.shape[0]
-        self.dtype = images[0].dtype
+        self.dtype = images.dtype
         if self.dtype == np.uint8: self.n_values = 256
         elif self.dtype == np.uint16: self.n_values = 65536
         else: Exception("Invalid image type: " + self.dtype.str)

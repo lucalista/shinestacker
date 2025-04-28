@@ -56,8 +56,8 @@ class DepthMapStack:
             return focus_map
     def focus_stack(self, images):
         t = images[0].dtype
-        if t == np.uint8: n_values = 256
-        elif t == np.uint16: n_values = 65536
+        if t == np.uint8: n_values = 255
+        elif t == np.uint16: n_values = 65535
         else: Exception("Invalid image type: " + t.str)
         gray_images = np.zeros(images.shape[:-1], dtype=t)
         for index in range(images.shape[0]):
@@ -76,5 +76,5 @@ class DepthMapStack:
         focus_map = self.get_focus_map(energy_map)
         self.print_message(' - blend images ')
         stacked_image = blend(images, focus_map)
-        return np.clip(np.absolute(stacked_image), 0, n_values - 1).astype(t)
+        return np.clip(np.absolute(stacked_image), 0, n_values).astype(t)
     
