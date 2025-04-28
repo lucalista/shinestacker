@@ -6,8 +6,7 @@ from PIL.ExifTags import TAGS
 import warnings
 
 # Bad TIFF keys in specific PIL version
-# BAD_EXIF_KEYS_16BITS_TIFF = [33723, 34665]
-BAD_EXIF_KEYS_16BITS_TIFF = []
+BAD_EXIF_KEYS_16BITS_TIFF = [33723, 34665]
 
 def check_path_exists(path):
     assert os.path.exists(path), 'path does not exist: ' + path
