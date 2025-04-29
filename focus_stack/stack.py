@@ -22,7 +22,8 @@ class FocusStackBase:
         img_files = [read_img(name) for name in img_files]
         if any([img is None for img in img_files]):
             raise RuntimeError("failed to load one or more image files.")
-        img_files = np.array(img_files, dtype=img_files[0].dtype)
+        dtype = img_files[0].dtype
+        img_files = np.array(img_files, dtype=dtype)
         stacked_img = self.stack_algo.focus_stack(img_files)
         in_filename = filenames[0].split(".")
         out_filename = self.output_dir + "/" + in_filename[0] + self.postfix + '.' + '.'.join(in_filename[1:])
@@ -30,7 +31,7 @@ class FocusStackBase:
             self.sub_message(' - denoise image ', end='\r')
             stacked_img = cv2.fastNlMeansDenoisingColored(stacked_img, None, self.denoise, self.denoise, 7, 21)
         write_img(out_filename, stacked_img)
-        if self.exif_path != '':
+        if self.exif_path != '' and dtype==np.uint8:
             self.sub_message(' - copy exif data            ', end='\r')
             dirpath, _, fnames = next(os.walk(self.exif_path))
             fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in EXTENSIONS]
