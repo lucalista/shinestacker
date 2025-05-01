@@ -162,7 +162,8 @@ arguments are:
 job.add_action(MultiLayer(name,  *options))
 ```
 * ```input_path``` (optional): one or more subdirectory within ```working_directory``` that contains input images to be combined. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
-* * ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
+* ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
+* ```reverse_order``` (optional, default: ```False```): if ```True```, the images in each of the folders specified in ```input_path``` appear as layers in reverse alphabetic order. Folders are still read in the same order specified in ```input_path```.
 
 ### Credits:
 
