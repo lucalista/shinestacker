@@ -3,6 +3,7 @@ import cv2
 import math
 import matplotlib.pyplot as plt
 from scipy.optimize import bisect
+from scipy.interpolate import interp1d
 from focus_stack.utils import read_img, write_img, img_8bit
 from focus_stack.stack_framework import *
 
@@ -11,26 +12,52 @@ class CorrectionMapBase:
         self.dtype = dtype
         self.two_n = 256 if dtype == np.uint8 else 65536
         self.two_n_1 = self.two_n - 1
+        self.id_lut = np.array(list(range(self.two_n)))
         self.i_min = i_min
         self.i_end = i_max + 1 if i_max >=0 else self.two_n
-        self.channels = len(ref_hist) 
-        self.id_lut = list(range(self.two_n))
-    def lut(self, gamma):
+        self.channels = len(ref_hist)
+        self.reference = None
+    def lut(self, correction, reference):
         assert(False), 'abstract method'
-    def apply_lut(self, correction, img):
-        lut = self.lut(correction)
+    def apply_lut(self, correction, reference, img):
+        lut = self.lut(correction, reference)
         return cv2.LUT(img, lut) if self.dtype==np.uint8 else np.take(lut, img)
     def adjust(self, image, correction):
         if self.channels == 1:
-            return self.apply_lut(correction[0], image)
+            return self.apply_lut(correction[0], self.reference[0], image)
         else:
             chans = cv2.split(image)
             if self.channels == 2:
-                ch_out = [chans[0]] + [self.apply_lut(correction[c - 1], chans[c]) for c in range(1, 3)]
+                ch_out = [chans[0]] + [self.apply_lut(correction[c - 1], self.reference[c - 1], chans[c]) for c in range(1, 3)]
             elif self.channels == 3:
-                ch_out = [self.apply_lut(correction[c], chans[c]) for c in range(3)]
+                ch_out = [self.apply_lut(correction[c], self.reference[c], chans[c]) for c in range(3)]
             return cv2.merge(ch_out)
+    def correction_size(self, correction):
+        return correction
 
+class MatchHist(CorrectionMapBase):
+    def __init__(self, dtype, ref_hist, i_min=0, i_max=-1):
+        CorrectionMapBase.__init__(self, dtype, ref_hist, i_min, i_max)
+        self.reference = self.cumsum(ref_hist)
+        self.reference_mean = [r.mean() for r in self.reference]
+        self.values = [*range(self.two_n)]
+    def cumsum(self, hist):
+        return [np.cumsum(h)/h.sum()*self.two_n_1 for h in hist]        
+    def lut(self, correction, reference):
+        interp = interp1d(reference, self.values)
+        lut = np.array([math.floor(interp(v)) for v in correction])
+        l0, l1 = lut[0], lut[-1]
+        ll = lut[(lut != l0) & (lut != l1)]
+        l_min, l_max = ll.min(), ll.max()
+        i0, i1 = self.id_lut[lut == l0], self.id_lut[lut == l1]
+        lut[lut == l0] = i0 / i0.max() * l_min
+        lut[lut == l1] = i1  + (i1 - self.two_n_1)*(self.two_n_1 - l_max)/float(i1.size)
+        return lut.astype(self.dtype)
+    def correction(self, hist):
+        return self.cumsum(hist)
+    def correction_size(self, correction):
+        return [c.mean()/m for c, m in zip(correction, self.reference_mean)]
+        
 class CorrectionMap(CorrectionMapBase):
     def __init__(self, dtype, ref_hist, i_min=0, i_max=-1):
         CorrectionMapBase.__init__(self, dtype, ref_hist)
@@ -43,20 +70,21 @@ class GammaMap(CorrectionMap):
         CorrectionMap.__init__(self, dtype, ref_hist, i_min, i_max)
     def correction(self, hist):
         return [bisect(lambda x: self.mid_val(self.lut(x), h) - r, 0.1, 5) for h, r in zip(hist, self.reference)]
-    def lut(self, gamma):
-        gamma_inv = 1.0/gamma
+    def lut(self, correction, reference=None):
+        gamma_inv = 1.0/correction
         return (((np.arange(0, self.two_n) / self.two_n_1) ** gamma_inv) * self.two_n_1).astype(self.dtype)   
 
 class LinearMap(CorrectionMap):
     def __init__(self, dtype, ref_hist, i_min=0, i_max=-1):
         CorrectionMap.__init__(self, dtype, ref_hist, i_min, i_max)
-    def lut(self, scale):
-        return np.clip(np.arange(0, self.two_n) * scale, 0, self.two_n_1).astype(self.dtype)
+    def lut(self, correction, reference=None):
+        return np.clip(np.arange(0, self.two_n) * correction, 0, self.two_n_1).astype(self.dtype)
     def correction(self, hist):
         return [r / self.mid_val(self.id_lut, h) for h, r in zip(hist, self.reference)]
 
 LINEAR = "LINEAR"
 GAMMA = "GAMMA"
+MATCH_HIST = "MATCH_HIST"
 default_img_scale = 8
 
 class Correction:
@@ -76,6 +104,8 @@ class Correction:
             self.corr_map = LinearMap(self.dtype, hist, self.i_min, self.i_max)
         elif self.corr_map == GAMMA:
             self.corr_map = GammaMap(self.dtype, hist, self.i_min, self.i_max)
+        elif self.corr_map == MATCH_HIST:
+            self.corr_map = MatchHist(self.dtype, hist, self.i_min, self.i_max)
         else:
             raise Exception("Invalid correction map type: " + self.corr_map)
         self.corrections = np.ones((size, self.channels))
@@ -99,7 +129,7 @@ class Correction:
         image = self.preprocess(image)
         correction, image = self.balance(image)
         image = self.postprocess(image)
-        self.corrections[idx] = correction
+        self.corrections[idx] = self.corr_map.correction_size(correction)
         return image
     def preprocess(self, image):
         return image
