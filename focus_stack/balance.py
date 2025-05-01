@@ -10,6 +10,7 @@ class CorrectionMap:
     def __init__(self, dtype, ref_hist, i_min=0, i_max=-1):
         self.dtype = dtype
         self.two_n = 256 if dtype == np.uint8 else 65536
+        self.two_n_1 = self.two_n - 1
         self.i_min = i_min
         self.i_end = i_max + 1 if i_max >=0 else self.two_n
         self.channels = len(ref_hist) 
@@ -34,7 +35,6 @@ class CorrectionMap:
 class GammaMap(CorrectionMap):
     def __init__(self, dtype, ref_hist, i_min=0, i_max=-1):
         CorrectionMap.__init__(self, dtype, ref_hist, i_min, i_max)
-        self.two_n_1 = self.two_n - 1
     def correction(self, hist):
         return [bisect(lambda x: self.mid_val(self.lut(x), h) - r, 0.1, 5) for h, r in zip(hist, self.reference)]
     def lut(self, gamma):
@@ -45,7 +45,7 @@ class LinearMap(CorrectionMap):
     def __init__(self, dtype, ref_hist, i_min=0, i_max=-1):
         CorrectionMap.__init__(self, dtype, ref_hist, i_min, i_max)
     def lut(self, scale):
-        return np.clip(np.arange(0, self.two_n) * scale, 0, self.n_values - 1).astype(self.dtype)
+        return np.clip(np.arange(0, self.two_n) * scale, 0, self.two_n_1).astype(self.dtype)
     def correction(self, hist):
         return [r / self.mid_val(self.id_lut, h) for h, r in zip(hist, self.reference)]
 
