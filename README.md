@@ -93,6 +93,10 @@ arguments are:
 
 ### Luminosity and color balance
 
+```python
+Balance(*options)
+```
+
 The module ```Balance``` accepts a correction object at constructor. There are four possible luminosity and color balance correctors:
 * ```LumiCorrection```: balance luminosity equally for R, G and B channels. It should be fine for most of the cases.
 * ```RGBCorrection```: balance luminosity separately for R, G and B channels. It may be needed if some but not all of the images have a undesired color dominance.
