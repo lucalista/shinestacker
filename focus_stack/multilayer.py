@@ -28,8 +28,8 @@ from psdtags import (
 )
 
 class MultiLayer(FrameMultiDirectory, JobBase):
-    def __init__(self, name, input_path=None, output_path=None, working_directory=None):
-        FrameMultiDirectory.__init__(self, name, input_path, output_path, working_directory, 1)
+    def __init__(self, name, input_path=None, output_path=None, working_directory=None, reverse_order=False):
+        FrameMultiDirectory.__init__(self, name, input_path, output_path, working_directory, 1, reverse_order)
         JobBase.__init__(self, name)
     def run(self):
         print(colored(self.name, "blue", attrs=["bold"]) + ": merging frames in folders: " + ", ".join([i for i in self.input_dir]))

@@ -16,16 +16,18 @@ class StackJob(Job):
 
 class FrameDirectory:
     EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
-    def __init__(self, name, input_path=None, output_path=None, working_directory=None, resample=1):
+    def __init__(self, name, input_path=None, output_path=None, working_directory=None, resample=1, reverse_order=False):
         self.name = name
         self.working_directory = working_directory
         self.input_path = input_path
         self.output_path = output_path
         self.resample = resample
+        self.reverse_order = reverse_order
     def folder_filelist(self, path):
         src_contents = os.walk(self.input_dir)
         dirpath, _, filenames = next(src_contents)
         filelist = [name for name in filenames if os.path.splitext(name)[-1][1:].lower() in FrameDirectory.EXTENSIONS]
+        if self.reverse_order: filelist.reverse()
         if self.resample > 1: filelist = filelist[0::self.resample]
         return filelist
     def set_filelist(self):
@@ -46,12 +48,13 @@ class FrameDirectory:
 
 class FrameMultiDirectory:
     EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
-    def __init__(self, name, input_path=None, output_path=None, working_directory=None, resample=1):
+    def __init__(self, name, input_path=None, output_path=None, working_directory=None, resample=1, reverse_order=False):
         self.name = name
         self.working_directory = working_directory
         self.input_path = input_path
         self.output_path = output_path
         self.resample = resample
+        self.reverse_order = reverse_order
     def folder_filelist(self):
         if isinstance(self.input_dir, str):
             dirs = [self.input_dir]
@@ -66,6 +69,7 @@ class FrameMultiDirectory:
             src_contents = os.walk(d)
             dirpath, _, filenames = next(src_contents)
             filelist = [p + "/" + name for name in filenames if os.path.splitext(name)[-1][1:].lower() in FrameDirectory.EXTENSIONS]
+            if self.reverse_order: filelist.reverse()
             if self.resample > 1: filelist = filelist[0::self.resample]
             files += filelist
         return files
