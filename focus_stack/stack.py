@@ -17,7 +17,7 @@ class FocusStackBase:
         self.denoise = denoise
         self.stack_algo.messenger(self)
     def focus_stack(self, filenames):
-        self.sub_message(' - read input files ', end='\r')
+        self.sub_message(' - reading input files           ', end='\r')
         img_files = sorted([os.path.join(self.input_dir, name) for name in filenames])
         img_files = [read_img(name) for name in img_files]
         if any([img is None for img in img_files]):

@@ -45,7 +45,7 @@ class LinearMap(CorrectionMap):
     def __init__(self, dtype, ref_hist, i_min=0, i_max=-1):
         CorrectionMap.__init__(self, dtype, ref_hist, i_min, i_max)
     def lut(self, scale):
-        return (np.arange(0, self.two_n) * scale).astype(self.dtype)
+        return np.clip(np.arange(0, self.two_n) * scale, 0, self.n_values - 1).astype(self.dtype)
     def correction(self, hist):
         return [r / self.mid_val(self.id_lut, h) for h, r in zip(hist, self.reference)]
 

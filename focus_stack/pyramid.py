@@ -39,7 +39,7 @@ class PyramidStack:
             next_layer[:, :, channel] = self.expand_layer(layer[:, :, channel])
         return next_layer
     def gaussian_pyramid(self, levels):
-        self.print_message(' - begin gaussian pyramids               ')
+        self.print_message(' - beginning gaussian pyramids               ')
         pyramid = [self.images.astype(np.float64)]
         while levels > 0:
             self.print_message(' - gaussian pyramids, level: {}     '.format(levels))
@@ -107,12 +107,12 @@ class PyramidStack:
         for layer in range(len(pyramids) - 2, -1, -1):
             laplacians = pyramids[layer]
             layers = laplacians.shape[0]
-            self.print_message(' - fuse pyramids, layer: {}     '.format(layer + 1))
+            self.print_message(' - fusing pyramids, layer: {}     '.format(layer + 1))
             region_energies = np.zeros(laplacians.shape[:3], dtype=np.float64)
             gray_laps = [cv2.cvtColor(laplacians[layer].astype(np.float32), cv2.COLOR_BGR2GRAY) for layer in range(layers)]
             region_energies = np.array([self.convolve(np.square(gray_lap)) for gray_lap in gray_laps])
             best_re = np.argmax(region_energies, axis = 0)
-            self.print_message(' - compute fused laplacian: {}     '.format(layer + 1))
+            self.print_message(' - computing fused laplacian: {}     '.format(layer + 1))
             fused_lapl = np.zeros(laplacians.shape[1:], dtype=laplacians.dtype)
             for layer in range(layers):
                 fused_lapl += np.where(best_re[:, :, np.newaxis]==layer, laplacians[layer], 0)

@@ -32,7 +32,7 @@ class MultiLayer(FrameMultiDirectory, JobBase):
         FrameMultiDirectory.__init__(self, name, input_path, output_path, working_directory, 1)
         JobBase.__init__(self, name)
     def run(self):
-        print(colored(self.name, "blue", attrs=["bold"]) + ": merge frames in folders: " + ", ".join([i for i in self.input_dir]))
+        print(colored(self.name, "blue", attrs=["bold"]) + ": merging frames in folders: " + ", ".join([i for i in self.input_dir]))
         files = self.folder_filelist()
         in_paths = [self.working_directory + "/" + f for f in files]
         print(colored(self.name, "blue", attrs=["bold"]) + ": frames: " + ", ".join([i.split("/")[-1] for i in files]))
@@ -94,8 +94,8 @@ class MultiLayer(FrameMultiDirectory, JobBase):
             ],
         )
         filename = ".".join(files[-1].split("/")[-1].split(".")[:-1])
-        print(colored(self.name, "blue", attrs=["bold"]) + ": writing multilayer tiff")
-        tifffile.imwrite(self.output_path + '/' + filename + '.tif',
+        print(colored(self.name, "blue", attrs=["bold"]) + ": writing multilayer tiff " + self.output_path + '/' + filename + '.tif')
+        tifffile.imwrite(self.working_directory + '/' + self.output_path + '/' + filename + '.tif',
             overlay(*((np.concatenate((image, np.expand_dims(transp, axis=-1)), axis=-1), (0, 0)) for image in images),
                 shape=shape,
             ),
