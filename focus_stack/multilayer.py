@@ -4,6 +4,7 @@ import tifffile
 import numpy as np
 import imagecodecs
 import tifffile
+import cv2
 from psdtags import (
     PsdBlendMode,
     PsdChannel,
@@ -37,7 +38,15 @@ class MultiLayer(FrameMultiDirectory, JobBase):
         in_paths = [self.working_directory + "/" + f for f in files]
         print(colored(self.name, "blue", attrs=["bold"]) + ": frames: " + ", ".join([i.split("/")[-1] for i in files]))
         print(colored(self.name, "blue", attrs=["bold"]) + ": reading files")
-        images = [tifffile.imread(p) for p in in_paths]
+        extension = files[0].split(".")[-1]
+        if extension == 'tif' or extension == 'tiff':
+            images = [tifffile.imread(p) for p in in_paths]
+        elif extension == 'jpg' or extension == 'jpeg':
+            images = [cv2.imread(p) for p in in_paths]
+            images = [cv2.cvtColor(i, cv2.COLOR_BGR2RGB) for i in images]
+        elif extension == 'png':
+            images = [cv2.imread(p, cv2.IMREAD_UNCHANGED) for p in in_paths]
+            images = [cv2.cvtColor(i, cv2.COLOR_BGR2RGB) for i in images]
         shape = images[0].shape[:2]
         transp = np.full_like(images[0][..., 0], 65535)
         fmt = 'Layer {:03d}'
