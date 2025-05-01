@@ -6,7 +6,7 @@ from scipy.optimize import bisect
 from focus_stack.utils import read_img, write_img, img_8bit
 from focus_stack.stack_framework import *
 
-class CorrectionMap:
+class CorrectionMapBase:
     def __init__(self, dtype, ref_hist, i_min=0, i_max=-1):
         self.dtype = dtype
         self.two_n = 256 if dtype == np.uint8 else 65536
@@ -15,9 +15,8 @@ class CorrectionMap:
         self.i_end = i_max + 1 if i_max >=0 else self.two_n
         self.channels = len(ref_hist) 
         self.id_lut = list(range(self.two_n))
-        self.reference = [self.mid_val(self.id_lut, h) for h in ref_hist]
-    def mid_val(self, lut, h):
-        return np.average(lut[self.i_min:self.i_end], weights=h.flatten()[self.i_min:self.i_end])
+    def lut(self, gamma):
+        assert(False), 'abstract method'
     def apply_lut(self, correction, img):
         lut = self.lut(correction)
         return cv2.LUT(img, lut) if self.dtype==np.uint8 else np.take(lut, img)
@@ -31,6 +30,13 @@ class CorrectionMap:
             elif self.channels == 3:
                 ch_out = [self.apply_lut(correction[c], chans[c]) for c in range(3)]
             return cv2.merge(ch_out)
+
+class CorrectionMap(CorrectionMapBase):
+    def __init__(self, dtype, ref_hist, i_min=0, i_max=-1):
+        CorrectionMapBase.__init__(self, dtype, ref_hist)
+        self.reference = [self.mid_val(self.id_lut, h) for h in ref_hist]
+    def mid_val(self, lut, h):
+        return np.average(lut[self.i_min:self.i_end], weights=h.flatten()[self.i_min:self.i_end])
 
 class GammaMap(CorrectionMap):
     def __init__(self, dtype, ref_hist, i_min=0, i_max=-1):
