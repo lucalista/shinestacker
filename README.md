@@ -147,7 +147,7 @@ arguments are:
 #### Stack algorithms
 
 * ```PyramidStack```, based on [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar. Arguments are:
-   * ```pyramid_min_size``` (optiohnal, default: 32)
+   * ```pyramid_min_size``` (optional, default: 32)
    * ```kernel_size``` (optional, default: 5)
    * ```gen_kernel``` (optional, default: 0.4) 
 * ```DepthMapStack```, based on [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar. Arguments are:
