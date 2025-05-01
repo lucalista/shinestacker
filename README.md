@@ -27,7 +27,10 @@ The following python modules:
 * termcolor
 * tqdm
 * PIL (pillow)
-
+* tifffile
+* imagecodecs
+* psdtags
+    
 ## Documentation
 
 Schedule the desired actions in a job, then run the job.
