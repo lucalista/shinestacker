@@ -45,7 +45,7 @@ class MatchHist(CorrectionMapBase):
         return [np.cumsum(h)/h.sum()*self.two_n_1 for h in hist]        
     def lut(self, correction, reference):
         interp = interp1d(reference, self.values)
-        lut = np.array([math.floor(interp(v)) for v in correction])
+        lut = np.array([interp(v) for v in correction])
         l0, l1 = lut[0], lut[-1]
         ll = lut[(lut != l0) & (lut != l1)]
         l_min, l_max = ll.min(), ll.max()
