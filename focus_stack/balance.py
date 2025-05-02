@@ -44,15 +44,14 @@ class MatchHist(CorrectionMapBase):
     def cumsum(self, hist):
         return [np.cumsum(h)/h.sum()*self.two_n_1 for h in hist]        
     def lut(self, correction, reference):
-        interp = interp1d(correction, self.values)
-        lut = np.array([interp(v) for v in reference])
+        interp = interp1d(reference, self.values)
+        lut = np.array([interp(v) for v in np.clip(correction, reference.min(), reference.max())])
         l0, l1 = lut[0], lut[-1]
         ll = lut[(lut != l0) & (lut != l1)]
         l_min, l_max = ll.min(), ll.max()
         i0, i1 = self.id_lut[lut == l0], self.id_lut[lut == l1]
         lut[lut == l0] = i0 / i0.max() * l_min
         lut[lut == l1] = i1  + (i1 - self.two_n_1)*(self.two_n_1 - l_max)/float(i1.size)
-        return lut.astype(self.dtype)
     def correction(self, hist):
         return self.cumsum(hist)
     def correction_size(self, correction):
