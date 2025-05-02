@@ -57,6 +57,8 @@ class MaskNoise:
     def begin(self, process):
         self.process = process
         self.noise_mask =  cv2.imread(process.working_directory + "/" + self.noise_mask, cv2.IMREAD_GRAYSCALE)
+    def end(self, process):
+        pass
     def run_frame(self, idx, ref_idx, image):
         self.process.sub_message('- mask noisy pixels ', end='\r')
         if len(image.shape) == 3:
