@@ -52,6 +52,7 @@ class MatchHist(CorrectionMapBase):
         i0, i1 = self.id_lut[lut == l0], self.id_lut[lut == l1]
         lut[lut == l0] = i0 / i0.max() * l_min
         lut[lut == l1] = i1  + (i1 - self.two_n_1)*(self.two_n_1 - l_max)/float(i1.size)
+        return lut.astype(self.dtype)
     def correction(self, hist):
         return self.cumsum(hist)
     def correction_size(self, correction):
