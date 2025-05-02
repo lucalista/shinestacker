@@ -166,6 +166,30 @@ job.add_action(MultiLayer(name,  *options))
 * ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
 * ```reverse_order``` (optional, default: ```False```): if ```True```, the images in each of the folders specified in ```input_path``` appear as layers in reverse alphabetic order. Folders are still read in the same order specified in ```input_path```.
 
+#### Noisy pixel masking
+
+First, the mask of noisy pixels has to be found and stored in afile:
+
+```python
+job = StackJob("job", "E:/Focus stacking/My image directory/")
+job.add_action(NoiseDetection("noise-map", input_path=["src"]))
+job.run()
+```
+The noisy pixel map is stored in the file ```noise-map/hot_rgb.png```. Noisy pixel maps individyally for the R, G and B channels are also stored.
+
+Noisy pixels are then masked adding to the ```MultiRefActions``` module the action ```MaskNoise```:
+
+```
+MaskNoise("noise-map/hot_rgb.png")
+```
+
+E.g.:
+```python
+job.add_action(MultiRefActions("align", actions=[MaskNoise("noise-map/hot_rgb.png")
+                                                 AlignLayers(),
+                                                 Balance(LumiCorrection(mask_size=0.8, i_min=150, i_max=65385))]))
+```
+
 ### Credits:
 
 based on [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar. The original code was used under permission of the author.
