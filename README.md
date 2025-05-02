@@ -180,6 +180,7 @@ Pyramid methods in image processing
 ## Issues
 
 The support of TIFF, in particular 16-bit images, is still partial:
+* ```SVCorrection``` and ```LSCorrection``` are only supported for 8-bit images
 * Even if ```exif_path``` is explicitly specified, for 16-bit TIFF exif data are not saved. Saving exif is implemented using the PIL library which does not support 16-bit TIFF as output, and therefore it would automatically downgrade the image to 8-bit, which is not a desirable feature.
 * Focus stacking modules crashes for TIFF files if  ```denoise``` is set ifferent from zero due to an assertion failure in the Open CV library. This is similar to a [known issue on stackoverflow](https://stackoverflow.com/questions/76647895/opencv-fastnlmeansdenoisingmulti-should-support-16-bit-images-but-does-it).
 * Focus stacking modules may crashes if  ```exif_path``` is provided and if the specified ```exif_path``` directory contains TIFF images, depending on the content of EXIF data. A couple of problematic keys in EXIF data have been identified, namely 33723, 34665, that cause a crash in the PIL library. Those keys are dropped from EXIF data for TIFF files in order to prevent such a crash. Moreover, some of the EXIF data may be missing.
