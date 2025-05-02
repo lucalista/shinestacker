@@ -3,4 +3,4 @@ from focus_stack.align import AlignLayers
 from focus_stack.balance import Balance, LumiCorrection, RGBCorrection, SVCorrection, LSCorrection, Correction, CorrectionMap, GammaMap, LinearMap, LINEAR, GAMMA, MATCH_HIST
 from focus_stack.stack import FocusStackBunch, FocusStack, DepthMapStack, PyramidStack
 from focus_stack.multilayer import MultiLayer
-from focus_stack.noise_detection import NoiseDetection
+from focus_stack.noise_detection import NoiseDetection, MaskNoise, MEAN, MEDIAN

@@ -265,7 +265,7 @@ class Balance:
         self.process.print_message('                                                                                 ')
         self.corrector.end(self.process.ref_idx)
     def run_frame(self, idx, ref_idx, image):
-        if(idx != self.process.ref_idx):
-            self.process.sub_message('- balance image    ', end='\r')
+        if idx != self.process.ref_idx:
+            self.process.sub_message('- balance image       ', end='\r')
             image = self.corrector.process(idx, image)
         return image

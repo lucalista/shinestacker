@@ -77,7 +77,8 @@ class AlignLayers:
             assert(false), "invalid align method: " + self.method
         return M, mask        
     def run_frame(self, idx, ref_idx, img_0):
-        self.process.sub_message('- find matches ', end='\r')
+        if idx == self.process.ref_idx: return img_0
+        self.process.sub_message('- find matches       ', end='\r')
         img_ref = self.process.img_ref(ref_idx)
         img_bw_0 = cv2.cvtColor(img_8bit(img_0), cv2.COLOR_BGR2GRAY)
         img_bw_1 = cv2.cvtColor(img_8bit(img_ref).astype('uint8'), cv2.COLOR_BGR2GRAY)
@@ -94,7 +95,7 @@ class AlignLayers:
             if(self.plot_matches): matches_mask = mask.ravel().tolist()
             h, w = img_bw_1.shape
             pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0] ]).reshape(-1, 1 ,2)
-            self.process.sub_message('- align images ', end='\r')
+            self.process.sub_message('- align images       ', end='\r')
             if self.transform==AlignLayers.ALIGN_HOMOGRAPHY:
                 dst = cv2.perspectiveTransform(pts, M)
                 img_warp = cv2.warpPerspective(img_0, M, (w, h), borderMode=self.cv2_border_mode, borderValue=self.border_value)

@@ -143,9 +143,6 @@ class MultiRefActions(FramesRefActions):
         self.sub_message('- read image        ', end='\r')
         img = read_img(self.input_dir + "/" + filename)
         if img is None: raise Exception("Invalid file: " + self.input_dir + "/" + filename)
-        if idx == ref_idx:
-            write_img(self.output_dir + "/" + filename, img)
-            return
         for a in self.__actions:
             img = a.run_frame(idx, ref_idx, img)
         self.sub_message('- write image        ', end='\r')
