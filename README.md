@@ -106,7 +106,7 @@ The module ```Balance``` accepts a correction object at constructor. There are f
 * ```SVCorrection```: balance saturation a luminosity value in the HSV (Hue, Saturation, brightness Value) representation. It may be needed in cases of extreme luminosity variation that affects saturation.
 * ```LSCorrection```: balance saturation a luminosity value in the HLS (Hue, Lightness, Saturation) representation. It may be needed in cases of extreme luminosity variation that affects saturation.
   
-Arguments for each of the corrector object constructor are:
+Arguments for each corrector object constructor are:
 * ```mask_size``` (optional): if specified, luminosity and color balance is only applied to pixels within a circle of radius equal to the minimum between the image width and height times ```mask_size```, i.e: 0.8 means 80% of a portrait image height. It may beuseful for images with vignetting, in order to remove the outer darker pixels.
 * ```i_min``` (optional): if specifies, only pixels with content greater pr equal tham ```i_min``` are used. It may be useful to remove black areas.
 * ```i_max``` (optional): if specifies, only pixels with content less pr equal tham ```i_max``` are used. It may be useful to remove white areas. Note that for 8-bit images ```i_max``` should be less or equal to 255, while for 16-bit images ```i_max``` should be less or equal to 65535.
