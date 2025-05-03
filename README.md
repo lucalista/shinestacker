@@ -91,7 +91,7 @@ Arguments are:
   * ```BORDER_REPLICATE```: the rows and columns at the very edge of the original are replicated to the extra border.
   * ```BORDER_REPLICATE_BLUR``` (default): same as above, but the border is blurred. The amount of blurring is specified by the parameter ```border_blur```.
 * ```border_value``` (optional, default: ```(0, 0, 0, 0)```): border value. See [Adding borders to your images](https://docs.opencv.org/3.4/dc/da3/tutorial_copyMakeBorder.html) for more details.
-* ```border_blur``` (optional, default: ```50```): amount of border blurring, in pixels.
+* ```border_blur``` (optional, default: ```50```): amount of border blurring, in pixels. Only applied if ```border_mode``` is set to ```BORDER_REPLICATE_BLUR```, which is the default option.
 * ```plot_matches``` (optional, default: ```False```): if ```True```, for each image the matches identified with respect to the reference image are plotted. May be useful for inspection and debugging.
 
 ### Luminosity and color balance
