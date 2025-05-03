@@ -41,7 +41,7 @@ Schedule the desired actions in a job, then run the job.
 job = StackJob(name, working_directory)
 ```
 
-arguments are:
+Arguments are:
 * ```working_directory```: the directory that contains input and output images, organized in subdirectories as specified by each action
 * ```name```: the name of the job, used for printout
 * ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images for subsequent action. If not specified, at least the first action must specify an ```input_path```.
@@ -51,7 +51,7 @@ arguments are:
 ```python
 job.add_action(MultiRefActions(name, actions=[...], *options))
 ```
-
+Arguments are:
 * ```name```: the name of the action, used for printout, and possibly for output path
 * ```actions```: array of action object to be applied in cascade 
 * ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images to be processed. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
@@ -65,7 +65,7 @@ job.add_action(MultiRefActions(name, actions=[...], *options))
 ```python
 AlignLayers(*options)
 ```
-arguments are:
+Arguments are:
 * ```transform``` (optional): the transformation applied to register images. Possible values are:
   * ```ALIGN_RIGID``` (default): allow scale, tanslation and rotation correction. This should be used for image acquired with tripode or microscope.
   * ```ALIGN_HOMOGRAPHY```: allow full perspective correction. This should be used for images taken with hand camera.
@@ -119,7 +119,7 @@ Arguments for each of the corrector object constructor are:
 ```python
 job.add_action(FocusStack(name, stacker, *options))
 ```
-arguments are:
+Arguments are:
 * ```name```: the name of the action, used for printout, and possibly for output path
 * ```stacker```: an object defining the focus stacking algorithm. Can be ```PyramidStack``` or ```DepthMapStack```, see below for possible algorithms. 
 * ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images to be processed. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
@@ -134,11 +134,12 @@ arguments are:
 ```python
 job.add_action(FocusStackBunch(name, stacker, *options))
 ```
-arguments are:
+Arguments are:
 * ```name```: the name of the action, used for printout, and possibly for output path
 * ```stacker```: an object defining the focus stacking algorithm. Can be ```PyramidStack``` or ```DepthMapStack```, see below for possible algorithms. 
 * ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images to be processed. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
 * * ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
+* ```working_directory```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_directory```.
 * ```exif_path``` (optional): if specified, EXIF data are copied to the output file from file in the specified directory. If not specified, it is the source directory used as * ```frames``` (optional, default: 10): the number of frames in each bunch that are stacked together.
 * ```overlap``` (optional, default: 0): the number of overlapping frames between a bunch and the following one. 
 * ```postfix``` (optional): if specified, the specified string is appended to the file name. May be useful if more algorithms are ran, and different file names are used for the output of different algorithms.
@@ -162,8 +163,10 @@ arguments are:
 ```python
 job.add_action(MultiLayer(name,  *options))
 ```
+Arguments are:
 * ```input_path``` (optional): one or more subdirectory within ```working_directory``` that contains input images to be combined. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
 * ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
+* ```working_directory```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_directory```.
 * ```reverse_order``` (optional, default: ```False```): if ```True```, the images in each of the folders specified in ```input_path``` appear as layers in reverse alphabetic order. Folders are still read in the same order specified in ```input_path```.
 
 #### Noisy pixel masking
@@ -175,7 +178,13 @@ job = StackJob("job", "E:/Focus stacking/My image directory/")
 job.add_action(NoiseDetection("noise-map", input_path=["src"]))
 job.run()
 ```
-The noisy pixel map is stored in the file ```noise-map/hot_rgb.png```. Noisy pixel maps individyally for the R, G and B channels are also stored.
+Arguments are:
+* ```input_path``` (optional): one or more subdirectory within ```working_directory``` that contains input images to be combined. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
+* ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
+* ```working_directory```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_directory```.
+* ```channel_thresholds``` (optional, default: ```(15, 15, 15)```): threshold values for noisy pixel detections in the color channels R, G, B, respectively.
+* ```blur_size``` (optional, default: 5): image blur amount for pixel detection.
+* ```file_name``` (optional, default: ```hot```): noise map filename. The noisy pixel map is stored bydefault in the file ```hot_rgb.png```. Noisy pixel maps individyally for the R, G and B channels are also stored in  ```hot_r.png```,  ```hot_g.png``` and  ```hot_b.png```, respectively.
 
 Noisy pixels are then masked adding to the ```MultiRefActions``` module the action ```MaskNoise```:
 

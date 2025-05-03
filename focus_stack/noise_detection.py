@@ -5,11 +5,12 @@ import numpy as np
 from tqdm.notebook import tqdm_notebook
 
 class NoiseDetection(FrameMultiDirectory, JobBase):
-    def __init__(self, name, input_path=None, output_path=None, working_directory=None, reverse_order=False, channel_thresholds=(15, 15, 15), blur_size = 5):
-        FrameMultiDirectory.__init__(self, name, input_path, output_path, working_directory, 1, reverse_order)
+    def __init__(self, name, input_path=None, output_path=None, working_directory=None, channel_thresholds=(15, 15, 15), blur_size = 5, file_name= "hot"):
+        FrameMultiDirectory.__init__(self, name, input_path, output_path, working_directory, 1, False)
         JobBase.__init__(self, name)
         self.channel_thresholds = channel_thresholds
         self.blur_size = blur_size
+        self.file_name = file_name
     def run_core(self):
         self.print_message('')
         self.print_message(colored(": map noisy pixels, frames in " + self.folder_list_str(), "blue"))
@@ -33,18 +34,18 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         blurred = cv2.GaussianBlur(mean_img, (self.blur_size, self.blur_size), 0)
         diff = cv2.absdiff(mean_img, blurred)
         b, g, r = cv2.split(diff)
-        _, hot_r = cv2.threshold(r, self.channel_thresholds[2], 255, cv2.THRESH_BINARY)
+        _, hot_r = cv2.threshold(r, self.channel_thresholds[0], 255, cv2.THRESH_BINARY)
         _, hot_g = cv2.threshold(g, self.channel_thresholds[1], 255, cv2.THRESH_BINARY)
-        _, hot_b = cv2.threshold(b, self.channel_thresholds[0], 255, cv2.THRESH_BINARY)
+        _, hot_b = cv2.threshold(b, self.channel_thresholds[2], 255, cv2.THRESH_BINARY)
         hot_rgb = cv2.bitwise_or(hot_r, cv2.bitwise_or(hot_g, hot_b))
         self.print_message("hot pixels, r: {}            ".format(hot_r[hot_r>0].size))
         self.print_message("hot pixels, g: {}            ".format(hot_g[hot_g>0].size))
         self.print_message("hot pixels, b: {}            ".format(hot_b[hot_b>0].size))
         self.print_message("hot pixels, rgb: {}          ".format(hot_rgb[hot_rgb>0].size))
-        cv2.imwrite(self.working_directory + '/' + self.output_path + "/hot_r.png", hot_r)
-        cv2.imwrite(self.working_directory + '/' + self.output_path + "/hot_g.png", hot_g)
-        cv2.imwrite(self.working_directory + '/' + self.output_path + "/hot_b.png", hot_b)
-        cv2.imwrite(self.working_directory + '/' + self.output_path + "/hot_rgb.png", hot_rgb)
+        cv2.imwrite(self.working_directory + '/' + self.output_path + "/" + self.file_name + "_r.png", hot_r)
+        cv2.imwrite(self.working_directory + '/' + self.output_path + "/" + self.file_name + "_g.png", hot_g)
+        cv2.imwrite(self.working_directory + '/' + self.output_path + "/" + self.file_name + "_b.png", hot_b)
+        cv2.imwrite(self.working_directory + '/' + self.output_path + "/" + self.file_name + "_rgb.png", hot_rgb)
 
 MEAN = 'MEAN'
 MEDIAN = 'MEDIAN'
