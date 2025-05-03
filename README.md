@@ -80,7 +80,7 @@ Arguments are:
   * ```AKAZE```
 * ```match_method``` (optional): the method used to find matches. See [Feature Matching](https://docs.opencv.org/4.x/dc/dc3/tutorial_py_matcher.html) for more details. Possible values are:
   * ```KNN``` (default): [Feature Matching with FLANN](https://docs.opencv.org/3.4/d5/d6f/tutorial_feature_flann_matcher.html)
-  * ```NORM_HAMMING```: 
+  * ```NORM_HAMMING```: [Use Hamming distance](https://docs.opencv.org/4.x/d2/de8/group__core__array.html#ggad12cefbcb5291cf958a85b4b67b6149fa4b063afd04aebb8dd07085a1207da727)
 * ```flann_idx_kdtree``` (optional, default: 2): parameter used by the FLANN matching algorithm.
 * ```flann_tree``` (optional, default: 5): parameter used by the FLANN matching algorithm.
 * ```flann_checks``` (optional, default: 50): parameter used by the FLANN matching algorithm.
