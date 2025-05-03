@@ -55,6 +55,9 @@ class FrameMultiDirectory:
         self.output_path = output_path
         self.resample = resample
         self.reverse_order = reverse_order
+    def folder_list_str(self):
+        s = 's' if len(self.input_dir)>1 else ''
+        return "folder{}: ".format(s) + ", ".join([i for i in self.input_dir])
     def folder_filelist(self):
         if isinstance(self.input_dir, str):
             dirs = [self.input_dir]

@@ -12,7 +12,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         self.blur_size = blur_size
     def run_core(self):
         self.print_message('')
-        self.print_message(colored(": detect noisy pixels in folders: " + ", ".join([i for i in self.input_dir]), "blue"))
+        self.print_message(colored(": map noisy pixels, frames in " + self.folder_list_str(), "blue"))
         files = self.folder_filelist()
         in_paths = [self.working_directory + "/" + f for f in files]
         first_time = True

@@ -34,7 +34,7 @@ class MultiLayer(FrameMultiDirectory, JobBase):
         JobBase.__init__(self, name)
     def run_core(self):
         self.print_message('')
-        self.print_message(colored(": merging frames in folders: " + ", ".join([i for i in self.input_dir]), "blue"))
+        self.print_message(colored(": merging frames in " + self.folder_list_str(), "blue"))
         files = self.folder_filelist()
         in_paths = [self.working_directory + "/" + f for f in files]
         self.print_message(colored(": frames: " + ", ".join([i.split("/")[-1] for i in files]), "blue"))
