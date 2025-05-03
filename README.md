@@ -173,7 +173,7 @@ Arguments are:
 
 ### Noisy pixel masking
 
-First, the mask of noisy pixels has to be found and stored in afile:
+First, the mask of noisy pixels has to be determined and stored in a PNG file:
 
 ```python
 job = StackJob("job", "E:/Focus stacking/My image directory/")
@@ -188,7 +188,7 @@ Arguments are:
 * ```blur_size``` (optional, default: 5): image blur amount for pixel detection.
 * ```file_name``` (optional, default: ```hot```): noise map filename. The noisy pixel map is stored bydefault in the file ```hot_rgb.png```. Noisy pixel maps individyally for the R, G and B channels are also stored in  ```hot_r.png```,  ```hot_g.png``` and  ```hot_b.png```, respectively.
 
-Noisy pixels are then masked adding to the ```MultiRefActions``` module the action ```MaskNoise```:
+After the noisy pixel mask has been determined, noisy pixels are then masked adding the action ```MaskNoise``` to the ```MultiRefActions``` module:
 
 ```
 MaskNoise("noise-map/hot_rgb.png")
