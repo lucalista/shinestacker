@@ -41,7 +41,7 @@ Schedule the desired actions in a job, then run the job.
 job = StackJob(name, working_directory)
 ```
 
-arguments are:
+Arguments are:
 * ```working_directory```: the directory that contains input and output images, organized in subdirectories as specified by each action
 * ```name```: the name of the job, used for printout
 * ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images for subsequent action. If not specified, at least the first action must specify an ```input_path```.
@@ -51,7 +51,7 @@ arguments are:
 ```python
 job.add_action(MultiRefActions(name, actions=[...], *options))
 ```
-
+Arguments are:
 * ```name```: the name of the action, used for printout, and possibly for output path
 * ```actions```: array of action object to be applied in cascade 
 * ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images to be processed. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
@@ -65,7 +65,7 @@ job.add_action(MultiRefActions(name, actions=[...], *options))
 ```python
 AlignLayers(*options)
 ```
-arguments are:
+Arguments are:
 * ```transform``` (optional): the transformation applied to register images. Possible values are:
   * ```ALIGN_RIGID``` (default): allow scale, tanslation and rotation correction. This should be used for image acquired with tripode or microscope.
   * ```ALIGN_HOMOGRAPHY```: allow full perspective correction. This should be used for images taken with hand camera.
@@ -80,7 +80,7 @@ arguments are:
   * ```AKAZE```
 * ```match_method``` (optional): the method used to find matches. See [Feature Matching](https://docs.opencv.org/4.x/dc/dc3/tutorial_py_matcher.html) for more details. Possible values are:
   * ```KNN``` (default): [Feature Matching with FLANN](https://docs.opencv.org/3.4/d5/d6f/tutorial_feature_flann_matcher.html)
-  * ```NORM_HAMMING```: 
+  * ```NORM_HAMMING```: [Use Hamming distance](https://docs.opencv.org/4.x/d2/de8/group__core__array.html#ggad12cefbcb5291cf958a85b4b67b6149fa4b063afd04aebb8dd07085a1207da727)
 * ```flann_idx_kdtree``` (optional, default: 2): parameter used by the FLANN matching algorithm.
 * ```flann_tree``` (optional, default: 5): parameter used by the FLANN matching algorithm.
 * ```flann_checks``` (optional, default: 50): parameter used by the FLANN matching algorithm.
@@ -88,10 +88,10 @@ arguments are:
 * ```rans_threshold``` (optional, default: 5.0): parameter used if ```ALIGN_HOMOGRAPHY``` is choosen as tansformation, see [Feature Matching + Homography to find Objects](https://docs.opencv.org/3.4/d1/de0/tutorial_py_feature_homography.html) for more details.
 * ```border_mode``` (optional, default: ```BORDER_REPLICATE_BLUR```): border mode. See [Adding borders to your images](https://docs.opencv.org/3.4/dc/da3/tutorial_copyMakeBorder.html) for more details.  Possible values are:
   * ```BORDER_CONSTANT```: pad the image with a constant value. The border value is specified with the parameter ```border_value```.
-  * ```BORDER_REPLICATE```: the rows amd columns at the very edge of the original are replicated to the extra border.
+  * ```BORDER_REPLICATE```: the rows and columns at the very edge of the original are replicated to the extra border.
   * ```BORDER_REPLICATE_BLUR``` (default): same as above, but the border is blurred. The amount of blurring is specified by the parameter ```border_blur```.
 * ```border_value``` (optional, default: ```(0, 0, 0, 0)```): border value. See [Adding borders to your images](https://docs.opencv.org/3.4/dc/da3/tutorial_copyMakeBorder.html) for more details.
-* ```border_blur``` (optional, default: ```50```): amount of border blurring, in pixels.
+* ```border_blur``` (optional, default: ```50```): amount of border blurring, in pixels. Only applied if ```border_mode``` is set to ```BORDER_REPLICATE_BLUR```, which is the default option.
 * ```plot_matches``` (optional, default: ```False```): if ```True```, for each image the matches identified with respect to the reference image are plotted. May be useful for inspection and debugging.
 
 ### Luminosity and color balance
@@ -106,12 +106,12 @@ The module ```Balance``` accepts a correction object at constructor. There are f
 * ```SVCorrection```: balance saturation a luminosity value in the HSV (Hue, Saturation, brightness Value) representation. It may be needed in cases of extreme luminosity variation that affects saturation.
 * ```LSCorrection```: balance saturation a luminosity value in the HLS (Hue, Lightness, Saturation) representation. It may be needed in cases of extreme luminosity variation that affects saturation.
   
-Arguments for each of the corrector object constructor are:
+Arguments for each corrector object constructor are:
 * ```mask_size``` (optional): if specified, luminosity and color balance is only applied to pixels within a circle of radius equal to the minimum between the image width and height times ```mask_size```, i.e: 0.8 means 80% of a portrait image height. It may beuseful for images with vignetting, in order to remove the outer darker pixels.
 * ```i_min``` (optional): if specifies, only pixels with content greater pr equal tham ```i_min``` are used. It may be useful to remove black areas.
 * ```i_max``` (optional): if specifies, only pixels with content less pr equal tham ```i_max``` are used. It may be useful to remove white areas. Note that for 8-bit images ```i_max``` should be less or equal to 255, while for 16-bit images ```i_max``` should be less or equal to 65535.
 * ```img_scale``` (optional, default: 10): gets luminosity histogram using every n-th pixel in each dimension. By default, it takes one every 10 pixels in horizontal and vertical directions, i.e.: one every 100 pixels in total.  
-* ```corr_map``` (optional, default: ```LINEAR```, possible values: ```LINEAR```, ```GAMMA``` and ```MATCH_HIST```): applies either a linear mapping or a gamma correction or matches histograms of reference and source images. The gamma correction avoids saturation of high luminosity pixels, but may introduce more distortion than a linear mapping. If ```MATCH_HIST``` is specified, options ```i_min``` and ```i_max``` are not used.
+* ```corr_map``` (optional, default: ```LINEAR```, possible values: ```LINEAR```, ```GAMMA``` and ```MATCH_HIST```): applies either a linear mapping or a gamma correction or matches histograms of reference and source images. The gamma correction avoids saturation of high luminosity pixels, but may introduce more distortion than a linear mapping. If ```MATCH_HIST``` is specified, options ```i_min``` and ```i_max``` are not used. Note that ```MATCH_HIST``` should be used with ```RGBCorrection```, and it is safer to set ```img_scale=1```.
 * ```plot_histograms```  (optional, default: ```False```): if ```True```, for each image and for the reference image histograms with pixel content are plotted. May be useful for inspection and debugging.
 
 ### Focus Stacking
@@ -119,7 +119,7 @@ Arguments for each of the corrector object constructor are:
 ```python
 job.add_action(FocusStack(name, stacker, *options))
 ```
-arguments are:
+Arguments are:
 * ```name```: the name of the action, used for printout, and possibly for output path
 * ```stacker```: an object defining the focus stacking algorithm. Can be ```PyramidStack``` or ```DepthMapStack```, see below for possible algorithms. 
 * ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images to be processed. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
@@ -129,16 +129,17 @@ arguments are:
 * ```postfix``` (optional): if specified, the specified string is appended to the file name. May be useful if more algorithms are ran, and different file names are used for the output of different algorithms.
 * ```denoise``` (optoinal): if specified, a denois algorithm is applied. A value of 0.75 to 1.00 does not reduce details in an appreciable way, and is suitable for modest noise reduction. See [Image Denoising](https://docs.opencv.org/3.4/d5/d69/tutorial_py_non_local_means.html) for more details
 
-### Bunch Focus Stacking
+### Focus Stacking in bunches of frames
 
 ```python
 job.add_action(FocusStackBunch(name, stacker, *options))
 ```
-arguments are:
+Arguments are:
 * ```name```: the name of the action, used for printout, and possibly for output path
 * ```stacker```: an object defining the focus stacking algorithm. Can be ```PyramidStack``` or ```DepthMapStack```, see below for possible algorithms. 
 * ```input_path``` (optional): the subdirectory within ```working_directory``` that contains input images to be processed. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
 * * ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
+* ```working_directory```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_directory```.
 * ```exif_path``` (optional): if specified, EXIF data are copied to the output file from file in the specified directory. If not specified, it is the source directory used as * ```frames``` (optional, default: 10): the number of frames in each bunch that are stacked together.
 * ```overlap``` (optional, default: 0): the number of overlapping frames between a bunch and the following one. 
 * ```postfix``` (optional): if specified, the specified string is appended to the file name. May be useful if more algorithms are ran, and different file names are used for the output of different algorithms.
@@ -157,14 +158,48 @@ arguments are:
    * ```blur_size``` (optional, default: 5) 
    * ```smooth_size``` (optional, default: 32)
 
-#### Combine frames into a single multilayer tiff
+### Combine frames into a single multilayer tiff
 
 ```python
 job.add_action(MultiLayer(name,  *options))
 ```
+Typically, one may want to combine the output of focus stacking and intermediate frames, or bunches, in order to perform fine retouch using an image manipulation application.
+
+Arguments are:
 * ```input_path``` (optional): one or more subdirectory within ```working_directory``` that contains input images to be combined. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
 * ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
+* ```working_directory```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_directory```.
 * ```reverse_order``` (optional, default: ```False```): if ```True```, the images in each of the folders specified in ```input_path``` appear as layers in reverse alphabetic order. Folders are still read in the same order specified in ```input_path```.
+
+### Noisy pixel masking
+
+First, the mask of noisy pixels has to be determined and stored in a PNG file:
+
+```python
+job = StackJob("job", "E:/Focus stacking/My image directory/")
+job.add_action(NoiseDetection("noise-map", input_path=["src"]))
+job.run()
+```
+Arguments are:
+* ```input_path``` (optional): one or more subdirectory within ```working_directory``` that contains input images to be combined. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
+* ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
+* ```working_directory```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_directory```.
+* ```channel_thresholds``` (optional, default: ```(15, 15, 15)```): threshold values for noisy pixel detections in the color channels R, G, B, respectively.
+* ```blur_size``` (optional, default: 5): image blur amount for pixel detection.
+* ```file_name``` (optional, default: ```hot```): noise map filename. The noisy pixel map is stored bydefault in the file ```hot_rgb.png```. Noisy pixel maps individyally for the R, G and B channels are also stored in  ```hot_r.png```,  ```hot_g.png``` and  ```hot_b.png```, respectively.
+
+After the noisy pixel mask has been determined, noisy pixels are then masked adding the action ```MaskNoise``` to the ```MultiRefActions``` module:
+
+```
+MaskNoise("noise-map/hot_rgb.png")
+```
+
+E.g.:
+```python
+job.add_action(MultiRefActions("align", actions=[MaskNoise("noise-map/hot_rgb.png"),
+                                                 AlignLayers(),
+                                                 Balance(LumiCorrection(mask_size=0.8, i_min=150, i_max=65385))]))
+```
 
 ### Credits:
 
@@ -179,11 +214,13 @@ Pyramid methods in image processing
 
 ## Issues
 
+PNG files have not been tested so far.
+
 The support of TIFF, in particular 16-bit images, is still partial:
-* Even if ```exif_path``` is explicitly specified, for 16-bit TIFF exif data are not saved. Saving exif is implemented using the PIL library which does not support 16-bit TIFF as output, and therefore it would automatically downgrade the image to 8-bit, which is not a desirable feature.
+* ```SVCorrection``` and ```LSCorrection``` are only supported for 8-bit images
+* Even if ```exif_path``` is explicitly specified, for 16-bit TIFF exif data are not saved. Saving exif is implemented using the PIL library which does not support 16-bit TIFF as output, and therefore it would automatically downgrade the image to 8-bit, which is not a desirable feature. An [online tool](https://www.imgonline.com.ua/eng/copy-photo-metadata.php) helps copying exif data to the final jpg image with from a source file, e.g.: one of the frames used to perform the stacking.
 * Focus stacking modules crashes for TIFF files if  ```denoise``` is set ifferent from zero due to an assertion failure in the Open CV library. This is similar to a [known issue on stackoverflow](https://stackoverflow.com/questions/76647895/opencv-fastnlmeansdenoisingmulti-should-support-16-bit-images-but-does-it).
 * Focus stacking modules may crashes if  ```exif_path``` is provided and if the specified ```exif_path``` directory contains TIFF images, depending on the content of EXIF data. A couple of problematic keys in EXIF data have been identified, namely 33723, 34665, that cause a crash in the PIL library. Those keys are dropped from EXIF data for TIFF files in order to prevent such a crash. Moreover, some of the EXIF data may be missing.
-* PNG files have not been tested so far.
 
 ## License
 

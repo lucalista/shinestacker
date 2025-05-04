@@ -55,6 +55,9 @@ class FrameMultiDirectory:
         self.output_path = output_path
         self.resample = resample
         self.reverse_order = reverse_order
+    def folder_list_str(self):
+        s = 's' if len(self.input_dir)>1 else ''
+        return "folder{}: ".format(s) + ", ".join([i for i in self.input_dir])
     def folder_filelist(self):
         if isinstance(self.input_dir, str):
             dirs = [self.input_dir]
@@ -143,9 +146,6 @@ class MultiRefActions(FramesRefActions):
         self.sub_message('- read image        ', end='\r')
         img = read_img(self.input_dir + "/" + filename)
         if img is None: raise Exception("Invalid file: " + self.input_dir + "/" + filename)
-        if idx == ref_idx:
-            write_img(self.output_dir + "/" + filename, img)
-            return
         for a in self.__actions:
             img = a.run_frame(idx, ref_idx, img)
         self.sub_message('- write image        ', end='\r')

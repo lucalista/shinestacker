@@ -45,13 +45,15 @@ class MatchHist(CorrectionMapBase):
         return [np.cumsum(h)/h.sum()*self.two_n_1 for h in hist]        
     def lut(self, correction, reference):
         interp = interp1d(reference, self.values)
-        lut = np.array([interp(v) for v in correction])
+        lut = np.array([interp(v) for v in np.clip(correction, reference.min(), reference.max())])
         l0, l1 = lut[0], lut[-1]
         ll = lut[(lut != l0) & (lut != l1)]
-        l_min, l_max = ll.min(), ll.max()
-        i0, i1 = self.id_lut[lut == l0], self.id_lut[lut == l1]
-        lut[lut == l0] = i0 / i0.max() * l_min
-        lut[lut == l1] = i1  + (i1 - self.two_n_1)*(self.two_n_1 - l_max)/float(i1.size)
+        if ll.size > 0:
+            l_min, l_max = ll.min(), ll.max()
+            i0, i1 = self.id_lut[lut == l0], self.id_lut[lut == l1]
+            i0_max = i0.max()
+            lut[lut == l0] = (i0 / i0_max * l_min) if i0_max > 0 else 0
+            lut[lut == l1] = i1  + (i1 - self.two_n_1)*(self.two_n_1 - l_max)/float(i1.size) if i1.size > 0 else self.two_n_1
         return lut.astype(self.dtype)
     def correction(self, hist):
         return self.cumsum(hist)
@@ -279,7 +281,7 @@ class Balance:
         self.process.print_message('                                                                                 ')
         self.correction.end(self.process.ref_idx)
     def run_frame(self, idx, ref_idx, image):
-        if(idx != self.process.ref_idx):
-            self.process.sub_message('- balance image    ', end='\r')
+        if idx != self.process.ref_idx:
+            self.process.sub_message('- balance image       ', end='\r')
             image = self.correction.process(idx, image)
         return image
