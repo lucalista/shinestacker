@@ -263,7 +263,7 @@ HLS = "HLS"
 
 default_img_scale = 8
 
-class Balance:
+class BalanceFrames:
     def __init__(self, channel=LUMI, mask_size=None, i_min=0, i_max=-1, img_scale=-1, corr_map=LINEAR, plot_histograms=False):
         img_scale = (1 if corr_map==MATCH_HIST else default_img_scale) if img_scale==-1 else img_scale
         if channel == LUMI:

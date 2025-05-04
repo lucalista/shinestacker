@@ -5,12 +5,13 @@ from focus_stack.utils import read_img, write_img, img_8bit
 from focus_stack.framework import JobBase
 from focus_stack.stack_framework import FramesRefActions
 
-class AlignLayers:
-    ALIGN_HOMOGRAPHY = "homography"
-    ALIGN_RIGID = "rigid"
-    BORDER_CONSTANT = "BORDER_CONSTANT"
-    BORDER_REPLICATE = "BORDER_REPLICATE"
-    BORDER_REPLICATE_BLUR = "BORDER_REPLICATE_BLUR"
+ALIGN_HOMOGRAPHY = "ALIGN_HOMOGRAPHY"
+ALIGN_RIGID = "ALIGN_RIGID"
+BORDER_CONSTANT = "BORDER_CONSTANT"
+BORDER_REPLICATE = "BORDER_REPLICATE"
+BORDER_REPLICATE_BLUR = "BORDER_REPLICATE_BLUR"
+
+class AlignFrames:
     def __init__(self, detector='SIFT', descriptor='SIFT', match_method='KNN', flann_idx_kdtree=2, flann_trees=5, flann_checks=50, match_threshold=0.75, transform=ALIGN_RIGID, rans_threshold=5.0, border_mode=BORDER_REPLICATE_BLUR, border_value=(0, 0, 0, 0),  border_blur=50, plot_matches=False):
         self.detector = detector
         self.descriptor = descriptor
@@ -20,13 +21,13 @@ class AlignLayers:
         self.flann_checks = flann_checks
         self.match_threshold = match_threshold
         self.transform = transform
-        self.min_matches = 4 if self.transform==AlignLayers.ALIGN_HOMOGRAPHY else 3
+        self.min_matches = 4 if self.transform==ALIGN_HOMOGRAPHY else 3
         self.rans_threshold = rans_threshold
         self.border_mode = border_mode
-        match self.border_mode:
-            case self.BORDER_CONSTANT: self.cv2_border_mode = cv2.BORDER_CONSTANT
-            case self.BORDER_REPLICATE: self.cv2_border_mode = cv2.BORDER_REPLICATE
-            case self.BORDER_REPLICATE_BLUR: self.cv2_border_mode = cv2.BORDER_REPLICATE
+        if border_mode == BORDER_CONSTANT: self.cv2_border_mode = cv2.BORDER_CONSTANT
+        elif border_mode == BORDER_REPLICATE: self.cv2_border_mode = cv2.BORDER_REPLICATE
+        elif border_mode == BORDER_REPLICATE_BLUR: self.cv2_border_mode = cv2.BORDER_REPLICATE
+        else: raise Exception("Invalid border_mode option: " + border_mode)
         self.border_blur = border_blur
         self.border_value = border_value
         self.plot_matches = plot_matches
@@ -36,14 +37,14 @@ class AlignLayers:
         elif self.detector=='ORB': detector = cv2.ORB_create()
         elif self.detector=='SURF': detector = cv2.FastFeatureDetector_create()
         elif self.detector=='AKAZE': detector = cv2.AKAZE_create()
-        assert(detector), "Invalid detector: " + self.detector_method
+        else: raise Exception("Invalid detector: " + self.detector_method)
         return detector
     def create_descriptor(self):
         descriptor = None
         if self.descriptor=='ORB': descriptor = cv2.SIFT_create()
         elif self.descriptor=='SIFT': descriptor = cv2.ORB_create()
         elif self.descriptor=='AKAZE': descriptor = cv2.AKAZE_create()
-        assert(descriptor), "Invalid descriptor: " + self.detector_method
+        else: raise Exception("Invalid descriptor: " + self.detector_method)
         return descriptor
     def detect_and_compute(self, detector, descriptor, img_bw_0, img_bw_1):
         if self.detector==self.descriptor and (self.detector=='SIFT' or self.detector=='AKAZE'):
@@ -69,12 +70,11 @@ class AlignLayers:
             good_matches = sorted(good_matches, key=lambda x: x.distance)
         return good_matches
     def find_transform(self, src_pts, dst_pts):
-        if self.transform==AlignLayers.ALIGN_HOMOGRAPHY:
+        if self.transform == ALIGN_HOMOGRAPHY:
             M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, self.rans_threshold)
-        elif self.transform==AlignLayers.ALIGN_RIGID:
+        elif self.transform == ALIGN_RIGID:
             M, mask = cv2.estimateAffinePartial2D(src_pts, dst_pts, method=cv2.RANSAC, ransacReprojThreshold=self.rans_threshold)
-        else:
-            assert(false), "invalid align method: " + self.method
+        else: raise Exception("invalid align method: " + self.method)
         return M, mask        
     def run_frame(self, idx, ref_idx, img_0):
         if idx == self.process.ref_idx: return img_0
@@ -96,17 +96,17 @@ class AlignLayers:
             h, w = img_bw_1.shape
             pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0] ]).reshape(-1, 1 ,2)
             self.process.sub_message('- align images       ', end='\r')
-            if self.transform==AlignLayers.ALIGN_HOMOGRAPHY:
+            if self.transform == ALIGN_HOMOGRAPHY:
                 dst = cv2.perspectiveTransform(pts, M)
                 img_warp = cv2.warpPerspective(img_0, M, (w, h), borderMode=self.cv2_border_mode, borderValue=self.border_value)
-                if self.border_mode == self.BORDER_REPLICATE_BLUR:
+                if self.border_mode == BORDER_REPLICATE_BLUR:
                     mask = cv2.warpPerspective(np.ones_like(img_0, dtype=np.uint8), M, (w, h), borderMode=cv2.BORDER_CONSTANT, borderValue=0)
-            elif self.transform==AlignLayers.ALIGN_RIGID:
+            elif self.transform == ALIGN_RIGID:
                 dst =  cv2.transform(pts, M)
                 img_warp = cv2.warpAffine(img_0, M, (img_0.shape[1], img_0.shape[0]), borderMode=self.cv2_border_mode, borderValue=self.border_value)
-                if self.border_mode == self.BORDER_REPLICATE_BLUR:
+                if self.border_mode == BORDER_REPLICATE_BLUR:
                     mask = cv2.warpAffine(np.ones_like(img_0, dtype=np.uint8), M, (w, h), borderMode=cv2.BORDER_CONSTANT, borderValue=0)
-            if self.border_mode == self.BORDER_REPLICATE_BLUR:
+            if self.border_mode == BORDER_REPLICATE_BLUR:
                 self.process.sub_message('- blur borders ', end='\r')
                 mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
                 blurred_warp = cv2.GaussianBlur(img_warp, (21, 21), sigmaX=self.border_blur)

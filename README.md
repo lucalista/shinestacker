@@ -7,8 +7,8 @@
 ```python
 from focus_stack import *
 job = StackJob("job", "E:/Focus stacking/My image directory/", input_path="source")
-job.add_action(MultiRefActions("align", actions=[AlignLayers(),
-                                                 Balance(mask_size=0.9, i_min=150, i_max=65385)]))
+job.add_action(Actions("align", actions=[AlignFrames(),
+                                         BalanceFrames(mask_size=0.9, i_min=150, i_max=65385)]))
 job.add_action(FocusStackBunch("batches", PyramidStack(), frames=10, overlap=2, denoise=0.8))
 job.add_action(FocusStack("stack", PyramidStack(), postfix='_py', denoise=0.8))
 job.add_action(FocusStack("stack", DepthMapStack(), input_path='batches', postfix='_dm', denoise=0.8))
@@ -49,7 +49,7 @@ Arguments are:
 ### Schedule multiple actions based on a reference image: align and/or balance images
 
 ```python
-job.add_action(MultiRefActions(name, actions=[...], *options))
+job.add_action(Actions(name, actions=[...], *options))
 ```
 Arguments are:
 * ```name```: the name of the action, used for printout, and possibly for output path
@@ -63,7 +63,7 @@ Arguments are:
 ### Image registration: scale, tanslation and rotation correction, or full perspective correction
 
 ```python
-AlignLayers(*options)
+AlignFrames(*options)
 ```
 Arguments are:
 * ```transform``` (optional): the transformation applied to register images. Possible values are:
@@ -97,7 +97,7 @@ Arguments are:
 ### Luminosity and color balance
 
 ```python
-Balance(*options)
+BalanceFrames(*options)
 ```
   
 Arguments are:
@@ -183,7 +183,7 @@ Arguments are:
 * ```blur_size``` (optional, default: 5): image blur amount for pixel detection.
 * ```file_name``` (optional, default: ```hot```): noise map filename. The noisy pixel map is stored bydefault in the file ```hot_rgb.png```. Noisy pixel maps individyally for the R, G and B channels are also stored in  ```hot_r.png```,  ```hot_g.png``` and  ```hot_b.png```, respectively.
 
-After the noisy pixel mask has been determined, noisy pixels are then masked adding the action ```MaskNoise``` to the ```MultiRefActions``` module:
+After the noisy pixel mask has been determined, noisy pixels are then masked adding the action ```MaskNoise``` to the ```Actions``` module:
 
 ```
 MaskNoise("noise-map/hot_rgb.png")
@@ -192,8 +192,8 @@ MaskNoise("noise-map/hot_rgb.png")
 E.g.:
 ```python
 job.add_action(MultiRefActions("align", actions=[MaskNoise("noise-map/hot_rgb.png"),
-                                                 AlignLayers(),
-                                                 Balance(mask_size=0.9, i_min=150, i_max=65385)]))
+                                                 AlignFrames(),
+                                                 BalanceFrames(mask_size=0.9, i_min=150, i_max=65385)]))
 ```
 
 ### Credits:

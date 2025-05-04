@@ -126,7 +126,7 @@ class FramesRefActions(FrameDirectory, ActionList):
             if self.step_process: self.__ref_idx = self.ref_idx
             self.__idx_step = -1
             
-class MultiRefActions(FramesRefActions):
+class Actions(FramesRefActions):
     def __init__(self, name, input_path=None, output_path=None, working_directory=None, resample=1, ref_idx=-1, step_process=True, actions=None):
         FramesRefActions.__init__(self, name, input_path, output_path, working_directory, resample, ref_idx, step_process)
         self.__actions = []
