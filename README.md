@@ -6,7 +6,12 @@
 
 ```python
 from focus_stack import *
-job = StackJob("job", "E:/Focus stacking/My image directory/", input_path="source")
+
+job = StackJob("job", "E:/Focus stacking/My image directory/")
+job.add_action(NoiseDetection("noise-map", input_path=["src"]))
+job.run()
+
+job = StackJob("job", "E:/Focus stacking/My image directory/", input_path="src")
 job.add_action(Actions("align", actions=[MaskNoise("noise-map/hot_rgb.png"),
                                          AlignFrames(),
                                          BalanceFrames(mask_size=0.9, i_min=150, i_max=65385)]))
