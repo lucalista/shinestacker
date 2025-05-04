@@ -3,9 +3,10 @@ from termcolor import colored
 import cv2
 import numpy as np
 from tqdm.notebook import tqdm_notebook
+import matplotlib.pyplot as plt
 
 class NoiseDetection(FrameMultiDirectory, JobBase):
-    def __init__(self, name, input_path=None, output_path=None, working_directory=None, channel_thresholds=(15, 15, 15), blur_size = 5, file_name= "hot"):
+    def __init__(self, name, input_path=None, output_path=None, working_directory=None, channel_thresholds=(13, 13, 13), blur_size = 5, file_name= "hot"):
         FrameMultiDirectory.__init__(self, name, input_path, output_path, working_directory, 1, False)
         JobBase.__init__(self, name)
         self.channel_thresholds = channel_thresholds
@@ -35,12 +36,26 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         mean_img = (mean_img/counter).astype(np.uint8)
         blurred = cv2.GaussianBlur(mean_img, (self.blur_size, self.blur_size), 0)
         diff = cv2.absdiff(mean_img, blurred)
-        hot_px = [self.hot_map(ch, self.channel_thresholds[i]) for i, ch in enumerate(cv2.split(diff))]
+        channels = cv2.split(diff)
+        hot_px = [self.hot_map(ch, self.channel_thresholds[i]) for i, ch in enumerate(channels)]
         hot_rgb = cv2.bitwise_or(hot_px[0], cv2.bitwise_or(hot_px[1], hot_px[2]))
         for ch, hot in zip(['r', 'g', 'b', 'rgb'], hot_px + [hot_rgb]):
-            self.print_message("hot pixels, {}: {}            ".format(ch, hot[hot>0].size))
+            self.print_message("hot pixels, {}: {}                ".format(ch, np.count_nonzero(hot > 0)))
             cv2.imwrite(self.working_directory + '/' + self.output_path + "/" + self.file_name + "_" + ch + ".png", hot)
-            
+        th_range = range(5, 30)
+        plt.figure(figsize=(10, 5))
+        x = np.array(list(th_range))
+        ys = [[np.count_nonzero(self.hot_map(ch, th) > 0) for th in th_range] for ch in channels]
+        for i, ch, y in zip(range(3), ['r', 'g', 'b'], ys):
+            plt.plot(x, y, c=ch, label=ch)
+            plt.plot([self.channel_thresholds[i], self.channel_thresholds[i]], [0, y[self.channel_thresholds[i] - int(x[0])]], c=ch, linestyle="--")
+        plt.xlabel('threshold')
+        plt.ylabel('# of hot pixels')
+        plt.legend()
+        plt.xlim(x[0], x[-1])
+        plt.ylim(0)
+        plt.show()
+        
 MEAN = 'MEAN'
 MEDIAN = 'MEDIAN'
 class MaskNoise:

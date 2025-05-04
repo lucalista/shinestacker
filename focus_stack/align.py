@@ -140,7 +140,7 @@ class AlignFrames:
         plt.plot([x[0], x[-1]], [self.min_matches, self.min_matches], color='lightgray', linestyle='--', label='min. matches')
         plt.plot(x, y, color='navy', label='matches')
         plt.xlabel('frame')
-        plt.ylabel('n. of matches')
+        plt.ylabel('# of matches')
         plt.legend()
         plt.ylim(0)
         plt.xlim(x[0], x[-1])
