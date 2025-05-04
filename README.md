@@ -7,7 +7,8 @@
 ```python
 from focus_stack import *
 job = StackJob("job", "E:/Focus stacking/My image directory/", input_path="source")
-job.add_action(Actions("align", actions=[AlignFrames(),
+job.add_action(Actions("align", actions=[MaskNoise("noise-map/hot_rgb.png"),
+                                         AlignFrames(),
                                          BalanceFrames(mask_size=0.9, i_min=150, i_max=65385)]))
 job.add_action(FocusStackBunch("batches", PyramidStack(), frames=10, overlap=2, denoise=0.8))
 job.add_action(FocusStack("stack", PyramidStack(), postfix='_py', denoise=0.8))
