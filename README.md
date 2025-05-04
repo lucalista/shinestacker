@@ -169,14 +169,14 @@ Arguments are:
 
 ### Noisy pixel masking
 
-First, the mask of noisy pixels has to be determined and stored in a PNG file:
+First, the mask of noisy pixels has to be determined and stored in a PNG file using the action ```NoiseDetection```:
 
 ```python
 job = StackJob("job", "E:/Focus stacking/My image directory/")
 job.add_action(NoiseDetection("noise-map", input_path=["src"]))
 job.run()
 ```
-Arguments are:
+Arguments for ```NoiseDetection``` constructor are:
 * ```input_path``` (optional): one or more subdirectory within ```working_directory``` that contains input images to be combined. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
 * ```output_path``` (optional): the subdirectory within ```working_directory``` where aligned images are written. If not specified,  it is equal to  ```name```.
 * ```working_directory```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_directory```.
