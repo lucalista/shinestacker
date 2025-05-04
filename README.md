@@ -191,9 +191,9 @@ MaskNoise("noise-map/hot_rgb.png")
 
 E.g.:
 ```python
-job.add_action(MultiRefActions("align", actions=[MaskNoise("noise-map/hot_rgb.png"),
-                                                 AlignFrames(),
-                                                 BalanceFrames(mask_size=0.9, i_min=150, i_max=65385)]))
+job.add_action(Actions("align", actions=[MaskNoise("noise-map/hot_rgb.png"),
+                                         AlignFrames(),
+                                         BalanceFrames(mask_size=0.9, i_min=150, i_max=65385)]))
 ```
 
 ### Credits:
