@@ -255,17 +255,31 @@ class LSCorrection(Ch2Correction):
     def postprocess(self, image):
         return cv2.cvtColor(image, cv2.COLOR_HLS2BGR)
 
+LUMI = "LUMI"
+RGB = "RGB"
+HSV = "HSV"
+HLS = "HLS"
+
 class Balance:
-    def __init__(self, corrector):
-        self.corrector = corrector
+    def __init__(self, channel=LUMI, mask_size=None, i_min=0, i_max=-1, img_scale=default_img_scale, corr_map=LINEAR, plot_histograms=False):
+        if channel == LUMI:
+            self.correction = LumiCorrection(mask_size, i_min, i_max, img_scale, corr_map, plot_histograms)
+        elif channel == RGB:
+            self.correction = RGBCorrection(mask_size, i_min, i_max, img_scale, corr_map, plot_histograms)
+        elif channel == HSV:
+            self.correction = SVCorrection(mask_size, i_min, i_max, img_scale, corr_map, plot_histograms)
+        elif channel == HLS:
+            self.correction = LSCorrection(mask_size, i_min, i_max, img_scale, corr_map, plot_histograms)
+        else:
+            raise Exception("Invalid channel option: " + channel)
     def begin(self, process):
         self.process = process
-        self.corrector.begin(read_img(self.process.input_dir + "/" + self.process.filenames[process.ref_idx]), self.process.counts)
+        self.correction.begin(read_img(self.process.input_dir + "/" + self.process.filenames[process.ref_idx]), self.process.counts)
     def end(self):
         self.process.print_message('                                                                                 ')
-        self.corrector.end(self.process.ref_idx)
+        self.correction.end(self.process.ref_idx)
     def run_frame(self, idx, ref_idx, image):
         if(idx != self.process.ref_idx):
             self.process.sub_message('- balance image    ', end='\r')
-            image = self.corrector.process(idx, image)
+            image = self.correction.process(idx, image)
         return image
