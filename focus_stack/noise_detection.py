@@ -11,6 +11,8 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         self.channel_thresholds = channel_thresholds
         self.blur_size = blur_size
         self.file_name = file_name
+    def hot_map(self, ch, th):
+        return cv2.threshold(ch, th, 255, cv2.THRESH_BINARY)[1]
     def run_core(self):
         self.print_message('')
         self.print_message(colored(": map noisy pixels, frames in " + self.folder_list_str(), "blue"))
@@ -33,20 +35,12 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         mean_img = (mean_img/counter).astype(np.uint8)
         blurred = cv2.GaussianBlur(mean_img, (self.blur_size, self.blur_size), 0)
         diff = cv2.absdiff(mean_img, blurred)
-        b, g, r = cv2.split(diff)
-        _, hot_r = cv2.threshold(r, self.channel_thresholds[0], 255, cv2.THRESH_BINARY)
-        _, hot_g = cv2.threshold(g, self.channel_thresholds[1], 255, cv2.THRESH_BINARY)
-        _, hot_b = cv2.threshold(b, self.channel_thresholds[2], 255, cv2.THRESH_BINARY)
-        hot_rgb = cv2.bitwise_or(hot_r, cv2.bitwise_or(hot_g, hot_b))
-        self.print_message("hot pixels, r: {}            ".format(hot_r[hot_r>0].size))
-        self.print_message("hot pixels, g: {}            ".format(hot_g[hot_g>0].size))
-        self.print_message("hot pixels, b: {}            ".format(hot_b[hot_b>0].size))
-        self.print_message("hot pixels, rgb: {}          ".format(hot_rgb[hot_rgb>0].size))
-        cv2.imwrite(self.working_directory + '/' + self.output_path + "/" + self.file_name + "_r.png", hot_r)
-        cv2.imwrite(self.working_directory + '/' + self.output_path + "/" + self.file_name + "_g.png", hot_g)
-        cv2.imwrite(self.working_directory + '/' + self.output_path + "/" + self.file_name + "_b.png", hot_b)
-        cv2.imwrite(self.working_directory + '/' + self.output_path + "/" + self.file_name + "_rgb.png", hot_rgb)
-
+        hot_px = [self.hot_map(ch, self.channel_thresholds[i]) for i, ch in enumerate(cv2.split(diff))]
+        hot_rgb = cv2.bitwise_or(hot_px[0], cv2.bitwise_or(hot_px[1], hot_px[2]))
+        for ch, hot in zip(['r', 'g', 'b', 'rgb'], hot_px + [hot_rgb]):
+            self.print_message("hot pixels, {}: {}            ".format(ch, hot[hot>0].size))
+            cv2.imwrite(self.working_directory + '/' + self.output_path + "/" + self.file_name + "_" + ch + ".png", hot)
+            
 MEAN = 'MEAN'
 MEDIAN = 'MEDIAN'
 class MaskNoise:
