@@ -99,14 +99,9 @@ Arguments are:
 ```python
 Balance(*options)
 ```
-
-The module ```Balance``` accepts a correction object at constructor. There are four possible luminosity and color balance correctors:
-* ```LumiCorrection```: balance luminosity equally for R, G and B channels. It should be fine for most of the cases.
-* ```RGBCorrection```: balance luminosity separately for R, G and B channels. It may be needed if some but not all of the images have a undesired color dominance.
-* ```SVCorrection```: balance saturation a luminosity value in the HSV (Hue, Saturation, brightness Value) representation. It may be needed in cases of extreme luminosity variation that affects saturation.
-* ```LSCorrection```: balance saturation a luminosity value in the HLS (Hue, Lightness, Saturation) representation. It may be needed in cases of extreme luminosity variation that affects saturation.
   
-Arguments for each corrector object constructor are:
+Arguments are:
+*```channel``` (optional, default: LUMI): channels to be balanced. Possible values are: ```LUMI``` (default): balance equally for R, G and B channels, should be reasonably fine for most of the cases; ```RGB```: balance luminosity separately for R, G and B channels, it may be needed if some but not all of the images have a undesired color dominance; ```HSV```: balance saturation a luminosity value in the HSV (Hue, Saturation, brightness Value) representation, it may be needed in cases of extreme luminosity variation that affects saturation; ```HLS```: balance saturation a luminosity value in the HLS (Hue, Lightness, Saturation) representation, it may be needed in cases of extreme luminosity variation that affects saturation.
 * ```mask_size``` (optional): if specified, luminosity and color balance is only applied to pixels within a circle of radius equal to the minimum between the image width and height times ```mask_size```, i.e: 0.8 means 80% of a portrait image height. It may beuseful for images with vignetting, in order to remove the outer darker pixels.
 * ```i_min``` (optional): if specifies, only pixels with content greater pr equal tham ```i_min``` are used. It may be useful to remove black areas.
 * ```i_max``` (optional): if specifies, only pixels with content less pr equal tham ```i_max``` are used. It may be useful to remove white areas. Note that for 8-bit images ```i_max``` should be less or equal to 255, while for 16-bit images ```i_max``` should be less or equal to 65535.
