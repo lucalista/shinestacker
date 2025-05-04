@@ -27,6 +27,7 @@ class FrameDirectory:
         src_contents = os.walk(self.input_dir)
         dirpath, _, filenames = next(src_contents)
         filelist = [name for name in filenames if os.path.splitext(name)[-1][1:].lower() in FrameDirectory.EXTENSIONS]
+        filelist.sort()
         if self.reverse_order: filelist.reverse()
         if self.resample > 1: filelist = filelist[0::self.resample]
         return filelist
