@@ -3,3 +3,11 @@ __pycache__/*
 *.pyc
 .ipynb_checkpoints/*
 */.ipynb_checkpoints/*
+test/img-*-align/*
+test/img-*-balance-*/*
+test/img-*-stack/*
+test/img-*-multilayer/*
+test/img-*-bunches/*
+sandbox/img-test/*
+.DS_Store
+.virtual_documents

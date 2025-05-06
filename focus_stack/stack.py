@@ -38,13 +38,13 @@ class FocusStackBase:
             exif_filename = self.exif_path + '/' + fnames[0]
             copy_exif(exif_filename, out_filename)
             self.sub_message('                              ', end='\r')
-    def init(self, job, working_directory):
+    def init(self, job, working_path):
         if self.exif_path is None: self.exif_path = job.paths[0]
-        if self.exif_path != '': self.exif_path = working_directory + "/" + self.exif_path
+        if self.exif_path != '': self.exif_path = working_path + "/" + self.exif_path
         
 class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
-    def __init__(self, name, stack_algo, input_path=None, output_path=None, working_directory=None, resample=1, exif_path=None, postfix='', frames=10, overlap=0, denoise=0):
-        FrameDirectory.__init__(self, name, input_path, output_path, working_directory, resample)
+    def __init__(self, name, stack_algo, input_path=None, output_path=None, working_path=None, resample=1, exif_path=None, postfix='', frames=10, overlap=0, denoise=0):
+        FrameDirectory.__init__(self, name, input_path, output_path, working_path, resample)
         ActionList.__init__(self, name)
         FocusStackBase.__init__(self, stack_algo, exif_path, postfix, denoise)
         if overlap >= frames: raise Exception("Overlap must be smaller than batch size")
@@ -59,12 +59,12 @@ class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
         self.focus_stack(self.__chunks[self.count - 1])
     def init(self, job):
         FrameDirectory.init(self, job)
-        FocusStackBase.init(self, job, self.working_directory)
+        FocusStackBase.init(self, job, self.working_path)
         
 class FocusStack(FrameDirectory, JobBase, FocusStackBase):
-    def __init__(self, name, stack_algo, input_path=None, output_path=None, working_directory=None, resample=1, exif_path=None, postfix='', denoise=0):
+    def __init__(self, name, stack_algo, input_path=None, output_path=None, working_path=None, resample=1, exif_path=None, postfix='', denoise=0):
         self.name = name
-        FrameDirectory.__init__(self, name, input_path, output_path, working_directory, resample)
+        FrameDirectory.__init__(self, name, input_path, output_path, working_path, resample)
         JobBase.__init__(self, name)
         FocusStackBase.__init__(self, stack_algo, exif_path, postfix, denoise)
     def run_core(self):
@@ -73,4 +73,4 @@ class FocusStack(FrameDirectory, JobBase, FocusStackBase):
         self.focus_stack(self.filenames)
     def init(self, job):
         FrameDirectory.init(self, job)
-        FocusStackBase.init(self, job, self.working_directory)
+        FocusStackBase.init(self, job, self.working_path)

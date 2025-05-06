@@ -6,8 +6,8 @@ from tqdm.notebook import tqdm_notebook
 import matplotlib.pyplot as plt
 
 class NoiseDetection(FrameMultiDirectory, JobBase):
-    def __init__(self, name, input_path=None, output_path=None, working_directory=None, channel_thresholds=(13, 13, 13), blur_size = 5, file_name= "hot"):
-        FrameMultiDirectory.__init__(self, name, input_path, output_path, working_directory, 1, False)
+    def __init__(self, name, input_path=None, output_path=None, working_path=None, channel_thresholds=(13, 13, 13), blur_size = 5, file_name= "hot"):
+        FrameMultiDirectory.__init__(self, name, input_path, output_path, working_path, 1, False)
         JobBase.__init__(self, name)
         self.channel_thresholds = channel_thresholds
         self.blur_size = blur_size
@@ -18,7 +18,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         self.print_message('')
         self.print_message(colored(": map noisy pixels, frames in " + self.folder_list_str(), "blue"))
         files = self.folder_filelist()
-        in_paths = [self.working_directory + "/" + f for f in files]
+        in_paths = [self.working_path + "/" + f for f in files]
         first_time = True
         counter = 0
         bar = tqdm_notebook(desc=self.name, total=len(in_paths))
@@ -41,7 +41,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         hot_rgb = cv2.bitwise_or(hot_px[0], cv2.bitwise_or(hot_px[1], hot_px[2]))
         for ch, hot in zip(['r', 'g', 'b', 'rgb'], hot_px + [hot_rgb]):
             self.print_message("hot pixels, {}: {}                ".format(ch, np.count_nonzero(hot > 0)))
-            cv2.imwrite(self.working_directory + '/' + self.output_path + "/" + self.file_name + "_" + ch + ".png", hot)
+            cv2.imwrite(self.working_path + '/' + self.output_path + "/" + self.file_name + "_" + ch + ".png", hot)
         th_range = range(5, 30)
         plt.figure(figsize=(10, 5))
         x = np.array(list(th_range))
@@ -66,7 +66,7 @@ class MaskNoise:
         self.noise_mask = noise_mask
     def begin(self, process):
         self.process = process
-        self.noise_mask =  cv2.imread(process.working_directory + "/" + self.noise_mask, cv2.IMREAD_GRAYSCALE)
+        self.noise_mask =  cv2.imread(process.working_path + "/" + self.noise_mask, cv2.IMREAD_GRAYSCALE)
     def end(self):
         pass
     def run_frame(self, idx, ref_idx, image):

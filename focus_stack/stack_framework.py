@@ -5,9 +5,9 @@ from termcolor import colored
 import os
 
 class StackJob(Job):
-    def __init__(self, name, working_directory, input_path=None):
-        check_path_exists(working_directory)
-        self.working_directory = working_directory
+    def __init__(self, name, working_path, input_path=None):
+        check_path_exists(working_path)
+        self.working_path = working_path
         if input_path is None or input_path == '': self.paths = []
         else: self.paths = [input_path]
         Job.__init__(self, name)
@@ -16,9 +16,9 @@ class StackJob(Job):
 
 class FrameDirectory:
     EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
-    def __init__(self, name, input_path=None, output_path=None, working_directory=None, resample=1, reverse_order=False):
+    def __init__(self, name, input_path=None, output_path=None, working_path=None, resample=1, reverse_order=False):
         self.name = name
-        self.working_directory = working_directory
+        self.working_path = working_path
         self.input_path = input_path
         self.output_path = output_path
         self.resample = resample
@@ -35,23 +35,23 @@ class FrameDirectory:
         self.filenames = self.folder_filelist(self.input_dir)
         print(colored("{} files ".format(len(self.filenames)) + "in folder: '" + self.input_dir + "'", 'blue'))
     def init(self, job):
-        if self.working_directory is None: self.working_directory = job.working_directory
-        check_path_exists(self.working_directory)
+        if self.working_path is None: self.working_path = job.working_path
+        check_path_exists(self.working_path)
         if self.input_path is None:
             assert len(job.paths)>0, "No input path has been specified in " + job.name
             self.input_path = job.paths[-1]
-        self.input_dir = self.working_directory + ('' if self.working_directory[-1] == '/' else '/') + self.input_path
+        self.input_dir = self.working_path + ('' if self.working_path[-1] == '/' else '/') + self.input_path
         check_path_exists(self.input_dir)
         if self.output_path is None: self.output_path = self.name
-        self.output_dir = self.working_directory + ('' if self.working_directory[-1] == '/' else '/') + self.output_path
+        self.output_dir = self.working_path + ('' if self.working_path[-1] == '/' else '/') + self.output_path
         if not os.path.exists(self.output_dir): os.makedirs(self.output_dir)        
         job.paths.append(self.output_path)
 
 class FrameMultiDirectory:
     EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
-    def __init__(self, name, input_path=None, output_path=None, working_directory=None, resample=1, reverse_order=False):
+    def __init__(self, name, input_path=None, output_path=None, working_path=None, resample=1, reverse_order=False):
         self.name = name
-        self.working_directory = working_directory
+        self.working_path = working_path
         self.input_path = input_path
         self.output_path = output_path
         self.resample = resample
@@ -81,27 +81,27 @@ class FrameMultiDirectory:
         self.filenames = self.folder_filelist()
         print(colored("{} files ".format(len(self.filenames)) + "in folder: '" + self.input_dir + "'", 'blue'))
     def init(self, job):
-        if self.working_directory is None: self.working_directory = job.working_directory
-        check_path_exists(self.working_directory)
+        if self.working_path is None: self.working_path = job.working_path
+        check_path_exists(self.working_path)
         if self.input_path is None:
             assert len(job.paths)>0, "No input path has been specified in " + job.name
             self.input_path = job.paths[-1]
         if isinstance(self.input_path, str):
-            self.input_dir = self.working_directory + ('' if self.working_directory[-1] == '/' else '/') + self.input_path
+            self.input_dir = self.working_path + ('' if self.working_path[-1] == '/' else '/') + self.input_path
             check_path_exists(self.input_dir)
         elif hasattr(self.input_path, "__len__"):
             self.input_dir = []
             for path in self.input_path:
-                self.input_dir.append(self.working_directory + ('' if self.working_directory[-1] == '/' else '/') + path)
+                self.input_dir.append(self.working_path + ('' if self.working_path[-1] == '/' else '/') + path)
                 check_path_exists(self.input_dir[-1])        
         if self.output_path is None: self.output_path = self.name
-        self.output_dir = self.working_directory + ('' if self.working_directory[-1] == '/' else '/') + self.output_path
+        self.output_dir = self.working_path + ('' if self.working_path[-1] == '/' else '/') + self.output_path
         if not os.path.exists(self.output_dir): os.makedirs(self.output_dir)        
         job.paths.append(self.output_path)
         
 class FramesRefActions(FrameDirectory, ActionList):
-    def __init__(self, name, input_path=None, output_path=None, working_directory=None, resample=1, ref_idx=-1, step_process=False):
-        FrameDirectory.__init__(self, name, input_path, output_path, working_directory, resample)
+    def __init__(self, name, input_path=None, output_path=None, working_path=None, resample=1, ref_idx=-1, step_process=False):
+        FrameDirectory.__init__(self, name, input_path, output_path, working_path, resample)
         ActionList.__init__(self, name)
         self.ref_idx = ref_idx
         self.step_process = step_process
@@ -128,8 +128,8 @@ class FramesRefActions(FrameDirectory, ActionList):
             self.__idx_step = -1
             
 class Actions(FramesRefActions):
-    def __init__(self, name, input_path=None, output_path=None, working_directory=None, resample=1, ref_idx=-1, step_process=True, actions=None):
-        FramesRefActions.__init__(self, name, input_path, output_path, working_directory, resample, ref_idx, step_process)
+    def __init__(self, name, input_path=None, output_path=None, working_path=None, resample=1, ref_idx=-1, step_process=True, actions=None):
+        FramesRefActions.__init__(self, name, input_path, output_path, working_path, resample, ref_idx, step_process)
         self.__actions = []
         for a in actions:
             self.__actions.append(a)
