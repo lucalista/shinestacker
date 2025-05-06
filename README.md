@@ -6,8 +6,14 @@
 
 ```python
 from focus_stack import *
-job = StackJob("job", "E:/Focus stacking/My image directory/", input_path="source")
-job.add_action(Actions("align", actions=[AlignFrames(),
+
+job = StackJob("job", "E:/Focus stacking/My image directory/")
+job.add_action(NoiseDetection("noise-map", input_path=["src"]))
+job.run()
+
+job = StackJob("job", "E:/Focus stacking/My image directory/", input_path="src")
+job.add_action(Actions("align", actions=[MaskNoise("noise-map/hot_rgb.png"),
+                                         AlignFrames(),
                                          BalanceFrames(mask_size=0.9, i_min=150, i_max=65385)]))
 job.add_action(FocusStackBunch("batches", PyramidStack(), frames=10, overlap=2, denoise=0.8))
 job.add_action(FocusStack("stack", PyramidStack(), postfix='_py', denoise=0.8))
@@ -48,10 +54,12 @@ Arguments are:
 
 ### Schedule multiple actions based on a reference image: align and/or balance images
 
+The class ```Actions``` runs multiple actions on each of the frames appearing in a path.
+
 ```python
 job.add_action(Actions(name, actions=[...], *options))
 ```
-Arguments are:
+Arguments for the constructor of ```Actions``` are for the :
 * ```name```: the name of the action, used for printout, and possibly for output path
 * ```actions```: array of action object to be applied in cascade 
 * ```input_path``` (optional): the subdirectory within ```working_path``` that contains input images to be processed. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
@@ -65,7 +73,7 @@ Arguments are:
 ```python
 AlignFrames(*options)
 ```
-Arguments are:
+Arguments for the constructor ```AlignFrames``` of are:
 * ```transform``` (optional): the transformation applied to register images. Possible values are:
   * ```ALIGN_RIGID``` (default): allow scale, tanslation and rotation correction. This should be used for image acquired with tripode or microscope.
   * ```ALIGN_HOMOGRAPHY```: allow full perspective correction. This should be used for images taken with hand camera.
@@ -100,7 +108,7 @@ Arguments are:
 BalanceFrames(*options)
 ```
   
-Arguments are:
+Arguments for the constructor of ```BalanceFrames``` are:
 *```channel``` (optional, default: LUMI): channels to be balanced. Possible values are: ```LUMI``` (default): balance equally for R, G and B channels, should be reasonably fine for most of the cases; ```RGB```: balance luminosity separately for R, G and B channels, it may be needed if some but not all of the images have a undesired color dominance; ```HSV```: balance saturation a luminosity value in the HSV (Hue, Saturation, brightness Value) representation, it may be needed in cases of extreme luminosity variation that affects saturation; ```HLS```: balance saturation a luminosity value in the HLS (Hue, Lightness, Saturation) representation, it may be needed in cases of extreme luminosity variation that affects saturation.
 * ```mask_size``` (optional): if specified, luminosity and color balance is only applied to pixels within a circle of radius equal to the minimum between the image width and height times ```mask_size```, i.e: 0.8 means 80% of a portrait image width or landscape image height. It may beuseful for images with vignetting, in order to remove the outer darker pixels.
 * ```i_min``` (optional): if specifies, only pixels with content greater pr equal tham ```i_min``` are used. It may be useful to remove black areas. Not used if ```MATCH_HIST``` is specified as value for ```corr_map```.
@@ -114,7 +122,7 @@ Arguments are:
 ```python
 job.add_action(FocusStack(name, stacker, *options))
 ```
-Arguments are:
+Arguments for the constructor of ```FocusStack``` are:
 * ```name```: the name of the action, used for printout, and possibly for output path
 * ```stacker```: an object defining the focus stacking algorithm. Can be ```PyramidStack``` or ```DepthMapStack```, see below for possible algorithms. 
 * ```input_path``` (optional): the subdirectory within ```working_path``` that contains input images to be processed. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
@@ -122,14 +130,14 @@ Arguments are:
 * ```working_path```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_path```.
 * ```exif_path``` (optional): if specified, EXIF data are copied to the output file from file in the specified directory. If not specified, it is the source directory used as input for the first action. If set equal to ```''``` no EXIF data is saved.
 * ```postfix``` (optional): if specified, the specified string is appended to the file name. May be useful if more algorithms are ran, and different file names are used for the output of different algorithms.
-* ```denoise``` (optoinal): if specified, a denois algorithm is applied. A value of 0.75 to 1.00 does not reduce details in an appreciable way, and is suitable for modest noise reduction. See [Image Denoising](https://docs.opencv.org/3.4/d5/d69/tutorial_py_non_local_means.html) for more details
+* ```denoise``` (optoinal): if specified, a denois algorithm is applied. A value of 0.75 to 1.00 does not reduce details in an appreciable way, and is suitable for modest noise reduction. denoise may be useful for 8-bit images, or for images taken at large ISO. 16-bits images at low ISO usually don't require denoise. See [Image Denoising](https://docs.opencv.org/3.4/d5/d69/tutorial_py_non_local_means.html) for more details.
 
 ### Focus Stacking in bunches of frames
 
 ```python
 job.add_action(FocusStackBunch(name, stacker, *options))
 ```
-Arguments are:
+Arguments for the constructor of ```FocusStackBunch``` are:
 * ```name```: the name of the action, used for printout, and possibly for output path
 * ```stacker```: an object defining the focus stacking algorithm. Can be ```PyramidStack``` or ```DepthMapStack```, see below for possible algorithms. 
 * ```input_path``` (optional): the subdirectory within ```working_path``` that contains input images to be processed. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
@@ -160,22 +168,22 @@ job.add_action(MultiLayer(name,  *options))
 ```
 Typically, one may want to combine the output of focus stacking and intermediate frames, or bunches, in order to perform fine retouch using an image manipulation application.
 
-Arguments are:
+Arguments for the constructor of ```MultiLayer``` are:
 * ```input_path``` (optional): one or more subdirectory within ```working_path``` that contains input images to be combined. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
 * ```output_path``` (optional): the subdirectory within ```working_path``` where aligned images are written. If not specified,  it is equal to  ```name```.
 * ```working_path```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_path```.
-* ```reverse_order``` (optional, default: ```False```): if ```True```, the images in each of the folders specified in ```input_path``` appear as layers in reverse alphabetic order. Folders are still read in the same order specified in ```input_path```.
 
 ### Noisy pixel masking
 
-First, the mask of noisy pixels has to be determined and stored in a PNG file:
+First, the mask of noisy pixels has to be determined and stored in a PNG file using the action ```NoiseDetection```:
 
 ```python
 job = StackJob("job", "E:/Focus stacking/My image directory/")
 job.add_action(NoiseDetection("noise-map", input_path=["src"]))
 job.run()
 ```
-Arguments are:
+
+Arguments for the constructor of ```NoiseDetection``` are:
 * ```input_path``` (optional): one or more subdirectory within ```working_path``` that contains input images to be combined. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
 * ```output_path``` (optional): the subdirectory within ```working_path``` where aligned images are written. If not specified,  it is equal to  ```name```.
 * ```working_path```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_path```.
@@ -186,7 +194,7 @@ Arguments are:
 After the noisy pixel mask has been determined, noisy pixels are then masked adding the action ```MaskNoise``` to the ```Actions``` module:
 
 ```
-MaskNoise("noise-map/hot_rgb.png")
+MaskNoise(noise_mask, *options)
 ```
 
 E.g.:
@@ -195,6 +203,11 @@ job.add_action(Actions("align", actions=[MaskNoise("noise-map/hot_rgb.png"),
                                          AlignFrames(),
                                          BalanceFrames(mask_size=0.9, i_min=150, i_max=65385)]))
 ```
+
+Arguments for the constructor of ```NoiseDetection``` are:
+* ```noise_mask```: filename of the noise mask
+*  ```kernel_size``` (optional, default: 3): blur size use to extract noisy pixels
+*  ```method``` (optional, default: ```MEAN```): possible values: ```MEAN```, ```MEDIAN```. Use mean or median of neighborhood pixels to replace a noisy pixel.
 
 ### Credits:
 
