@@ -30,7 +30,7 @@ from psdtags import (
 
 class MultiLayer(FrameMultiDirectory, JobBase):
     def __init__(self, name, input_path=None, output_path=None, working_path=None, reverse_order=False):
-        FrameMultiDirectory.__init__(self, name, input_path, output_path, working_path, 1, reverse_order)
+        FrameMultiDirectory.__init__(self, name, input_path, output_path, working_path, None, 1, reverse_order)
         JobBase.__init__(self, name)
     def run_core(self):
         self.print_message('')

@@ -92,7 +92,7 @@ class AlignFrames:
             src_pts = np.float32([kp_0[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
             dst_pts = np.float32([kp_1[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
             M, mask = self.find_transform(src_pts, dst_pts)
-            if(self.plot_matches): matches_mask = mask.ravel().tolist()
+            if self.plot_matches: matches_mask = mask.ravel().tolist()
             h, w = img_bw_1.shape
             pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0] ]).reshape(-1, 1 ,2)
             self.process.sub_message('- align images       ', end='\r')
@@ -111,21 +111,21 @@ class AlignFrames:
                 mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
                 blurred_warp = cv2.GaussianBlur(img_warp, (21, 21), sigmaX=self.border_blur)
                 img_warp[mask == 0] = blurred_warp[mask == 0]
+            if self.plot_matches:
+                draw_params = dict(matchColor = (0,255,0), singlePointColor=None, matchesMask=matches_mask, flags = 2)
+                img_match = cv2.cvtColor(cv2.drawMatches(img_0, kp_0, img_ref, kp_1, good_matches, None, **draw_params), cv2.COLOR_BGR2RGB)
+                print('')
+                print("matches: {}".format(n_good_matches))
+                plt.figure(figsize=(10, 5))
+                plt.imshow(img_match, 'gray')
+                plt.savefig(self.process.plot_path + "/" + self.process.name + "-matches-{:04d}.pdf".format(idx), dpi=150)
+                plt.show()
             return img_warp
         else:
             img_warp = None
-            if(self.plot_matches): matches_mask = None
+            if self.plot_matches: matches_mask = None
             self.process.sub_message("- image not aligned, too few matches found: {}           ".format(n_good_matches))
             return None
-        if(self.plot_matches):
-            draw_params = dict(matchColor = (0,255,0), singlePointColor=None, matchesMask=matches_mask, flags = 2)
-            img_match = cv2.cvtColor(cv2.drawMatches(img_0, kp_0, img_ref, kp_1, good_matches, None, **draw_params), cv2.COLOR_BGR2RGB)
-            print('')
-            print("matches: {}".format(n_good_matches))
-            plt.figure(figsize=(10, 5))
-            plt.imshow(img_match, 'gray'),
-            plt.show()
-        return img_warp
     def begin(self, process):
         self.process = process
         self.n_matches = np.zeros(process.counts)
@@ -136,7 +136,10 @@ class AlignFrames:
         no_ref = (x != self.process.ref_idx + 1)
         x = x[no_ref]
         y = self.n_matches[no_ref]
-        plt.plot([self.process.ref_idx + 1, self.process.ref_idx + 1], [0, y.max()], color='cornflowerblue', linestyle='--', label='reference frame')
+        if self.process.ref_idx == 0: y_max = y[1]
+        elif self.process.ref_idx == len(y) - 1: y_max = y[-1]
+        else: y_max = (y[self.process.ref_idx - 1] + y[self.process.ref_idx])/2
+        plt.plot([self.process.ref_idx + 1, self.process.ref_idx + 1], [0, y_max], color='cornflowerblue', linestyle='--', label='reference frame')
         plt.plot([x[0], x[-1]], [self.min_matches, self.min_matches], color='lightgray', linestyle='--', label='min. matches')
         plt.plot(x, y, color='navy', label='matches')
         plt.xlabel('frame')
@@ -144,4 +147,5 @@ class AlignFrames:
         plt.legend()
         plt.ylim(0)
         plt.xlim(x[0], x[-1])
+        plt.savefig(self.process.plot_path + "/" + self.process.name + "-matches.pdf", dpi=150)
         plt.show()

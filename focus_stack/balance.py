@@ -97,10 +97,10 @@ class Correction:
         self.img_scale = default_img_scale if img_scale==-1 else img_scale
         self.corr_map = corr_map
         self.channels = channels
-    def begin(self, ref_image, size):
+    def begin(self, ref_image, size, ref_idx):
         self.dtype = ref_image.dtype
         self.two_n = 256 if ref_image.dtype == np.uint8 else 65536
-        hist = self.get_hist(self.preprocess(ref_image))
+        hist = self.get_hist(self.preprocess(ref_image), ref_idx)
         if self.corr_map == LINEAR:
             self.corr_map = LinearMap(self.dtype, hist, self.i_min, self.i_max)
         elif self.corr_map == GAMMA:
@@ -119,16 +119,16 @@ class Correction:
             image_sel = image[(xv - width//2)**2 + (yv - height//2)**2 <= (min(width, height)*self.mask_size/2)**2]
         hist, bins = np.histogram((image_sel if self.img_scale==1 else image_sel[::self.img_scale][::self.img_scale]), bins=np.linspace(-0.5, self.two_n - 0.5, self.two_n + 1))
         return hist
-    def balance(self, image):
-        correction = self.corr_map.correction(self.get_hist(image))
+    def balance(self, image, idx):
+        correction = self.corr_map.correction(self.get_hist(image, idx))
         return correction, self.corr_map.adjust(image, correction)
-    def get_hist(self, image):
+    def get_hist(self, image, idx):
         assert(False), 'abstract method'
     def end(self):
         assert(False), 'abstract method'
-    def process(self, idx, image):
+    def apply_correction(self, idx, image):
         image = self.preprocess(image)
-        correction, image = self.balance(image)
+        correction, image = self.balance(image, idx)
         image = self.postprocess(image)
         self.corrections[idx] = self.corr_map.correction_size(correction)
         return image
@@ -146,7 +146,7 @@ class Correction:
 class LumiCorrection(Correction):
     def __init__(self, mask_size=None, i_min=0, i_max=-1, img_scale=1, corr_map=LINEAR, plot_histograms=False):
         Correction.__init__(self, 1, mask_size, i_min, i_max, img_scale, corr_map, plot_histograms)
-    def get_hist(self, image):
+    def get_hist(self, image, idx):
         if self.dtype != image.dtype: raise Exception("Images must be all of 8 bit or 16 bit")
         hist = self.calc_hist_1ch(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY))
         if self.plot_histograms:
@@ -158,6 +158,7 @@ class LumiCorrection(Correction):
                 hist_col = self.calc_hist_1ch(chan)
                 self.histo_plot(axs[1], hist_col, "r,g,b luminosity", color, alpha=0.5)
             plt.xlim(0, self.two_n)
+            plt.savefig(self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx), dpi=150)
             plt.show()
         return [hist]
     def end(self, ref_idx):
@@ -172,12 +173,13 @@ class LumiCorrection(Correction):
         plt.legend()
         plt.xlim(x[0], x[-1])
         plt.ylim(0)
+        plt.savefig(self.process.plot_path + "/" + self.process.name + "-balance.pdf", dpi=150)
         plt.show()
 
 class RGBCorrection(Correction):
     def __init__(self, mask_size=None, i_min=0, i_max=-1, img_scale=1, corr_map=LINEAR, plot_histograms=False):
         Correction.__init__(self, 3, mask_size, i_min, i_max, img_scale, corr_map, plot_histograms)
-    def get_hist(self, image):
+    def get_hist(self, image, idx):
         if self.dtype != image.dtype: raise Exception("Images must be all of 8 bit or 16 bit")
         hist = [self.calc_hist_1ch(chan) for chan in cv2.split(image)]
         colors = ("r", "g", "b")
@@ -186,6 +188,7 @@ class RGBCorrection(Correction):
             for c in [2, 1, 0]:
                 self.histo_plot(axs[c], hist[c], colors[c] + " luminosity", colors[c])
             plt.xlim(0, self.two_n)
+            plt.savefig(self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx), dpi=150)
             plt.show()
         return hist
     def end(self, ref_idx):
@@ -202,6 +205,7 @@ class RGBCorrection(Correction):
         plt.legend()
         plt.xlim(x[0], x[-1])
         plt.ylim(0)
+        plt.savefig(self.process.plot_path + "/" + self.process.name + "-balance.pdf", dpi=150)
         plt.show()
 
 class Ch2Correction(Correction):
@@ -211,7 +215,7 @@ class Ch2Correction(Correction):
         assert(False), 'abstract method'
     def get_labels(self):
         assert(False), 'abstract method'
-    def get_hist(self, image):
+    def get_hist(self, image, idx):
         if self.dtype != image.dtype: raise Exception("Images must be all of 8 bit or 16 bit")
         hist = [self.calc_hist_1ch(chan) for chan in cv2.split(image)]
         if self.plot_histograms:
@@ -219,6 +223,7 @@ class Ch2Correction(Correction):
             for c in range(3):
                 self.histo_plot(axs[c], hist[c], self.labels[c], self.colors[c])
             plt.xlim(0, self.two_n)
+            plt.savefig(self.process.plot_path + "/" + self.process.name + "_hist_{:04d}.pdf".format(idx), dpi=150)
             plt.show()
         return hist[1:]
     def end(self, ref_idx):
@@ -234,6 +239,7 @@ class Ch2Correction(Correction):
         plt.legend()
         plt.xlim(x[0], x[-1])
         plt.ylim(0)
+        plt.savefig(self.process.plot_path + "/" + self.process.name + "-balance.pdf", dpi=150)
         plt.show()
         
 class SVCorrection(Ch2Correction):
@@ -278,12 +284,13 @@ class BalanceFrames:
             raise Exception("Invalid channel option: " + channel)
     def begin(self, process):
         self.process = process
-        self.correction.begin(read_img(self.process.input_dir + "/" + self.process.filenames[process.ref_idx]), self.process.counts)
+        self.correction.process = process
+        self.correction.begin(read_img(self.process.input_dir + "/" + self.process.filenames[process.ref_idx]), self.process.counts, process.ref_idx)
     def end(self):
         self.process.print_message('                                                                                 ')
         self.correction.end(self.process.ref_idx)
     def run_frame(self, idx, ref_idx, image):
         if idx != self.process.ref_idx:
             self.process.sub_message('- balance image       ', end='\r')
-            image = self.correction.process(idx, image)
+            image = self.correction.apply_correction(idx, image)
         return image

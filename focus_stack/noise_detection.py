@@ -6,8 +6,8 @@ from tqdm.notebook import tqdm_notebook
 import matplotlib.pyplot as plt
 
 class NoiseDetection(FrameMultiDirectory, JobBase):
-    def __init__(self, name, input_path=None, output_path=None, working_path=None, channel_thresholds=(13, 13, 13), blur_size = 5, file_name= "hot"):
-        FrameMultiDirectory.__init__(self, name, input_path, output_path, working_path, 1, False)
+    def __init__(self, name, input_path=None, output_path=None, working_path=None, plot_path='plots', channel_thresholds=(13, 13, 13), blur_size = 5, file_name= "hot"):
+        FrameMultiDirectory.__init__(self, name, input_path, output_path, working_path, plot_path, 1, False)
         JobBase.__init__(self, name)
         self.channel_thresholds = channel_thresholds
         self.blur_size = blur_size
@@ -54,6 +54,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         plt.legend()
         plt.xlim(x[0], x[-1])
         plt.ylim(0)
+        plt.savefig(self.plot_path + "/" + self.name + "-hot-pixels.pdf", dpi=150)
         plt.show()
         
 MEAN = 'MEAN'
