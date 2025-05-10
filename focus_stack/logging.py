@@ -1,8 +1,9 @@
 import logging
 import sys
 from pathlib import Path
+import re
 
-class ColorFormatter(logging.Formatter):
+class ConsoleFormatter(logging.Formatter):
     COLORS = {
         'DEBUG': '\033[36m',     # CYAN
         'INFO': '\033[32m',      # GREEN
@@ -16,6 +17,12 @@ class ColorFormatter(logging.Formatter):
         fmt = f"{color}[%(levelname).3s %(asctime)s]{self.RESET} %(message)s"
         return logging.Formatter(fmt).format(record)
 
+class FileFormatter(logging.Formatter):
+    ANSI_ESCAPE = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+    def format(self, record):
+        fmt = f"[%(levelname).3s %(asctime)s] %(message)s"
+        return self.ANSI_ESCAPE.sub('', logging.Formatter(fmt).format(record).replace("\r", ""))
+
 def setup_logging(
     console_level=logging.INFO,
     file_level=logging.DEBUG,
@@ -28,14 +35,12 @@ def setup_logging(
     root_logger.setLevel(logging.DEBUG)
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(console_level)
-    console_handler.setFormatter(ColorFormatter())
+    console_handler.setFormatter(ConsoleFormatter())
     if log_file:
         Path(log_file).parent.mkdir(parents=True, exist_ok=True)
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(file_level)
-        file_handler.setFormatter(
-            logging.Formatter("[%(levelname).3s %(asctime)s] %(name)s: %(message)s")
-        )
+        file_handler.setFormatter(FileFormatter())
         root_logger.addHandler(file_handler)
     root_logger.addHandler(console_handler)
     logging.getLogger("matplotlib").setLevel(logging.WARNING)
