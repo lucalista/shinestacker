@@ -32,15 +32,24 @@ def setup_logging(
     setup_logging._called = True
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(console_level)
-    console_handler.setFormatter(ConsoleFormatter())
     if log_file:
         Path(log_file).parent.mkdir(parents=True, exist_ok=True)
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(file_level)
         file_handler.setFormatter(FileFormatter())
         root_logger.addHandler(file_handler)
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(console_level)
+    console_handler.setFormatter(ConsoleFormatter())
     root_logger.addHandler(console_handler)
     logging.getLogger("matplotlib").setLevel(logging.WARNING)
     logging.getLogger("PIL").setLevel(logging.INFO)
+
+def set_console_logging_terminator(terminator):
+    logging.getLogger().handlers[1].terminator = terminator
+
+def console_logging_overwrite():
+    set_console_logging_terminator('\r')
+
+def console_logging_newline():
+    set_console_logging_terminator('\n')
