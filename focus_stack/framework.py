@@ -1,6 +1,7 @@
 import time
 from termcolor import colored
 from tqdm.notebook import tqdm_notebook
+from focus_stack.logging import setup_logging
 
 def elapsed_time_str(start):
     dt = time.time() - start
