@@ -22,7 +22,7 @@ def setup_logging(
     log_file=None
 ):
     if hasattr(setup_logging, '_called'):
-        return  # Evita riconfigurazioni
+        return
     setup_logging._called = True
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
