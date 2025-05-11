@@ -23,7 +23,7 @@ class JobBase:
         self.logger.info(colored(self.name + ": ", "green", attrs=["bold"]) + colored("elapsed time: {}                    ".format(elapsed_time_str(self.__t0)), "green"))
         self.logger.info(colored(self.name + ": ", "green", attrs=["bold"]) + colored("completed                    ", "green"))
     def print_message(self, msg='', level=logging.INFO, end='\n'):
-        self.base_message = colored("running " + self.name, "blue", attrs=["bold"])
+        self.base_message = colored(self.name, "blue", attrs=["bold"])
         if msg != '': self.base_message += (': ' + msg)
         if end == '\r': console_logging_overwrite()
         self.logger.log(level, colored(self.base_message, 'blue', attrs=['bold']))
