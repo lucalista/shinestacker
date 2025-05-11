@@ -109,7 +109,7 @@ class Correction:
         elif self.corr_map == MATCH_HIST:
             self.corr_map = MatchHist(self.dtype, hist, self.i_min, self.i_max)
         else:
-            raise Exception("Invalid correction map type: " + self.corr_map)
+            raise InvalidOptionError("corr_map", self.corr_map)
         self.corrections = np.ones((size, self.channels))
     def calc_hist_1ch(self, image):
         if self.mask_size is None:
@@ -148,7 +148,7 @@ class LumiCorrection(Correction):
     def __init__(self, mask_size=None, i_min=0, i_max=-1, img_scale=1, corr_map=LINEAR, plot_histograms=False):
         Correction.__init__(self, 1, mask_size, i_min, i_max, img_scale, corr_map, plot_histograms)
     def get_hist(self, image, idx):
-        if self.dtype != image.dtype: raise Exception("Images must be all of 8 bit or 16 bit")
+        if self.dtype != image.dtype: raise BitDepthError()
         hist = self.calc_hist_1ch(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY))
         if self.plot_histograms:
             chans = cv2.split(image)
@@ -185,7 +185,7 @@ class RGBCorrection(Correction):
     def __init__(self, mask_size=None, i_min=0, i_max=-1, img_scale=1, corr_map=LINEAR, plot_histograms=False):
         Correction.__init__(self, 3, mask_size, i_min, i_max, img_scale, corr_map, plot_histograms)
     def get_hist(self, image, idx):
-        if self.dtype != image.dtype: raise Exception("Images must be all of 8 bit or 16 bit")
+        if self.dtype != image.dtype: raise BitDepthError()
         hist = [self.calc_hist_1ch(chan) for chan in cv2.split(image)]
         colors = ("r", "g", "b")
         if self.plot_histograms:
@@ -225,7 +225,7 @@ class Ch2Correction(Correction):
     def get_labels(self):
         assert(False), 'abstract method'
     def get_hist(self, image, idx):
-        if self.dtype != image.dtype: raise Exception("Images must be all of 8 bit or 16 bit")
+        if self.dtype != image.dtype: raise BitDepthError()
         hist = [self.calc_hist_1ch(chan) for chan in cv2.split(image)]
         if self.plot_histograms:
             fig, axs = plt.subplots(1, 3, figsize=(10, 3), sharey=True)
@@ -292,7 +292,7 @@ class BalanceFrames:
         elif channel == HLS:
             self.correction = LSCorrection(mask_size, i_min, i_max, img_scale, corr_map, plot_histograms)
         else:
-            raise Exception("Invalid channel option: " + channel)
+            raise InvalidOptionError("channel", channel)
     def begin(self, process):
         self.process = process
         self.correction.process = process

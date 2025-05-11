@@ -4,6 +4,7 @@ import numpy as np
 from focus_stack.utils import read_img, write_img, img_8bit
 from focus_stack.framework import JobBase
 from focus_stack.stack_framework import FramesRefActions
+from focus_stack.exceptions import AlignmentError
 import logging
 
 ALIGN_HOMOGRAPHY = "ALIGN_HOMOGRAPHY"
@@ -28,7 +29,7 @@ class AlignFrames:
         if border_mode == BORDER_CONSTANT: self.cv2_border_mode = cv2.BORDER_CONSTANT
         elif border_mode == BORDER_REPLICATE: self.cv2_border_mode = cv2.BORDER_REPLICATE
         elif border_mode == BORDER_REPLICATE_BLUR: self.cv2_border_mode = cv2.BORDER_REPLICATE
-        else: raise Exception("Invalid border_mode option: " + border_mode)
+        else: raise InvalidOptionError("border_mode", border_mode)
         self.border_blur = border_blur
         self.border_value = border_value
         self.plot_matches = plot_matches
@@ -38,14 +39,14 @@ class AlignFrames:
         elif self.detector=='ORB': detector = cv2.ORB_create()
         elif self.detector=='SURF': detector = cv2.FastFeatureDetector_create()
         elif self.detector=='AKAZE': detector = cv2.AKAZE_create()
-        else: raise Exception("Invalid detector: " + self.detector_method)
+        else: raise InvalidOptionError("detector" + self.detector)
         return detector
     def create_descriptor(self):
         descriptor = None
         if self.descriptor=='ORB': descriptor = cv2.SIFT_create()
         elif self.descriptor=='SIFT': descriptor = cv2.ORB_create()
         elif self.descriptor=='AKAZE': descriptor = cv2.AKAZE_create()
-        else: raise Exception("Invalid descriptor: " + self.detector_method)
+        else: raise InvalidOptionError("descriptor", self.descriptor)
         return descriptor
     def detect_and_compute(self, detector, descriptor, img_bw_0, img_bw_1):
         if self.detector==self.descriptor and (self.detector=='SIFT' or self.detector=='AKAZE'):
@@ -75,7 +76,7 @@ class AlignFrames:
             M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, self.rans_threshold)
         elif self.transform == ALIGN_RIGID:
             M, mask = cv2.estimateAffinePartial2D(src_pts, dst_pts, method=cv2.RANSAC, ransacReprojThreshold=self.rans_threshold)
-        else: raise Exception("invalid align method: " + self.method)
+        else: raise InvalidOptionError("transform", self.transform)
         return M, mask        
     def run_frame(self, idx, ref_idx, img_0):
         if idx == self.process.ref_idx: return img_0
@@ -126,7 +127,8 @@ class AlignFrames:
         else:
             img_warp = None
             if self.plot_matches: matches_mask = None
-            self.process.sub_message(": image not aligned, too few matches found: {}           ".format(n_good_matches), level=logging.WARNING)
+            self.process.sub_message(": image not aligned, too few matches found: {}  ".format(n_good_matches), level=logging.WARNING)
+            raise AlignmentError(idx, f"too few matches found: {n_good_matches} < {self.min_matches}")
             return None
     def begin(self, process):
         self.process = process

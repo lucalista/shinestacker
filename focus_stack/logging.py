@@ -14,7 +14,7 @@ class ConsoleFormatter(logging.Formatter):
     RESET = '\033[0m'
     def format(self, record):
         color = self.COLORS.get(record.levelname, '')
-        return logging.Formatter(f"{color}[%(levelname).3s %(asctime)s]{self.RESET} %(message)s").format(record)
+        return logging.Formatter(f"{color}[%(levelname).3s]{self.RESET} %(message)s").format(record)
             
 class FileFormatter(logging.Formatter):
     ANSI_ESCAPE = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')

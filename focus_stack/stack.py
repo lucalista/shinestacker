@@ -17,22 +17,22 @@ class FocusStackBase:
         self.denoise = denoise
         self.stack_algo.messenger(self)
     def focus_stack(self, filenames):
-        self.sub_message(' - reading input files           ', end='\r')
+        self.sub_message(': reading input files           ', end='\r')
         img_files = sorted([os.path.join(self.input_dir, name) for name in filenames])
         img_files = [read_img(name) for name in img_files]
         if any([img is None for img in img_files]):
-            raise RuntimeError("failed to load one or more image files.")
+            raise ImageLoadError(filenames)
         dtype = img_files[0].dtype
         img_files = np.array(img_files, dtype=dtype)
         stacked_img = self.stack_algo.focus_stack(img_files)
         in_filename = filenames[0].split(".")
         out_filename = self.output_dir + "/" + in_filename[0] + self.postfix + '.' + '.'.join(in_filename[1:])
         if self.denoise > 0:
-            self.sub_message(' - denoise image ', end='\r')
+            self.sub_message(': denoise image ', end='\r')
             stacked_img = cv2.fastNlMeansDenoisingColored(stacked_img, None, self.denoise, self.denoise, 7, 21)
         write_img(out_filename, stacked_img)
         if self.exif_path != '' and dtype==np.uint8:
-            self.sub_message(' - copy exif data            ', end='\r')
+            self.sub_message(': copy exif data            ', end='\r')
             dirpath, _, fnames = next(os.walk(self.exif_path))
             fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in EXTENSIONS]
             exif_filename = self.exif_path + '/' + fnames[0]
@@ -47,7 +47,7 @@ class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
         FrameDirectory.__init__(self, name, input_path, output_path, working_path, None, resample)
         ActionList.__init__(self, name)
         FocusStackBase.__init__(self, stack_algo, exif_path, postfix, denoise)
-        if overlap >= frames: raise Exception("Overlap must be smaller than batch size")
+        if overlap >= frames: raise InvalidOptionError("overlap", overlap, "overlap must be smaller than batch size")
         self.frames = frames
         self.overlap = overlap
     def begin(self):
