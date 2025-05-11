@@ -4,6 +4,7 @@ import numpy as np
 from focus_stack.utils import read_img, write_img, img_8bit
 from focus_stack.framework import JobBase
 from focus_stack.stack_framework import FramesRefActions
+import logging
 
 ALIGN_HOMOGRAPHY = "ALIGN_HOMOGRAPHY"
 ALIGN_RIGID = "ALIGN_RIGID"
@@ -123,7 +124,7 @@ class AlignFrames:
         else:
             img_warp = None
             if self.plot_matches: matches_mask = None
-            self.process.sub_message(": image not aligned, too few matches found: {}           ".format(n_good_matches))
+            self.process.sub_message(": image not aligned, too few matches found: {}           ".format(n_good_matches), level=logging.WARNING)
             return None
     def begin(self, process):
         self.process = process

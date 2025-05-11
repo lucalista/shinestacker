@@ -22,15 +22,15 @@ class JobBase:
         self.run_core()
         self.logger.info(colored(self.name + ": ", "green", attrs=["bold"]) + colored("elapsed time: {}                    ".format(elapsed_time_str(self.__t0)), "green"))
         self.logger.info(colored(self.name + ": ", "green", attrs=["bold"]) + colored("completed                    ", "green"))
-    def print_message(self, msg='', end='\n'):
+    def print_message(self, msg='', level=logging.INFO, end='\n'):
         self.base_message = colored("running " + self.name, "blue", attrs=["bold"])
         if msg != '': self.base_message += (': ' + msg)
         if end == '\r': console_logging_overwrite()
-        self.logger.info(colored(self.base_message, 'blue', attrs=['bold']))
+        self.logger.log(level, colored(self.base_message, 'blue', attrs=['bold']))
         if end == '\r': console_logging_newline()
-    def sub_message(self, msg, end='\n'):
+    def sub_message(self, msg, level=logging.INFO, end='\n'):
         if end == '\r': console_logging_overwrite()
-        self.logger.info(self.base_message + msg)
+        self.logger.log(level, self.base_message + msg)
         if end == '\r': console_logging_newline()
             
 class Job(JobBase):
@@ -68,7 +68,7 @@ class ActionList(JobBase):
         else:
             raise StopIteration
     def run_core(self):
-        self.print_message('', '\r')
+        self.print_message('', end='\r')
         self.begin()
         bar = tqdm_notebook(desc=self.name, total=self.counts)
         for x in iter(self):
