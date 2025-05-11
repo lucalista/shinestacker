@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 from tqdm.notebook import tqdm_notebook
 import matplotlib.pyplot as plt
+import logging
 
 class NoiseDetection(FrameMultiDirectory, JobBase):
     def __init__(self, name, input_path=None, output_path=None, working_path=None, plot_path='plots', channel_thresholds=(13, 13, 13), blur_size = 5, file_name= "hot"):
@@ -23,7 +24,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         counter = 0
         bar = tqdm_notebook(desc=self.name, total=len(in_paths))
         for path in in_paths:
-            self.print_message(colored("reading frame: " + path.split("/")[-1], "blue"), '\r')
+            self.print_message(colored("reading frame: " + path.split("/")[-1], "blue"), end='\r')
             img = cv2.imread(path, cv2.IMREAD_COLOR)
             if first_time:
                 first_time = False
@@ -54,7 +55,9 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         plt.legend()
         plt.xlim(x[0], x[-1])
         plt.ylim(0)
-        plt.savefig(self.plot_path + "/" + self.name + "-hot-pixels.pdf", dpi=150)
+        filename = self.plot_path + "/" + self.name + "-hot-pixels.pdf"
+        logging.getLogger(__name__).debug("save plot file: " + filename)  
+        plt.savefig(filename, dpi=150)
         plt.show()
         
 MEAN = 'MEAN'

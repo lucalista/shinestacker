@@ -118,7 +118,9 @@ class AlignFrames:
                 self.process.sub_message(": matches: {}".format(n_good_matches))
                 plt.figure(figsize=(10, 5))
                 plt.imshow(img_match, 'gray')
-                plt.savefig(self.process.plot_path + "/" + self.process.name + "-matches-{:04d}.pdf".format(idx), dpi=150)
+                filename = self.process.plot_path + "/" + self.process.name + "-matches-{:04d}.pdf".format(idx)
+                logging.getLogger(__name__).debug("save plot file: " + filename)  
+                plt.savefig(filename, dpi=150)
                 plt.show()
             return img_warp
         else:
@@ -146,5 +148,7 @@ class AlignFrames:
         plt.legend()
         plt.ylim(0)
         plt.xlim(x[0], x[-1])
-        plt.savefig(self.process.plot_path + "/" + self.process.name + "-matches.pdf", dpi=150)
+        filename = self.process.plot_path + "/" + self.process.name + "-matches.pdf"
+        logging.getLogger(__name__).debug("save plot file: " + filename)  
+        plt.savefig(filename, dpi=150)
         plt.show()

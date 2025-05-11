@@ -6,6 +6,7 @@ from scipy.optimize import bisect
 from scipy.interpolate import interp1d
 from focus_stack.utils import read_img, write_img, img_8bit
 from focus_stack.stack_framework import *
+import logging
 
 class CorrectionMapBase:
     def __init__(self, dtype, ref_hist, i_min=0, i_max=-1):
@@ -158,7 +159,9 @@ class LumiCorrection(Correction):
                 hist_col = self.calc_hist_1ch(chan)
                 self.histo_plot(axs[1], hist_col, "r,g,b luminosity", color, alpha=0.5)
             plt.xlim(0, self.two_n)
-            plt.savefig(self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx), dpi=150)
+            filename = self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx)
+            logging.getLogger(__name__).debug("save plot file: " + filename)
+            plt.savefig(filename, dpi=150)
             plt.show()
         return [hist]
     def end(self, ref_idx):
@@ -173,7 +176,9 @@ class LumiCorrection(Correction):
         plt.legend()
         plt.xlim(x[0], x[-1])
         plt.ylim(0)
-        plt.savefig(self.process.plot_path + "/" + self.process.name + "-balance.pdf", dpi=150)
+        filename = self.process.plot_path + "/" + self.process.name + "-balance.pdf"
+        logging.getLogger(__name__).debug("save plot file: " + filename)
+        plt.savefig(filename, dpi=150)
         plt.show()
 
 class RGBCorrection(Correction):
@@ -188,7 +193,9 @@ class RGBCorrection(Correction):
             for c in [2, 1, 0]:
                 self.histo_plot(axs[c], hist[c], colors[c] + " luminosity", colors[c])
             plt.xlim(0, self.two_n)
-            plt.savefig(self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx), dpi=150)
+            filename = self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx)
+            logging.getLogger(__name__).debug("save plot file: " + filename)
+            plt.savefig(filename, dpi=150)
             plt.show()
         return hist
     def end(self, ref_idx):
@@ -205,7 +212,9 @@ class RGBCorrection(Correction):
         plt.legend()
         plt.xlim(x[0], x[-1])
         plt.ylim(0)
-        plt.savefig(self.process.plot_path + "/" + self.process.name + "-balance.pdf", dpi=150)
+        filename = self.process.plot_path + "/" + self.process.name + "-balance.pdf"
+        logging.getLogger(__name__).debug("save plot file: " + filename)
+        plt.savefig(filename, dpi=150)
         plt.show()
 
 class Ch2Correction(Correction):
@@ -239,7 +248,9 @@ class Ch2Correction(Correction):
         plt.legend()
         plt.xlim(x[0], x[-1])
         plt.ylim(0)
-        plt.savefig(self.process.plot_path + "/" + self.process.name + "-balance.pdf", dpi=150)
+        filename = self.process.plot_path + "/" + self.process.name + "-balance.pdf"
+        logging.getLogger(__name__).debug("save plot file: " + filename)
+        plt.savefig(filename, dpi=150)
         plt.show()
         
 class SVCorrection(Ch2Correction):
