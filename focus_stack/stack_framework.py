@@ -37,10 +37,10 @@ class FramePaths(JobBase):
         if self.plot_path is not None:
             self.plot_path = self.working_path + ('' if self.working_path[-1] == '/' else '/') + self.plot_path
             if not os.path.exists(self.plot_path): os.makedirs(self.plot_path)
-        job.paths.append(self.output_path)
         if self.input_path is None:
-            assert len(job.paths)>0, "No input path has been specified in " + job.name
+            assert len(job.paths) > 0, "No input path has been specified in " + job.name
             self.input_path = job.paths[-1]
+        job.paths.append(self.output_path)
         
 class FrameDirectory(FramePaths):
     EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
