@@ -1,7 +1,8 @@
 import time
 from termcolor import colored
 from tqdm.notebook import tqdm_notebook
-from focus_stack.logging import setup_logging
+from focus_stack.logging import setup_logging, console_logging_overwrite, console_logging_newline
+import logging
 
 def elapsed_time_str(start):
     dt = time.time() - start
@@ -15,23 +16,28 @@ class JobBase:
     def __init__(self, name):
         self.name = name
         self.base_message = ''
+        self.logger = logging.getLogger(__name__) 
     def run(self):
         self.__t0 = time.time()
         self.run_core()
-        print(colored(self.name + ": ", "green", attrs=["bold"]), end='')
-        print(colored("elapsed time: {}                    ".format(elapsed_time_str(self.__t0)), "green"))
-        print(colored(self.name + " completed                    ", "green"))
+        self.logger.info(colored(self.name + ": ", "green", attrs=["bold"]) + colored("elapsed time: {}                    ".format(elapsed_time_str(self.__t0)), "green"))
+        self.logger.info(colored(self.name + ": ", "green", attrs=["bold"]) + colored("completed                    ", "green"))
     def print_message(self, msg='', end='\n'):
         self.base_message = colored("running " + self.name, "blue", attrs=["bold"])
         if msg != '': self.base_message += (': ' + msg)
-        print(colored(self.base_message, 'blue', attrs=['bold']), end=end)
+        if end == '\r': console_logging_overwrite()
+        self.logger.info(colored(self.base_message, 'blue', attrs=['bold']))
+        if end == '\r': console_logging_newline()
     def sub_message(self, msg, end='\n'):
-        print(self.base_message + msg, end=end)
-        
+        if end == '\r': console_logging_overwrite()
+        self.logger.info(self.base_message + msg)
+        if end == '\r': console_logging_newline()
+            
 class Job(JobBase):
-    def __init__(self, name):
+    def __init__(self, name, log_file="logs/focusstack.log"):
         JobBase.__init__(self, name)
         self.__actions = []
+        setup_logging(log_file=log_file)
     def time(self):
         return time.time() - self.__t0
     def init(self, a):

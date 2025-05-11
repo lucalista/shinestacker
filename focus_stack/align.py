@@ -95,7 +95,7 @@ class AlignFrames:
             if self.plot_matches: matches_mask = mask.ravel().tolist()
             h, w = img_bw_1.shape
             pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0] ]).reshape(-1, 1 ,2)
-            self.process.sub_message('- align images       ', end='\r')
+            self.process.sub_message(': align images       ', end='\r')
             if self.transform == ALIGN_HOMOGRAPHY:
                 dst = cv2.perspectiveTransform(pts, M)
                 img_warp = cv2.warpPerspective(img_0, M, (w, h), borderMode=self.cv2_border_mode, borderValue=self.border_value)
@@ -107,15 +107,14 @@ class AlignFrames:
                 if self.border_mode == BORDER_REPLICATE_BLUR:
                     mask = cv2.warpAffine(np.ones_like(img_0, dtype=np.uint8), M, (w, h), borderMode=cv2.BORDER_CONSTANT, borderValue=0)
             if self.border_mode == BORDER_REPLICATE_BLUR:
-                self.process.sub_message('- blur borders ', end='\r')
+                self.process.sub_message(': blur borders ', end='\r')
                 mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
                 blurred_warp = cv2.GaussianBlur(img_warp, (21, 21), sigmaX=self.border_blur)
                 img_warp[mask == 0] = blurred_warp[mask == 0]
             if self.plot_matches:
                 draw_params = dict(matchColor = (0,255,0), singlePointColor=None, matchesMask=matches_mask, flags = 2)
                 img_match = cv2.cvtColor(cv2.drawMatches(img_0, kp_0, img_ref, kp_1, good_matches, None, **draw_params), cv2.COLOR_BGR2RGB)
-                print('')
-                print("matches: {}".format(n_good_matches))
+                self.process.sub_message(": matches: {}".format(n_good_matches))
                 plt.figure(figsize=(10, 5))
                 plt.imshow(img_match, 'gray')
                 plt.savefig(self.process.plot_path + "/" + self.process.name + "-matches-{:04d}.pdf".format(idx), dpi=150)
@@ -124,13 +123,12 @@ class AlignFrames:
         else:
             img_warp = None
             if self.plot_matches: matches_mask = None
-            self.process.sub_message("- image not aligned, too few matches found: {}           ".format(n_good_matches))
+            self.process.sub_message(": image not aligned, too few matches found: {}           ".format(n_good_matches))
             return None
     def begin(self, process):
         self.process = process
         self.n_matches = np.zeros(process.counts)
     def end(self):
-        #print("                                           ")
         plt.figure(figsize=(10, 5))
         x = np.arange(1, len(self.n_matches) + 1, dtype=int)
         no_ref = (x != self.process.ref_idx + 1)
