@@ -68,7 +68,7 @@ class FocusStack(FrameDirectory, JobBase, FocusStackBase):
         JobBase.__init__(self, name)
         FocusStackBase.__init__(self, stack_algo, exif_path, postfix, denoise)
     def run_core(self):
-        self.print_message('')
+        self.print_message("", end='\r')
         self.set_filelist()
         self.focus_stack(self.filenames)
     def init(self, job):

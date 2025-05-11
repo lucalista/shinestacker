@@ -27,7 +27,7 @@ class FramePaths(JobBase):
         self.reverse_order = reverse_order
     def set_filelist(self):
         self.filenames = self.folder_filelist(self.input_dir)
-        self.print_message(colored("{} files ".format(len(self.filenames)) + "in folder: " + self.input_dir + "     ", 'blue'))
+        self.sub_message(colored(": {} files ".format(len(self.filenames)) + "in folder: " + self.input_dir + "     ", 'blue'))
     def init(self, job):
         if self.working_path is None: self.working_path = job.working_path
         check_path_exists(self.working_path)

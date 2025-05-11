@@ -162,7 +162,11 @@ class LumiCorrection(Correction):
             filename = self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx)
             logging.getLogger(__name__).debug("save plot file: " + filename)
             plt.savefig(filename, dpi=150)
-            plt.show()
+            try:
+                __IPYTHON__
+                plt.show()
+            except:
+                plt.close()
         return [hist]
     def end(self, ref_idx):
         plt.figure(figsize=(10, 5))
@@ -179,8 +183,11 @@ class LumiCorrection(Correction):
         filename = self.process.plot_path + "/" + self.process.name + "-balance.pdf"
         logging.getLogger(__name__).debug("save plot file: " + filename)
         plt.savefig(filename, dpi=150)
-        plt.show()
-
+        try:
+            __IPYTHON__
+            plt.show()
+        except:
+            plt.cla()
 class RGBCorrection(Correction):
     def __init__(self, mask_size=None, i_min=0, i_max=-1, img_scale=1, corr_map=LINEAR, plot_histograms=False):
         Correction.__init__(self, 3, mask_size, i_min, i_max, img_scale, corr_map, plot_histograms)
@@ -196,7 +203,11 @@ class RGBCorrection(Correction):
             filename = self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx)
             logging.getLogger(__name__).debug("save plot file: " + filename)
             plt.savefig(filename, dpi=150)
-            plt.show()
+            try:
+                __IPYTHON__
+                plt.show()
+            except:
+                plt.close()
         return hist
     def end(self, ref_idx):
         plt.figure(figsize=(10, 5))
@@ -215,8 +226,12 @@ class RGBCorrection(Correction):
         filename = self.process.plot_path + "/" + self.process.name + "-balance.pdf"
         logging.getLogger(__name__).debug("save plot file: " + filename)
         plt.savefig(filename, dpi=150)
-        plt.show()
-
+        try:
+            __IPYTHON__
+            plt.show()
+        except:
+            plt.close()
+            
 class Ch2Correction(Correction):
     def __init__(self, mask_size=None, i_min=0, i_max=-1, img_scale=1, corr_map=LINEAR, plot_histograms=False):
         Correction.__init__(self, 2, mask_size, i_min, i_max, img_scale, corr_map, plot_histograms)
@@ -233,7 +248,11 @@ class Ch2Correction(Correction):
                 self.histo_plot(axs[c], hist[c], self.labels[c], self.colors[c])
             plt.xlim(0, self.two_n)
             plt.savefig(self.process.plot_path + "/" + self.process.name + "_hist_{:04d}.pdf".format(idx), dpi=150)
-            plt.show()
+            try:
+                __IPYTHON__
+                plt.show()
+            except:
+                plt.close()      
         return hist[1:]
     def end(self, ref_idx):
         plt.figure(figsize=(10, 5))
@@ -251,8 +270,12 @@ class Ch2Correction(Correction):
         filename = self.process.plot_path + "/" + self.process.name + "-balance.pdf"
         logging.getLogger(__name__).debug("save plot file: " + filename)
         plt.savefig(filename, dpi=150)
-        plt.show()
-        
+        try:
+            __IPYTHON__
+            plt.show()
+        except:
+            plt.close()
+                
 class SVCorrection(Ch2Correction):
     def __init__(self, mask_size=None, i_min=0, i_max=-1, img_scale=1, corr_map=LINEAR, plot_histograms=False):
         Ch2Correction.__init__(self, mask_size, i_min, i_max, img_scale, corr_map, plot_histograms)

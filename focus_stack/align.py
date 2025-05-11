@@ -80,7 +80,7 @@ class AlignFrames:
         return M, mask        
     def run_frame(self, idx, ref_idx, img_0):
         if idx == self.process.ref_idx: return img_0
-        self.process.sub_message('- find matches       ', end='\r')
+        self.process.sub_message(': find matches         ', end='\r')
         img_ref = self.process.img_ref(ref_idx)
         img_bw_0 = cv2.cvtColor(img_8bit(img_0), cv2.COLOR_BGR2GRAY)
         img_bw_1 = cv2.cvtColor(img_8bit(img_ref).astype('uint8'), cv2.COLOR_BGR2GRAY)
@@ -116,18 +116,26 @@ class AlignFrames:
             if self.plot_matches:
                 draw_params = dict(matchColor = (0,255,0), singlePointColor=None, matchesMask=matches_mask, flags = 2)
                 img_match = cv2.cvtColor(cv2.drawMatches(img_0, kp_0, img_ref, kp_1, good_matches, None, **draw_params), cv2.COLOR_BGR2RGB)
-                self.process.sub_message(": matches: {}".format(n_good_matches))
+                self.process.sub_message(": matches: {}.   ".format(n_good_matches), end='\r')
                 plt.figure(figsize=(10, 5))
-                plt.imshow(img_match, 'gray')
+                try:
+                    __IPYTHON__
+                    plt.imshow(img_match, 'gray')
+                except:
+                    pass
                 filename = self.process.plot_path + "/" + self.process.name + "-matches-{:04d}.pdf".format(idx)
                 logging.getLogger(__name__).debug("save plot file: " + filename)  
                 plt.savefig(filename, dpi=150)
-                plt.show()
+                try:
+                    __IPYTHON__
+                    plt.show()
+                except:
+                    plt.close()
             return img_warp
         else:
             img_warp = None
             if self.plot_matches: matches_mask = None
-            self.process.sub_message(": image not aligned, too few matches found: {}  ".format(n_good_matches), level=logging.WARNING)
+            self.process.sub_message(": image not aligned, too few matches found: {}  ".format(n_good_matches), level=logging.CRITICAL)
             raise AlignmentError(idx, f"too few matches found: {n_good_matches} < {self.min_matches}")
             return None
     def begin(self, process):
@@ -153,4 +161,8 @@ class AlignFrames:
         filename = self.process.plot_path + "/" + self.process.name + "-matches.pdf"
         logging.getLogger(__name__).debug("save plot file: " + filename)  
         plt.savefig(filename, dpi=150)
-        plt.show()
+        try:
+            __IPYTHON__
+            plt.show()
+        except:
+            plt.close()

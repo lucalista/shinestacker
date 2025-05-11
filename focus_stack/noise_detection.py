@@ -58,7 +58,11 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         filename = self.plot_path + "/" + self.name + "-hot-pixels.pdf"
         logging.getLogger(__name__).debug("save plot file: " + filename)  
         plt.savefig(filename, dpi=150)
-        plt.show()
+        try:
+            __IPYTHON__
+            plt.show()
+        except:
+            plt.close()
         
 MEAN = 'MEAN'
 MEDIAN = 'MEDIAN'
