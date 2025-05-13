@@ -5,4 +5,4 @@ from focus_stack.stack import FocusStackBunch, FocusStack, DepthMapStack, Pyrami
 from focus_stack.multilayer import MultiLayer
 from focus_stack.noise_detection import NoiseDetection, MaskNoise, MEAN, MEDIAN
 from focus_stack.logging import setup_logging, console_logging_overwrite, console_logging_newline
-from focus_stack.exceptions import FocusStackError, InvalidOptionError, ImageLoadError, AlignmentError, BitDepthError
+from focus_stack.exceptions import FocusStackError, InvalidOptionError, ImageLoadError, AlignmentError, BitDepthError, ShapeError

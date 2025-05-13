@@ -28,4 +28,9 @@ class BitDepthError(FocusStackError):
     """Raised when images don't have the same bit depth"""
     def __init__(self):
         super().__init__("Images must be all of 8 bit or 16 bit")
+
+class ShapeError(FocusStackError):
+    """Raised when images don't have the same shape"""
+    def __init__(self, shape_ref, shape):
+        super().__init__("Images has shape ({}x{}), reference has shape({}x{})".format(*shape[:2], *shape_ref[:2]))
         

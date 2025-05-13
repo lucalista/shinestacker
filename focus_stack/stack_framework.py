@@ -138,12 +138,16 @@ class Actions(FramesRefActions):
     def img_ref(self, idx):
         filename = self.filenames[idx]
         img = read_img((self.output_dir if self.step_process else self.input_dir)  + "/" + filename)
+        self.dtype = img.dtype
+        self.shape = img.shape
         if img is None: raise Exception("Invalid file: " + self.input_dir + "/" + filename)
         return img 
     def run_frame(self, idx, ref_idx):
         filename = self.filenames[idx]
         self.sub_message(': read image', end='\r')
         img = read_img(self.input_dir + "/" + filename)
+        if hasattr(self, 'dtype') and img.dtype != self.dtype: raise BitDepthError()
+        if hasattr(self, 'shape') and img.shape != self.shape: raise ShapeError(img.shape, self.shape)
         if img is None: raise Exception("Invalid file: " + self.input_dir + "/" + filename)
         for a in self.__actions:
             img = a.run_frame(idx, ref_idx, img)
