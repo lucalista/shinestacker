@@ -12,7 +12,7 @@ BAD_EXIF_KEYS_16BITS_TIFF = [33723, 34665]
 #BAD_EXIF_KEYS_16BITS_TIFF = []
 
 def check_path_exists(path):
-    assert os.path.exists(path), 'path does not exist: ' + path
+    if not os.path.exists(path): raise Exception('Path does not exist: ' + path)
 
 def read_img(file_path):
     if not os.path.isfile(file_path): raise Exception("File does not exist: " + file_path)
@@ -33,18 +33,15 @@ def write_img(file_path, img):
         cv2.imwrite(file_path, img) 
         
 def img_8bit(img):
-    if img.dtype == np.uint16:
-        return (img >> 8).astype('uint8')
-    else:
-        return img
+    return (img >> 8).astype('uint8') if img.dtype == np.uint16 else img
     
 def print_exif(exif, ext):
     if exif is None:
-        print('image has no exif data.')
+        raise Exception('Image has no exif data.')
     else:
         for tag_id in exif:
             if (ext == 'tiff' or ext == 'tif') and (tag_id in BAD_EXIF_KEYS_16BITS_TIFF):
-                print(f'<<< skipped >>>           [#{tag_id}]: <<< bad key for TIFF format in PIL module >>>')
+                logging.getLogger(__name__).info(f'<<< skipped >>>           [#{tag_id}]: <<< bad key for TIFF format in PIL module >>>')
             else:
                 tag = TAGS.get(tag_id, tag_id)
                 data = exif.get(tag_id)
@@ -53,7 +50,7 @@ def print_exif(exif, ext):
                         data = data.decode()
                     except:
                         data = '<<< decode error >>>'
-                print(f"{tag:25} [#{tag_id}]: {data}")
+                logging.getLogger(__name__).info(f"{tag:25} [#{tag_id}]: {data}")
                 
 def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
     if out_filename is None: out_filename = in_filename
