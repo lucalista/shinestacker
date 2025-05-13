@@ -62,7 +62,7 @@ class DepthMapStack:
         gray_images = np.zeros(images.shape[:-1], dtype=t)
         for index in range(images.shape[0]):
             gray_images[index] = convert_to_grayscale(images[index])
-        self.print_message(': compute energy map          ')
+        self.print_message(': compute energy map')
         if self.energy == DepthMapStack.ENERGY_SOBEL:
             energy_map = get_sobel_map(gray_images)
         elif self.energy == DepthMapStack.ENERGY_LAPLACIAN:
@@ -70,11 +70,11 @@ class DepthMapStack:
         else:
             assert(False), 'invalid energy parameter: ' + self.energy
         if self.smooth_size > 0:
-            self.print_message(': smoothing energy map ')
+            self.print_message(': smoothing energy map')
             energy_map = self.smooth_energy_map(energy_map)
-        self.print_message(': computing focus map ')
+        self.print_message(': computing focus map')
         focus_map = self.get_focus_map(energy_map)
-        self.print_message(': blending images ')
+        self.print_message(': blending images')
         stacked_image = blend(images, focus_map)
         return np.clip(np.absolute(stacked_image), 0, n_values).astype(t)
     

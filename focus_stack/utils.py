@@ -4,6 +4,8 @@ import numpy as np
 from PIL import Image, ExifTags
 from PIL.ExifTags import TAGS
 import warnings
+import logging
+import matplotlib.pyplot as plt
 
 # Bad TIFF keys in specific PIL version
 BAD_EXIF_KEYS_16BITS_TIFF = [33723, 34665]
@@ -70,3 +72,13 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
         image_new.save(out_filename, 'TIFF', exif=exif)
     elif ext == 'png':
         image_new.save(out_filename, 'PNG', exif=exif, quality=100)
+
+def save_plot(filename, show=True):
+    logging.getLogger(__name__).debug("save plot file: " + filename)  
+    plt.savefig(filename, dpi=150)
+    if show:
+        try:
+            __IPYTHON__
+            plt.show()
+        except:
+            plt.close()

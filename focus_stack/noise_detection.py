@@ -1,4 +1,5 @@
 from focus_stack.stack_framework import FrameMultiDirectory, JobBase
+from focus_stack.utils import save_plot
 from termcolor import colored
 import cv2
 import numpy as np
@@ -41,7 +42,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         hot_px = [self.hot_map(ch, self.channel_thresholds[i]) for i, ch in enumerate(channels)]
         hot_rgb = cv2.bitwise_or(hot_px[0], cv2.bitwise_or(hot_px[1], hot_px[2]))
         for ch, hot in zip(['r', 'g', 'b', 'rgb'], hot_px + [hot_rgb]):
-            self.print_message("hot pixels, {}: {}                ".format(ch, np.count_nonzero(hot > 0)))
+            self.print_message("hot pixels, {}: {}".format(ch, np.count_nonzero(hot > 0)))
             cv2.imwrite(self.working_path + '/' + self.output_path + "/" + self.file_name + "_" + ch + ".png", hot)
         th_range = range(5, 30)
         plt.figure(figsize=(10, 5))
@@ -55,14 +56,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         plt.legend()
         plt.xlim(x[0], x[-1])
         plt.ylim(0)
-        filename = self.plot_path + "/" + self.name + "-hot-pixels.pdf"
-        logging.getLogger(__name__).debug("save plot file: " + filename)  
-        plt.savefig(filename, dpi=150)
-        try:
-            __IPYTHON__
-            plt.show()
-        except:
-            plt.close()
+        save_plot(self.plot_path + "/" + self.name + "-hot-pixels.pdf")
         
 MEAN = 'MEAN'
 MEDIAN = 'MEDIAN'
@@ -78,7 +72,7 @@ class MaskNoise:
     def end(self):
         pass
     def run_frame(self, idx, ref_idx, image):
-        self.process.sub_message('- mask noisy pixels ', end='\r')
+        self.process.sub_message('- mask noisy pixels', end='\r')
         if len(image.shape) == 3:
             corrected = image.copy()
             for c in range(3):

@@ -20,7 +20,7 @@ class FileFormatter(logging.Formatter):
     ANSI_ESCAPE = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
     def format(self, record):
         fmt = f"[%(levelname).3s %(asctime)s] %(message)s"
-        return self.ANSI_ESCAPE.sub('', logging.Formatter(fmt).format(record).replace("\r", ""))
+        return self.ANSI_ESCAPE.sub('', logging.Formatter(fmt).format(record).replace("\r", "").rstrip())
 
 def setup_logging(
     console_level=logging.INFO,

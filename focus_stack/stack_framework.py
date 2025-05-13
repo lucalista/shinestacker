@@ -27,7 +27,7 @@ class FramePaths(JobBase):
         self.reverse_order = reverse_order
     def set_filelist(self):
         self.filenames = self.folder_filelist(self.input_dir)
-        self.sub_message(colored(": {} files ".format(len(self.filenames)) + "in folder: " + self.input_dir + "     ", 'blue'))
+        self.sub_message(colored(": {} files ".format(len(self.filenames)) + "in folder: " + self.input_dir, 'blue'))
     def init(self, job):
         if self.working_path is None: self.working_path = job.working_path
         check_path_exists(self.working_path)
@@ -115,7 +115,7 @@ class FramesRefActions(FrameDirectory, ActionList):
             self.__ref_idx = self.ref_idx
             self.__idx_step = +1
         ll = len(self.filenames)
-        self.print_message(colored("step {}/{}: process file: {}, reference: {} ".format(self.count, ll, self.filenames[self.__idx], self.filenames[self.__ref_idx]), "blue"), end='\r')
+        self.print_message(colored("step {}/{}: process file: {}, reference: {}".format(self.count, ll, self.filenames[self.__idx], self.filenames[self.__ref_idx]), "blue"), end='\r')
         self.run_frame(self.__idx, self.__ref_idx)
         if(self.__idx < ll):
             if self.step_process: self.__ref_idx = self.__idx
@@ -142,12 +142,12 @@ class Actions(FramesRefActions):
         return img 
     def run_frame(self, idx, ref_idx):
         filename = self.filenames[idx]
-        self.sub_message(': read image        ', end='\r')
+        self.sub_message(': read image', end='\r')
         img = read_img(self.input_dir + "/" + filename)
         if img is None: raise Exception("Invalid file: " + self.input_dir + "/" + filename)
         for a in self.__actions:
             img = a.run_frame(idx, ref_idx, img)
-        self.sub_message(': write image        ', end='\r')
+        self.sub_message(': write image', end='\r')
         write_img(self.output_dir + "/" + filename, img)
     def end(self):
         for a in self.__actions:

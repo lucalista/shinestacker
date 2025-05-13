@@ -4,7 +4,7 @@ import math
 import matplotlib.pyplot as plt
 from scipy.optimize import bisect
 from scipy.interpolate import interp1d
-from focus_stack.utils import read_img, write_img, img_8bit
+from focus_stack.utils import read_img, write_img, img_8bit, save_plot
 from focus_stack.stack_framework import *
 import logging
 
@@ -159,14 +159,7 @@ class LumiCorrection(Correction):
                 hist_col = self.calc_hist_1ch(chan)
                 self.histo_plot(axs[1], hist_col, "r,g,b luminosity", color, alpha=0.5)
             plt.xlim(0, self.two_n)
-            filename = self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx)
-            logging.getLogger(__name__).debug("save plot file: " + filename)
-            plt.savefig(filename, dpi=150)
-            try:
-                __IPYTHON__
-                plt.show()
-            except:
-                plt.close()
+            save_plot(self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx))
         return [hist]
     def end(self, ref_idx):
         plt.figure(figsize=(10, 5))
@@ -180,14 +173,7 @@ class LumiCorrection(Correction):
         plt.legend()
         plt.xlim(x[0], x[-1])
         plt.ylim(0)
-        filename = self.process.plot_path + "/" + self.process.name + "-balance.pdf"
-        logging.getLogger(__name__).debug("save plot file: " + filename)
-        plt.savefig(filename, dpi=150)
-        try:
-            __IPYTHON__
-            plt.show()
-        except:
-            plt.cla()
+        save_plot(self.process.plot_path + "/" + self.process.name + "-balance.pdf")
 class RGBCorrection(Correction):
     def __init__(self, mask_size=None, i_min=0, i_max=-1, img_scale=1, corr_map=LINEAR, plot_histograms=False):
         Correction.__init__(self, 3, mask_size, i_min, i_max, img_scale, corr_map, plot_histograms)
@@ -200,14 +186,7 @@ class RGBCorrection(Correction):
             for c in [2, 1, 0]:
                 self.histo_plot(axs[c], hist[c], colors[c] + " luminosity", colors[c])
             plt.xlim(0, self.two_n)
-            filename = self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx)
-            logging.getLogger(__name__).debug("save plot file: " + filename)
-            plt.savefig(filename, dpi=150)
-            try:
-                __IPYTHON__
-                plt.show()
-            except:
-                plt.close()
+            save_plot(self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx))
         return hist
     def end(self, ref_idx):
         plt.figure(figsize=(10, 5))
@@ -223,14 +202,7 @@ class RGBCorrection(Correction):
         plt.legend()
         plt.xlim(x[0], x[-1])
         plt.ylim(0)
-        filename = self.process.plot_path + "/" + self.process.name + "-balance.pdf"
-        logging.getLogger(__name__).debug("save plot file: " + filename)
-        plt.savefig(filename, dpi=150)
-        try:
-            __IPYTHON__
-            plt.show()
-        except:
-            plt.close()
+        save_plot(self.process.plot_path + "/" + self.process.name + "-balance.pdf")
             
 class Ch2Correction(Correction):
     def __init__(self, mask_size=None, i_min=0, i_max=-1, img_scale=1, corr_map=LINEAR, plot_histograms=False):
@@ -247,12 +219,7 @@ class Ch2Correction(Correction):
             for c in range(3):
                 self.histo_plot(axs[c], hist[c], self.labels[c], self.colors[c])
             plt.xlim(0, self.two_n)
-            plt.savefig(self.process.plot_path + "/" + self.process.name + "_hist_{:04d}.pdf".format(idx), dpi=150)
-            try:
-                __IPYTHON__
-                plt.show()
-            except:
-                plt.close()      
+            save_plot(self.process.plot_path + "/" + self.process.name + "_hist_{:04d}.pdf".format(idx))      
         return hist[1:]
     def end(self, ref_idx):
         plt.figure(figsize=(10, 5))
@@ -267,14 +234,7 @@ class Ch2Correction(Correction):
         plt.legend()
         plt.xlim(x[0], x[-1])
         plt.ylim(0)
-        filename = self.process.plot_path + "/" + self.process.name + "-balance.pdf"
-        logging.getLogger(__name__).debug("save plot file: " + filename)
-        plt.savefig(filename, dpi=150)
-        try:
-            __IPYTHON__
-            plt.show()
-        except:
-            plt.close()
+        save_plot(self.process.plot_path + "/" + self.process.name + "-balance.pdf")
                 
 class SVCorrection(Ch2Correction):
     def __init__(self, mask_size=None, i_min=0, i_max=-1, img_scale=1, corr_map=LINEAR, plot_histograms=False):
@@ -321,10 +281,10 @@ class BalanceFrames:
         self.correction.process = process
         self.correction.begin(read_img(self.process.input_dir + "/" + self.process.filenames[process.ref_idx]), self.process.counts, process.ref_idx)
     def end(self):
-        self.process.print_message('                                                                                 ')
+        self.process.print_message(' '*60)
         self.correction.end(self.process.ref_idx)
     def run_frame(self, idx, ref_idx, image):
         if idx != self.process.ref_idx:
-            self.process.sub_message(': balance image       ', end='\r')
+            self.process.sub_message(': balance image', end='\r')
             image = self.correction.apply_correction(idx, image)
         return image
