@@ -21,16 +21,13 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         self.print_message(colored(": map noisy pixels, frames in " + self.folder_list_str(), "blue"))
         files = self.folder_filelist()
         in_paths = [self.working_path + "/" + f for f in files]
-        first_time = True
+        mean_img = None
         bar = tqdm_notebook(desc=self.name, total=len(in_paths))
         for path in in_paths:
             self.print_message(colored("reading frame: " + path.split("/")[-1], "blue"), end='\r')
             img = cv2.imread(path, cv2.IMREAD_COLOR)
-            if first_time:
-                first_time = False
-                mean_img = img.astype(np.float64)
-            else:
-                mean_img += img
+            if mean_img is None: mean_img = img.astype(np.float64)
+            else: mean_img += img
             bar.update(1)
         bar.close()
         mean_img = (mean_img/len(in_paths)).astype(np.uint8)
