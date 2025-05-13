@@ -22,7 +22,6 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         files = self.folder_filelist()
         in_paths = [self.working_path + "/" + f for f in files]
         first_time = True
-        counter = 0
         bar = tqdm_notebook(desc=self.name, total=len(in_paths))
         for path in in_paths:
             self.print_message(colored("reading frame: " + path.split("/")[-1], "blue"), end='\r')
@@ -32,10 +31,9 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
                 mean_img = img.astype(np.float64)
             else:
                 mean_img += img
-            counter += 1
             bar.update(1)
         bar.close()
-        mean_img = (mean_img/counter).astype(np.uint8)
+        mean_img = (mean_img/len(in_paths)).astype(np.uint8)
         blurred = cv2.GaussianBlur(mean_img, (self.blur_size, self.blur_size), 0)
         diff = cv2.absdiff(mean_img, blurred)
         channels = cv2.split(diff)
