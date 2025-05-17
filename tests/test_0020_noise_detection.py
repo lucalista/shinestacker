@@ -5,7 +5,7 @@ from focus_stack import *
 def test_detect():
     try:
         job = StackJob("job", "./")
-        job.add_action(NoiseDetection("noise-map", input_path=["img-noise"]))
+        job.add_action(NoiseDetection(input_path=["img-noise"]))
         job.run()
     except:
         assert False
@@ -13,7 +13,7 @@ def test_detect():
 def test_correct():
     try:
         job = StackJob("job", "./", input_path="img-jpg")
-        job.add_action(Actions("img-noise-corr", actions=[MaskNoise("noise-map/hot_rgb.png")]))
+        job.add_action(Actions("img-noise-corr", actions=[MaskNoise()]))
         job.run()
     except:
         assert False

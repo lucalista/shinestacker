@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import logging
 
 class NoiseDetection(FrameMultiDirectory, JobBase):
-    def __init__(self, name, input_path=None, output_path=None, working_path=None, plot_path='plots', channel_thresholds=(13, 13, 13), blur_size = 5, file_name= "hot"):
+    def __init__(self, name="noise-map", input_path=None, output_path=None, working_path=None, plot_path='plots', channel_thresholds=(13, 13, 13), blur_size = 5, file_name= "hot"):
         FrameMultiDirectory.__init__(self, name, input_path, output_path, working_path, plot_path, 1, False)
         JobBase.__init__(self, name)
         self.channel_thresholds = channel_thresholds
@@ -38,7 +38,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         hot_rgb = cv2.bitwise_or(hot_px[0], cv2.bitwise_or(hot_px[1], hot_px[2]))
         for ch, hot in zip(['r', 'g', 'b', 'rgb'], hot_px + [hot_rgb]):
             self.print_message("hot pixels, {}: {}".format(ch, np.count_nonzero(hot > 0)))
-            cv2.imwrite(self.working_path + '/' + self.output_path + "/" + self.file_name + "_" + ch + ".png", hot)
+            cv2.imwrite(self.working_path + '/' + self.output_path + "/" + self.file_name + "-" + ch + ".png", hot)
         th_range = range(5, 30)
         plt.figure(figsize=(10, 5))
         x = np.array(list(th_range))
@@ -56,7 +56,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
 MEAN = 'MEAN'
 MEDIAN = 'MEDIAN'
 class MaskNoise:
-    def __init__(self, noise_mask, kernel_size=3, method=MEAN):
+    def __init__(self, noise_mask="noise-map/hot_rgb.png", kernel_size=3, method=MEAN):
         self.noise_mask = noise_mask
         self.kernel_size = kernel_size
         self.method = method
