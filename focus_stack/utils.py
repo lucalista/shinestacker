@@ -2,14 +2,18 @@ import cv2
 import os
 import numpy as np
 from PIL import Image, ExifTags
+from PIL.TiffImagePlugin import IFDRational
 from PIL.ExifTags import TAGS
 import warnings
 import logging
+import tifffile
 import matplotlib.pyplot as plt
 
 # Bad TIFF keys in specific PIL version
 BAD_EXIF_KEYS_16BITS_TIFF = [33723, 34665]
 #BAD_EXIF_KEYS_16BITS_TIFF = []
+
+NO_COPY_TIFF_TAGS = ["XMLPacket", "Compression", "StripOffsets", "RowsPerStrip", "StripByteCounts", "XResolution", "YResolution", "ResolutionUnit", "ImageResources", "Software"]
 
 def check_path_exists(path):
     if not os.path.exists(path): raise Exception('Path does not exist: ' + path)
@@ -44,14 +48,55 @@ def print_exif(exif, ext):
                 logging.getLogger(__name__).info(f'<<< skipped >>>           [#{tag_id}]: <<< bad key for TIFF format in PIL module >>>')
             else:
                 tag = TAGS.get(tag_id, tag_id)
-                data = exif.get(tag_id)
-                if isinstance(data, bytes):
-                    try:
-                        data = data.decode()
-                    except:
-                        data = '<<< decode error >>>'
-                logging.getLogger(__name__).info(f"{tag:25} [#{tag_id}]: {data}")
-                
+                if tag != "XMLPacket":
+                    data = exif.get(tag_id)
+                    if isinstance(data, bytes):
+                        try:
+                            data = data.decode()
+                        except:
+                            logging.getLogger(__name__).warning(f"Can't decode EXIF tag {tag:25} [#{tag_id}]")
+                            data = '<<< decode error >>>'
+                    logging.getLogger(__name__).info(f"{tag:25} [#{tag_id}]: {data}")
+                else:
+                    logging.getLogger(__name__).info(f"{tag:25} [#{tag_id}]: <<<XML data>>>")
+
+def get_tiff_dtype_count(value):
+    """Restituisce (dtype, count) appropriati per i tag TIFF"""
+    if isinstance(value, str):
+        # Stringhe ASCII (dtype=2), lunghezza + terminatore null
+        return 2, len(value) + 1
+    elif isinstance(value, (bytes, bytearray)):
+        # Dati binari (dtype=1)
+        return 1, len(value)
+    elif isinstance(value, (list, tuple, np.ndarray)):
+        # Array o sequenze
+        if isinstance(value, np.ndarray):
+            dtype = value.dtype
+        else:
+            dtype = np.array(value).dtype
+        
+        # Mappatura numpy dtype → TIFF dtype
+        if dtype == np.uint8:
+            return 1, len(value)
+        elif dtype == np.uint16:
+            return 3, len(value)
+        elif dtype == np.uint32:
+            return 4, len(value)
+        elif dtype == np.float32:
+            return 11, len(value)
+        elif dtype == np.float64:
+            return 12, len(value)
+    elif isinstance(value, int):
+        if 0 <= value <= 65535:
+            return 3, 1  # uint16
+        else:
+            return 4, 1  # uint32
+    elif isinstance(value, float):
+        return 11, 1  # float64
+    
+    # Default per altri casi (stringa ASCII)
+    return 2, len(str(value)) + 1
+        
 def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
     if out_filename is None: out_filename = in_filename
     if(not os.path.isfile(exif_filename)): raise Exception("File does not exist: " + exif_filename)
@@ -61,13 +106,33 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
     ext = in_filename.split(".")[-1]
     if verbose: 
         print_exif(exif, ext)
-    image_new = Image.open(in_filename)
+    if ext == 'tiff' or ext == 'tif':
+        image_new = tifffile.imread(in_filename)
+    else:
+        image_new = Image.open(in_filename)
     if ext == 'jpeg' or ext == 'jpg':
         image_new.save(out_filename, 'JPEG', exif=exif, quality=100)
     elif ext == 'tiff' or ext == 'tif':
         for k in BAD_EXIF_KEYS_16BITS_TIFF:
             if k in exif: del exif[k]
-        image_new.save(out_filename, 'TIFF', exif=exif)
+        #image_new.save(out_filename, 'TIFF', exif=exif)
+        metadata = {}
+        extra = []
+        for tag_id in exif:
+            tag = TAGS.get(tag_id, tag_id)
+            data = exif.get(tag_id)
+            if isinstance(data, bytes):
+                try:
+                    data = data.decode()
+                except:
+                    logging.getLogger(__name__).warning(f"Can't decode EXIF tag {tag:25} [#{tag_id}]")
+                    data = '<<< decode error >>>'
+            if isinstance(data, IFDRational):
+                    data = data.numerator/data.denominator
+            if tag not in NO_COPY_TIFF_TAGS:
+                metadata[tag] = data
+                extra.append((tag_id, *get_tiff_dtype_count(data), data, False))
+        tifffile.imwrite(out_filename, image_new, metadata=metadata, extratags=extra, compression='adobe_deflate')
     elif ext == 'png':
         image_new.save(out_filename, 'PNG', exif=exif, quality=100)
     return exif
