@@ -8,7 +8,6 @@ def test_tif_rgb_match():
         job.add_action(Actions("img-tif-balance-rgb-match", actions=[BalanceFrames(channel=RGB, 
             corr_map=MATCH_HIST, plot_histograms=True)]))
         job.run()
-        assert True
     except:
         assert False
 
@@ -18,7 +17,6 @@ def test_jpg_lumi():
         job.add_action(Actions("img-jpg-balance-lumi", actions=[BalanceFrames(channel=LUMI,
             corr_map=LINEAR, plot_histograms=True)]))
         job.run()
-        assert True
     except:
         assert False
         
@@ -28,7 +26,6 @@ def test_tif_lumi():
         job.add_action(Actions("img-tif-balance-lumi", actions=[BalanceFrames(channel=LUMI,
             corr_map=GAMMA, plot_histograms=True)]))
         job.run()
-        assert True
     except:
         assert False
 
@@ -38,7 +35,6 @@ def test_jpg_rgb():
         job.add_action(Actions("img-jpg-balance-rgb", actions=[BalanceFrames(channel=RGB,
             corr_map=LINEAR, plot_histograms=True)]))
         job.run()
-        assert True
     except:
         assert False
         
@@ -48,7 +44,6 @@ def test_jpg_hsv():
         job.add_action(Actions("img-jpg-balance-sv", actions=[BalanceFrames(channel=HSV,
             corr_map=LINEAR, plot_histograms=True)]))
         job.run()
-        assert True
     except:
         assert False
         
@@ -58,7 +53,6 @@ def test_jpg_hls():
         job.add_action(Actions("img-jpg-balance-ls", actions=[BalanceFrames(channel=HLS,
             corr_map=GAMMA, plot_histograms=True)]))
         job.run()
-        assert True
     except:
         assert False
         

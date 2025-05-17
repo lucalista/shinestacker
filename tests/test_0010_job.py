@@ -36,7 +36,6 @@ def test_run():
         job.add_action(Action2())
         job.add_action(MyActionList("my actions"))
         job.run()
-        assert True
     except:
         assert False
 

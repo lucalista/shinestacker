@@ -22,7 +22,6 @@ def test_run():
         console_logging_newline()
         logger.info('this message is in log file and on console')
         logger.info('Finished')
-        assert True
     except:
         assert False
 

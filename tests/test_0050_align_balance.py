@@ -8,7 +8,6 @@ def test_hls_gamma():
         job.add_action(Actions("img-jpg-align-balance-ls", actions=[AlignFrames(), 
             BalanceFrames(channel=HLS, corr_map=GAMMA)]))
         job.run()
-        assert True
     except:
         assert False
         
@@ -18,7 +17,6 @@ def test_hsv():
         job.add_action(Actions("img-jpg-align-balance-sv", actions=[AlignFrames(), 
             BalanceFrames(channel=HSV)]))
         job.run()
-        assert True
     except:
         assert False
         
@@ -28,7 +26,6 @@ def test_rgb():
         job.add_action(Actions("img-jpg-align-balance-rgb", actions=[AlignFrames(), 
             BalanceFrames(channel=RGB)]))
         job.run()
-        assert True
     except:
         assert False
         
@@ -38,7 +35,6 @@ def test_lumi():
         job.add_action(Actions("img-jpg-align-balance-lumi", actions=[AlignFrames(), 
             BalanceFrames(channel=LUMI)]))
         job.run()
-        assert True
     except:
         assert False
 

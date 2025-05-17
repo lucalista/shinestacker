@@ -2,15 +2,23 @@ import sys
 sys.path.append('../')
 from focus_stack import *
 
-def test_run():
+def test_detect():
     try:
         job = StackJob("job", "./")
         job.add_action(NoiseDetection("noise-map", input_path=["img-noise"]))
         job.run()
-        assert True
+    except:
+        assert False
+
+def test_correct():
+    try:
+        job = StackJob("job", "./", input_path="img-jpg")
+        job.add_action(Actions("img-noise-corr", actions=[MaskNoise("noise-map/hot_rgb.png")]))
+        job.run()
     except:
         assert False
 
 if __name__ == '__main__':
-    test_run()
+    test_detect()
+    test_correct()
 

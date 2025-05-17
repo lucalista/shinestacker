@@ -7,7 +7,6 @@ def test_jpg():
         job = StackJob("job", "./", input_path="img-jpg")
         job.add_action(FocusStack("img-jpg-stack", PyramidStack(), postfix='_pyr'))
         job.run()
-        assert True
     except:
         assert False
         
@@ -16,7 +15,6 @@ def test_tif():
         job = StackJob("job", "./", input_path="img-tif")
         job.add_action(FocusStack("img-tif-stack", PyramidStack(), postfix='_pyr'))
         job.run()
-        assert True
     except:
         assert False
         
@@ -25,7 +23,6 @@ def test_jpg_dm():
         job = StackJob("job", "./", input_path="img-jpg")
         job.add_action(FocusStack("img-jpg-stack", DepthMapStack(), postfix='_dm'))
         job.run()
-        assert True
     except:
         assert False
         
@@ -34,7 +31,6 @@ def test_bunches():
         job = StackJob("job", "./", input_path="img-jpg")
         job.add_action(FocusStackBunch("img-jpg-bunches",  PyramidStack(), frames=3))
         job.run()
-        assert True
     except:
         assert False
 
