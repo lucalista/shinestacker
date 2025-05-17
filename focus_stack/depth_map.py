@@ -15,11 +15,12 @@ def get_sobel_map(images):
         energies[index] = np.abs(cv2.Sobel(image, cv2.CV_64F, 1, 0)) + np.abs(cv2.Sobel(image, cv2.CV_64F, 0, 1))
     return energies
 
+ENERGY_SOBEL = "sobel"
+ENERGY_LAPLACIAN = "laplacian"
+MAP_MAX = "max"
+MAP_AVERAGE = "average"
+
 class DepthMapStack:
-    ENERGY_SOBEL = "sobel"
-    ENERGY_LAPLACIAN = "laplacian"
-    MAP_MAX = "max"
-    MAP_AVERAGE = "average"
     def __init__(self, map_type=MAP_AVERAGE, energy=ENERGY_LAPLACIAN, kernel_size=5, blur_size=5, smooth_size=32):
         self.map_type = map_type
         self.energy = energy
@@ -43,7 +44,7 @@ class DepthMapStack:
                 smoothed[index] = cv2.bilateralFilter(energies[index], self.smooth_size, 25, 25)
         return smoothed
     def get_focus_map(self, energies):
-        if (self.map_type == DepthMapStack.MAP_AVERAGE):
+        if (self.map_type == MAP_AVERAGE):
             tile_shape = np.array(energies.shape)
             tile_shape[1:] = 1
             sum_energies = np.tile(np.sum(energies, axis=0), tile_shape)
@@ -63,9 +64,9 @@ class DepthMapStack:
         for index in range(images.shape[0]):
             gray_images[index] = convert_to_grayscale(images[index])
         self.print_message(': compute energy map')
-        if self.energy == DepthMapStack.ENERGY_SOBEL:
+        if self.energy == ENERGY_SOBEL:
             energy_map = get_sobel_map(gray_images)
-        elif self.energy == DepthMapStack.ENERGY_LAPLACIAN:
+        elif self.energy == ENERGY_LAPLACIAN:
             energy_map = self.get_laplacian_map(gray_images)
         else:
             assert(False), 'invalid energy parameter: ' + self.energy
