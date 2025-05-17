@@ -59,7 +59,9 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
     image = Image.open(exif_filename)
     exif = image.tag_v2 if hasattr(image, 'tag_v2') else image.getexif()
     ext = in_filename.split(".")[-1]
-    if verbose: print_exif(exif, ext)
+    if verbose: 
+        logging.getLogger(__name__).info("EXIF data:")
+        print_exif(exif, ext)
     image_new = Image.open(in_filename)
     if ext == 'jpeg' or ext == 'jpg':
         image_new.save(out_filename, 'JPEG', exif=exif, quality=100)
