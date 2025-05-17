@@ -8,6 +8,8 @@ tests/img-*-balance-*/*
 tests/img-*-stack/*
 tests/img-*-multilayer/*
 tests/img-*-bunches/*
+tests/img-exif/*
+tests/img-noise-corr/*
 tests/noise-map/*
 tests/plots/*
 sandbox/img-test/*
