@@ -60,7 +60,6 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
     exif = image.tag_v2 if hasattr(image, 'tag_v2') else image.getexif()
     ext = in_filename.split(".")[-1]
     if verbose: 
-        logging.getLogger(__name__).info("EXIF data:")
         print_exif(exif, ext)
     image_new = Image.open(in_filename)
     if ext == 'jpeg' or ext == 'jpg':
@@ -71,6 +70,7 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
         image_new.save(out_filename, 'TIFF', exif=exif)
     elif ext == 'png':
         image_new.save(out_filename, 'PNG', exif=exif, quality=100)
+    return exif
 
 def save_plot(filename, show=True):
     logging.getLogger(__name__).debug("save plot file: " + filename)  
