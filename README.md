@@ -7,8 +7,8 @@
 ```python
 from focus_stack import *
 
-job = StackJob("job", "E:/Focus stacking/My image directory/")
-job.add_action(NoiseDetection(input_path=["src"]))
+job = StackJob("job", "E:/Focus stacking/My image directory/", input_path="src")
+job.add_action(NoiseDetection())
 job.run()
 
 job = StackJob("job", "E:/Focus stacking/My image directory/", input_path="src")

@@ -4,8 +4,8 @@ from focus_stack import *
 
 def test_detect():
     try:
-        job = StackJob("job", "./")
-        job.add_action(NoiseDetection(input_path=["img-noise"]))
+        job = StackJob("job", "./", input_path="img-noise")
+        job.add_action(NoiseDetection())
         job.run()
     except:
         assert False
