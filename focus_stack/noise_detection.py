@@ -55,6 +55,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         
 MEAN = 'MEAN'
 MEDIAN = 'MEDIAN'
+
 class MaskNoise:
     def __init__(self, noise_mask="noise-map/hot_rgb.png", kernel_size=3, method=MEAN):
         self.noise_mask = noise_mask
