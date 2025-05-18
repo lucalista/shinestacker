@@ -1,0 +1,4 @@
+[flake8]
+exclude = */.ipynb_checkpoints/*
+max-line-length = 160
+ignore = E402
