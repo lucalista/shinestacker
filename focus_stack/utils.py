@@ -1,5 +1,6 @@
 import cv2
 import os
+import re
 import numpy as np
 from PIL import Image, ExifTags
 from PIL.TiffImagePlugin import IFDRational
@@ -22,8 +23,9 @@ SOFTWARE = 305
 IMAGERESOURCES = 34377
 INTERCOLORPROFILE = 34675
 EXIFTAG = 34665
+XMLPACKET = 700
 NO_COPY_TIFF_TAGS_ID = [IMAGEWIDTH, IMAGELENGTH, RESOLUTIONX, RESOLUTIONY, BITSPERSAMPLE, PHOTOMETRICINTERPRETATION, SAMPLESPERPIXEL, PLANARCONFIGURATION, SOFTWARE, RESOLUTIONUNIT, EXIFTAG]
-NO_COPY_TIFF_TAGS = ["XMLPacket", "Compression", "StripOffsets", "RowsPerStrip", "StripByteCounts", "XResolution", "YResolution", "ImageResources", "InterColorProfile"]
+NO_COPY_TIFF_TAGS = ["Compression", "StripOffsets", "RowsPerStrip", "StripByteCounts", "XResolution", "YResolution", "ImageResources", "InterColorProfile"]
 
 def check_path_exists(path):
     if not os.path.exists(path): raise Exception('Path does not exist: ' + path)
@@ -51,22 +53,22 @@ def img_8bit(img):
 
 def get_exif(exif_filename):
     if(not os.path.isfile(exif_filename)): raise Exception("File does not exist: " + exif_filename)
+    ext = exif_filename.split(".")[-1]
     image = Image.open(exif_filename)
     return image.tag_v2 if hasattr(image, 'tag_v2') else image.getexif()
-
-    
+            
 def print_exif(exif, ext):
     logger = logging.getLogger(__name__)
-    if exif is None:
-        raise Exception('Image has no exif data.')
+    if exif is None: raise Exception('Image has no exif data.')
     else:
         for tag_id in exif:
             tag = TAGS.get(tag_id, tag_id)
-            if tag == "XMLPacket": date = "<<<XML data>>>"
-            elif tag == "ImageResources" or tag == "InterColorProfile": data = "<<< Photoshop data >>>" 
+            if tag_id == XMLPACKET: data = "<<<XML data>>>"
+            elif tag_id == IMAGERESOURCES or tag_id == INTERCOLORPROFILE: data = "<<< Photoshop data >>>" 
             else: data = exif.get(tag_id)
             if isinstance(data, bytes):
-                try: data = data.decode()
+                try:
+                    data = data.decode()
                 except:
                     logger.warning(f"Print: can't decode EXIF tag {tag:25} [#{tag_id}]")
                     data = '<<< *** decode error *** >>>'
@@ -97,6 +99,7 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
     if(not os.path.isfile(exif_filename)): raise Exception("File does not exist: " + exif_filename)
     if(not os.path.isfile(in_filename)): raise Exception("File does not exist: " + in_filename)
     exif = get_exif(exif_filename)
+    if exif is None: raise Exception('Image has no exif data.')
     ext = in_filename.split(".")[-1]
     if verbose: 
         print_exif(exif, ext)
@@ -114,7 +117,10 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
             data = exif.get(tag_id)
             if isinstance(data, bytes):
                 try:
-                    if tag != "ImageResources" and tag != "InterColorProfile": data = data.decode()
+                    if tag != "ImageResources" and tag != "InterColorProfile":
+                        if tag_id == XMLPACKET:
+                            data = re.sub(b'[^\x20-\x7E]', b'', data)
+                        data = data.decode()
                 except:
                     logger.warning(f"Copy: can't decode EXIF tag {tag:25} [#{tag_id}]")
                     data = '<<< decode error >>>'
