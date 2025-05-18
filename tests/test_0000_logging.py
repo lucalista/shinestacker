@@ -1,7 +1,8 @@
-import logging
 import sys
 sys.path.append('../')
-from focus_stack import setup_logging, console_logging_overwrite, console_logging_newline
+from focus_stack.logging import setup_logging, console_logging_overwrite, console_logging_newline
+import logging
+
 
 def test_run():
     try:
@@ -10,7 +11,7 @@ def test_run():
             file_level=logging.DEBUG,
             log_file="logs/focusstack.log"
         )
-        logger = logging.getLogger(__name__) 
+        logger = logging.getLogger(__name__)
         logger.info('Started')
         logger.debug('pi = 3.14')
         logger.warning('warning...!')
@@ -22,8 +23,9 @@ def test_run():
         console_logging_newline()
         logger.info('this message is in log file and on console')
         logger.info('Finished')
-    except:
+    except Exception:
         assert False
+
 
 if __name__ == '__main__':
     test_run()

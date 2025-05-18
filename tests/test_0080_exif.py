@@ -1,21 +1,25 @@
 import sys
 sys.path.append('../')
 import os
-from PIL import Image, ExifTags
-from PIL.ExifTags import TAGS
 import logging
-from focus_stack.utils import get_exif, copy_exif, print_exif, NO_COPY_TIFF_TAGS
+from PIL import Image
+from PIL.ExifTags import TAGS
+from focus_stack.utils import get_exif, copy_exif, print_exif
 from focus_stack.logging import setup_logging
+
 
 NO_TEST_TIFF_TAGS = ["XMLPacket", "Compression", "StripOffsets", "RowsPerStrip", "StripByteCounts", "ImageResources", "ExifOffset", 34665]
 
 NO_TEST_JPG_TAGS = [34665]
+
+
 def test_exif_jpg():
     try:
         setup_logging()
         logger = logging.getLogger(__name__)
-        output_dir = "./img-exif";
-        if not os.path.exists(output_dir): os.makedirs(output_dir)
+        output_dir = "./img-exif"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
         out_filename = output_dir + "/0001.jpg"
         ext = out_filename.split(".")[-1]
         logger.info("======== Testing JPG EXIF ======== ")
@@ -27,11 +31,12 @@ def test_exif_jpg():
         print_exif(exif_copy, ext)
         for tag, tag_copy in zip(exif, exif_copy):
             data, data_copy = exif.get(tag), exif_copy.get(tag_copy)
-            if isinstance(data, bytes): data = data.decode()
-            if isinstance(data_copy, bytes): data_copy = data_copy.decode()
+            if isinstance(data, bytes):
+                data = data.decode()
+            if isinstance(data_copy, bytes):
+                data_copy = data_copy.decode()
             if tag not in NO_TEST_TIFF_TAGS and not (tag == tag_copy and data == data_copy):
-                logger.error("JPG EXIF data don't match: " +
-                             f"{tag} => {data}, {tag_copy} => {data_copy}")
+                logger.error("JPG EXIF data don't match: {tag} => {data}, {tag_copy} => {data_copy}")
                 assert False
     except Exception:
         assert False
@@ -72,16 +77,14 @@ def test_exif_tiff():
                     try:
                         data = data.decode()
                     except Exception:
-                        logger.warning("Test: can't decode EXIF tag" +
-                                       f"{tag:25} [#{tag_id}]")
+                        logger.warning("Test: can't decode EXIF tag {tag:25} [#{tag_id}]")
                         data = '<<< decode error >>>'
             if isinstance(data_copy, bytes):
                 data_copy = data_copy.decode()
             meta[tag], meta_copy[tag_copy] = data, data_copy
         for (tag, data, data_copy) in list(common_entries(meta, meta_copy)):
             if tag not in NO_TEST_TIFF_TAGS and not data == data_copy:
-                logger.error("TIFF EXIF data don't match: " +
-                             f"{tag}: {data}=>{data_copy}")
+                logger.error(f"TIFF EXIF data don't match: {tag}: {data}=>{data_copy}")
                 assert False
     except Exception:
         assert False

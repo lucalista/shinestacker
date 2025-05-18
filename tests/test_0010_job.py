@@ -1,33 +1,39 @@
 import sys
 sys.path.append('../')
 from focus_stack.framework import Job, JobBase, ActionList
-from termcolor import colored, cprint
+from termcolor import colored
 import time
-import logging
-from focus_stack.logging import setup_logging, console_logging_overwrite, console_logging_newline
+
 
 class Action1(JobBase):
     def __init__(self):
         JobBase.__init__(self, "action 1")
+
     def run(self):
         self.print_message(colored("run 1", "blue", attrs=["bold"]))
         time.sleep(0.5)
-        
+
+
 class Action2(JobBase):
     def __init__(self):
         JobBase.__init__(self, "action 2")
+
     def run(self):
         self.print_message(colored("run 2", "blue", attrs=["bold"]))
         time.sleep(0.7)
 
+
 class MyActionList(ActionList):
     def __init__(self, name):
         ActionList.__init__(self, name)
+
     def begin(self):
         self.counts = 10
+
     def run_step(self):
         self.print_message(colored("action: {} ".format(self.count), "blue"), end='\r')
         time.sleep(0.1)
+
 
 def test_run():
     try:
@@ -36,8 +42,9 @@ def test_run():
         job.add_action(Action2())
         job.add_action(MyActionList("my actions"))
         job.run()
-    except:
+    except Exception:
         assert False
+
 
 if __name__ == '__main__':
     test_run()
