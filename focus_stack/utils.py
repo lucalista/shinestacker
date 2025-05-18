@@ -105,7 +105,7 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
     if ext == 'jpeg' or ext == 'jpg':
         image_new.save(out_filename, 'JPEG', exif=exif, quality=100)
     elif ext == 'tiff' or ext == 'tif':
-        metadata = {}
+        metadata = { "description": "image generated with focusstack package" }
         extra = []
         for tag_id in exif:
             tag = TAGS.get(tag_id, tag_id)
@@ -130,7 +130,6 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
             phint = exif.get(PHOTOMETRICINTERPRETATION)
             photometric = phint if not phint is None else None
             if tag not in NO_COPY_TIFF_TAGS and tag_id not in NO_COPY_TIFF_TAGS_ID:
-                metadata[tag] = data
                 extra.append((tag_id, *get_tiff_dtype_count(data), data, False))
             else:
                 logger.info(f"Skip tag {tag:25} [#{tag_id}]")
