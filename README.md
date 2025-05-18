@@ -203,7 +203,7 @@ MaskNoise(noise_mask, *options)
 
 E.g.:
 ```python
-job.add_action(Actions("align", actions=[MaskNoise("noise-map/hot-rgb.png"),
+job.add_action(Actions("align", actions=[MaskNoise(),
                                          AlignFrames(),
                                          BalanceFrames(mask_size=0.9, i_min=150, i_max=65385)]))
 ```
