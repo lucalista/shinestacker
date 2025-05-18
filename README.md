@@ -201,7 +201,7 @@ After the noisy pixel mask has been determined, noisy pixels are then masked add
 job.add_action(Actions("mask", actions=[MaskNoise(*options)]))
 ```
 
-E.g.:
+Or as preliminary stage to more actions:
 ```python
 job.add_action(Actions("align", actions=[MaskNoise(),
                                          AlignFrames(),
