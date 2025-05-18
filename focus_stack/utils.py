@@ -34,20 +34,15 @@ def check_path_exists(path):
 def read_img(file_path):
     if not os.path.isfile(file_path): raise Exception("File does not exist: " + file_path)
     ext = file_path.split(".")[-1]
-    if ext == 'jpeg' or ext == 'jpg':
-        img = cv2.imread(file_path)
-    elif ext == 'tiff' or ext == 'tif' or ext == 'png':
-        img = cv2.imread(file_path, cv2.IMREAD_UNCHANGED)
+    if ext == 'jpeg' or ext == 'jpg': img = cv2.imread(file_path)
+    elif ext == 'tiff' or ext == 'tif' or ext == 'png': img = cv2.imread(file_path, cv2.IMREAD_UNCHANGED)
     return img
 
 def write_img(file_path, img):
     ext = file_path.split(".")[-1]
-    if ext == 'jpeg' or ext == 'jpg':
-        cv2.imwrite(file_path, img, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
-    elif ext == 'tiff' or ext == 'tif':
-        cv2.imwrite(file_path, img, [int(cv2.IMWRITE_TIFF_COMPRESSION), 1])
-    elif ext == 'png':
-        cv2.imwrite(file_path, img) 
+    if ext == 'jpeg' or ext == 'jpg': cv2.imwrite(file_path, img, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+    elif ext == 'tiff' or ext == 'tif': cv2.imwrite(file_path, img, [int(cv2.IMWRITE_TIFF_COMPRESSION), 1])
+    elif ext == 'png': cv2.imwrite(file_path, img) 
         
 def img_8bit(img):
     return (img >> 8).astype('uint8') if img.dtype == np.uint16 else img
@@ -73,24 +68,22 @@ def get_exif(exif_filename):
         return exif_dict
     else: return None
 
-def print_exif(exif, ext):
+def print_exif(exif, ext, hide_xml=True):
     logger = logging.getLogger(__name__)
     if exif is None: raise Exception('Image has no exif data.')
     else:
         for tag_id in exif:
             tag = TAGS.get(tag_id, tag_id)
-            #if tag_id == XMLPACKET: data = "<<<XML data>>>"
-            if tag_id == IMAGERESOURCES or tag_id == INTERCOLORPROFILE: data = "<<< Photoshop data >>>" 
+            if tag_id == XMLPACKET and hide_xml: data = "<<< XML data >>>"
+            elif tag_id == IMAGERESOURCES or tag_id == INTERCOLORPROFILE: data = "<<< Photoshop data >>>" 
             else:
-                if hasattr(exif, 'get'): data = exif.get(tag_id)
-                else: data = exif[tag_id]
+                data = exif.get(tag_id) if hasattr(exif, 'get') else exif[tag_id]
             if isinstance(data, bytes):
                 try: data = data.decode()
                 except:
                     logger.warning(f"Print: can't decode EXIF tag {tag:25} [#{tag_id}]")
                     data = '<<< *** decode error *** >>>'
-            if isinstance(data, IFDRational):
-                data = f"{data.numerator}/{data.denominator}"
+            if isinstance(data, IFDRational): data = f"{data.numerator}/{data.denominator}"
             logger.info(f"{tag:25} [#{tag_id:5d}]: {data}")
 
 def get_tiff_dtype_count(value):
@@ -129,13 +122,10 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
                 jpeg_data = buffer.getvalue()
                 if xmp_data is not None:
                     app1_marker_pos = jpeg_data.find(b'\xFF\xE1')
-                    if app1_marker_pos == -1:
-                        app1_marker_pos = len(jpeg_data) - 2
-                    updated_data = (
-                        jpeg_data[:app1_marker_pos] +
+                    if app1_marker_pos == -1: app1_marker_pos = len(jpeg_data) - 2
+                    updated_data = (jpeg_data[:app1_marker_pos] +
                         b'\xFF\xE1' + len(xmp_data).to_bytes(2, 'big') +
-                        xmp_data + jpeg_data[app1_marker_pos:]
-                    )
+                        xmp_data + jpeg_data[app1_marker_pos:])
                 else:
                     logger.warning(f"Copy: can't find XMLPacket in JPG EXIF data")
                     updated_data = jpeg_data
@@ -145,33 +135,29 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
         metadata = { "description": "image generated with focusstack package" }
         extra = []
         for tag_id in exif:
-            tag = TAGS.get(tag_id, tag_id)
-            data = exif.get(tag_id)
+            tag, data = TAGS.get(tag_id, tag_id), exif.get(tag_id)
             if isinstance(data, bytes):
                 try:
-                    if tag != "ImageResources" and tag != "InterColorProfile":
+                    if tag_id != IMAGERESOURCES and tag_id != INTERCOLORPROFILE: 
                         if tag_id == XMLPACKET: data = re.sub(b'[^\x20-\x7E]', b'', data)
                         data = data.decode()
                 except:
                     logger.warning(f"Copy: can't decode EXIF tag {tag:25} [#{tag_id}]")
                     data = '<<< decode error >>>'
-            if isinstance(data, IFDRational):
-                    data = (data.numerator, data.denominator)
+            if isinstance(data, IFDRational): data = (data.numerator, data.denominator)
             res_x, res_y = exif.get(RESOLUTIONX), exif.get(RESOLUTIONY)
             if not (res_x is None or res_y is None):
                 resolution = ((res_x.numerator, res_x.denominator), (res_y.numerator, res_y.denominator))
-            else:
-                resolution=((720000, 10000), (720000, 10000))
+            else: resolution=((720000, 10000), (720000, 10000))
             res_u = exif.get(RESOLUTIONUNIT)
-            resolutionunit = res_u if not res_u is None else 'inch'
+            resolutionunit = res_u if res_u is not None else 'inch'
             sw = exif.get(SOFTWARE)
-            software = sw if not sw is None else "N/A"
+            software = sw if sw is not None else "N/A"
             phint = exif.get(PHOTOMETRICINTERPRETATION)
             photometric = phint if not phint is None else None
             if tag not in NO_COPY_TIFF_TAGS and tag_id not in NO_COPY_TIFF_TAGS_ID:
                 extra.append((tag_id, *get_tiff_dtype_count(data), data, False))
-            else:
-                logger.info(f"Skip tag {tag:25} [#{tag_id}]")
+            else: logger.info(f"Skip tag {tag:25} [#{tag_id}]")
         tifffile.imwrite(out_filename, image_new, metadata=metadata, extratags=extra, compression='adobe_deflate',
                         resolution=resolution, resolutionunit=resolutionunit, software=software, photometric=photometric)
     elif ext == 'png':
