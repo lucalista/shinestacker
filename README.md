@@ -41,7 +41,7 @@ The following python modules:
 
 ### Job creation
 
-Create a jobm then schedule the desired actions in a job, then run the job.
+Create a job, then schedule the desired actions in a job, then run the job.
 
 ```python
 job = StackJob(name, working_path)
