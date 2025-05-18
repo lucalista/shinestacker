@@ -225,7 +225,7 @@ def save_plot(filename, show=True):
     plt.savefig(filename, dpi=150)
     if show:
         try:
-            __IPYTHON__
+            __IPYTHON__  # noqa
             plt.show()
         except Exception:
             plt.close()
