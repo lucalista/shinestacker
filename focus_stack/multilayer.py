@@ -3,7 +3,6 @@ from termcolor import colored
 import tifffile
 import numpy as np
 import imagecodecs
-import tifffile
 import cv2
 from psdtags import (
     PsdBlendMode,
