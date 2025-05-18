@@ -25,6 +25,8 @@ IMAGERESOURCES = 34377
 INTERCOLORPROFILE = 34675
 EXIFTAG = 34665
 XMLPACKET = 700
+STRIPOFFSETS = 273
+STRIPBYTECOUNTS = 279
 NO_COPY_TIFF_TAGS_ID = [IMAGEWIDTH, IMAGELENGTH, RESOLUTIONX, RESOLUTIONY, BITSPERSAMPLE, PHOTOMETRICINTERPRETATION, SAMPLESPERPIXEL, PLANARCONFIGURATION, SOFTWARE, RESOLUTIONUNIT, EXIFTAG, INTERCOLORPROFILE, IMAGERESOURCES]
 NO_COPY_TIFF_TAGS = ["Compression", "StripOffsets", "RowsPerStrip", "StripByteCounts"]
 
@@ -75,7 +77,9 @@ def print_exif(exif, ext, hide_xml=True):
         for tag_id in exif:
             tag = TAGS.get(tag_id, tag_id)
             if tag_id == XMLPACKET and hide_xml: data = "<<< XML data >>>"
-            elif tag_id == IMAGERESOURCES or tag_id == INTERCOLORPROFILE: data = "<<< Photoshop data >>>" 
+            elif tag_id == IMAGERESOURCES or tag_id == INTERCOLORPROFILE: data = "<<< Photoshop data >>>"
+            elif tag_id == STRIPOFFSETS: data = "<<< Strip offsets >>>"
+            elif tag_id == STRIPBYTECOUNTS: data = "<<< Strip byte counts >>>"
             else:
                 data = exif.get(tag_id) if hasattr(exif, 'get') else exif[tag_id]
             if isinstance(data, bytes):
