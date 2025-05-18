@@ -44,7 +44,7 @@ The following python modules:
 Create a job, then schedule the desired actions in a job, then run the job.
 
 ```python
-job = StackJob(name, working_path)
+job = StackJob(name, working_path [, input_path])
 ```
 
 Arguments are:
