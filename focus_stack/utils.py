@@ -58,8 +58,16 @@ def get_exif(exif_filename):
     if ext == 'tif' or ext == 'tiff':
         return image.tag_v2 if hasattr(image, 'tag_v2') else image.getexif()
     elif ext == 'jpeg' or ext == 'jpg':
-        print(image.info['exif'])
-        return image.getexif()
+        with open(exif_filename, 'rb') as f:
+            data = f.read()
+            xmp_start = data.find(b'<?xpacket')
+            xmp_end = data.find(b'<?xpacket end="w"?>') + len('<?xpacket end="w"?>')
+            if xmp_start != -1 and xmp_end != -1:
+                xmp_bytes = data[xmp_start:xmp_end]
+            else: xmp_bytes = ''
+        exif_dict = image.getexif()
+        exif_dict[XMLPACKET] = xmp_bytes
+        return exif_dict
     else: return None
 
 def print_exif(exif, ext):
@@ -68,8 +76,8 @@ def print_exif(exif, ext):
     else:
         for tag_id in exif:
             tag = TAGS.get(tag_id, tag_id)
-            if tag_id == XMLPACKET: data = "<<<XML data>>>"
-            elif tag_id == IMAGERESOURCES or tag_id == INTERCOLORPROFILE: data = "<<< Photoshop data >>>" 
+            #if tag_id == XMLPACKET: data = "<<<XML data>>>"
+            if tag_id == IMAGERESOURCES or tag_id == INTERCOLORPROFILE: data = "<<< Photoshop data >>>" 
             else:
                 if hasattr(exif, 'get'): data = exif.get(tag_id)
                 else: data = exif[tag_id]
@@ -101,12 +109,12 @@ def get_tiff_dtype_count(value):
         
 def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
     logger = logging.getLogger(__name__)
+    ext = in_filename.split(".")[-1]
     if out_filename is None: out_filename = in_filename
     if(not os.path.isfile(exif_filename)): raise Exception("File does not exist: " + exif_filename)
     if(not os.path.isfile(in_filename)): raise Exception("File does not exist: " + in_filename)
     exif = get_exif(exif_filename)
     if exif is None: raise Exception('Image has no exif data.')
-    ext = in_filename.split(".")[-1]
     if verbose: print_exif(exif, ext)
     if ext == 'tiff' or ext == 'tif': image_new = tifffile.imread(in_filename)
     else: image_new = Image.open(in_filename)

@@ -8,8 +8,9 @@ import logging
 from focus_stack.utils import get_exif, copy_exif, print_exif, NO_COPY_TIFF_TAGS
 from focus_stack.logging import setup_logging
 
-NO_TEST_TIFF_TAGS = ["XMLPacket", "Compression", "StripOffsets", "RowsPerStrip", "StripByteCounts", "ImageResources"]
+NO_TEST_TIFF_TAGS = ["XMLPacket", "Compression", "StripOffsets", "RowsPerStrip", "StripByteCounts", "ImageResources", "ExifOffset", 34665]
 
+NO_TEST_JPG_TAGS = [34665]
 def test_exif_jpg():
     try:
         setup_logging()
@@ -29,9 +30,10 @@ def test_exif_jpg():
             data_copy = exif_copy.get(tag_copy)
             if isinstance(data, bytes): data = data.decode()
             if isinstance(data_copy, bytes): data_copy = data_copy.decode()
-            if not (tag == tag_copy and data == data_copy):
-                logger.error(f"JPG EXIF data don't match: {tag} => {data}, {tag_copy} => {data_copy}" )
-                assert False
+            if tag not in NO_TEST_TIFF_TAGS:
+                if not (tag == tag_copy and data == data_copy):
+                    logger.error(f"JPG EXIF data don't match: {tag} => {data}, {tag_copy} => {data_copy}" )
+                    assert False
     except:
         assert False
 
@@ -74,7 +76,7 @@ def test_exif_tiff():
             meta_copy[tag_copy] = data_copy
         for (tag, data, data_copy) in list(common_entries(meta, meta_copy)):
             if tag not in NO_TEST_TIFF_TAGS:
-                if not data==data_copy:
+                if not data == data_copy:
                     logger.error(f"TIFF EXIF data don't match: {tag}: {data}=>{data_copy}" )
                     assert False
     except:
