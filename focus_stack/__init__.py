@@ -1,3 +1,4 @@
+# flake8: noqa F401
 from focus_stack.stack_framework import StackJob, Actions
 from focus_stack.align import AlignFrames, ALIGN_HOMOGRAPHY, ALIGN_RIGID, BORDER_CONSTANT, BORDER_REPLICATE, BORDER_REPLICATE_BLUR
 from focus_stack.balance import BalanceFrames, LINEAR, GAMMA, MATCH_HIST, LUMI, RGB, HSV, HLS

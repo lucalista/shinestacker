@@ -2,13 +2,15 @@ class FocusStackError(Exception):
     """Base exception for all focusstack errors"""
     pass
 
+
 class InvalidOptionError(FocusStackError):
     """"Raised when invalid option is requested"""
     def __init__(self, option, value, details=""):
         self.option = option
         self.value = value
         self.details = details
-        super().__init__(f"Invalid option {option} = {value}" + ("" if details =="" else f": {details}"))
+        super().__init__(f"Invalid option {option} = {value}" + ("" if details == "" else f": {details}"))
+
 
 class ImageLoadError(FocusStackError):
     """Raised when image loading fails"""
@@ -17,6 +19,7 @@ class ImageLoadError(FocusStackError):
         self.details = details
         super().__init__(f"Failed to load {path}" + ("" if details == "" else f": {details}"))
 
+
 class AlignmentError(FocusStackError):
     """Raised when image alignment fails"""
     def __init__(self, index, details):
@@ -24,13 +27,14 @@ class AlignmentError(FocusStackError):
         self.details = details
         super().__init__(f"Alignment failed for image {index}: {details}")
 
+
 class BitDepthError(FocusStackError):
     """Raised when images don't have the same bit depth"""
     def __init__(self):
         super().__init__("Images must be all of 8 bit or 16 bit")
 
+
 class ShapeError(FocusStackError):
     """Raised when images don't have the same shape"""
     def __init__(self, shape_ref, shape):
         super().__init__("Images has shape ({}x{}), reference has shape({}x{})".format(*shape[:2], *shape_ref[:2]))
-        

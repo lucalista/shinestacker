@@ -23,14 +23,15 @@ from psdtags import (
     PsdString,
     PsdUserMask,
     TiffImageSourceData,
-    __version__,
     overlay,
 )
+
 
 class MultiLayer(FrameMultiDirectory, JobBase):
     def __init__(self, name, input_path=None, output_path=None, working_path=None, reverse_order=False):
         FrameMultiDirectory.__init__(self, name, input_path, output_path, working_path, None, 1, reverse_order)
         JobBase.__init__(self, name)
+
     def run_core(self):
         self.print_message(colored("merging frames in " + self.folder_list_str(), "blue"))
         files = self.folder_filelist()
@@ -79,7 +80,7 @@ class MultiLayer(FrameMultiDirectory, JobBase):
             blendmode=PsdBlendMode.NORMAL, blending_ranges=(),
             clipping=PsdClippingType.BASE, flags=PsdLayerFlag.PHOTOSHOP5,
             info=[PsdString(PsdKey.UNICODE_LAYER_NAME, fmt.format(i + 1))],
-        ) for i, image in enumerate (images)]
+        ) for i, image in enumerate(images)]
         image_source_data = TiffImageSourceData(
             name='Layered TIFF',
             psdformat=PsdFormat.LE32BIT,
@@ -104,10 +105,10 @@ class MultiLayer(FrameMultiDirectory, JobBase):
         )
         filename = ".".join(files[-1].split("/")[-1].split(".")[:-1])
         self.print_message(colored("writing multilayer tiff " + self.output_path + '/' + filename + '.tif', "blue"))
-        tifffile.imwrite(self.working_path + '/' + self.output_path + '/' + filename + '.tif',
+        tifffile.imwrite(
+            self.working_path + '/' + self.output_path + '/' + filename + '.tif',
             overlay(*((np.concatenate((image, np.expand_dims(transp, axis=-1)), axis=-1), (0, 0)) for image in images),
-                shape=shape,
-            ),
+                    shape=shape),
             photometric='rgb',
             compression='adobe_deflate',
             resolution=((720000, 10000), (720000, 10000)),
