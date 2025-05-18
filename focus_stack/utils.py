@@ -68,7 +68,7 @@ def get_exif(exif_filename):
             data = extract_elcosed_data(f.read(), b'<?xpacket', b'<?xpacket end="w"?>')
             if data is not None: exif_dict[XMLPACKET] = data
         return exif_dict
-    else: return None
+    else: return image.getexif()
 
 def print_exif(exif, ext, hide_xml=True):
     logger = logging.getLogger(__name__)
