@@ -62,10 +62,9 @@ def get_exif(exif_filename):
         with open(exif_filename, 'rb') as f:
             data = f.read()
             head, foot, size = b'<?xpacket', b'<?xpacket end="w"?>', len('<?xpacket end="w"?>')
-            xmp_start = data.find(head)
-            xmp_end = data.find(foot) + size
+            xmp_start, xmp_end = data.find(head), data.find(foot)
             if xmp_start != -1 and xmp_end != -1:
-                xmp_bytes = data[xmp_start:xmp_end].decode().replace('\x00', '').encode()
+                xmp_bytes = data[xmp_start:xmp_end + size].decode().replace('\x00', '').encode()
             else: xmp_bytes = ''
         exif_dict = image.getexif()
         exif_dict[XMLPACKET] = xmp_bytes
@@ -124,7 +123,7 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
         try:
             xmp_data = exif[XMLPACKET]
             head, foot, size = b'<x:xmpmeta', b'</x:xmpmeta>', len('</x:xmpmeta>')
-            xmp_start = xmp_data.find(head)
+            xmp_start, xmp_end = xmp_data.find(head), xmp_data.find(foot)
             if xmp_start != -1 and xmp_end != -1:
                 xmp_data = xmp_data[xmp_start:xmp_end + size]   
         except:
