@@ -48,6 +48,12 @@ def write_img(file_path, img):
         
 def img_8bit(img):
     return (img >> 8).astype('uint8') if img.dtype == np.uint16 else img
+
+def get_exif(exif_filename):
+    if(not os.path.isfile(exif_filename)): raise Exception("File does not exist: " + exif_filename)
+    image = Image.open(exif_filename)
+    return image.tag_v2 if hasattr(image, 'tag_v2') else image.getexif()
+
     
 def print_exif(exif, ext):
     logger = logging.getLogger(__name__)
@@ -56,20 +62,17 @@ def print_exif(exif, ext):
     else:
         for tag_id in exif:
             tag = TAGS.get(tag_id, tag_id)
-            if tag != "XMLPacket":
-                data = exif.get(tag_id)
-                if isinstance(data, bytes):
-                    try:
-                        if tag == "ImageResources" or tag == "InterColorProfile": data = "<<< Photoshop data >>>" 
-                        else: data = data.decode()
-                    except:
-                        logger.warning(f"Print: can't decode EXIF tag {tag:25} [#{tag_id}]")
-                        data = '<<< decode error >>>'
-                if isinstance(data, IFDRational):
-                    data = f"{data.numerator}/{data.denominator}"
-                logger.info(f"{tag:25} [#{tag_id}]: {data}")
-            else:
-                logger.info(f"{tag:25} [#{tag_id}]: <<<XML data>>>")
+            if tag == "XMLPacket": date = "<<<XML data>>>"
+            elif tag == "ImageResources" or tag == "InterColorProfile": data = "<<< Photoshop data >>>" 
+            else: data = exif.get(tag_id)
+            if isinstance(data, bytes):
+                try: data = data.decode()
+                except:
+                    logger.warning(f"Print: can't decode EXIF tag {tag:25} [#{tag_id}]")
+                    data = '<<< *** decode error *** >>>'
+            if isinstance(data, IFDRational):
+                data = f"{data.numerator}/{data.denominator}"
+            logger.info(f"{tag:25} [#{tag_id:5d}]: {data}")
 
 def get_tiff_dtype_count(value):
     if isinstance(value, str): return 2, len(value) + 1 # ASCII string, (dtype=2), length + null terminator
@@ -93,8 +96,7 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
     if out_filename is None: out_filename = in_filename
     if(not os.path.isfile(exif_filename)): raise Exception("File does not exist: " + exif_filename)
     if(not os.path.isfile(in_filename)): raise Exception("File does not exist: " + in_filename)
-    image = Image.open(exif_filename)
-    exif = image.tag_v2 if hasattr(image, 'tag_v2') else image.getexif()
+    exif = get_exif(exif_filename)
     ext = in_filename.split(".")[-1]
     if verbose: 
         print_exif(exif, ext)

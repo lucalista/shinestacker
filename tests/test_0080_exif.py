@@ -5,7 +5,7 @@ from PIL import Image, ExifTags
 from PIL.ExifTags import TAGS
 import tifffile
 import logging
-from focus_stack.utils import copy_exif, print_exif, NO_COPY_TIFF_TAGS
+from focus_stack.utils import get_exif, copy_exif, print_exif, NO_COPY_TIFF_TAGS
 from focus_stack.logging import setup_logging
 
 NO_TEST_TIFF_TAGS = ["XMLPacket", "Compression", "StripOffsets", "RowsPerStrip", "StripByteCounts", "ImageResources", "Software"]
@@ -17,10 +17,10 @@ def test_exif_jpg():
         output_dir = "./img-exif";
         if not os.path.exists(output_dir): os.makedirs(output_dir)
         out_filename = output_dir + "/0001.jpg"
+        logger.info("======== Testing JPG EXIF ======== ")
         logger.info("*** Source JPG EXIF ***" )
         exif = copy_exif("./img-jpg/0000.jpg", "./img-jpg/0001.jpg", out_filename=out_filename, verbose=True)
-        image = Image.open(out_filename)
-        exif_copy = image.tag_v2 if hasattr(image, 'tag_v2') else image.getexif()
+        exif_copy = get_exif(out_filename)
         ext = out_filename.split(".")[-1]
         logger.info("*** Copy JPG EXIF ***" )
         print_exif(exif_copy, ext)
@@ -48,6 +48,7 @@ def test_exif_tiff():
         output_dir = "./img-exif";
         if not os.path.exists(output_dir): os.makedirs(output_dir)
         out_filename = output_dir + "/0001.tif"
+        logger.info("======== Testing TIFF EXIF ========" )
         logging.getLogger(__name__).info("*** Source TIFF EXIF ***" )
         exif = copy_exif("./img-tif/0000.tif", "./img-tif/0001.tif", out_filename=out_filename, verbose=True)
         image = Image.open(out_filename)
