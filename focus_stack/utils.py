@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 BAD_EXIF_KEYS_16BITS_TIFF = [33723, 34665]
 #BAD_EXIF_KEYS_16BITS_TIFF = []
 
-NO_COPY_TIFF_TAGS = ["XMLPacket", "Compression", "StripOffsets", "RowsPerStrip", "StripByteCounts", "XResolution", "YResolution", "ResolutionUnit", "ImageResources", "Software"]
+NO_COPY_TIFF_TAGS = ["XMLPacket", "Compression", "StripOffsets", "RowsPerStrip", "StripByteCounts", "XResolution", "YResolution", "ImageResources"]
 
 def check_path_exists(path):
     if not os.path.exists(path): raise Exception('Path does not exist: ' + path)
@@ -56,46 +56,28 @@ def print_exif(exif, ext):
                         except:
                             logging.getLogger(__name__).warning(f"Can't decode EXIF tag {tag:25} [#{tag_id}]")
                             data = '<<< decode error >>>'
+                    if isinstance(data, IFDRational):
+                        data = f"{data.numerator}/{data.denominator}"
                     logging.getLogger(__name__).info(f"{tag:25} [#{tag_id}]: {data}")
                 else:
                     logging.getLogger(__name__).info(f"{tag:25} [#{tag_id}]: <<<XML data>>>")
 
 def get_tiff_dtype_count(value):
-    """Restituisce (dtype, count) appropriati per i tag TIFF"""
-    if isinstance(value, str):
-        # Stringhe ASCII (dtype=2), lunghezza + terminatore null
-        return 2, len(value) + 1
-    elif isinstance(value, (bytes, bytearray)):
-        # Dati binari (dtype=1)
-        return 1, len(value)
+    if isinstance(value, str): return 2, len(value) + 1 # ASCII string, (dtype=2), length + null terminator
+    elif isinstance(value, (bytes, bytearray)): return 1, len(value) # Binary data (dtype=1)
     elif isinstance(value, (list, tuple, np.ndarray)):
-        # Array o sequenze
-        if isinstance(value, np.ndarray):
-            dtype = value.dtype
-        else:
-            dtype = np.array(value).dtype
-        
-        # Mappatura numpy dtype → TIFF dtype
-        if dtype == np.uint8:
-            return 1, len(value)
-        elif dtype == np.uint16:
-            return 3, len(value)
-        elif dtype == np.uint32:
-            return 4, len(value)
-        elif dtype == np.float32:
-            return 11, len(value)
-        elif dtype == np.float64:
-            return 12, len(value)
+        if isinstance(value, np.ndarray): dtype = value.dtype # Array or sequence
+        else: dtype = np.array(value).dtype # Map numpy dtype to TIFF dtype
+        if dtype == np.uint8: return 1, len(value)
+        elif dtype == np.uint16: return 3, len(value)
+        elif dtype == np.uint32: return 4, len(value)
+        elif dtype == np.float32: return 11, len(value)
+        elif dtype == np.float64: return 12, len(value)
     elif isinstance(value, int):
-        if 0 <= value <= 65535:
-            return 3, 1  # uint16
-        else:
-            return 4, 1  # uint32
-    elif isinstance(value, float):
-        return 11, 1  # float64
-    
-    # Default per altri casi (stringa ASCII)
-    return 2, len(str(value)) + 1
+        if 0 <= value <= 65535: return 3, 1  # uint16
+        else: return 4, 1  # uint32
+    elif isinstance(value, float): return 11, 1  # float64
+    return 2, len(str(value)) + 1 # Default for othre cases (ASCII string)
         
 def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
     if out_filename is None: out_filename = in_filename
@@ -128,11 +110,21 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
                     logging.getLogger(__name__).warning(f"Can't decode EXIF tag {tag:25} [#{tag_id}]")
                     data = '<<< decode error >>>'
             if isinstance(data, IFDRational):
-                    data = data.numerator/data.denominator
+                    data = (data.numerator, data.denominator)
+            res_x, res_y = exif.get(282), exif.get(283)
+            if not (res_x is None or res_y is None):
+                resolution = ((res_x.numerator, res_x.denominator), (res_y.numerator, res_y.denominator))
+            else:
+                resolution=((720000, 10000), (720000, 10000))
+            res_u = exif.get(296)
+            resolutionunit = res_u if not res_u is None else 'inch'
+            sw = exif.get(305)
+            software = sw if not sw is None else "N/A"
             if tag not in NO_COPY_TIFF_TAGS:
                 metadata[tag] = data
                 extra.append((tag_id, *get_tiff_dtype_count(data), data, False))
-        tifffile.imwrite(out_filename, image_new, metadata=metadata, extratags=extra, compression='adobe_deflate')
+        tifffile.imwrite(out_filename, image_new, metadata=metadata, extratags=extra, compression='adobe_deflate',
+                        resolution=resolution, resolutionunit=resolutionunit, software=software)
     elif ext == 'png':
         image_new.save(out_filename, 'PNG', exif=exif, quality=100)
     return exif

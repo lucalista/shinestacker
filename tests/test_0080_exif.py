@@ -8,6 +8,8 @@ import logging
 from focus_stack.utils import copy_exif, print_exif, NO_COPY_TIFF_TAGS
 from focus_stack.logging import setup_logging
 
+NO_TEST_TIFF_TAGS = ["XMLPacket", "Compression", "StripOffsets", "RowsPerStrip", "StripByteCounts", "ImageResources", "Software"]
+
 def test_exif_jpg():
     try:
         setup_logging()
@@ -67,7 +69,7 @@ def test_exif_tiff():
             meta[tag] = data
             meta_copy[tag_copy] = data_copy
         for (tag, data, data_copy) in list(common_entries(meta, meta_copy)):
-            if tag not in NO_COPY_TIFF_TAGS:
+            if tag not in NO_TEST_TIFF_TAGS:
                 if not data==data_copy:
                     logging.getLogger(__name__).error(f"TIFF EXIF data don't match: {tag}: {data}=>{data_copy}" )
                     assert False
