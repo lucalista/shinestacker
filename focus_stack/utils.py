@@ -56,8 +56,8 @@ def extract_elcosed_data(data, head, foot):
     size = len(foot.decode('ascii'))
     xmp_start, xmp_end = data.find(head), data.find(foot)
     if xmp_start != -1 and xmp_end != -1:
-        return data[xmp_start:xmp_end + size].decode().replace('\x00', '').encode()
-    else: return b''  
+        return re.sub(b'[^\x20-\x7E]', b'', data[xmp_start:xmp_end + size]).decode().replace('\x00', '').encode()
+    else: return None  
 
 def get_exif(exif_filename):
     if(not os.path.isfile(exif_filename)): raise Exception("File does not exist: " + exif_filename)
@@ -68,9 +68,8 @@ def get_exif(exif_filename):
     elif ext == 'jpeg' or ext == 'jpg':
         exif_dict = image.getexif()
         with open(exif_filename, 'rb') as f:
-            data = f.read()
-            xmp_bytes = extract_elcosed_data(data, b'<?xpacket', b'<?xpacket end="w"?>')
-            exif_dict[XMLPACKET] = xmp_bytes
+            data = extract_elcosed_data(f.read(), b'<?xpacket', b'<?xpacket end="w"?>')
+            if data is not None: exif_dict[XMLPACKET] = data
         return exif_dict
     else: return None
 
@@ -123,15 +122,12 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
     if ext == 'tiff' or ext == 'tif': image_new = tifffile.imread(in_filename)
     else: image_new = Image.open(in_filename)
     if ext == 'jpeg' or ext == 'jpg':
-        try:
-            xmp_data = extract_elcosed_data(exif[XMLPACKET], b'<x:xmpmeta', b'</x:xmpmeta>')
-        except:
-            xmp_data = None
+        xmp_data = extract_elcosed_data(exif[XMLPACKET], b'<x:xmpmeta', b'</x:xmpmeta>')
         with Image.open(in_filename) as image:
             with io.BytesIO() as buffer:
                 image.save(buffer, format="JPEG", exif=exif.tobytes(), quality=100)
                 jpeg_data = buffer.getvalue()
-                if xmp_data:
+                if xmp_data is not None:
                     app1_marker_pos = jpeg_data.find(b'\xFF\xE1')
                     if app1_marker_pos == -1:
                         app1_marker_pos = len(jpeg_data) - 2
@@ -154,8 +150,7 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
             if isinstance(data, bytes):
                 try:
                     if tag != "ImageResources" and tag != "InterColorProfile":
-                        if tag_id == XMLPACKET:
-                            data = re.sub(b'[^\x20-\x7E]', b'', data)
+                        if tag_id == XMLPACKET: data = re.sub(b'[^\x20-\x7E]', b'', data)
                         data = data.decode()
                 except:
                     logger.warning(f"Copy: can't decode EXIF tag {tag:25} [#{tag_id}]")
