@@ -1,6 +1,7 @@
 import cv2
 import os
 import re
+import io
 import numpy as np
 from PIL import Image, ExifTags
 from PIL.TiffImagePlugin import IFDRational
@@ -60,10 +61,11 @@ def get_exif(exif_filename):
     elif ext == 'jpeg' or ext == 'jpg':
         with open(exif_filename, 'rb') as f:
             data = f.read()
-            xmp_start = data.find(b'<?xpacket')
-            xmp_end = data.find(b'<?xpacket end="w"?>') + len('<?xpacket end="w"?>')
+            head, foot, size = b'<?xpacket', b'<?xpacket end="w"?>', len('<?xpacket end="w"?>')
+            xmp_start = data.find(head)
+            xmp_end = data.find(foot) + size
             if xmp_start != -1 and xmp_end != -1:
-                xmp_bytes = data[xmp_start:xmp_end]
+                xmp_bytes = data[xmp_start:xmp_end].decode().replace('\x00', '').encode()
             else: xmp_bytes = ''
         exif_dict = image.getexif()
         exif_dict[XMLPACKET] = xmp_bytes
@@ -119,7 +121,32 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
     if ext == 'tiff' or ext == 'tif': image_new = tifffile.imread(in_filename)
     else: image_new = Image.open(in_filename)
     if ext == 'jpeg' or ext == 'jpg':
-        image_new.save(out_filename, 'JPEG', exif=exif, quality=100)
+        try:
+            xmp_data = exif[XMLPACKET]
+            head, foot, size = b'<x:xmpmeta', b'</x:xmpmeta>', len('</x:xmpmeta>')
+            xmp_start = xmp_data.find(head)
+            if xmp_start != -1 and xmp_end != -1:
+                xmp_data = xmp_data[xmp_start:xmp_end + size]   
+        except:
+            xmp_data = None
+        with Image.open(in_filename) as image:
+            with io.BytesIO() as buffer:
+                image.save(buffer, format="JPEG", exif=exif.tobytes(), quality=100)
+                jpeg_data = buffer.getvalue()
+                if xmp_data:
+                    app1_marker_pos = jpeg_data.find(b'\xFF\xE1')
+                    if app1_marker_pos == -1:
+                        app1_marker_pos = len(jpeg_data) - 2
+                    updated_data = (
+                        jpeg_data[:app1_marker_pos] +
+                        b'\xFF\xE1' + len(xmp_data).to_bytes(2, 'big') +
+                        xmp_data + jpeg_data[app1_marker_pos:]
+                    )
+                else:
+                    logger.warning(f"Copy: can't find XMLPacket in JPG EXIF data")
+                    updated_data = jpeg_data
+                with open(out_filename, 'wb') as f:
+                    f.write(updated_data) 
     elif ext == 'tiff' or ext == 'tif':
         metadata = { "description": "image generated with focusstack package" }
         extra = []
