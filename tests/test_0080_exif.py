@@ -8,7 +8,7 @@ import logging
 from focus_stack.utils import get_exif, copy_exif, print_exif, NO_COPY_TIFF_TAGS
 from focus_stack.logging import setup_logging
 
-NO_TEST_TIFF_TAGS = ["XMLPacket", "Compression", "StripOffsets", "RowsPerStrip", "StripByteCounts", "ImageResources", "Software"]
+NO_TEST_TIFF_TAGS = ["XMLPacket", "Compression", "StripOffsets", "RowsPerStrip", "StripByteCounts", "ImageResources"]
 
 def test_exif_jpg():
     try:
@@ -27,10 +27,10 @@ def test_exif_jpg():
         for tag, tag_copy in zip(exif, exif_copy):
             data = exif.get(tag)
             data_copy = exif_copy.get(tag_copy)
-            if isinstance(data, bytes): data=data.decode()
-            if isinstance(data_copy, bytes): data_copy=data_copy.decode()
-            if not (tag == tag_copy and data==data_copy):
-                logger.error(f"JPG EXIF data don't match: {tag}=>{data}, {tag_copy}=>{data_copy}" )
+            if isinstance(data, bytes): data = data.decode()
+            if isinstance(data_copy, bytes): data_copy = data_copy.decode()
+            if not (tag == tag_copy and data == data_copy):
+                logger.error(f"JPG EXIF data don't match: {tag} => {data}, {tag_copy} => {data_copy}" )
                 assert False
     except:
         assert False
