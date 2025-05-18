@@ -166,7 +166,7 @@ Arguments for the constructor of ```FocusStackBunch``` are:
 ### Combine frames into a single multilayer tiff
 
 ```python
-job.add_action(MultiLayer(name,  *options))
+job.add_action(MultiLayer(name, *options))
 ```
 Typically, one may want to combine the output of focus stacking and intermediate frames, or bunches, in order to perform fine retouch using an image manipulation application.
 
