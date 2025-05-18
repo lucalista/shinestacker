@@ -15,6 +15,18 @@ BAD_EXIF_KEYS_16BITS_TIFF = [33723, 34665]
 
 NO_COPY_TIFF_TAGS = ["XMLPacket", "Compression", "StripOffsets", "RowsPerStrip", "StripByteCounts", "XResolution", "YResolution", "ImageResources"]
 
+IMAGEWIDTH = 256
+IMAGELENGTH = 257
+RESOLUTIONX = 282
+RESOLUTIONY = 283
+RESOLUTIONUNIT = 296
+BITSPERSAMPLE = 258
+PHOTOMETRICINTERPRETATION = 262
+SAMPLESPERPIXEL = 277
+PLANARCONFIGURATION = 284
+SOFTWARE = 305
+NO_COPY_TIFF_TAGS_ID = [IMAGEWIDTH, IMAGELENGTH, RESOLUTIONX, RESOLUTIONY, BITSPERSAMPLE, PHOTOMETRICINTERPRETATION, SAMPLESPERPIXEL, PLANARCONFIGURATION, SOFTWARE, RESOLUTIONUNIT]
+
 def check_path_exists(path):
     if not os.path.exists(path): raise Exception('Path does not exist: ' + path)
 
@@ -111,20 +123,22 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
                     data = '<<< decode error >>>'
             if isinstance(data, IFDRational):
                     data = (data.numerator, data.denominator)
-            res_x, res_y = exif.get(282), exif.get(283)
+            res_x, res_y = exif.get(RESOLUTIONX), exif.get(RESOLUTIONY)
             if not (res_x is None or res_y is None):
                 resolution = ((res_x.numerator, res_x.denominator), (res_y.numerator, res_y.denominator))
             else:
                 resolution=((720000, 10000), (720000, 10000))
-            res_u = exif.get(296)
+            res_u = exif.get(RESOLUTIONUNIT)
             resolutionunit = res_u if not res_u is None else 'inch'
-            sw = exif.get(305)
+            sw = exif.get(SOFTWARE)
             software = sw if not sw is None else "N/A"
-            if tag not in NO_COPY_TIFF_TAGS:
+            phint = exif.get(PHOTOMETRICINTERPRETATION)
+            photometric = phint if not phint is None else None
+            if tag not in NO_COPY_TIFF_TAGS and tag_id not in NO_COPY_TIFF_TAGS_ID:
                 metadata[tag] = data
                 extra.append((tag_id, *get_tiff_dtype_count(data), data, False))
         tifffile.imwrite(out_filename, image_new, metadata=metadata, extratags=extra, compression='adobe_deflate',
-                        resolution=resolution, resolutionunit=resolutionunit, software=software)
+                        resolution=resolution, resolutionunit=resolutionunit, software=software, photometric=photometric)
     elif ext == 'png':
         image_new.save(out_filename, 'PNG', exif=exif, quality=100)
     return exif
