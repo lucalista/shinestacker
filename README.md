@@ -2,7 +2,7 @@
 
 <img src='img/flies.gif' width="400">  <img src='img/flies_stack.jpg' width="400">
 
-### Usage example with jupyter notebook:
+## Usage example
 
 ```python
 from focus_stack import *
@@ -21,7 +21,7 @@ job.add_action(FocusStack("stack", DepthMapStack(), input_path='batches', postfi
 job.add_action(MultiLayer("multilayer", input_path=['batches', 'stack']))
 job.run()
 ```
-### Requirements
+## Requirements
 
 * python version 3.10 or greater
 
@@ -38,6 +38,8 @@ The following python modules:
 * psdtags
 * 
 ## Installation
+You can clone the pagkage from GitHub:
+
 ```bash
 pip install git+https://github.com/lucalista/focusstack.git
 ```
