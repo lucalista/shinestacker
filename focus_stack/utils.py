@@ -9,10 +9,6 @@ import logging
 import tifffile
 import matplotlib.pyplot as plt
 
-# Bad TIFF keys in specific PIL version
-BAD_EXIF_KEYS_16BITS_TIFF = [33723, 34665]
-#BAD_EXIF_KEYS_16BITS_TIFF = []
-
 IMAGEWIDTH = 256
 IMAGELENGTH = 257
 RESOLUTIONX = 282
@@ -25,7 +21,8 @@ PLANARCONFIGURATION = 284
 SOFTWARE = 305
 IMAGERESOURCES = 34377
 INTERCOLORPROFILE = 34675
-NO_COPY_TIFF_TAGS_ID = [IMAGEWIDTH, IMAGELENGTH, RESOLUTIONX, RESOLUTIONY, BITSPERSAMPLE, PHOTOMETRICINTERPRETATION, SAMPLESPERPIXEL, PLANARCONFIGURATION, SOFTWARE, RESOLUTIONUNIT]
+EXIFTAG = 34665
+NO_COPY_TIFF_TAGS_ID = [IMAGEWIDTH, IMAGELENGTH, RESOLUTIONX, RESOLUTIONY, BITSPERSAMPLE, PHOTOMETRICINTERPRETATION, SAMPLESPERPIXEL, PLANARCONFIGURATION, SOFTWARE, RESOLUTIONUNIT, EXIFTAG]
 NO_COPY_TIFF_TAGS = ["XMLPacket", "Compression", "StripOffsets", "RowsPerStrip", "StripByteCounts", "XResolution", "YResolution", "ImageResources", "InterColorProfile"]
 
 def check_path_exists(path):
@@ -58,24 +55,21 @@ def print_exif(exif, ext):
         raise Exception('Image has no exif data.')
     else:
         for tag_id in exif:
-            if (ext == 'tiff' or ext == 'tif') and (tag_id in BAD_EXIF_KEYS_16BITS_TIFF):
-                logger.info(f'<<< skipped >>>           [#{tag_id}]: <<< bad key for TIFF format in PIL module >>>')
+            tag = TAGS.get(tag_id, tag_id)
+            if tag != "XMLPacket":
+                data = exif.get(tag_id)
+                if isinstance(data, bytes):
+                    try:
+                        if tag == "ImageResources" or tag == "InterColorProfile": data = "<<< Photoshop data >>>" 
+                        else: data = data.decode()
+                    except:
+                        logger.warning(f"Print: can't decode EXIF tag {tag:25} [#{tag_id}]")
+                        data = '<<< decode error >>>'
+                if isinstance(data, IFDRational):
+                    data = f"{data.numerator}/{data.denominator}"
+                logger.info(f"{tag:25} [#{tag_id}]: {data}")
             else:
-                tag = TAGS.get(tag_id, tag_id)
-                if tag != "XMLPacket":
-                    data = exif.get(tag_id)
-                    if isinstance(data, bytes):
-                        try:
-                            if tag == "ImageResources" or tag == "InterColorProfile": data = "<<< Photoshop data >>>" 
-                            else: data = data.decode()
-                        except:
-                            logger.warning(f"Print: can't decode EXIF tag {tag:25} [#{tag_id}]")
-                            data = '<<< decode error >>>'
-                    if isinstance(data, IFDRational):
-                        data = f"{data.numerator}/{data.denominator}"
-                    logger.info(f"{tag:25} [#{tag_id}]: {data}")
-                else:
-                    logger.info(f"{tag:25} [#{tag_id}]: <<<XML data>>>")
+                logger.info(f"{tag:25} [#{tag_id}]: <<<XML data>>>")
 
 def get_tiff_dtype_count(value):
     if isinstance(value, str): return 2, len(value) + 1 # ASCII string, (dtype=2), length + null terminator
@@ -111,9 +105,6 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
     if ext == 'jpeg' or ext == 'jpg':
         image_new.save(out_filename, 'JPEG', exif=exif, quality=100)
     elif ext == 'tiff' or ext == 'tif':
-        for k in BAD_EXIF_KEYS_16BITS_TIFF:
-            if k in exif: del exif[k]
-        #image_new.save(out_filename, 'TIFF', exif=exif)
         metadata = {}
         extra = []
         for tag_id in exif:
