@@ -52,6 +52,13 @@ def write_img(file_path, img):
 def img_8bit(img):
     return (img >> 8).astype('uint8') if img.dtype == np.uint16 else img
 
+def extract_elcosed_data(data, head, foot):
+    size = len(foot.decode('ascii'))
+    xmp_start, xmp_end = data.find(head), data.find(foot)
+    if xmp_start != -1 and xmp_end != -1:
+        return data[xmp_start:xmp_end + size].decode().replace('\x00', '').encode()
+    else: return b''  
+
 def get_exif(exif_filename):
     if(not os.path.isfile(exif_filename)): raise Exception("File does not exist: " + exif_filename)
     ext = exif_filename.split(".")[-1]
@@ -59,15 +66,11 @@ def get_exif(exif_filename):
     if ext == 'tif' or ext == 'tiff':
         return image.tag_v2 if hasattr(image, 'tag_v2') else image.getexif()
     elif ext == 'jpeg' or ext == 'jpg':
+        exif_dict = image.getexif()
         with open(exif_filename, 'rb') as f:
             data = f.read()
-            head, foot, size = b'<?xpacket', b'<?xpacket end="w"?>', len('<?xpacket end="w"?>')
-            xmp_start, xmp_end = data.find(head), data.find(foot)
-            if xmp_start != -1 and xmp_end != -1:
-                xmp_bytes = data[xmp_start:xmp_end + size].decode().replace('\x00', '').encode()
-            else: xmp_bytes = ''
-        exif_dict = image.getexif()
-        exif_dict[XMLPACKET] = xmp_bytes
+            xmp_bytes = extract_elcosed_data(data, b'<?xpacket', b'<?xpacket end="w"?>')
+            exif_dict[XMLPACKET] = xmp_bytes
         return exif_dict
     else: return None
 
@@ -121,11 +124,7 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
     else: image_new = Image.open(in_filename)
     if ext == 'jpeg' or ext == 'jpg':
         try:
-            xmp_data = exif[XMLPACKET]
-            head, foot, size = b'<x:xmpmeta', b'</x:xmpmeta>', len('</x:xmpmeta>')
-            xmp_start, xmp_end = xmp_data.find(head), xmp_data.find(foot)
-            if xmp_start != -1 and xmp_end != -1:
-                xmp_data = xmp_data[xmp_start:xmp_end + size]   
+            xmp_data = extract_elcosed_data(exif[XMLPACKET], b'<x:xmpmeta', b'</x:xmpmeta>')
         except:
             xmp_data = None
         with Image.open(in_filename) as image:
