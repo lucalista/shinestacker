@@ -36,7 +36,12 @@ The following python modules:
 * tifffile
 * imagecodecs
 * psdtags
-    
+* 
+## Installation
+```bash
+pip install git+https://github.com/lucalista/focusstack.git
+```
+
 ## Documentation
 
 ### Job creation
