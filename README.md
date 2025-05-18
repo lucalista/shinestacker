@@ -230,7 +230,7 @@ PNG files have not been tested so far.
 
 The support of TIFF, in particular 16-bit images, is still partial:
 * ```SVCorrection``` and ```LSCorrection``` are only supported for 8-bit images
-* Even if ```exif_path``` is explicitly specified, for 16-bit TIFF exif data are not be saved.
+* Even if ```exif_path``` is explicitly specified, for 16-bit TIFF exif data for the moment are not be saved because of incomplete support of EXIF data for TIFF files.
 * Focus stacking modules crashes for TIFF files if  ```denoise``` is set ifferent from zero due to an assertion failure in the Open CV library. This is similar to a [known issue on stackoverflow](https://stackoverflow.com/questions/76647895/opencv-fastnlmeansdenoisingmulti-should-support-16-bit-images-but-does-it).
 
 ## License
