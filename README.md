@@ -73,7 +73,7 @@ Arguments for the constructor of ```Actions``` are for the :
 ### Image registration: scale, tanslation and rotation correction, or full perspective correction
 
 ```python
-AlignFrames(*options)
+job.add_action(Actions("align", actions=[AlignFrames(*options)])
 ```
 Arguments for the constructor ```AlignFrames``` of are:
 * ```transform``` (optional): the transformation applied to register images. Possible values are:
@@ -107,7 +107,7 @@ Arguments for the constructor ```AlignFrames``` of are:
 ### Luminosity and color balance
 
 ```python
-BalanceFrames(*options)
+job.add_action(Actions("balance", actions=[BalanceFrames(*options)])
 ```
   
 Arguments for the constructor of ```BalanceFrames``` are:
@@ -198,7 +198,7 @@ Arguments for the constructor of ```NoiseDetection``` are:
 After the noisy pixel mask has been determined, noisy pixels are then masked adding the action ```MaskNoise``` to the ```Actions``` module:
 
 ```
-MaskNoise(noise_mask, *options)
+job.add_action(Actions("mask", actions=[MaskNoise(noise_mask, *options)])
 ```
 
 E.g.:
