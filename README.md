@@ -39,9 +39,9 @@ The following python modules:
     
 ## Documentation
 
-Schedule the desired actions in a job, then run the job.
-
 ### Job creation
+
+Create a jobm then schedule the desired actions in a job, then run the job.
 
 ```python
 job = StackJob(name, working_path)
