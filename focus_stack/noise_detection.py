@@ -27,7 +27,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         mean_img = None
         bar = tqdm_notebook(desc=self.name, total=len(in_paths))
         for path in in_paths:
-            self.print_message(colored("reading frame: " + path.split("/")[-1], "blue"), end='\r')
+            self.print_message(colored("reading frame: " + path.split("/")[-1], "blue"), end='\r', tqdm=True)
             img = cv2.imread(path, cv2.IMREAD_COLOR)
             if mean_img is None:
                 mean_img = img.astype(np.float64)
@@ -78,7 +78,7 @@ class MaskNoise:
         pass
 
     def run_frame(self, idx, ref_idx, image):
-        self.process.sub_message('- mask noisy pixels', end='\r')
+        self.process.sub_message(': mask noisy pixels', end='\r', tqdm=True)
         if len(image.shape) == 3:
             corrected = image.copy()
             for c in range(3):

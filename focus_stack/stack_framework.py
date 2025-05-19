@@ -150,7 +150,7 @@ class FramesRefActions(FrameDirectory, ActionList):
         self.print_message(
             colored("step {}/{}: process file: {}, reference: {}".format(self.count, ll, self.filenames[self.__idx],
                                                                          self.filenames[self.__ref_idx]), "blue"),
-            end='\r')
+            end='\r', tqdm=True)
         self.run_frame(self.__idx, self.__ref_idx)
         if self.__idx < ll:
             if self.step_process:
@@ -186,7 +186,7 @@ class Actions(FramesRefActions):
 
     def run_frame(self, idx, ref_idx):
         filename = self.filenames[idx]
-        self.sub_message(': read image', end='\r')
+        self.sub_message(': read image', end='\r', tqdm=True)
         img = read_img(self.input_dir + "/" + filename)
         if hasattr(self, 'dtype') and img.dtype != self.dtype:
             raise BitDepthError()
@@ -196,7 +196,7 @@ class Actions(FramesRefActions):
             raise Exception("Invalid file: " + self.input_dir + "/" + filename)
         for a in self.__actions:
             img = a.run_frame(idx, ref_idx, img)
-        self.sub_message(': write image', end='\r')
+        self.sub_message(': write image', end='\r', tqdm=True)
         write_img(self.output_dir + "/" + filename, img)
 
     def end(self):

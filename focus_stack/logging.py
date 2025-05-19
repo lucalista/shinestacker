@@ -2,6 +2,7 @@ import logging
 import sys
 from pathlib import Path
 import re
+from tqdm import tqdm
 
 
 class ConsoleFormatter(logging.Formatter):
@@ -27,6 +28,16 @@ class FileFormatter(logging.Formatter):
         return self.ANSI_ESCAPE.sub('', logging.Formatter(fmt).format(record).replace("\r", "").rstrip())
 
 
+class TqdmLoggingHandler(logging.StreamHandler):
+    def emit(self, record):
+        try:
+            tqdm.write(self.format(record), end=self.terminator)
+        except RecursionError:
+            raise
+        except Exception:
+            self.handleError(record)
+
+
 def setup_logging(
     console_level=logging.INFO,
     file_level=logging.DEBUG,
@@ -41,23 +52,30 @@ def setup_logging(
     console_handler.setLevel(console_level)
     console_handler.setFormatter(ConsoleFormatter())
     root_logger.addHandler(console_handler)
+    tqdm_logger = logging.getLogger("tqdm")
+    tqdm_handler = TqdmLoggingHandler()
+    tqdm_handler.setFormatter(ConsoleFormatter())
+    tqdm_logger.handlers.clear()
+    tqdm_logger.addHandler(tqdm_handler)
+    tqdm_logger.propagate = False
     if log_file:
         Path(log_file).parent.mkdir(parents=True, exist_ok=True)
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(file_level)
         file_handler.setFormatter(FileFormatter())
         root_logger.addHandler(file_handler)
+        tqdm_logger.addHandler(file_handler)
     logging.getLogger("matplotlib").setLevel(logging.WARNING)
     logging.getLogger("PIL").setLevel(logging.INFO)
 
 
-def set_console_logging_terminator(terminator):
-    logging.getLogger().handlers[0].terminator = terminator
+def set_console_logging_terminator(terminator, name=None):
+    logging.getLogger(name).handlers[0].terminator = terminator
 
 
-def console_logging_overwrite():
+def console_logging_overwrite(name=None):
     set_console_logging_terminator('\r')
 
 
-def console_logging_newline():
+def console_logging_newline(name=None):
     set_console_logging_terminator('\n')

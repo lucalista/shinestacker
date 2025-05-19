@@ -103,7 +103,7 @@ class AlignFrames:
     def run_frame(self, idx, ref_idx, img_0):
         if idx == self.process.ref_idx:
             return img_0
-        self.process.sub_message(': find matches', end='\r')
+        self.process.sub_message(': find matches', end='\r', tqdm=True)
         img_ref = self.process.img_ref(ref_idx)
         img_bw_0 = cv2.cvtColor(img_8bit(img_0), cv2.COLOR_BGR2GRAY)
         img_bw_1 = cv2.cvtColor(img_8bit(img_ref).astype('uint8'), cv2.COLOR_BGR2GRAY)
@@ -122,7 +122,7 @@ class AlignFrames:
             h, w = img_bw_1.shape
             # may be useful for future applications
             # pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0]]).reshape(-1, 1 ,2)
-            self.process.sub_message(': align images', end='\r')
+            self.process.sub_message(': align images', end='\r', tqdm=True)
             if self.transform == ALIGN_HOMOGRAPHY:
                 # may be useful for future applications
                 # dst = cv2.perspectiveTransform(pts, M)
@@ -136,14 +136,14 @@ class AlignFrames:
                 if self.border_mode == BORDER_REPLICATE_BLUR:
                     mask = cv2.warpAffine(np.ones_like(img_0, dtype=np.uint8), M, (w, h), borderMode=cv2.BORDER_CONSTANT, borderValue=0)
             if self.border_mode == BORDER_REPLICATE_BLUR:
-                self.process.sub_message(': blur borders', end='\r')
+                self.process.sub_message(': blur borders', end='\r', tqdm=True)
                 mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
                 blurred_warp = cv2.GaussianBlur(img_warp, (21, 21), sigmaX=self.border_blur)
                 img_warp[mask == 0] = blurred_warp[mask == 0]
             if self.plot_matches:
                 draw_params = dict(matchColor=(0, 255, 0), singlePointColor=None, matchesMask=matches_mask, flags=2)
                 img_match = cv2.cvtColor(cv2.drawMatches(img_0, kp_0, img_ref, kp_1, good_matches, None, **draw_params), cv2.COLOR_BGR2RGB)
-                self.process.sub_message(": matches: {}".format(n_good_matches), end='\r')
+                self.process.sub_message(": matches: {}".format(n_good_matches), end='\r', tqdm=True)
                 try:
                     __IPYTHON__  # noqa
                     plt.figure(figsize=(10, 5))
@@ -156,7 +156,7 @@ class AlignFrames:
             img_warp = None
             if self.plot_matches:
                 matches_mask = None
-            self.process.sub_message(": image not aligned, too few matches found: {}".format(n_good_matches), level=logging.CRITICAL)
+            self.process.sub_message(": image not aligned, too few matches found: {}".format(n_good_matches), level=logging.CRITICAL, tqdm=True)
             raise AlignmentError(idx, f"too few matches found: {n_good_matches} < {self.min_matches}")
             return None
 

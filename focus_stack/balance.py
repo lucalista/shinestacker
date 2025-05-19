@@ -334,6 +334,6 @@ class BalanceFrames:
 
     def run_frame(self, idx, ref_idx, image):
         if idx != self.process.ref_idx:
-            self.process.sub_message(': balance image', end='\r')
+            self.process.sub_message(': balance image', end='\r', tqdm=True)
             image = self.correction.apply_correction(idx, image)
         return image

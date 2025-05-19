@@ -1,6 +1,7 @@
 import time
 from termcolor import colored
 from tqdm.notebook import tqdm_notebook
+from tqdm import tqdm
 from focus_stack.logging import setup_logging, console_logging_overwrite, console_logging_newline
 import logging
 
@@ -21,6 +22,7 @@ class JobBase:
         self.name = name
         self.base_message = ''
         self.logger = logging.getLogger(__name__)
+        self.logger_tqdm = logging.getLogger("tqdm")
 
     def run(self):
         self.__t0 = time.time()
@@ -32,20 +34,23 @@ class JobBase:
         self.logger.info(
             colored(self.name + ": ", "green", attrs=["bold"]) + colored("completed", "green") + trailing_spaces)
 
-    def print_message(self, msg='', level=logging.INFO, end='\n'):
+    def get_logger(self, tqdm=False):
+        return self.logger_tqdm if tqdm else self.logger
+
+    def print_message(self, msg='', level=logging.INFO, end='\n', tqdm=False):
         self.base_message = colored(self.name, "blue", attrs=["bold"])
         if msg != '':
             self.base_message += (': ' + msg)
         if end == '\r':
             console_logging_overwrite()
-        self.logger.log(level, colored(self.base_message, 'blue', attrs=['bold']) + trailing_spaces)
+        self.get_logger(tqdm).log(level, colored(self.base_message, 'blue', attrs=['bold']) + trailing_spaces)
         if end == '\r':
             console_logging_newline()
 
-    def sub_message(self, msg, level=logging.INFO, end='\n'):
+    def sub_message(self, msg, level=logging.INFO, end='\n', tqdm=False):
         if end == '\r':
             console_logging_overwrite()
-        self.logger.log(level, self.base_message + msg + trailing_spaces)
+        self.get_logger(tqdm).log(level, self.base_message + msg + trailing_spaces)
         if end == '\r':
             console_logging_newline()
 
@@ -95,9 +100,13 @@ class ActionList(JobBase):
             raise StopIteration
 
     def run_core(self):
-        self.print_message('', end='\r')
+        self.print_message('', end='\n')
         self.begin()
-        bar = tqdm_notebook(desc=self.name, total=self.counts)
+        try:
+            __IPYTHON__  # noqa
+            bar = tqdm_notebook(desc=self.name, total=self.counts)
+        except Exception:
+            bar = tqdm(desc=self.name, total=self.counts)
         for x in iter(self):
             bar.update(1)
         bar.close()

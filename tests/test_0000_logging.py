@@ -2,9 +2,11 @@ import sys
 sys.path.append('../')
 from focus_stack.logging import setup_logging, console_logging_overwrite, console_logging_newline
 import logging
+import time
+from tqdm import tqdm
 
 
-def test_run():
+def test_log():
     try:
         setup_logging(
             console_level=logging.DEBUG,
@@ -27,5 +29,30 @@ def test_run():
         assert False
 
 
+def test_tqdm():
+    try:
+        setup_logging(
+            console_level=logging.DEBUG,
+            file_level=logging.DEBUG,
+            log_file="logs/focusstack.log"
+        )
+        logger = logging.getLogger("tqdm")
+        counts = 50
+        bar = tqdm(desc="progress bar", total=counts, position=0)
+        descr = tqdm(total=counts, position=1, bar_format='{desc}')
+        for i in range(counts):
+            if i % 5 == 0:
+                logger.log(logging.INFO, f"Step: {i}")
+                descr.set_description_str(f"Step: {i}")
+            bar.update(1)
+            time.sleep(0.02)
+        descr.set_description_str("")
+        bar.close()
+        logger.info('Finished')
+    except Exception:
+        assert False
+
+
 if __name__ == '__main__':
-    test_run()
+    test_log()
+    test_tqdm()
