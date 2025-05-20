@@ -42,7 +42,7 @@ def test_tqdm():
         descr = tqdm(total=counts, position=1, bar_format='{desc}')
         for i in range(counts):
             if i % 5 == 0:
-                logger.log(logging.INFO, f"Step: {i}")
+                logger.log(logging.INFO, f"\033[AStep: {i}")
                 descr.set_description_str(f"Step: {i}")
             bar.update(1)
             time.sleep(0.02)

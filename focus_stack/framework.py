@@ -21,31 +21,29 @@ class JobBase:
     def __init__(self, name):
         self.name = name
         self.base_message = ''
-        self.logger = logging.getLogger(__name__)
-        self.logger_tqdm = logging.getLogger("tqdm")
 
     def run(self):
         self.__t0 = time.time()
         self.run_core()
-        self.logger.info(
+        self.get_logger().info(
             colored(self.name + ": ", "green",
                     attrs=["bold"]) + colored(
                 "elapsed time: {}".format(elapsed_time_str(self.__t0)), "green") + trailing_spaces)
-        self.logger.info(
+        self.get_logger().info(
             colored(self.name + ": ", "green", attrs=["bold"]) + colored("completed", "green") + trailing_spaces)
 
     def get_logger(self, tqdm=False):
-        return self.logger_tqdm if tqdm else self.logger
+        return logging.getLogger("tqdm" if tqdm else __name__)
 
-    def print_message(self, msg='', level=logging.INFO, end='\n', tqdm=False):
+    def print_message(self, msg='', level=logging.INFO, end=None, tqdm=False):
         self.base_message = colored(self.name, "blue", attrs=["bold"])
         if msg != '':
             self.base_message += (': ' + msg)
-        if end == '\r':
-            console_logging_overwrite()
+        if end is not None:
+            logging.getLogger("tqdm" if tqdm else None).handlers[0].terminator = end
         self.get_logger(tqdm).log(level, colored(self.base_message, 'blue', attrs=['bold']) + trailing_spaces)
-        if end == '\r':
-            console_logging_newline()
+        if end is not None:
+            logging.getLogger("tqdm" if tqdm else None).handlers[0].terminator = '\n'
 
     def sub_message(self, msg, level=logging.INFO, end='\n', tqdm=False):
         if end == '\r':

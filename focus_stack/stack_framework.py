@@ -4,6 +4,7 @@ from focus_stack.utils import read_img, write_img
 from focus_stack.exceptions import ShapeError, BitDepthError
 from termcolor import colored
 import os
+LINE_UP = "\033[A"
 
 
 class StackJob(Job):
@@ -35,7 +36,8 @@ class FramePaths(JobBase):
 
     def set_filelist(self):
         self.filenames = self.folder_filelist(self.input_dir)
-        self.sub_message(colored(": {} files ".format(len(self.filenames)) + "in folder: " + self.input_dir, 'blue'))
+        self.print_message(colored(": {} files ".format(len(self.filenames)) + "in folder: " + self.input_dir, 'blue'))
+        self.print_message('')
 
     def init(self, job):
         if self.working_path is None:
@@ -88,7 +90,7 @@ class FrameMultiDirectory:
         FramePaths.__init__(self, name, input_path, output_path, working_path, plot_path, resample, reverse_order)
 
     def folder_list_str(self):
-        s = 's' if len(self.input_dir) > 1 else ''
+        s = 's' if hasattr(self.input_dir, "__len__") else ''
         return "folder{}: ".format(s) + ", ".join([i for i in self.input_dir])
 
     def folder_filelist(self):
@@ -186,7 +188,7 @@ class Actions(FramesRefActions):
 
     def run_frame(self, idx, ref_idx):
         filename = self.filenames[idx]
-        self.sub_message(': read image', end='\r', tqdm=True)
+        self.sub_message(': read image', tqdm=True)
         img = read_img(self.input_dir + "/" + filename)
         if hasattr(self, 'dtype') and img.dtype != self.dtype:
             raise BitDepthError()
@@ -196,7 +198,7 @@ class Actions(FramesRefActions):
             raise Exception("Invalid file: " + self.input_dir + "/" + filename)
         for a in self.__actions:
             img = a.run_frame(idx, ref_idx, img)
-        self.sub_message(': write image', end='\r', tqdm=True)
+        self.sub_message(': write image', tqdm=True)
         write_img(self.output_dir + "/" + filename, img)
 
     def end(self):

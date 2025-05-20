@@ -31,7 +31,7 @@ class MyActionList(ActionList):
         self.counts = 10
 
     def run_step(self):
-        self.print_message(colored("action: {} ".format(self.count), "blue"), end='\r', tqdm=True)
+        self.print_message("\033[A" + colored("action: {} ".format(self.count), "blue"), tqdm=True)
         time.sleep(0.1)
 
 

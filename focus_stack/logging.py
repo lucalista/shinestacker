@@ -74,8 +74,8 @@ def set_console_logging_terminator(terminator, name=None):
 
 
 def console_logging_overwrite(name=None):
-    set_console_logging_terminator('\r')
+    set_console_logging_terminator('\r', name)
 
 
 def console_logging_newline(name=None):
-    set_console_logging_terminator('\n')
+    set_console_logging_terminator('\n', name)
