@@ -21,8 +21,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         return cv2.threshold(ch, th, 255, cv2.THRESH_BINARY)[1]
 
     def run_core(self):
-        self.print_message('')
-        self.print_message(colored("map noisy pixels, frames in " + self.folder_list_str(), "blue"))
+        self.print_message(colored("map noisy pixels, frames in " + self.folder_list_str(), "blue"), tqdm=True)
         files = self.folder_filelist()
         in_paths = [self.working_path + "/" + f for f in files]
         mean_img = None
@@ -32,7 +31,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         except Exception:
             bar = tqdm(desc=self.name, total=len(in_paths), ncols=80)
         for path in in_paths:
-            self.print_message(LINE_UP + colored("reading frame: " + path.split("/")[-1], "blue"), tqdm=True)
+            self.print_message(colored("reading frame: " + path.split("/")[-1], "blue"), begin=LINE_UP, tqdm=True)
             img = cv2.imread(path, cv2.IMREAD_COLOR)
             if mean_img is None:
                 mean_img = img.astype(np.float64)
@@ -46,9 +45,11 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         channels = cv2.split(diff)
         hot_px = [self.hot_map(ch, self.channel_thresholds[i]) for i, ch in enumerate(channels)]
         hot_rgb = cv2.bitwise_or(hot_px[0], cv2.bitwise_or(hot_px[1], hot_px[2]))
-        for ch, hot in zip(['r', 'g', 'b', 'rgb'], hot_px + [hot_rgb]):
-            self.print_message("hot pixels, {}: {}".format(ch, np.count_nonzero(hot > 0)))
+        msg = []
+        for ch, hot in zip(['rgb', 'r', 'g', 'b', ], [hot_rgb] + hot_px):
             cv2.imwrite(self.working_path + '/' + self.output_path + "/" + self.file_name + "-" + ch + ".png", hot)
+            msg.append("{}: {}".format(ch, np.count_nonzero(hot > 0)))
+        self.print_message("hot pixels: " + ", ".join(msg))
         th_range = range(5, 30)
         plt.figure(figsize=(10, 5))
         x = np.array(list(th_range))
@@ -83,7 +84,7 @@ class MaskNoise:
         pass
 
     def run_frame(self, idx, ref_idx, image):
-        self.process.sub_message(': mask noisy pixels', tqdm=True)
+        self.process.sub_message(': mask noisy pixels', begin=LINE_UP, tqdm=True)
         if len(image.shape) == 3:
             corrected = image.copy()
             for c in range(3):

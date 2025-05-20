@@ -19,7 +19,7 @@ class FocusStackBase:
         self.stack_algo.messenger(self)
 
     def focus_stack(self, filenames):
-        self.sub_message(': reading input files', tqdm=True)
+        self.sub_message(': reading input files', begin=LINE_UP, tqdm=True)
         img_files = sorted([os.path.join(self.input_dir, name) for name in filenames])
         img_files = [read_img(name) for name in img_files]
         if any([img is None for img in img_files]):
@@ -30,16 +30,16 @@ class FocusStackBase:
         in_filename = filenames[0].split(".")
         out_filename = self.output_dir + "/" + in_filename[0] + self.postfix + '.' + '.'.join(in_filename[1:])
         if self.denoise > 0:
-            self.sub_message(': denoise image', tqdm=True)
+            self.sub_message(': denoise image', begin=LINE_UP, tqdm=True)
             stacked_img = cv2.fastNlMeansDenoisingColored(stacked_img, None, self.denoise, self.denoise, 7, 21)
         write_img(out_filename, stacked_img)
         if self.exif_path != '' and dtype == np.uint8:
-            self.sub_message(': copy exif data', tqdm=True)
+            self.sub_message(': copy exif data', begin=LINE_UP, tqdm=True)
             dirpath, _, fnames = next(os.walk(self.exif_path))
             fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in EXTENSIONS]
             exif_filename = self.exif_path + '/' + fnames[0]
             copy_exif(exif_filename, out_filename)
-            self.sub_message(' ' * 60, tqdm=True)
+            self.sub_message(' ' * 60, begin=LINE_UP, tqdm=True)
 
     def init(self, job, working_path):
         if self.exif_path is None:
@@ -65,7 +65,7 @@ class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
         self.counts = len(self.__chunks)
 
     def run_step(self):
-        self.print_message(colored("fusing bunch: {}".format(self.count), "blue"), tqdm=True)
+        self.print_message(colored("fusing bunch: {}".format(self.count), "blue"), begin=LINE_UP, tqdm=True)
         self.focus_stack(self.__chunks[self.count - 1])
 
     def init(self, job):

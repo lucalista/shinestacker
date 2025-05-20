@@ -18,7 +18,7 @@ class PyramidStack:
         self.messenger = messenger
 
     def print_message(self, msg):
-        self.messenger.sub_message(LINE_UP + colored(msg, "light_blue"), end='\r', tqdm=True)
+        self.messenger.sub_message(colored(msg, "light_blue"), begin=LINE_UP, tqdm=True)
 
     def convolve(self, image):
         return cv2.filter2D(image, -1, self.gen_kernel, borderType=cv2.BORDER_REFLECT101)

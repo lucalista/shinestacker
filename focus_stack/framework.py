@@ -5,6 +5,7 @@ from tqdm import tqdm
 from focus_stack.logging import setup_logging, console_logging_overwrite, console_logging_newline
 import logging
 
+LINE_UP = "\r\033[A"
 trailing_spaces = " " * 30
 
 
@@ -35,22 +36,22 @@ class JobBase:
     def get_logger(self, tqdm=False):
         return logging.getLogger("tqdm" if tqdm else __name__)
 
-    def print_message(self, msg='', level=logging.INFO, end=None, tqdm=False):
+    def set_terminator(self, tqdm=None, end='\n'):
+        if end is not None:
+            logging.getLogger("tqdm" if tqdm else None).handlers[0].terminator = end
+    
+    def print_message(self, msg='', level=logging.INFO, end=None, begin='', tqdm=False):
         self.base_message = colored(self.name, "blue", attrs=["bold"])
         if msg != '':
             self.base_message += (': ' + msg)
-        if end is not None:
-            logging.getLogger("tqdm" if tqdm else None).handlers[0].terminator = end
-        self.get_logger(tqdm).log(level, colored(self.base_message, 'blue', attrs=['bold']) + trailing_spaces)
-        if end is not None:
-            logging.getLogger("tqdm" if tqdm else None).handlers[0].terminator = '\n'
+        self.set_terminator(tqdm, end)
+        self.get_logger(tqdm).log(level, begin + colored(self.base_message, 'blue', attrs=['bold']) + trailing_spaces)
+        self.set_terminator(tqdm)
 
-    def sub_message(self, msg, level=logging.INFO, end='\n', tqdm=False):
-        if end == '\r':
-            console_logging_overwrite()
-        self.get_logger(tqdm).log(level, self.base_message + msg + trailing_spaces)
-        if end == '\r':
-            console_logging_newline()
+    def sub_message(self, msg, level=logging.INFO, end=None, begin='', tqdm=False):
+        self.set_terminator(tqdm, end)
+        self.get_logger(tqdm).log(level, begin + self.base_message + msg + trailing_spaces)
+        self.set_terminator(tqdm)
 
 
 class Job(JobBase):
@@ -98,7 +99,7 @@ class ActionList(JobBase):
             raise StopIteration
 
     def run_core(self):
-        self.print_message('', end='\n')
+        self.print_message('begin run', end='\n')
         self.begin()
         try:
             __IPYTHON__  # noqa

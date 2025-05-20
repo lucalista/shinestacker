@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../')
-from focus_stack.framework import Job, JobBase, ActionList
+from focus_stack.framework import Job, JobBase, ActionList, LINE_UP
 from termcolor import colored
 import time
 
@@ -31,7 +31,7 @@ class MyActionList(ActionList):
         self.counts = 10
 
     def run_step(self):
-        self.print_message("\033[A" + colored("action: {} ".format(self.count), "blue"), tqdm=True)
+        self.print_message(colored("action: {} ".format(self.count), "blue"), begin=LINE_UP, tqdm=True)
         time.sleep(0.1)
 
 

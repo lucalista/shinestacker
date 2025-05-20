@@ -38,7 +38,7 @@ class DepthMapStack:
         self.messenger = messenger
 
     def print_message(self, msg):
-        self.messenger.sub_message(LINE_UP + colored(msg, "light_blue"), end='\r', tqdm=True)
+        self.messenger.sub_message(colored(msg, "light_blue"), begin=LINE_UP, tqdm=True)
 
     def get_laplacian_map(self, images):
         laplacian = np.zeros(images.shape, dtype=np.float32)
