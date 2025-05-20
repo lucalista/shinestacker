@@ -149,10 +149,10 @@ class FramesRefActions(FrameDirectory, ActionList):
             self.__ref_idx = self.ref_idx
             self.__idx_step = +1
         ll = len(self.filenames)
-        self.print_message(
+        self.print_message(LINE_UP + 
             colored("step {}/{}: process file: {}, reference: {}".format(self.count, ll, self.filenames[self.__idx],
                                                                          self.filenames[self.__ref_idx]), "blue"),
-            end='\r', tqdm=True)
+                           tqdm=True)
         self.run_frame(self.__idx, self.__ref_idx)
         if self.__idx < ll:
             if self.step_process:
