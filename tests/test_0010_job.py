@@ -31,10 +31,10 @@ class MyActionList(ActionList):
         self.counts = 10
 
     def run_step(self):
-        self.print_message(colored("action: {} ".format(self.count), "blue"), begin=LINE_UP, tqdm=True)
+        self.print_message(colored("action: {}      ".format(self.count), "blue"), begin=LINE_UP, tqdm=True)
         time.sleep(0.1)
 
-
+        
 def test_run():
     try:
         job = Job("job")
