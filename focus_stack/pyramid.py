@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 from termcolor import colored
 from focus_stack.exceptions import BitDepthError
+from focus_stack.stack_framework import LINE_UP
 
 
 class PyramidStack:
@@ -17,7 +18,7 @@ class PyramidStack:
         self.messenger = messenger
 
     def print_message(self, msg):
-        self.messenger.sub_message(colored(msg, "light_blue"), end='\r', tqdm=True)
+        self.messenger.sub_message(LINE_UP + colored(msg, "light_blue"), end='\r', tqdm=True)
 
     def convolve(self, image):
         return cv2.filter2D(image, -1, self.gen_kernel, borderType=cv2.BORDER_REFLECT101)

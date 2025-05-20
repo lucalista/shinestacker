@@ -104,7 +104,7 @@ class ActionList(JobBase):
             __IPYTHON__  # noqa
             bar = tqdm_notebook(desc=self.name, total=self.counts)
         except Exception:
-            bar = tqdm(desc=self.name, total=self.counts)
+            bar = tqdm(desc=self.name, total=self.counts, ncols=80)
         for x in iter(self):
             bar.update(1)
         bar.close()

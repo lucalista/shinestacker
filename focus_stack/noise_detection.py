@@ -30,7 +30,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
             __IPYTHON__  # noqa
             bar = tqdm_notebook(desc=self.name, total=len(in_paths))
         except Exception:
-            bar = tqdm(desc=self.name, total=len(in_paths))
+            bar = tqdm(desc=self.name, total=len(in_paths), ncols=80)
         for path in in_paths:
             self.print_message(LINE_UP + colored("reading frame: " + path.split("/")[-1], "blue"), tqdm=True)
             img = cv2.imread(path, cv2.IMREAD_COLOR)
