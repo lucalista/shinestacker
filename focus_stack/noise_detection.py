@@ -1,4 +1,4 @@
-from focus_stack.stack_framework import FrameMultiDirectory, JobBase, LINE_UP
+from focus_stack.stack_framework import FrameMultiDirectory, JobBase
 from focus_stack.utils import save_plot
 from termcolor import colored
 import cv2
@@ -21,7 +21,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         return cv2.threshold(ch, th, 255, cv2.THRESH_BINARY)[1]
 
     def run_core(self):
-        self.print_message(colored("map noisy pixels, frames in " + self.folder_list_str(), "blue"), tqdm=True)
+        self.print_message(colored("map noisy pixels, frames in " + self.folder_list_str(), "blue"))
         files = self.folder_filelist()
         in_paths = [self.working_path + "/" + f for f in files]
         mean_img = None
@@ -31,7 +31,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         except Exception:
             bar = tqdm(desc=self.name, total=len(in_paths), ncols=80)
         for path in in_paths:
-            self.print_message(colored("reading frame: " + path.split("/")[-1], "blue"), begin=LINE_UP, tqdm=True)
+            self.print_message_r(colored("reading frame: " + path.split("/")[-1], "blue"))
             img = cv2.imread(path, cv2.IMREAD_COLOR)
             if mean_img is None:
                 mean_img = img.astype(np.float64)
@@ -84,7 +84,7 @@ class MaskNoise:
         pass
 
     def run_frame(self, idx, ref_idx, image):
-        self.process.sub_message(': mask noisy pixels', begin=LINE_UP, tqdm=True)
+        self.process.sub_message_r(': mask noisy pixels')
         if len(image.shape) == 3:
             corrected = image.copy()
             for c in range(3):

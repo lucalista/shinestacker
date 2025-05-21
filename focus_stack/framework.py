@@ -2,7 +2,7 @@ import time
 from termcolor import colored
 from tqdm.notebook import tqdm_notebook
 from tqdm import tqdm
-from focus_stack.logging import setup_logging, console_logging_overwrite, console_logging_newline
+from focus_stack.logging import setup_logging
 import logging
 
 LINE_UP = "\r\033[A"
@@ -22,6 +22,11 @@ class JobBase:
     def __init__(self, name):
         self.name = name
         self.base_message = ''
+        try:
+            __IPYTHON__ # noqa
+            self.begin_r, self.end_r = "", "\r",
+        except Exception:
+            self.begin_r, self.end_r = LINE_UP, None
 
     def run(self):
         self.__t0 = time.time()
@@ -39,7 +44,7 @@ class JobBase:
     def set_terminator(self, tqdm=None, end='\n'):
         if end is not None:
             logging.getLogger("tqdm" if tqdm else None).handlers[0].terminator = end
-    
+
     def print_message(self, msg='', level=logging.INFO, end=None, begin='', tqdm=False):
         self.base_message = colored(self.name, "blue", attrs=["bold"])
         if msg != '':
@@ -52,6 +57,12 @@ class JobBase:
         self.set_terminator(tqdm, end)
         self.get_logger(tqdm).log(level, begin + self.base_message + msg + trailing_spaces)
         self.set_terminator(tqdm)
+
+    def print_message_r(self, msg='', level=logging.INFO):
+        self.print_message(msg, level, self.end_r, self.begin_r, False)
+
+    def sub_message_r(self, msg='', level=logging.INFO):
+        self.sub_message(msg, level, self.end_r, self.begin_r, False)
 
 
 class Job(JobBase):

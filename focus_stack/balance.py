@@ -5,7 +5,7 @@ from scipy.optimize import bisect
 from scipy.interpolate import interp1d
 from focus_stack.utils import read_img, save_plot
 from focus_stack.exceptions import InvalidOptionError
-from focus_stack.framework import LINE_UP
+
 
 class CorrectionMapBase:
     def __init__(self, dtype, ref_hist, i_min=0, i_max=-1):
@@ -334,6 +334,6 @@ class BalanceFrames:
 
     def run_frame(self, idx, ref_idx, image):
         if idx != self.process.ref_idx:
-            self.process.sub_message(': balance image', begin=LINE_UP, tqdm=True)
+            self.process.sub_message_r(': balance image')
             image = self.correction.apply_correction(idx, image)
         return image

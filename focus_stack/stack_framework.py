@@ -1,4 +1,4 @@
-from .framework import Job, ActionList, JobBase, LINE_UP
+from .framework import Job, ActionList, JobBase
 from .utils import check_path_exists
 from focus_stack.utils import read_img, write_img
 from focus_stack.exceptions import ShapeError, BitDepthError
@@ -36,6 +36,7 @@ class FramePaths(JobBase):
     def set_filelist(self):
         self.filenames = self.folder_filelist(self.input_dir)
         self.print_message(colored(": {} files ".format(len(self.filenames)) + "in folder: " + self.input_dir, 'blue'))
+        self.print_message(colored("focus stacking", 'blue'))
 
     def init(self, job):
         if self.working_path is None:
@@ -149,10 +150,9 @@ class FramesRefActions(FrameDirectory, ActionList):
             self.__ref_idx = self.ref_idx
             self.__idx_step = +1
         ll = len(self.filenames)
-        self.print_message(
+        self.print_message_r(
             colored("step {}/{}: process file: {}, reference: {}".format(self.count, ll, self.filenames[self.__idx],
-                                                                         self.filenames[self.__ref_idx]), "blue"),
-                           begin=LINE_UP, tqdm=True)
+                                                                         self.filenames[self.__ref_idx]), "blue"))
         self.run_frame(self.__idx, self.__ref_idx)
         if self.__idx < ll:
             if self.step_process:
@@ -188,7 +188,7 @@ class Actions(FramesRefActions):
 
     def run_frame(self, idx, ref_idx):
         filename = self.filenames[idx]
-        self.sub_message(': read image', begin=LINE_UP, tqdm=True)
+        self.sub_message_r(': read imput image')
         img = read_img(self.input_dir + "/" + filename)
         if hasattr(self, 'dtype') and img.dtype != self.dtype:
             raise BitDepthError()
@@ -198,7 +198,7 @@ class Actions(FramesRefActions):
             raise Exception("Invalid file: " + self.input_dir + "/" + filename)
         for a in self.__actions:
             img = a.run_frame(idx, ref_idx, img)
-        self.sub_message(': write image', begin=LINE_UP, tqdm=True)
+        self.sub_message_r(': write output image')
         write_img(self.output_dir + "/" + filename, img)
 
     def end(self):

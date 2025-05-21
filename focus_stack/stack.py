@@ -4,7 +4,7 @@ import os
 from termcolor import colored
 from .utils import copy_exif
 from focus_stack.utils import read_img, write_img
-from focus_stack.stack_framework import FrameDirectory, JobBase, ActionList, LINE_UP
+from focus_stack.stack_framework import FrameDirectory, JobBase, ActionList
 from focus_stack.exceptions import InvalidOptionError, ImageLoadError
 
 EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
@@ -19,7 +19,7 @@ class FocusStackBase:
         self.stack_algo.messenger(self)
 
     def focus_stack(self, filenames):
-        self.sub_message(': reading input files', begin=LINE_UP, tqdm=True)
+        self.sub_message_r(': reading input files')
         img_files = sorted([os.path.join(self.input_dir, name) for name in filenames])
         img_files = [read_img(name) for name in img_files]
         if any([img is None for img in img_files]):
@@ -30,16 +30,16 @@ class FocusStackBase:
         in_filename = filenames[0].split(".")
         out_filename = self.output_dir + "/" + in_filename[0] + self.postfix + '.' + '.'.join(in_filename[1:])
         if self.denoise > 0:
-            self.sub_message(': denoise image', begin=LINE_UP, tqdm=True)
+            self.sub_message_r(': denoise image')
             stacked_img = cv2.fastNlMeansDenoisingColored(stacked_img, None, self.denoise, self.denoise, 7, 21)
         write_img(out_filename, stacked_img)
         if self.exif_path != '' and dtype == np.uint8:
-            self.sub_message(': copy exif data', begin=LINE_UP, tqdm=True)
+            self.sub_message_r(': copy exif data')
             dirpath, _, fnames = next(os.walk(self.exif_path))
             fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in EXTENSIONS]
             exif_filename = self.exif_path + '/' + fnames[0]
             copy_exif(exif_filename, out_filename)
-            self.sub_message(' ' * 60, begin=LINE_UP, tqdm=True)
+            self.sub_message_r(' ' * 60)
 
     def init(self, job, working_path):
         if self.exif_path is None:
@@ -65,7 +65,7 @@ class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
         self.counts = len(self.__chunks)
 
     def run_step(self):
-        self.print_message(colored("fusing bunch: {}".format(self.count), "blue"), begin=LINE_UP, tqdm=True)
+        self.print_message_r(colored("fusing bunch: {}".format(self.count), "blue"))
         self.focus_stack(self.__chunks[self.count - 1])
 
     def init(self, job):
@@ -81,7 +81,6 @@ class FocusStack(FrameDirectory, JobBase, FocusStackBase):
         FocusStackBase.__init__(self, stack_algo, exif_path, postfix, denoise)
 
     def run_core(self):
-        self.print_message("", tqdm=True)
         self.set_filelist()
         self.focus_stack(self.filenames)
 

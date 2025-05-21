@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../')
-from focus_stack.framework import Job, JobBase, ActionList, LINE_UP
+from focus_stack.framework import Job, JobBase, ActionList
 from termcolor import colored
 import time
 
@@ -31,15 +31,10 @@ class MyActionList(ActionList):
         self.counts = 10
 
     def run_step(self):
-        try:
-            __IPYTHON__
-            begin, end ="", "\r",
-        except Exception:
-            begin, end =LINE_UP, None
-        self.print_message(colored("action: {}".format(self.count), "blue"), begin=begin, end=end, tqdm=True)
+        self.print_message_r(colored("action: {}".format(self.count), "blue"))
         time.sleep(0.1)
 
-        
+
 def test_run():
     try:
         job = Job("job")
