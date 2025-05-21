@@ -31,7 +31,12 @@ class MyActionList(ActionList):
         self.counts = 10
 
     def run_step(self):
-        self.print_message(colored("action: {}      ".format(self.count), "blue"), begin=LINE_UP, tqdm=True)
+        try:
+            __IPYTHON__
+            begin, end ="", "\r",
+        except Exception:
+            begin, end =LINE_UP, None
+        self.print_message(colored("action: {}".format(self.count), "blue"), begin=begin, end=end, tqdm=True)
         time.sleep(0.1)
 
         
