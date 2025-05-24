@@ -4,6 +4,7 @@ from focus_stack.logging import setup_logging, console_logging_overwrite, consol
 import logging
 import time
 from tqdm import tqdm
+from tqdm.notebook import tqdm_notebook
 
 
 def test_log():
@@ -38,8 +39,13 @@ def test_tqdm():
         )
         logger = logging.getLogger("tqdm")
         counts = 50
-        bar = tqdm(desc="progress bar", total=counts, position=0)
-        descr = tqdm(total=counts, position=1, bar_format='{desc}')
+        try:
+            __IPYTHON__  # noqa
+            bar = tqdm_notebook(desc="progress bar", total=counts, position=0)
+            descr = tqdm_notebook(total=counts, position=1, bar_format='{desc}')
+        except Exception:
+            bar = tqdm(desc="progress bar", total=counts, position=0)
+            descr = tqdm(total=counts, position=1, bar_format='{desc}')
         for i in range(counts):
             if i % 5 == 0:
                 logger.log(logging.INFO, f"\033[AStep: {i}")
