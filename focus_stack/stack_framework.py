@@ -3,6 +3,7 @@ from .utils import check_path_exists
 from focus_stack.utils import read_img, write_img
 from focus_stack.exceptions import ShapeError, BitDepthError
 from termcolor import colored
+import logging
 import os
 
 
@@ -199,8 +200,10 @@ class Actions(FramesRefActions):
         for a in self.__actions:
             img = a.run_frame(idx, ref_idx, img)
         self.sub_message_r(': write output image')
-        write_img(self.output_dir + "/" + filename, img)
-
+        if img is not None:
+            write_img(self.output_dir + "/" + filename, img)
+        else:
+            self.print_message("No output file resulted from processing input file: " + self.input_dir + "/" + filename, level=logging.WARNING)
     def end(self):
         for a in self.__actions:
             a.end()
