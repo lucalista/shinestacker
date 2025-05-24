@@ -131,7 +131,7 @@ Arguments for the constructor of ```BalanceFrames``` are:
 job.add_action(Actions("vignette", actions=[Vignetting(*options)])
 ```
 
-Applies a radial luminosity correction determined from the mean pixel luminosity, spotting vignetting effect at the image borders. The correction has the following model:
+Applies a radial luminosity correction determined from the mean pixel luminosity, spotting vignetting effect at the image borders. The correction has the following asymmetric sigmoid model:
 
 $\displaystyle i(r) = \frac{i_0}{1 + \exp(\exp(k(r - r_0)))}\,$
 
