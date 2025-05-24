@@ -137,7 +137,7 @@ class Correction:
         else:
             height, width = image.shape[:2]
             xv, yv = np.meshgrid(np.linspace(0, width - 1, width), np.linspace(0, height - 1, height))
-            image_sel = image[(xv - width // 2) ** 2 + (yv - height // 2) ** 2 <= (min(width, height) * self.mask_size / 2) ** 2]
+            image_sel = image[(xv - width / 2) ** 2 + (yv - height / 2) ** 2 <= (min(width, height) * self.mask_size / 2) ** 2]
         hist, bins = np.histogram((image_sel if self.img_scale == 1
                                    else image_sel[::self.img_scale][::self.img_scale]),
                                   bins=np.linspace(-0.5, self.two_n - 0.5, self.two_n + 1))

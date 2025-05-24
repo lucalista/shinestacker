@@ -204,6 +204,7 @@ class Actions(FramesRefActions):
             write_img(self.output_dir + "/" + filename, img)
         else:
             self.print_message("No output file resulted from processing input file: " + self.input_dir + "/" + filename, level=logging.WARNING)
+
     def end(self):
         for a in self.__actions:
             a.end()
