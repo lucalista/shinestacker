@@ -12,8 +12,7 @@ job.add_action(NoiseDetection())
 job.run()
 
 job = StackJob("job", "E:/Focus stacking/My image directory/", input_path="src")
-job.add_action(Actions("align", actions=[MaskNoise(),
-                                         AlignFrames(),
+job.add_action(Actions("align", actions=[MaskNoise(), Vignetting(), AlignFrames(),
                                          BalanceFrames(mask_size=0.9, i_min=150, i_max=65385)]))
 job.add_action(FocusStackBunch("batches", PyramidStack(), frames=10, overlap=2, denoise=0.8))
 job.add_action(FocusStack("stack", PyramidStack(), postfix='_py', denoise=0.8))
@@ -125,6 +124,24 @@ Arguments for the constructor of ```BalanceFrames``` are:
 * ```img_scale``` (optional, default: 8): gets luminosity histogram using every n-th pixel in each dimension. By default, it takes one every 10 pixels in horizontal and vertical directions, i.e.: one every 100 pixels in total.  
 * ```corr_map``` (optional, default: ```LINEAR```, possible values: ```LINEAR```, ```GAMMA``` and ```MATCH_HIST```): applies either a linear mapping or a gamma correction or matches histograms of reference and source images. The gamma correction avoids saturation of high luminosity pixels, but may introduce more distortion than a linear mapping. If ```MATCH_HIST``` is specified as value for ```corr_map```, options ```i_min``` and ```i_max``` are not used. Note that ```MATCH_HIST``` should be used with ```RGBCorrection```, and it is safer to set ```img_scale=1```.
 * ```plot_histograms```  (optional, default: ```False```): if ```True```, for each image and for the reference image histograms with pixel content are plotted. May be useful for inspection and debugging.
+  
+### Vignetting correction
+
+```python
+job.add_action(Actions("vignette", actions=[Vignetting(*options)])
+```
+
+Applies a radial luminosity correction determined from the mean pixel luminosity, spotting vignetting effect at the image borders. The correction has the following model:
+
+$i(r) = \frac{i_0}{1 + \exp(\exp(k(r - r_0)))}\,$
+
+where the parameters $i_0$, $k$ and $r_0$ are estimated from the image luminosity data.
+               
+Arguments for the constructor of ```Vignetting``` are:
+*```r_steps``` (optional, default: 100): number of radial steps to determine mean pixel luminosity.
+*```black_threshold``` (optional, default: 1): apply correction only on pixels with luminosity greater than.
+*```apply_correction``` (optional, default: ```True```): if ```False```, the correction is computed but not applied to the image. It may be useful in order to determine a value of the parameter ```mask_size``` for the action ```BalanceFrames``` by looking at the output curve plot.
+
 
 ### Focus Stacking
 
