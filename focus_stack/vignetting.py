@@ -31,33 +31,26 @@ class Vignetting:
         return (radii[1:] + radii[:-1]) / 2, mean_intensities
 
     def sigmoid(r, i0, k, r0):
-        return i0 / (1 + np.exp(k * (r - r0)))
+        return i0 / (1 + np.exp(np.exp(np.clip(k * (r - r0), -6, 6))))
 
     def fit_sigmoid(self, radii, intensities):
         valid_mask = ~np.isnan(intensities)
-        r_valid = radii[valid_mask]
-        i_valid = intensities[valid_mask]
-        return curve_fit(Vignetting.sigmoid, r_valid, i_valid, p0=[np.max(i_valid), 0.01, np.median(r_valid)])[0]
+        i_valid, r_valid = intensities[valid_mask], radii[valid_mask]
+        return curve_fit(Vignetting.sigmoid, r_valid, i_valid,
+                         p0=[np.max(i_valid), 0.01, np.median(r_valid)])[0]
 
     def correct_vignetting(self, image, params):
         h, w = image.shape[:2]
         y, x = np.ogrid[:h, :w]
         r = np.sqrt((x - w / 2)**2 + (y - h / 2)**2)
-        vignette = Vignetting.sigmoid(r, *params) / params[0]
-        vignette = np.clip(vignette, 1e-6, 1)
+        vignette = np.clip(Vignetting.sigmoid(r, *params) / Vignetting.sigmoid(0, *params), 1e-6, 1)
         if len(image.shape) == 3:
-            black_mask = np.min(image, axis=2) < self.black_threshold
             vignette = vignette[:, :, np.newaxis]
-            vignette[black_mask, :] = 1
+            vignette[np.min(image, axis=2) < self.black_threshold, :] = 1
         else:
-            black_mask = image < self.black_threshold
-            vignette[black_mask] = 1
-        corrected_image = image / vignette
-        if image.dtype == np.uint8:
-            return np.clip(corrected_image, 0, 255).astype(np.uint8)
-        elif image.dtype == np.uint16:
-            return np.clip(corrected_image, 0, 65535).astype(np.uint16)
-        return corrected_image
+            vignette[image < self.black_threshold] = 1
+        print((vignette*255).astype(image.dtype).max(), (vignette*255).astype(image.dtype).min())
+        return np.clip(image / vignette, 0, 255 if image.dtype == np.uint8 else 65535).astype(image.dtype)
 
     def run_frame(self, idx, ref_idx, img_0):
         img = cv2.cvtColor(img_8bit(img_0), cv2.COLOR_BGR2GRAY)
