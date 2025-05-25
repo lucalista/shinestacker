@@ -3,18 +3,19 @@ import cv2
 import numpy as np
 from focus_stack.utils import img_8bit, save_plot
 from scipy.optimize import curve_fit, fsolve
+from termcolor import colored
 import logging
 
 CLIP_EXP=10
 
 class Vignetting:
-    def __init__(self, r_steps=100, black_threshold=1, percentiles=(0.1, 0.25, 0.5, 0.75, 0.9),
+    def __init__(self, r_steps=100, black_threshold=1, percentiles=(0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95),
                  apply_correction=True, plot_histograms=False):
         self.r_steps = r_steps
         self.black_threshold = black_threshold
         self.apply_correction = apply_correction
         self.plot_histograms = plot_histograms
-        self.percentiles = percentiles
+        self.percentiles = np.sort(percentiles)
 
     def radial_mean_intensity(self, image):
         if len(image.shape) > 2:
@@ -40,8 +41,13 @@ class Vignetting:
     def fit_sigmoid(self, radii, intensities):
         valid_mask = ~np.isnan(intensities)
         i_valid, r_valid = intensities[valid_mask], radii[valid_mask]
-        return curve_fit(Vignetting.sigmoid, r_valid, i_valid,
-                         p0=[np.max(i_valid), 0.01, np.median(r_valid)])[0]
+        try:
+            res =  curve_fit(Vignetting.sigmoid, r_valid, i_valid,
+                             p0=[np.max(i_valid), 0.01, np.median(r_valid)])[0]
+        except Exception:
+            self.process.sub_message(colored(": could not find vignetting model", "red"), level=logging.ERROR)
+            res = None
+        return res
 
     def correct_vignetting(self, image, params):
         h, w = image.shape[:2]
@@ -56,10 +62,12 @@ class Vignetting:
         return np.clip(image / vignette, 0, 255 if image.dtype == np.uint8 else 65535).astype(image.dtype)
 
     def run_frame(self, idx, ref_idx, img_0):
-        self.process.sub_message_r(": remove vignetting")
+        self.process.sub_message_r(colored(": compute vignetting", "light_blue"))
         img = cv2.cvtColor(img_8bit(img_0), cv2.COLOR_BGR2GRAY)
         radii, intensities = self.radial_mean_intensity(img)
         pars = self.fit_sigmoid(radii, intensities)
+        if pars is None:
+            return img_0
         self.v0 = Vignetting.sigmoid(0, *pars)
         i0_fit, k_fit, r0_fit = pars
         self.process.sub_message(f": fit parameters: i0={i0_fit:.4f}, k={k_fit:.4f}, r0={r0_fit:.4f}",
@@ -76,11 +84,15 @@ class Vignetting:
                   show=self.plot_histograms)
         for i, p in enumerate(self.percentiles):
             self.corrections[i][idx] = fsolve(lambda x: Vignetting.sigmoid(x, *pars)/self.v0 - p, r0_fit)[0]
-        return self.correct_vignetting(img_0, pars) if self.apply_correction else img_0
+        if self.apply_correction:
+            self.process.sub_message_r(colored(": correct vignetting", "light_blue"))
+            return self.correct_vignetting(img_0, pars)
+        else:
+            return img_0
 
     def begin(self, process):
         self.process = process
-        self.corrections = [np.ones(self.process.counts) for p in self.percentiles]
+        self.corrections = [np.full(self.process.counts, None, dtype=float) for p in self.percentiles]
 
     def end(self):
         plt.figure(figsize=(10, 5))
@@ -93,6 +105,12 @@ class Vignetting:
                 linestyle = 'dotted'
             plt.plot(xs, self.corrections[i], label=f"{p:.0%} correction",
                      linestyle=linestyle, color="blue")
+        plt.fill_between(xs, self.corrections[-1], self.corrections[0], color="#0000ff10")
+        iis = np.where(self.percentiles == 0.5)
+        if len(iis) > 0:
+            i = iis[0][0]
+            if i >= 1 and i < len(self.percentiles) - 1:
+                plt.fill_between(xs, self.corrections[i - 1], self.corrections[i + 1], color="#0000ff20")
         plt.plot(xs[[0, -1]], [self.r_max]*2, linestyle="--", label="max. radius", color="darkred")
         plt.plot(xs[[0, -1]], [self.w_2]*2, linestyle="--", label="half width", color="limegreen")
         plt.plot(xs[[0, -1]], [self.h_2]*2, linestyle="--", label="half height", color="darkgreen")
