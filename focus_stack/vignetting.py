@@ -118,7 +118,7 @@ class Vignetting:
         plt.plot(xs[[0, -1]], [self.w_2]*2, linestyle="--", label="half width", color="limegreen")
         plt.plot(xs[[0, -1]], [self.h_2]*2, linestyle="--", label="half height", color="darkgreen")
         plt.xlabel('frame')
-        plt.ylabel('$r_0$ (pixels)')
+        plt.ylabel('distance from center (pixels)')
         plt.legend(ncols=2)
         plt.xlim(xs[0], xs[-1])
         plt.ylim(0, self.r_max*1.05)
