@@ -59,16 +59,16 @@ class Vignetting:
         i0_fit, k_fit, r0_fit = self.fit_sigmoid(radii, intensities)
         self.process.sub_message(f": fit parameters: i0={i0_fit:.2f}, k={k_fit:.4f}, r0={r0_fit:.2f}",
                                  level=logging.DEBUG)
-        if self.plot_histograms:
-            plt.figure(figsize=(10, 5))
-            plt.plot(radii, intensities, label="image mean intensity")
-            plt.plot(radii, Vignetting.sigmoid(radii, i0_fit, k_fit, r0_fit), label="sigmoid fit")
-            plt.xlabel('radius (pixels)')
-            plt.ylabel('mean intensity')
-            plt.legend()
-            plt.xlim(radii[0], radii[-1])
-            plt.ylim(0)
-            save_plot(self.process.plot_path + "/" + self.process.name + "-radial-intensity-{:04d}.pdf".format(idx))
+        plt.figure(figsize=(10, 5))
+        plt.plot(radii, intensities, label="image mean intensity")
+        plt.plot(radii, Vignetting.sigmoid(radii, i0_fit, k_fit, r0_fit), label="sigmoid fit")
+        plt.xlabel('radius (pixels)')
+        plt.ylabel('mean intensity')
+        plt.legend()
+        plt.xlim(radii[0], radii[-1])
+        plt.ylim(0)
+        save_plot(self.process.plot_path + "/" + self.process.name + "-radial-intensity-{:04d}.pdf".format(idx),
+                  show=self.plot_histograms)
         self.r0s.append(r0_fit)
         return self.correct_vignetting(img_0, (i0_fit, k_fit, r0_fit)) if self.apply_correction else img_0
 
