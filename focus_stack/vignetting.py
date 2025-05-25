@@ -105,7 +105,7 @@ class Vignetting:
                 linestyle = 'dotted'
             plt.plot(xs, self.corrections[i], label=f"{p:.0%} correction",
                      linestyle=linestyle, color="blue")
-        plt.fill_between(xs, self.corrections[-1], self.corrections[0], color="#0000ff10")
+        plt.fill_between(xs, self.corrections[-1], self.corrections[0], color="#0000ff20")
         iis = np.where(self.percentiles == 0.5)
         if len(iis) > 0:
             i = iis[0][0]
