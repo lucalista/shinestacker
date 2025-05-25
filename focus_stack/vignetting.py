@@ -9,13 +9,14 @@ import logging
 CLIP_EXP=10
 
 class Vignetting:
-    def __init__(self, r_steps=100, black_threshold=1, percentiles=(0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95),
+    def __init__(self, r_steps=100, black_threshold=1, percentiles=(0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95), max_correction=1,
                  apply_correction=True, plot_histograms=False):
         self.r_steps = r_steps
         self.black_threshold = black_threshold
         self.apply_correction = apply_correction
         self.plot_histograms = plot_histograms
         self.percentiles = np.sort(percentiles)
+        self.max_correction = max_correction
 
     def radial_mean_intensity(self, image):
         if len(image.shape) > 2:
@@ -54,6 +55,8 @@ class Vignetting:
         y, x = np.ogrid[:h, :w]
         r = np.sqrt((x - w / 2)**2 + (y - h / 2)**2)
         vignette = np.clip(Vignetting.sigmoid(r, *params) / self.v0, 1e-6, 1)
+        if self.max_correction < 1:
+            vignette = (1.0 - self.max_correction) + vignette * self.max_correction
         if len(image.shape) == 3:
             vignette = vignette[:, :, np.newaxis]
             vignette[np.min(image, axis=2) < self.black_threshold, :] = 1

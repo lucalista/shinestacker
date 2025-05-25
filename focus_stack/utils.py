@@ -228,4 +228,5 @@ def save_plot(filename, show=True):
             __IPYTHON__  # noqa
             plt.show()
         except Exception:
-            plt.close()
+            pass
+    plt.close()

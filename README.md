@@ -140,6 +140,7 @@ where the parameters $i_0$, $k$ and $r_0$ are estimated from the image luminosit
 Arguments for the constructor of ```Vignetting``` are:
 * ```r_steps``` (optional, default: 100): number of radial steps to determine mean pixel luminosity.
 * ```black_threshold``` (optional, default: 1): apply correction only on pixels with luminosity greater than.
+* ```max_correction``` (optional, default: 1): if less than one, the correction is rescaled in order to be at most the specified valye.
 * ```apply_correction``` (optional, default: ```True```): if ```False```, the correction is computed but not applied to the image. It may be useful in order to determine a value of the parameter ```mask_size``` for the action ```BalanceFrames``` by looking at the output curve plot.
 
 
