@@ -53,7 +53,6 @@ class Vignetting:
             vignette[np.min(image, axis=2) < self.black_threshold, :] = 1
         else:
             vignette[image < self.black_threshold] = 1
-        print((vignette*255).astype(image.dtype).max(), (vignette*255).astype(image.dtype).min())
         return np.clip(image / vignette, 0, 255 if image.dtype == np.uint8 else 65535).astype(image.dtype)
 
     def run_frame(self, idx, ref_idx, img_0):
