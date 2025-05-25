@@ -5,6 +5,7 @@ from focus_stack.utils import img_8bit, save_plot
 from scipy.optimize import curve_fit, fsolve
 import logging
 
+CLIP_EXP=10
 
 class Vignetting:
     def __init__(self, r_steps=100, black_threshold=1, percentiles=(0.1, 0.25, 0.5, 0.75, 0.9),
@@ -34,7 +35,7 @@ class Vignetting:
         return (radii[1:] + radii[:-1]) / 2, mean_intensities
 
     def sigmoid(r, i0, k, r0):
-        return i0 / (1 + np.exp(np.exp(np.clip(k * (np.float64(r) - r0), -6, 6))))
+        return i0 / (1 + np.exp(np.minimum(CLIP_EXP, np.exp(np.clip(k * (np.float64(r) - r0), -CLIP_EXP, CLIP_EXP)))))
 
     def fit_sigmoid(self, radii, intensities):
         valid_mask = ~np.isnan(intensities)
@@ -56,6 +57,7 @@ class Vignetting:
         return np.clip(image / vignette, 0, 255 if image.dtype == np.uint8 else 65535).astype(image.dtype)
 
     def run_frame(self, idx, ref_idx, img_0):
+        self.process.sub_message_r(": remove vignetting")
         img = cv2.cvtColor(img_8bit(img_0), cv2.COLOR_BGR2GRAY)
         radii, intensities = self.radial_mean_intensity(img)
         pars = self.fit_sigmoid(radii, intensities)
