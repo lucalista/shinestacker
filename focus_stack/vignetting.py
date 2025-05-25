@@ -2,27 +2,29 @@ import matplotlib.pyplot as plt
 import cv2
 import numpy as np
 from focus_stack.utils import img_8bit, save_plot
-from scipy.optimize import curve_fit
+from scipy.optimize import curve_fit, fsolve
 import logging
 
 
 class Vignetting:
-    def __init__(self, r_steps=100, black_threshold=1, apply_correction=True, plot_histograms=False):
+    def __init__(self, r_steps=100, black_threshold=1, percentiles=(0.1, 0.25, 0.5, 0.75, 0.9),
+                 apply_correction=True, plot_histograms=False):
         self.r_steps = r_steps
         self.black_threshold = black_threshold
         self.apply_correction = apply_correction
         self.plot_histograms = plot_histograms
+        self.percentiles = percentiles
 
     def radial_mean_intensity(self, image):
         if len(image.shape) > 2:
             raise ValueError("The image must be grayscale")
         h, w = image.shape
-        center = (w / 2, h / 2)
+        self.w_2, self.h_2 = w / 2, h / 2
         self.r_max = np.sqrt((w / 2)**2 + (h / 2)**2)
         radii = np.linspace(0, self.r_max, self.r_steps + 1)
         mean_intensities = np.zeros(self.r_steps)
         y, x = np.ogrid[:h, :w]
-        dist_from_center = np.sqrt((x - center[0])**2 + (y - center[1])**2)
+        dist_from_center = np.sqrt((x - self.w_2)**2 + (y - self.h_2)**2)
         for i in range(self.r_steps):
             mask = (dist_from_center >= radii[i]) & (dist_from_center < radii[i + 1])
             if np.any(mask):
@@ -44,7 +46,7 @@ class Vignetting:
         h, w = image.shape[:2]
         y, x = np.ogrid[:h, :w]
         r = np.sqrt((x - w / 2)**2 + (y - h / 2)**2)
-        vignette = np.clip(Vignetting.sigmoid(r, *params) / Vignetting.sigmoid(0, *params), 1e-6, 1)
+        vignette = np.clip(Vignetting.sigmoid(r, *params) / self.v0, 1e-6, 1)
         if len(image.shape) == 3:
             vignette = vignette[:, :, np.newaxis]
             vignette[np.min(image, axis=2) < self.black_threshold, :] = 1
@@ -56,12 +58,14 @@ class Vignetting:
     def run_frame(self, idx, ref_idx, img_0):
         img = cv2.cvtColor(img_8bit(img_0), cv2.COLOR_BGR2GRAY)
         radii, intensities = self.radial_mean_intensity(img)
-        i0_fit, k_fit, r0_fit = self.fit_sigmoid(radii, intensities)
-        self.process.sub_message(f": fit parameters: i0={i0_fit:.2f}, k={k_fit:.4f}, r0={r0_fit:.2f}",
+        pars = self.fit_sigmoid(radii, intensities)
+        self.v0 = Vignetting.sigmoid(0, *pars)
+        i0_fit, k_fit, r0_fit = pars
+        self.process.sub_message(f": fit parameters: i0={i0_fit:.4f}, k={k_fit:.4f}, r0={r0_fit:.4f}",
                                  level=logging.DEBUG)
         plt.figure(figsize=(10, 5))
         plt.plot(radii, intensities, label="image mean intensity")
-        plt.plot(radii, Vignetting.sigmoid(radii, i0_fit, k_fit, r0_fit), label="sigmoid fit")
+        plt.plot(radii, Vignetting.sigmoid(radii, *pars), label="sigmoid fit")
         plt.xlabel('radius (pixels)')
         plt.ylabel('mean intensity')
         plt.legend()
@@ -69,20 +73,32 @@ class Vignetting:
         plt.ylim(0)
         save_plot(self.process.plot_path + "/" + self.process.name + "-radial-intensity-{:04d}.pdf".format(idx),
                   show=self.plot_histograms)
-        self.r0s.append(r0_fit)
-        return self.correct_vignetting(img_0, (i0_fit, k_fit, r0_fit)) if self.apply_correction else img_0
+        for i, p in enumerate(self.percentiles):
+            r_mid = fsolve(lambda x: Vignetting.sigmoid(x, *pars)/self.v0 - p, r0_fit)[0]
+            self.corrections[i].append(r_mid)
+        return self.correct_vignetting(img_0, pars) if self.apply_correction else img_0
 
     def begin(self, process):
         self.process = process
-        self.r0s = []
+        self.corrections = [[] for p in self.percentiles]
 
     def end(self):
         plt.figure(figsize=(10, 5))
-        xs = np.arange(1, len(self.r0s) + 1, dtype=int)
-        plt.plot(xs, self.r0s, label="sigmoid $r_0$ parameter")
+        xs = np.arange(1, len(self.corrections[0]) + 1, dtype=int)
+        for i, p in enumerate(self.percentiles):
+            linestyle = 'solid'
+            if p == 0.5:
+                linestyle = '-.'
+            elif i == 0 or i == len(self.percentiles) - 1:
+                linestyle = 'dotted'
+            plt.plot(xs, self.corrections[i], label=f"{p:.0%} correction",
+                     linestyle=linestyle, color="blue")
+        plt.plot(xs[[0, -1]], [self.r_max]*2, linestyle="--", label="max. radius", color="darkred")
+        plt.plot(xs[[0, -1]], [self.w_2]*2, linestyle="--", label="half width", color="limegreen")
+        plt.plot(xs[[0, -1]], [self.h_2]*2, linestyle="--", label="half height", color="darkgreen")
         plt.xlabel('frame')
         plt.ylabel('$r_0$ (pixels)')
-        plt.legend()
+        plt.legend(ncols=2)
         plt.xlim(xs[0], xs[-1])
-        plt.ylim(0, self.r_max)
+        plt.ylim(0, self.r_max*1.05)
         save_plot(self.process.plot_path + "/" + self.process.name + "-r0.pdf")
