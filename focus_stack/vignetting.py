@@ -76,13 +76,12 @@ class Vignetting:
         save_plot(self.process.plot_path + "/" + self.process.name + "-radial-intensity-{:04d}.pdf".format(idx),
                   show=self.plot_histograms)
         for i, p in enumerate(self.percentiles):
-            r_mid = fsolve(lambda x: Vignetting.sigmoid(x, *pars)/self.v0 - p, r0_fit)[0]
-            self.corrections[i].append(r_mid)
+            self.corrections[i][idx] = fsolve(lambda x: Vignetting.sigmoid(x, *pars)/self.v0 - p, r0_fit)[0]
         return self.correct_vignetting(img_0, pars) if self.apply_correction else img_0
 
     def begin(self, process):
         self.process = process
-        self.corrections = [[] for p in self.percentiles]
+        self.corrections = [np.ones(self.process.counts) for p in self.percentiles]
 
     def end(self):
         plt.figure(figsize=(10, 5))
