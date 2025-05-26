@@ -3,15 +3,9 @@ __pycache__/*
 *.pyc
 .ipynb_checkpoints/*
 */.ipynb_checkpoints/*
-tests/img-*-align/*
-tests/img-*-balance-*/*
-tests/img-*-stack/*
-tests/img-*-multilayer/*
-tests/img-*-bunches/*
-tests/img-exif/*
-tests/img-noise-corr/*
-tests/noise-map/*
+tests/output/*
 tests/plots/*
+tests/noise-map/*
 sandbox/img-test/*
 */logs/*
 .DS_Store
