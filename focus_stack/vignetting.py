@@ -6,7 +6,8 @@ from scipy.optimize import curve_fit, fsolve
 from termcolor import colored
 import logging
 
-CLIP_EXP=10
+CLIP_EXP = 10
+
 
 class Vignetting:
     def __init__(self, r_steps=100, black_threshold=1, percentiles=(0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95), max_correction=1,
@@ -43,8 +44,8 @@ class Vignetting:
         valid_mask = ~np.isnan(intensities)
         i_valid, r_valid = intensities[valid_mask], radii[valid_mask]
         try:
-            res =  curve_fit(Vignetting.sigmoid, r_valid, i_valid,
-                             p0=[np.max(i_valid), 0.01, np.median(r_valid)])[0]
+            res = curve_fit(Vignetting.sigmoid, r_valid, i_valid,
+                            p0=[np.max(i_valid), 0.01, np.median(r_valid)])[0]
         except Exception:
             self.process.sub_message(colored(": could not find vignetting model", "red"), level=logging.ERROR)
             res = None
@@ -86,7 +87,7 @@ class Vignetting:
         save_plot(self.process.plot_path + "/" + self.process.name + "-radial-intensity-{:04d}.pdf".format(idx),
                   show=self.plot_histograms)
         for i, p in enumerate(self.percentiles):
-            self.corrections[i][idx] = fsolve(lambda x: Vignetting.sigmoid(x, *pars)/self.v0 - p, r0_fit)[0]
+            self.corrections[i][idx] = fsolve(lambda x: Vignetting.sigmoid(x, *pars) / self.v0 - p, r0_fit)[0]
         if self.apply_correction:
             self.process.sub_message_r(colored(": correct vignetting", "light_blue"))
             return self.correct_vignetting(img_0, pars)
@@ -114,12 +115,12 @@ class Vignetting:
             i = iis[0][0]
             if i >= 1 and i < len(self.percentiles) - 1:
                 plt.fill_between(xs, self.corrections[i - 1], self.corrections[i + 1], color="#0000ff20")
-        plt.plot(xs[[0, -1]], [self.r_max]*2, linestyle="--", label="max. radius", color="darkred")
-        plt.plot(xs[[0, -1]], [self.w_2]*2, linestyle="--", label="half width", color="limegreen")
-        plt.plot(xs[[0, -1]], [self.h_2]*2, linestyle="--", label="half height", color="darkgreen")
+        plt.plot(xs[[0, -1]], [self.r_max] * 2, linestyle="--", label="max. radius", color="darkred")
+        plt.plot(xs[[0, -1]], [self.w_2] * 2, linestyle="--", label="half width", color="limegreen")
+        plt.plot(xs[[0, -1]], [self.h_2] * 2, linestyle="--", label="half height", color="darkgreen")
         plt.xlabel('frame')
         plt.ylabel('distance from center (pixels)')
         plt.legend(ncols=2)
         plt.xlim(xs[0], xs[-1])
-        plt.ylim(0, self.r_max*1.05)
+        plt.ylim(0, self.r_max * 1.05)
         save_plot(self.process.plot_path + "/" + self.process.name + "-r0.pdf")

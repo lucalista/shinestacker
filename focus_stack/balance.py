@@ -189,7 +189,7 @@ class LumiCorrection(Correction):
             self.histo_plot(axs[1], hist_col, "r,g,b luminosity", color, alpha=0.5)
         plt.xlim(0, self.two_n)
         save_plot(self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx),
-             show=self.plot_histograms)
+                  show=self.plot_histograms)
         return [hist]
 
     def end(self, ref_idx):
@@ -256,7 +256,7 @@ class Ch2Correction(Correction):
             self.histo_plot(axs[c], hist[c], self.labels[c], self.colors[c])
         plt.xlim(0, self.two_n)
         save_plot(self.process.plot_path + "/" + self.process.name + "_hist_{:04d}.pdf".format(idx),
-                 show=self.plot_histograms)
+                  show=self.plot_histograms)
         return hist[1:]
 
     def end(self, ref_idx):
