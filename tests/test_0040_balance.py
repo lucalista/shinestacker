@@ -5,8 +5,8 @@ from focus_stack import StackJob, Actions, BalanceFrames, RGB, MATCH_HIST, LUMI,
 
 def test_tif_rgb_match():
     try:
-        job = StackJob("job", "./", input_path="img-tif")
-        job.add_action(Actions("img-tif-balance-rgb-match",
+        job = StackJob("job", "./", input_path="input/img-tif")
+        job.add_action(Actions("balance", output_path="output/img-tif-balance-rgb-match",
                                actions=[BalanceFrames(channel=RGB,
                                                       corr_map=MATCH_HIST, plot_histograms=True)]))
         job.run()
@@ -16,8 +16,8 @@ def test_tif_rgb_match():
 
 def test_jpg_lumi():
     try:
-        job = StackJob("job", "./", input_path="img-jpg")
-        job.add_action(Actions("img-jpg-balance-lumi",
+        job = StackJob("job", "./", input_path="input/img-jpg")
+        job.add_action(Actions("balance", output_path="output/img-jpg-balance-lumi",
                                actions=[BalanceFrames(channel=LUMI,
                                                       corr_map=LINEAR, plot_histograms=True)]))
         job.run()
@@ -27,8 +27,8 @@ def test_jpg_lumi():
 
 def test_tif_lumi():
     try:
-        job = StackJob("job", "./", input_path="img-tif")
-        job.add_action(Actions("img-tif-balance-lumi",
+        job = StackJob("job", "./", input_path="input/img-tif")
+        job.add_action(Actions("balance", output_path="output/img-tif-balance-lumi",
                                actions=[BalanceFrames(channel=LUMI,
                                                       corr_map=GAMMA, plot_histograms=True)]))
         job.run()
@@ -38,8 +38,8 @@ def test_tif_lumi():
 
 def test_jpg_rgb():
     try:
-        job = StackJob("job", "./", input_path="img-jpg")
-        job.add_action(Actions("img-jpg-balance-rgb",
+        job = StackJob("job", "./", input_path="input/img-jpg")
+        job.add_action(Actions("balance", output_path="output/img-jpg-balance-rgb",
                                actions=[BalanceFrames(channel=RGB,
                                                       corr_map=LINEAR, plot_histograms=True)]))
         job.run()
@@ -49,8 +49,8 @@ def test_jpg_rgb():
 
 def test_jpg_hsv():
     try:
-        job = StackJob("job", "./", input_path="img-jpg")
-        job.add_action(Actions("img-jpg-balance-sv",
+        job = StackJob("job", "./", input_path="input/img-jpg")
+        job.add_action(Actions("balance", output_path="output/img-jpg-balance-sv",
                                actions=[BalanceFrames(channel=HSV,
                                                       corr_map=LINEAR, plot_histograms=True)]))
         job.run()
@@ -60,8 +60,8 @@ def test_jpg_hsv():
 
 def test_jpg_hls():
     try:
-        job = StackJob("job", "./", input_path="img-jpg")
-        job.add_action(Actions("img-jpg-balance-ls",
+        job = StackJob("job", "./", input_path="input/img-jpg")
+        job.add_action(Actions("balance", output_path="output/img-jpg-balance-ls",
                                actions=[BalanceFrames(channel=HLS,
                                                       corr_map=GAMMA, plot_histograms=True)]))
         job.run()

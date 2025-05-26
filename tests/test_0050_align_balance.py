@@ -5,8 +5,8 @@ from focus_stack import StackJob, Actions, AlignFrames, BalanceFrames, GAMMA, HS
 
 def test_hls_gamma():
     try:
-        job = StackJob("job", "./", input_path="img-jpg")
-        job.add_action(Actions("img-jpg-align-balance-ls",
+        job = StackJob("job", "./", input_path="input/img-jpg")
+        job.add_action(Actions("align", output_path="output/img-jpg-align-balance-ls",
                                actions=[AlignFrames(), BalanceFrames(channel=HLS, corr_map=GAMMA)]))
         job.run()
     except Exception:
@@ -15,8 +15,8 @@ def test_hls_gamma():
 
 def test_hsv():
     try:
-        job = StackJob("job", "./", input_path="img-jpg")
-        job.add_action(Actions("img-jpg-align-balance-sv",
+        job = StackJob("job", "./", input_path="input/img-jpg")
+        job.add_action(Actions("align", output_path="output/img-jpg-align-balance-sv",
                                actions=[AlignFrames(), BalanceFrames(channel=HSV)]))
         job.run()
     except Exception:
@@ -25,8 +25,8 @@ def test_hsv():
 
 def test_rgb():
     try:
-        job = StackJob("job", "./", input_path="img-jpg")
-        job.add_action(Actions("img-jpg-align-balance-rgb",
+        job = StackJob("job", "./", input_path="input/img-jpg")
+        job.add_action(Actions("align", output_path="output/img-jpg-align-balance-rgb",
                                actions=[AlignFrames(), BalanceFrames(channel=RGB)]))
         job.run()
     except Exception:
@@ -35,8 +35,8 @@ def test_rgb():
 
 def test_lumi():
     try:
-        job = StackJob("job", "./", input_path="img-jpg")
-        job.add_action(Actions("img-jpg-align-balance-lumi",
+        job = StackJob("job", "./", input_path="input/img-jpg")
+        job.add_action(Actions("align", output_path="output/img-jpg-align-balance-lumi",
                                actions=[AlignFrames(), BalanceFrames(channel=LUMI)]))
         job.run()
     except Exception:

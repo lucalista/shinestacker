@@ -17,14 +17,14 @@ def test_exif_jpg():
     try:
         setup_logging()
         logger = logging.getLogger(__name__)
-        output_dir = "./img-exif"
+        output_dir = "output/img-exif"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
         out_filename = output_dir + "/0001.jpg"
         ext = out_filename.split(".")[-1]
         logger.info("======== Testing JPG EXIF ======== ")
         logger.info("*** Source JPG EXIF ***")
-        exif = copy_exif("./img-jpg/0000.jpg", "./img-jpg/0001.jpg",
+        exif = copy_exif("input/img-jpg/0000.jpg", "input/img-jpg/0001.jpg",
                          out_filename=out_filename, verbose=True)
         exif_copy = get_exif(out_filename)
         logger.info("*** Copy JPG EXIF ***")
@@ -53,13 +53,13 @@ def test_exif_tiff():
     try:
         setup_logging()
         logger = logging.getLogger(__name__)
-        output_dir = "./img-exif"
+        output_dir = "output/img-exif"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
         out_filename = output_dir + "/0001.tif"
         logger.info("======== Testing TIFF EXIF ========")
         logging.getLogger(__name__).info("*** Source TIFF EXIF ***")
-        exif = copy_exif("./img-tif/0000.tif", "./img-tif/0001.tif",
+        exif = copy_exif("input/img-tif/0000.tif", "input/img-tif/0001.tif",
                          out_filename=out_filename, verbose=True)
         image = Image.open(out_filename)
         exif_copy = image.tag_v2 if hasattr(image,

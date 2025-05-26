@@ -5,8 +5,9 @@ from focus_stack import StackJob, Actions, AlignFrames
 
 def test_jpg():
     try:
-        job = StackJob("job", "./", input_path="img-jpg")
-        job.add_action(Actions("img-jpg-align", actions=[AlignFrames(plot_matches=True)]))
+        job = StackJob("job", "./", input_path="input/img-jpg")
+        job.add_action(Actions("align", output_path="output/img-jpg-align",
+                               actions=[AlignFrames(plot_matches=True)]))
         job.run()
     except Exception:
         assert False
@@ -14,8 +15,9 @@ def test_jpg():
 
 def test_tif():
     try:
-        job = StackJob("job", "./", input_path="img-tif")
-        job.add_action(Actions("img-tif-align", actions=[AlignFrames()]))
+        job = StackJob("job", "./", input_path="input/img-tif")
+        job.add_action(Actions("align", output_path="output/img-tif-align",
+                               actions=[AlignFrames()]))
         job.run()
     except Exception:
         assert False
