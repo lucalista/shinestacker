@@ -192,7 +192,7 @@ class Actions(FramesRefActions):
         self.sub_message_r(': read imput image')
         img = read_img(self.input_dir + "/" + filename)
         if hasattr(self, 'dtype') and img.dtype != self.dtype:
-            raise BitDepthError()
+            raise BitDepthError(img.dtype, self.dtype)
         if hasattr(self, 'shape') and img.shape != self.shape:
             raise ShapeError(img.shape, self.shape)
         if img is None:

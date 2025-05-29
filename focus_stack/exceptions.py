@@ -30,8 +30,8 @@ class AlignmentError(FocusStackError):
 
 class BitDepthError(FocusStackError):
     """Raised when images don't have the same bit depth"""
-    def __init__(self):
-        super().__init__("Images must be all of 8 bit or 16 bit")
+    def __init__(self, dtype_ref, dtype):
+        super().__init__("Images has type {}, expected {}.".format(dtype, dtype_ref))
 
 
 class ShapeError(FocusStackError):

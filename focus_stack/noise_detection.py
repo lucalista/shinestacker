@@ -10,6 +10,18 @@ import os
 import errno
 
 
+def get_img_metadata(img):
+    return img.shape[:2], img.dtype
+
+
+def validate_image(img, expected_shape=None, expected_dtype=None):
+    shape, dtype = get_img_metadata(img)
+    if expected_shape and shape != expected_shape:
+        raise ShapeError(shape, expected_shape)
+    if expected_dtype and dtype != expected_dtype:
+        raise BitDepthError(dtype, expected_dtype)
+        
+
 def mean_image(file_paths, progress_callback=None, message_callback=None, update_message_callback=None):
     mean_img = None
     for path in file_paths:
@@ -23,13 +35,10 @@ def mean_image(file_paths, progress_callback=None, message_callback=None, update
             logger = logging.getLogger(__name__)
             logger.error("Can't open file: " + path)
         if mean_img is None:
+            metadata = get_img_metadata(img)
             mean_img = img.astype(np.float64)
-            shape, dtype = img.shape[:2], img.dtype
         else:
-            if img.shape[:2] != shape:
-                raise ShapeError(shape, img.shape)
-            if img.dtype != dtype:
-                raise BitDepthError()
+            validate_image(img, *metadata)
             mean_img += img
         if progress_callback:
             progress_callback()

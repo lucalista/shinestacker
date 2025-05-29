@@ -163,7 +163,7 @@ class PyramidStack:
         elif self.dtype == np.uint16:
             self.n_values = 65536
         else:
-            raise BitDepthError()
+            raise BitDepthError(images.dtype, self.dtype)
         stacked_image = self.collapse(self.fuse_pyramids(
             self.laplacian_pyramid(int(np.log2(min(images[0].shape[:2]) / self.min_size)))))
         return np.clip(np.absolute(stacked_image), 0, self.n_values - 1).astype(self.dtype)
