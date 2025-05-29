@@ -9,6 +9,8 @@ from PIL.ExifTags import TAGS
 import logging
 import tifffile
 import matplotlib.pyplot as plt
+from tqdm import tqdm
+from tqdm.notebook import tqdm_notebook
 
 IMAGEWIDTH = 256
 IMAGELENGTH = 257
@@ -35,6 +37,15 @@ NO_COPY_TIFF_TAGS = ["Compression", "StripOffsets", "RowsPerStrip", "StripByteCo
 def check_path_exists(path):
     if not os.path.exists(path):
         raise Exception('Path does not exist: ' + path)
+
+
+def make_tqdm_bar(name, size, ncols=80):
+    try:
+        __IPYTHON__  # noqa
+        bar = tqdm_notebook(desc=name, total=size)
+    except Exception:
+        bar = tqdm(desc=name, total=size, ncols=ncols)
+    return bar
 
 
 def read_img(file_path):

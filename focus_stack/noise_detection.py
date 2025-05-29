@@ -1,16 +1,47 @@
 from focus_stack.stack_framework import FrameMultiDirectory, JobBase
-from focus_stack.utils import save_plot
+from focus_stack.utils import read_img, save_plot, make_tqdm_bar
+from focus_stack.exceptions import ShapeError, BitDepthError
 from termcolor import colored
 import cv2
 import numpy as np
-from tqdm import tqdm
-from tqdm.notebook import tqdm_notebook
 import matplotlib.pyplot as plt
+import logging
+import os
+import errno
+
+
+def mean_image(file_paths, progress_callback=None, message_callback=None, update_message_callback=None):
+    mean_img = None
+    for path in file_paths:
+        if update_message_callback:
+            update_message_callback(f"reading frame: {path.split('/')[-1]}")
+        if not os.path.exists(path):
+            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)
+        try:
+            img = read_img(path)
+        except Exception:
+            logger = logging.getLogger(__name__)
+            logger.error("Can't open file: " + path)
+        if mean_img is None:
+            mean_img = img.astype(np.float64)
+            shape, dtype = img.shape[:2], img.dtype
+        else:
+            if img.shape[:2] != shape:
+                raise ShapeError(shape, img.shape)
+            if img.dtype != dtype:
+                raise BitDepthError()
+            mean_img += img
+        if progress_callback:
+            progress_callback()
+    return (mean_img / len(file_paths)).astype(np.uint8)
+
+
+DEFAULT_NOISE_MAP_FILENAME = "hot_pixels.png"
 
 
 class NoiseDetection(FrameMultiDirectory, JobBase):
     def __init__(self, name="noise-map", input_path=None, output_path=None, working_path=None, plot_path='plots',
-                 channel_thresholds=(13, 13, 13), blur_size=5, file_name="hot"):
+                 channel_thresholds=(13, 13, 13), blur_size=5, file_name=DEFAULT_NOISE_MAP_FILENAME):
         FrameMultiDirectory.__init__(self, name, input_path, output_path, working_path, plot_path, 1, False)
         JobBase.__init__(self, name)
         self.channel_thresholds = channel_thresholds
@@ -24,22 +55,14 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         self.print_message(colored("map noisy pixels, frames in " + self.folder_list_str(), "blue"))
         files = self.folder_filelist()
         in_paths = [self.working_path + "/" + f for f in files]
-        mean_img = None
-        try:
-            __IPYTHON__  # noqa
-            bar = tqdm_notebook(desc=self.name, total=len(in_paths))
-        except Exception:
-            bar = tqdm(desc=self.name, total=len(in_paths), ncols=80)
-        for path in in_paths:
-            self.print_message_r(colored("reading frame: " + path.split("/")[-1], "blue"))
-            img = cv2.imread(path, cv2.IMREAD_COLOR)
-            if mean_img is None:
-                mean_img = img.astype(np.float64)
-            else:
-                mean_img += img
-            bar.update(1)
+        bar = make_tqdm_bar(self.name, len(in_paths))
+        mean_img = mean_image(
+            file_paths=in_paths,
+            progress_callback=lambda: bar.update(1),
+            message_callback=self.print_message,
+            update_message_callback=lambda msg: self.print_message_r(colored(msg, "blue"))
+        )
         bar.close()
-        mean_img = (mean_img / len(in_paths)).astype(np.uint8)
         blurred = cv2.GaussianBlur(mean_img, (self.blur_size, self.blur_size), 0)
         diff = cv2.absdiff(mean_img, blurred)
         channels = cv2.split(diff)
@@ -47,16 +70,17 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         hot_rgb = cv2.bitwise_or(hot_px[0], cv2.bitwise_or(hot_px[1], hot_px[2]))
         msg = []
         for ch, hot in zip(['rgb', 'r', 'g', 'b', ], [hot_rgb] + hot_px):
-            cv2.imwrite(self.working_path + '/' + self.output_path + "/" + self.file_name + "-" + ch + ".png", hot)
             msg.append("{}: {}".format(ch, np.count_nonzero(hot > 0)))
         self.print_message("hot pixels: " + ", ".join(msg))
+        cv2.imwrite(self.working_path + '/' + self.output_path + "/" + self.file_name, hot)
         th_range = range(5, 30)
         plt.figure(figsize=(10, 5))
         x = np.array(list(th_range))
         ys = [[np.count_nonzero(self.hot_map(ch, th) > 0) for th in th_range] for ch in channels]
         for i, ch, y in zip(range(3), ['r', 'g', 'b'], ys):
             plt.plot(x, y, c=ch, label=ch)
-            plt.plot([self.channel_thresholds[i], self.channel_thresholds[i]], [0, y[self.channel_thresholds[i] - int(x[0])]], c=ch, linestyle="--")
+            plt.plot([self.channel_thresholds[i], self.channel_thresholds[i]],
+                     [0, y[self.channel_thresholds[i] - int(x[0])]], c=ch, linestyle="--")
         plt.xlabel('threshold')
         plt.ylabel('# of hot pixels')
         plt.legend()
@@ -70,7 +94,7 @@ MEDIAN = 'MEDIAN'
 
 
 class MaskNoise:
-    def __init__(self, noise_mask="noise-map/hot_rgb.png", kernel_size=3, method=MEAN):
+    def __init__(self, noise_mask="noise-map/" + DEFAULT_NOISE_MAP_FILENAME, kernel_size=3, method=MEAN):
         self.noise_mask = noise_mask
         self.kernel_size = kernel_size
         self.method = method

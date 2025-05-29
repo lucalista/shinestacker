@@ -37,4 +37,4 @@ class BitDepthError(FocusStackError):
 class ShapeError(FocusStackError):
     """Raised when images don't have the same shape"""
     def __init__(self, shape_ref, shape):
-        super().__init__("Images has shape ({}x{}), reference has shape({}x{})".format(*shape[:2], *shape_ref[:2]))
+        super().__init__("Images has shape ({}x{}), expected ({}x{}).".format(*shape[:2], *shape_ref[:2]))
