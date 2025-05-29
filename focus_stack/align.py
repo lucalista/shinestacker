@@ -41,7 +41,8 @@ class AlignFrames:
         self.border_value = border_value
         self.plot_matches = plot_matches
 
-    def create_detector(self):
+    def detect_and_compute(self, img_0, img_1):
+        img_bw_0, img_bw_1 = img_bw_8bit(img_0), img_bw_8bit(img_1)
         detector = None
         if self.detector == 'SIFT':
             detector = cv2.SIFT_create()
@@ -53,9 +54,6 @@ class AlignFrames:
             detector = cv2.AKAZE_create()
         else:
             raise InvalidOptionError("detector" + self.detector)
-        return detector
-
-    def create_descriptor(self):
         descriptor = None
         if self.descriptor == 'ORB':
             descriptor = cv2.SIFT_create()
@@ -65,9 +63,6 @@ class AlignFrames:
             descriptor = cv2.AKAZE_create()
         else:
             raise InvalidOptionError("descriptor", self.descriptor)
-        return descriptor
-
-    def detect_and_compute(self, detector, descriptor, img_bw_0, img_bw_1):
         if self.detector == self.descriptor and (self.detector == 'SIFT' or self.detector == 'AKAZE'):
             kp_0, des_0 = detector.detectAndCompute(img_bw_0, None)
             kp_1, des_1 = detector.detectAndCompute(img_bw_1, None)
@@ -76,7 +71,8 @@ class AlignFrames:
             kp_1 = detector.detect(img_bw_1, None)
             kp_0, des_0 = descriptor.compute(img_bw_0, kp_0)
             kp_1, des_1 = descriptor.compute(img_bw_1, kp_1)
-        return kp_0, kp_1, des_0, des_1
+        good_matches = self.get_good_matches(des_0, des_1)
+        return kp_0, kp_1, good_matches
 
     def get_good_matches(self, des_0, des_1):
         if self.match_method == 'KNN':
@@ -113,19 +109,17 @@ class AlignFrames:
         metadata = get_img_metadata(img_1)
         validate_image(img_0, *metadata)
         self.process.sub_message_r(': find matches')
-        img_bw_0, img_bw_1 = img_bw_8bit(img_0), img_bw_8bit(img_1)
-        detector, descriptor = self.create_detector(), self.create_descriptor()
-        kp_0, kp_1, des_0, des_1 = self.detect_and_compute(detector, descriptor, img_bw_0, img_bw_1)
-        good_matches = self.get_good_matches(des_0, des_1)
+        kp_0, kp_1, good_matches = self.detect_and_compute(img_0, img_1)
         n_good_matches = len(good_matches)
         self.n_matches[idx] = n_good_matches
+        self.process.sub_message_r(": matches: {}".format(n_good_matches))
         if n_good_matches >= self.min_matches:
             src_pts = np.float32([kp_0[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
             dst_pts = np.float32([kp_1[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
             M, mask = self.find_transform(src_pts, dst_pts)
             if self.plot_matches:
                 matches_mask = mask.ravel().tolist()
-            h, w = img_bw_1.shape
+            h, w = img_0.shape[:2]
             # may be useful for future applications
             # pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0]]).reshape(-1, 1 ,2)
             self.process.sub_message_r(': align images')
@@ -153,12 +147,12 @@ class AlignFrames:
                                    matchesMask=matches_mask, flags=2)
                 img_match = cv2.cvtColor(cv2.drawMatches(img_0, kp_0, img_1, kp_1, good_matches,
                                                          None, **draw_params), cv2.COLOR_BGR2RGB)
-                self.process.sub_message_r(": matches: {}".format(n_good_matches))
                 try:
                     __IPYTHON__  # noqa
                     plt.figure(figsize=(10, 5))
                     plt.imshow(img_match, 'gray')
-                    plt.savefig(self.process.plot_path + "/" + self.process.name + "-matches-{:04d}.pdf".format(idx))
+                    plt.savefig(self.process.plot_path + "/" + self.process.name +
+                                "-matches-{:04d}.pdf".format(idx))
                 except Exception:
                     pass
             return img_warp
