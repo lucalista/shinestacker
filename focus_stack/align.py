@@ -79,7 +79,8 @@ class AlignFrames:
 
     def get_good_matches(self, des_0, des_1):
         if self.match_method == 'KNN':
-            flann = cv2.FlannBasedMatcher(dict(algorithm=self.flann_idx_kdtree, trees=self.flann_trees), dict(checks=self.flann_checks))
+            flann = cv2.FlannBasedMatcher(dict(algorithm=self.flann_idx_kdtree, 
+                                               trees=self.flann_trees), dict(checks=self.flann_checks))
             matches = flann.knnMatch(des_0, des_1, k=2)
             good_matches = []
             for m, n in matches:
@@ -95,7 +96,8 @@ class AlignFrames:
         if self.transform == ALIGN_HOMOGRAPHY:
             M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, self.rans_threshold)
         elif self.transform == ALIGN_RIGID:
-            M, mask = cv2.estimateAffinePartial2D(src_pts, dst_pts, method=cv2.RANSAC, ransacReprojThreshold=self.rans_threshold)
+            M, mask = cv2.estimateAffinePartial2D(src_pts, dst_pts, method=cv2.RANSAC, 
+                                                  ransacReprojThreshold=self.rans_threshold)
         else:
             raise InvalidOptionError("transform", self.transform)
         return M, mask
@@ -107,8 +109,7 @@ class AlignFrames:
         img_ref = self.process.img_ref(ref_idx)
         img_bw_0 = cv2.cvtColor(img_8bit(img_0), cv2.COLOR_BGR2GRAY)
         img_bw_1 = cv2.cvtColor(img_8bit(img_ref).astype('uint8'), cv2.COLOR_BGR2GRAY)
-        detector = self.create_detector()
-        descriptor = self.create_descriptor()
+        detector, descriptor = self.create_detector(), self.create_descriptor()
         kp_0, kp_1, des_0, des_1 = self.detect_and_compute(detector, descriptor, img_bw_0, img_bw_1)
         good_matches = self.get_good_matches(des_0, des_1)
         n_good_matches = len(good_matches)
@@ -132,17 +133,21 @@ class AlignFrames:
             elif self.transform == ALIGN_RIGID:
                 # may be useful for future applications
                 # dst = cv2.transform(pts, M)
-                img_warp = cv2.warpAffine(img_0, M, (img_0.shape[1], img_0.shape[0]), borderMode=self.cv2_border_mode, borderValue=self.border_value)
+                img_warp = cv2.warpAffine(img_0, M, (img_0.shape[1], img_0.shape[0]),
+                                          borderMode=self.cv2_border_mode, borderValue=self.border_value)
                 if self.border_mode == BORDER_REPLICATE_BLUR:
-                    mask = cv2.warpAffine(np.ones_like(img_0, dtype=np.uint8), M, (w, h), borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+                    mask = cv2.warpAffine(np.ones_like(img_0, dtype=np.uint8), M, (w, h),
+                                          borderMode=cv2.BORDER_CONSTANT, borderValue=0)
             if self.border_mode == BORDER_REPLICATE_BLUR:
                 self.process.sub_message_r(': blur borders')
                 mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
                 blurred_warp = cv2.GaussianBlur(img_warp, (21, 21), sigmaX=self.border_blur)
                 img_warp[mask == 0] = blurred_warp[mask == 0]
             if self.plot_matches:
-                draw_params = dict(matchColor=(0, 255, 0), singlePointColor=None, matchesMask=matches_mask, flags=2)
-                img_match = cv2.cvtColor(cv2.drawMatches(img_0, kp_0, img_ref, kp_1, good_matches, None, **draw_params), cv2.COLOR_BGR2RGB)
+                draw_params = dict(matchColor=(0, 255, 0), singlePointColor=None,
+                                   matchesMask=matches_mask, flags=2)
+                img_match = cv2.cvtColor(cv2.drawMatches(img_0, kp_0, img_ref, kp_1, good_matches,
+                                                         None, **draw_params), cv2.COLOR_BGR2RGB)
                 self.process.sub_message_r(": matches: {}".format(n_good_matches))
                 try:
                     __IPYTHON__  # noqa
@@ -176,8 +181,10 @@ class AlignFrames:
             y_max = y[-1]
         else:
             y_max = (y[self.process.ref_idx - 1] + y[self.process.ref_idx]) / 2
-        plt.plot([self.process.ref_idx + 1, self.process.ref_idx + 1], [0, y_max], color='cornflowerblue', linestyle='--', label='reference frame')
-        plt.plot([x[0], x[-1]], [self.min_matches, self.min_matches], color='lightgray', linestyle='--', label='min. matches')
+        plt.plot([self.process.ref_idx + 1, self.process.ref_idx + 1], [0, y_max],
+                 color='cornflowerblue', linestyle='--', label='reference frame')
+        plt.plot([x[0], x[-1]], [self.min_matches, self.min_matches], color='lightgray',
+                 linestyle='--', label='min. matches')
         plt.plot(x, y, color='navy', label='matches')
         plt.xlabel('frame')
         plt.ylabel('# of matches')
