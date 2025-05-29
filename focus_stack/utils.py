@@ -1,3 +1,4 @@
+from focus_stack.exceptions import ShapeError, BitDepthError
 import cv2
 import os
 import re
@@ -71,6 +72,22 @@ def write_img(file_path, img):
 
 def img_8bit(img):
     return (img >> 8).astype('uint8') if img.dtype == np.uint16 else img
+
+
+def img_bw_8bit(img):
+    return cv2.cvtColor(img_8bit(img), cv2.COLOR_BGR2GRAY)
+    
+
+def get_img_metadata(img):
+    return img.shape[:2], img.dtype
+
+
+def validate_image(img, expected_shape=None, expected_dtype=None):
+    shape, dtype = get_img_metadata(img)
+    if expected_shape and shape != expected_shape:
+        raise ShapeError(shape, expected_shape)
+    if expected_dtype and dtype != expected_dtype:
+        raise BitDepthError(dtype, expected_dtype)
 
 
 def extract_elcosed_data(data, head, foot):

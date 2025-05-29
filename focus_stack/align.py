@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
 import cv2
 import numpy as np
-from focus_stack.utils import img_8bit, save_plot
+from focus_stack.utils import img_8bit, img_bw_8bit, save_plot
 from focus_stack.exceptions import AlignmentError, InvalidOptionError
+from focus_stack.utils import get_img_metadata, validate_image
 import logging
 
 ALIGN_HOMOGRAPHY = "ALIGN_HOMOGRAPHY"
@@ -105,10 +106,14 @@ class AlignFrames:
     def run_frame(self, idx, ref_idx, img_0):
         if idx == self.process.ref_idx:
             return img_0
-        self.process.sub_message_r(': find matches')
         img_ref = self.process.img_ref(ref_idx)
-        img_bw_0 = cv2.cvtColor(img_8bit(img_0), cv2.COLOR_BGR2GRAY)
-        img_bw_1 = cv2.cvtColor(img_8bit(img_ref).astype('uint8'), cv2.COLOR_BGR2GRAY)
+        return self.align_images(idx, img_ref, img_0)
+
+    def align_images(self, idx, img_1, img_0):
+        metadata = get_img_metadata(img_1)
+        validate_image(img_0, *metadata)
+        self.process.sub_message_r(': find matches')
+        img_bw_0, img_bw_1 = img_bw_8bit(img_0), img_bw_8bit(img_1)
         detector, descriptor = self.create_detector(), self.create_descriptor()
         kp_0, kp_1, des_0, des_1 = self.detect_and_compute(detector, descriptor, img_bw_0, img_bw_1)
         good_matches = self.get_good_matches(des_0, des_1)
@@ -146,7 +151,7 @@ class AlignFrames:
             if self.plot_matches:
                 draw_params = dict(matchColor=(0, 255, 0), singlePointColor=None,
                                    matchesMask=matches_mask, flags=2)
-                img_match = cv2.cvtColor(cv2.drawMatches(img_0, kp_0, img_ref, kp_1, good_matches,
+                img_match = cv2.cvtColor(cv2.drawMatches(img_0, kp_0, img_1, kp_1, good_matches,
                                                          None, **draw_params), cv2.COLOR_BGR2RGB)
                 self.process.sub_message_r(": matches: {}".format(n_good_matches))
                 try:

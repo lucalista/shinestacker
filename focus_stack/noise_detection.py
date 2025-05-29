@@ -1,5 +1,5 @@
 from focus_stack.stack_framework import FrameMultiDirectory, JobBase
-from focus_stack.utils import read_img, save_plot, make_tqdm_bar
+from focus_stack.utils import read_img, save_plot, make_tqdm_bar, get_img_metadata, validate_image
 from focus_stack.exceptions import ShapeError, BitDepthError
 from termcolor import colored
 import cv2
@@ -8,18 +8,6 @@ import matplotlib.pyplot as plt
 import logging
 import os
 import errno
-
-
-def get_img_metadata(img):
-    return img.shape[:2], img.dtype
-
-
-def validate_image(img, expected_shape=None, expected_dtype=None):
-    shape, dtype = get_img_metadata(img)
-    if expected_shape and shape != expected_shape:
-        raise ShapeError(shape, expected_shape)
-    if expected_dtype and dtype != expected_dtype:
-        raise BitDepthError(dtype, expected_dtype)
         
 
 def mean_image(file_paths, progress_callback=None, message_callback=None, update_message_callback=None):
