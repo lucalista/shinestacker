@@ -3,6 +3,7 @@ from termcolor import colored
 from tqdm.notebook import tqdm_notebook
 from tqdm import tqdm
 from focus_stack.logging import setup_logging
+from focus_stack.utils import make_tqdm_bar
 import logging
 
 LINE_UP = "\r\033[A"
@@ -112,11 +113,7 @@ class ActionList(JobBase):
     def run_core(self):
         self.print_message('begin run', end='\n')
         self.begin()
-        try:
-            __IPYTHON__  # noqa
-            bar = tqdm_notebook(desc=self.name, total=self.counts)
-        except Exception:
-            bar = tqdm(desc=self.name, total=self.counts, ncols=80)
+        bar = make_tqdm_bar(self.name, self.counts)
         for x in iter(self):
             bar.update(1)
         bar.close()
