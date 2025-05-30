@@ -7,13 +7,13 @@ from focus_stack.logging import setup_logging
 import logging
 
 
-def check_fail_size(p):
+def check_fail_size(p, d, Ex, fs):
     logger = logging.getLogger()
     shape_err = False
     try:
-        mean_image([f"output/img-jpg-wrong-size/image{i}.jpg" for i in (1, 2)],
+        mean_image(["output/" + d + f"/image{i}." + p for i in fs],
                    update_message_callback=lambda msg: logger.info(msg))
-    except ShapeError:
+    except Ex:
         shape_err = True
     assert shape_err
 
@@ -24,22 +24,15 @@ def test_detect_fail_1():
         file_level=logging.DEBUG,
         log_file="logs/focusstack.log"
     )
-    check_fail_size("jpg")
+    check_fail_size("jpg", "img-jpg-wrong-size", ShapeError, (1, 2))
 
 
 def test_detect_fail_2():
-    check_fail_size("tif")
+    check_fail_size("tif", "img-tif-wrong-size", ShapeError, (1, 2))
 
 
-def test_fail_type():
-    logger = logging.getLogger()
-    type_err = False
-    try:
-        mean_image([f"output/img-tif-wrong-type/image_{i}bit.tif" for i in (8, 16)],
-                   update_message_callback=lambda msg: logger.info(msg))
-    except BitDepthError:
-        type_err = True
-    assert type_err
+def test_detect_fail_3():
+    check_fail_size("tif", "img-tif-wrong-type", BitDepthError, ("_8bit", "_16bit"))
 
 
 def test_detect():
@@ -63,6 +56,6 @@ def test_correct():
 if __name__ == '__main__':
     test_detect_fail_1()
     test_detect_fail_2()
-    test_fail_type()
+    test_detect_fail_3()
     test_detect()
     test_correct()
