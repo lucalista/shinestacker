@@ -67,10 +67,8 @@ class AlignFrames:
             kp_0, des_0 = detector.detectAndCompute(img_bw_0, None)
             kp_1, des_1 = detector.detectAndCompute(img_bw_1, None)
         else:
-            kp_0 = detector.detect(img_bw_0, None)
-            kp_1 = detector.detect(img_bw_1, None)
-            kp_0, des_0 = descriptor.compute(img_bw_0, kp_0)
-            kp_1, des_1 = descriptor.compute(img_bw_1, kp_1)
+            kp_0, des_0 = descriptor.compute(img_bw_0, detector.detect(img_bw_0, None))
+            kp_1, des_1 = descriptor.compute(img_bw_1, detector.detect(img_bw_1, None))
         good_matches = self.get_good_matches(des_0, des_1)
         return kp_0, kp_1, good_matches
 
