@@ -7,13 +7,13 @@ from focus_stack.logging import setup_logging
 import logging
 
 
-def check_fail_size(p, d, Ex, fs):
+def check_fail_size(extension, directory, ExepctionType, files):
     logger = logging.getLogger()
     shape_err = False
     try:
-        mean_image(["output/" + d + f"/image{i}." + p for i in fs],
+        mean_image(["output/" + directory + f"/image{i}." + extension for i in files],
                    update_message_callback=lambda msg: logger.info(msg))
-    except Ex:
+    except ExepctionType:
         shape_err = True
     assert shape_err
 
