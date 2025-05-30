@@ -94,6 +94,8 @@ class MaskNoise:
     def __init__(self, noise_mask="noise-map/" + DEFAULT_NOISE_MAP_FILENAME, kernel_size=3, method=MEAN):
         self.noise_mask = noise_mask
         self.kernel_size = kernel_size
+        self.ks2 = self.kernel_size // 2
+        self.ks2_1 = self.ks2 + 1
         self.method = method
         self.noise_mask = noise_mask
 
@@ -117,10 +119,12 @@ class MaskNoise:
     def correct_channel(self, channel):
         corrected = channel.copy()
         noise_coords = np.argwhere(self.noise_mask > 0)
+        k2 = self.kernel_size // 2
+        k2_1 = k2 + 1
         for y, x in noise_coords:
             neighborhood = channel[
-                max(0, y - self.kernel_size // 2):min(channel.shape[0], y + self.kernel_size // 2 + 1),
-                max(0, x - self.kernel_size // 2):min(channel.shape[1], x + self.kernel_size // 2 + 1)
+                max(0, y - self.ks2):min(channel.shape[0], y + self.ks2_1),
+                max(0, x - self.ks2):min(channel.shape[1], x + self.ks2_1)
             ]
             valid_pixels = neighborhood[neighborhood != 0]
             if len(valid_pixels) > 0:
