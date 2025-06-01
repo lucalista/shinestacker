@@ -99,7 +99,7 @@ Arguments for the constructor ```AlignFrames``` of are:
   * ```DESCRIPTOR_ORB```
   * ```DESCRIPTOR_AKAZE```
 
-```matching_config``` (optiona, default; ```None```): a dictionary specifying the following parameters, with the corresponding default values:
+```matching_config``` (optional, default; ```None```): a dictionary specifying the following parameters, with the corresponding default values:
 ```python
 {
     'method': MATCHING_KNN,
@@ -117,7 +117,7 @@ Arguments for the constructor ```AlignFrames``` of are:
 * ```flann_checks``` (optional, default: 50): parameter used by the FLANN matching algorithm.
 * ```threshold``` (optional, default: 0.75): parameter used to select good matches. See [Feature Matching](https://docs.opencv.org/4.x/dc/dc3/tutorial_py_matcher.html) for more details. 
 
-* ```alignment_config``` (optiona, default; ```None```): a dictionary specifying the following parameters, with the corresponding default values:
+* ```alignment_config``` (optional, default; ```None```): a dictionary specifying the following parameters, with the corresponding default values:
 ```python
 {
     'transform': ALIGN_RIGID,
@@ -139,7 +139,7 @@ Arguments for the constructor ```AlignFrames``` of are:
 * ```border_blur``` (optional, default: ```50```): amount of border blurring, in pixels. Only applied if ```border_mode``` is set to ```BORDER_REPLICATE_BLUR```, which is the default option.
 
 
-* ```plot_config``` (optiona, default; ```None```): a dictionary specifying the following parameters, with the corresponding default values:
+* ```plot_config``` (optional, default; ```None```): a dictionary specifying the following parameters, with the corresponding default values:
 ```python
 {
     'enabled': False,
