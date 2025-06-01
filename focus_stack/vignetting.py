@@ -38,7 +38,7 @@ class Vignetting:
         return (radii[1:] + radii[:-1]) / 2, mean_intensities
 
     def sigmoid(r, i0, k, r0):
-        return i0 / (1.0 + np.exp(np.minimum(CLIP_EXP, np.exp(np.clip(k * (float64(r) - r0), -CLIP_EXP, CLIP_EXP)))))
+        return i0 / (1.0 + np.exp(np.minimum(CLIP_EXP, np.exp(np.clip(k * (r - r0), -CLIP_EXP, CLIP_EXP)))))
 
     def fit_sigmoid(self, radii, intensities):
         valid_mask = ~np.isnan(intensities)
