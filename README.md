@@ -167,7 +167,7 @@ Arguments for the constructor of ```BalanceFrames``` are:
 ```
 Note that for 8-bit images the maximum intensity is 255, while for 16-bit images the maximum intensity is 65536.
 * ```img_scale``` (optional, default: 8): gets luminosity histogram using every n-th pixel in each dimension. By default, it takes one every 10 pixels in horizontal and vertical directions, i.e.: one every 100 pixels in total.  
-* ```corr_map``` (optional, default: ```LINEAR```, possible values: ```LINEAR```, ```GAMMA``` and ```MATCH_HIST```): applies either a linear mapping or a gamma correction or matches histograms of reference and source images. The gamma correction avoids saturation of high luminosity pixels, but may introduce more distortion than a linear mapping. If ```MATCH_HIST``` is specified as value for ```corr_map```, options ```i_min``` and ```i_max``` are not used. Note that ```MATCH_HIST``` should be used with ```RGBCorrection```, and it is safer to set ```img_scale=1```.
+* ```corr_map``` (optional, default: ```LINEAR```, possible values: ```LINEAR```, ```GAMMA``` and ```MATCH_HIST```): applies either a linear mapping or a gamma correction or matches histograms of reference and source images. The gamma correction avoids saturation of high luminosity pixels, but may introduce more distortion than a linear mapping. If ```MATCH_HIST``` is specified as value for ```corr_map```, option ```intensity_interval``` is not used. Note that ```MATCH_HIST``` should be used with ```RGBCorrection```, and it is safer to set ```img_scale=1```.
 * ```plot_histograms```  (optional, default: ```False```): if ```True```, for each image and for the reference image histograms with pixel content are plotted. May be useful for inspection and debugging.
   
 ### Vignetting correction
@@ -275,7 +275,8 @@ Or as preliminary stage to more actions:
 ```python
 job.add_action(Actions("align", actions=[MaskNoise(),
                                          AlignFrames(),
-                                         BalanceFrames(mask_size=0.9, i_min=150, i_max=65385)]))
+                                         BalanceFrames(mask_size=0.9,
+                                         intensity_interval={'min': 150, 'max':65385})]))
 ```
 
 Arguments for the constructor of ```NoiseDetection``` are:
