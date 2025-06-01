@@ -6,8 +6,11 @@ from focus_stack import StackJob, Actions, AlignFrames, BalanceFrames, BALANCE_G
 def test_hls_gamma():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg")
-        job.add_action(Actions("align", output_path="output/img-jpg-align-balance-ls",
-                               actions=[AlignFrames(), BalanceFrames(channel=BALANCE_HLS, corr_map=BALANCE_GAMMA)]))
+        job.add_action(Actions("align",
+                               [AlignFrames(),
+                                BalanceFrames(channel=BALANCE_HLS,
+                                              corr_map=BALANCE_GAMMA)],
+                               output_path="output/img-jpg-align-balance-ls"))
         job.run()
     except Exception:
         assert False
@@ -16,8 +19,10 @@ def test_hls_gamma():
 def test_hsv():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg")
-        job.add_action(Actions("align", output_path="output/img-jpg-align-balance-sv",
-                               actions=[AlignFrames(), BalanceFrames(channel=BALANCE_HSV)]))
+        job.add_action(Actions("align", 
+                               [AlignFrames(),
+                                BalanceFrames(channel=BALANCE_HSV)],
+                               output_path="output/img-jpg-align-balance-sv"))
         job.run()
     except Exception:
         assert False
@@ -26,8 +31,10 @@ def test_hsv():
 def test_rgb():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg")
-        job.add_action(Actions("align", output_path="output/img-jpg-align-balance-rgb",
-                               actions=[AlignFrames(), BalanceFrames(channel=BALANCE_RGB)]))
+        job.add_action(Actions("align",
+                               [AlignFrames(),
+                                BalanceFrames(channel=BALANCE_RGB)],
+                               output_path="output/img-jpg-align-balance-rgb"))
         job.run()
     except Exception:
         assert False
@@ -36,8 +43,9 @@ def test_rgb():
 def test_lumi():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg")
-        job.add_action(Actions("align", output_path="output/img-jpg-align-balance-lumi",
-                               actions=[AlignFrames(), BalanceFrames(channel=BALANCE_LUMI)]))
+        job.add_action(Actions("align",
+                               [AlignFrames(), BalanceFrames(channel=BALANCE_LUMI)],
+                               output_path="output/img-jpg-align-balance-lumi"))
         job.run()
     except Exception:
         assert False

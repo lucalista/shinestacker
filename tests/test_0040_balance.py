@@ -6,9 +6,10 @@ from focus_stack import StackJob, Actions, BalanceFrames, BALANCE_RGB, BALANCE_M
 def test_tif_rgb_match():
     try:
         job = StackJob("job", "./", input_path="input/img-tif")
-        job.add_action(Actions("balance", output_path="output/img-tif-balance-rgb-match",
-                               actions=[BalanceFrames(channel=BALANCE_RGB,
-                                                      corr_map=BALANCE_MATCH_HIST, plot_histograms=True)]))
+        job.add_action(Actions("balance",
+                               [BalanceFrames(channel=BALANCE_RGB,
+                                              corr_map=BALANCE_MATCH_HIST, plot_histograms=True)],
+                               output_path="output/img-tif-balance-rgb-match"))
         job.run()
     except Exception:
         assert False
@@ -17,9 +18,11 @@ def test_tif_rgb_match():
 def test_jpg_lumi():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg")
-        job.add_action(Actions("balance", output_path="output/img-jpg-balance-lumi",
-                               actions=[BalanceFrames(channel=BALANCE_LUMI,
-                                                      corr_map=BALANCE_LINEAR, plot_histograms=True)]))
+        job.add_action(Actions("balance",
+                               [BalanceFrames(channel=BALANCE_LUMI,
+                                              corr_map=BALANCE_LINEAR,
+                                              plot_histograms=True)],
+                               output_path="output/img-jpg-balance-lumi"))
         job.run()
     except Exception:
         assert False
@@ -28,9 +31,11 @@ def test_jpg_lumi():
 def test_tif_lumi():
     try:
         job = StackJob("job", "./", input_path="input/img-tif")
-        job.add_action(Actions("balance", output_path="output/img-tif-balance-lumi",
-                               actions=[BalanceFrames(channel=BALANCE_LUMI,
-                                                      corr_map=BALANCE_GAMMA, plot_histograms=True)]))
+        job.add_action(Actions("balance",
+                               [BalanceFrames(channel=BALANCE_LUMI,
+                                              corr_map=BALANCE_GAMMA,
+                                              plot_histograms=True)],
+                               output_path="output/img-tif-balance-lumi"))
         job.run()
     except Exception:
         assert False
@@ -39,9 +44,11 @@ def test_tif_lumi():
 def test_jpg_rgb():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg")
-        job.add_action(Actions("balance", output_path="output/img-jpg-balance-rgb",
-                               actions=[BalanceFrames(channel=BALANCE_RGB,
-                                                      corr_map=BALANCE_LINEAR, plot_histograms=True)]))
+        job.add_action(Actions("balance",
+                               [BalanceFrames(channel=BALANCE_RGB,
+                                              corr_map=BALANCE_LINEAR,
+                                              plot_histograms=True)],
+                               output_path="output/img-jpg-balance-rgb"))
         job.run()
     except Exception:
         assert False
@@ -50,9 +57,11 @@ def test_jpg_rgb():
 def test_jpg_hsv():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg")
-        job.add_action(Actions("balance", output_path="output/img-jpg-balance-sv",
-                               actions=[BalanceFrames(channel=BALANCE_HSV,
-                                                      corr_map=BALANCE_LINEAR, plot_histograms=True)]))
+        job.add_action(Actions("balance", 
+                               [BalanceFrames(channel=BALANCE_HSV,
+                                              corr_map=BALANCE_LINEAR,
+                                              plot_histograms=True)],
+                               output_path="output/img-jpg-balance-sv"))
         job.run()
     except Exception:
         assert False
@@ -61,9 +70,11 @@ def test_jpg_hsv():
 def test_jpg_hls():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg")
-        job.add_action(Actions("balance", output_path="output/img-jpg-balance-ls",
-                               actions=[BalanceFrames(channel=BALANCE_HLS,
-                                                      corr_map=BALANCE_GAMMA, plot_histograms=True)]))
+        job.add_action(Actions("balance",
+                               [BalanceFrames(channel=BALANCE_HLS,
+                                              corr_map=BALANCE_GAMMA,
+                                              plot_histograms=True)],
+                               output_path="output/img-jpg-balance-ls"))
         job.run()
     except Exception:
         assert False

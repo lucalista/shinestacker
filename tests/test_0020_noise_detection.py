@@ -47,7 +47,7 @@ def test_detect():
 def test_correct():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg")
-        job.add_action(Actions("noise", output_path="output/img-noise-corr", actions=[MaskNoise()]))
+        job.add_action(Actions("noise", [MaskNoise()], output_path="output/img-noise-corr"))
         job.run()
     except Exception:
         assert False

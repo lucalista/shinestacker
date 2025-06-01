@@ -167,7 +167,7 @@ class FramesRefActions(FrameDirectory, ActionList):
 
 
 class Actions(FramesRefActions):
-    def __init__(self, name, input_path=None, output_path=None, working_path=None, plot_path='plots', resample=1, ref_idx=-1, step_process=True, actions=None):
+    def __init__(self, name, actions, input_path=None, output_path=None, working_path=None, plot_path='plots', resample=1, ref_idx=-1, step_process=True):
         FramesRefActions.__init__(self, name, input_path, output_path, working_path, plot_path, resample, ref_idx, step_process)
         self.__actions = []
         for a in actions:
