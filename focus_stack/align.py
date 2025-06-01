@@ -11,165 +11,176 @@ ALIGN_RIGID = "ALIGN_RIGID"
 BORDER_CONSTANT = "BORDER_CONSTANT"
 BORDER_REPLICATE = "BORDER_REPLICATE"
 BORDER_REPLICATE_BLUR = "BORDER_REPLICATE_BLUR"
+DETECTOR_SIFT = "SIFT"
+DETECTOR_ORB = "ORB"
+DETECTOR_SURF = "SURF"
+DETECTOR_AKAZE = "AKAZE"
+DESCRIPTOR_SIFT = "SIFT"
+DESCRIPTOR_ORB = "ORB"
+DESCRIPTOR_AKAZE = "AKAZE"
+MATCHING_KNN = "KNN"
+MATCHING_NORM_HAMMING = "NORM_HAMMING"
 
+_DEFAULT_FEATURE_CONFIG = {
+    'detector': DETECTOR_SIFT,
+    'descriptor': DESCRIPTOR_SIFT
+}
 
-def get_good_matches(des_0, des_1, match_method='KNN',
-                     flann_idx_kdtree=2, flann_trees=5, flann_checks=50, match_threshold=0.75):
-    if match_method == 'KNN':
-        flann = cv2.FlannBasedMatcher(dict(algorithm=flann_idx_kdtree, 
-                                           trees=flann_trees), dict(checks=flann_checks))
-        matches = flann.knnMatch(des_0, des_1, k=2)
-        good_matches = []
-        for m, n in matches:
-            if m.distance < match_threshold * n.distance:
-                good_matches.append(m)
-    elif match_method == 'NORM_HAMMING':
-        bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-        good_matches = bf.match(des_0, des_1)
-        good_matches = sorted(good_matches, key=lambda x: x.distance)
-    return good_matches
+_DEFAULT_MATCHING_CONFIG = {
+    'method': MATCHING_KNN,
+    'flann_idx_kdtree': 2,
+    'flann_trees': 5,
+    'flann_checks': 50,
+    'threshold': 0.75
+}
 
+_DEFAULT_ALIGNMENT_CONFIG = {
+    'transform': ALIGN_RIGID,
+    'rans_threshold': 5.0,
+    'border_mode': BORDER_REPLICATE_BLUR,
+    'border_value': (0, 0, 0, 0),
+    'border_blur': 50
+}
 
-def detect_and_compute(img_0, img_1, detector='SIFT', descriptor='SIFT',
-                       match_method='KNN', flann_idx_kdtree=2, flann_trees=5,
-                       flann_checks=50, match_threshold=0.75):
-    img_bw_0, img_bw_1 = img_bw_8bit(img_0), img_bw_8bit(img_1)
-    if detector == 'SIFT':
-        detector = cv2.SIFT_create()
-    elif detector == 'ORB':
-        detector = cv2.ORB_create()
-    elif detector == 'SURF':
-        detector = cv2.FastFeatureDetector_create()
-    elif detector == 'AKAZE':
-        detector = cv2.AKAZE_create()
-    else:
-        raise InvalidOptionError("detector: " + detector)
-    if descriptor == 'SIFT':
-        descriptor = cv2.SIFT_create()
-    elif descriptor == 'ORB':
-        descriptor = cv2.ORB_create()
-    elif descriptor == 'AKAZE':
-        descriptor = cv2.AKAZE_create()
-    else:
-        raise InvalidOptionError("descriptor", descriptor)
-    if detector == descriptor and (detector == 'SIFT' or detector == 'AKAZE'):
-        kp_0, des_0 = detector.detectAndCompute(img_bw_0, None)
-        kp_1, des_1 = detector.detectAndCompute(img_bw_1, None)
-    else:
-        kp_0, des_0 = descriptor.compute(img_bw_0, detector.detect(img_bw_0, None))
-        kp_1, des_1 = descriptor.compute(img_bw_1, detector.detect(img_bw_1, None))
-    good_matches = get_good_matches(des_0, des_1, match_method,
-                     flann_idx_kdtree, flann_trees, flann_checks, match_threshold)
-    return kp_0, kp_1, good_matches
+_DEFAULT_PLOT_CONFIG = {
+    'enabled': False,
+    'path': ''
+}
 
-
-def find_transform(src_pts, dst_pts, transform=ALIGN_RIGID, rans_threshold=5.0):
-    if transform == ALIGN_HOMOGRAPHY:
-        M, msk = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, rans_threshold)
-    elif transform == ALIGN_RIGID:
-        M, msk = cv2.estimateAffinePartial2D(src_pts, dst_pts, method=cv2.RANSAC,
-                                             ransacReprojThreshold=rans_threshold)
-    else:
-        raise InvalidOptionError("transform", transform)
-    return M, msk
-
-
-cv2_border_mode_map = {
+_cv2_border_mode_map = {
     BORDER_CONSTANT: cv2.BORDER_CONSTANT,
     BORDER_REPLICATE: cv2.BORDER_REPLICATE,
     BORDER_REPLICATE_BLUR: cv2.BORDER_REPLICATE
 }
 
+_VALID_DETECTORS = {DETECTOR_SIFT, DETECTOR_ORB, DETECTOR_SURF, DETECTOR_AKAZE}
+_VALID_DESCRIPTORS = {DESCRIPTOR_SIFT, DESCRIPTOR_ORB, DESCRIPTOR_AKAZE}
+_VALID_MATCHING_METHODS = {MATCHING_KNN, MATCHING_NORM_HAMMING}
+_VALID_TRANSFORMS = {ALIGN_HOMOGRAPHY, ALIGN_RIGID}
+_VALID_BORDER_MODES = {BORDER_CONSTANT, BORDER_REPLICATE, BORDER_REPLICATE_BLUR}
 
-def align_images(img_1, img_0, detector='SIFT', descriptor='SIFT',
-                 match_method='KNN', flann_idx_kdtree=2, flann_trees=5,
-                 flann_checks=50, match_threshold=0.75,
-                 transform=ALIGN_RIGID, rans_threshold=5.0,
-                 border_mode=BORDER_REPLICATE_BLUR, border_value=(0, 0, 0, 0), border_blur=50,
-                 plot_matches=False, plot_path='',
-                 message_callback=None, matches_message_callback=None,
-                 align_message_callback=None, blur_message_callback=None):
+def get_good_matches(des_0, des_1, matching_config=None):
+    if matching_config is None:
+        matching_config = _DEFAULT_MATCHING_CONFIG
+    
+    if matching_config['method'] == MATCHING_KNN:
+        flann = cv2.FlannBasedMatcher(
+            dict(algorithm=matching_config['flann_idx_kdtree'], trees=matching_config['flann_trees']), 
+            dict(checks=matching_config['flann_checks']))
+        matches = flann.knnMatch(des_0, des_1, k=2)
+        good_matches = [m for m, n in matches if m.distance < matching_config['threshold'] * n.distance]
+    elif matching_config['method'] == MATCHING_NORM_HAMMING:
+        bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+        good_matches = sorted(bf.match(des_0, des_1), key=lambda x: x.distance)
+    return good_matches
+
+def detect_and_compute(img_0, img_1, feature_config=None, matching_config=None):
+    if feature_config is None:
+        feature_config = _DEFAULT_FEATURE_CONFIG
+    if matching_config is None:
+        matching_config = _DEFAULT_MATCHING_CONFIG
+    
+    img_bw_0, img_bw_1 = img_bw_8bit(img_0), img_bw_8bit(img_1)
+    
+    detector_map = {
+        DETECTOR_SIFT: cv2.SIFT_create,
+        DETECTOR_ORB: cv2.ORB_create,
+        DETECTOR_SURF: cv2.FastFeatureDetector_create,
+        DETECTOR_AKAZE: cv2.AKAZE_create
+    }
+    
+    descriptor_map = {
+        DESCRIPTOR_SIFT: cv2.SIFT_create,
+        DESCRIPTOR_ORB: cv2.ORB_create,
+        DESCRIPTOR_AKAZE: cv2.AKAZE_create
+    }
+    
+    detector = detector_map[feature_config['detector']]()
+    descriptor = descriptor_map[feature_config['descriptor']]()
+    
+    if feature_config['detector'] == feature_config['descriptor'] and feature_config['detector'] in {DETECTOR_SIFT, DETECTOR_AKAZE}:
+        kp_0, des_0 = detector.detectAndCompute(img_bw_0, None)
+        kp_1, des_1 = detector.detectAndCompute(img_bw_1, None)
+    else:
+        kp_0, des_0 = descriptor.compute(img_bw_0, detector.detect(img_bw_0, None))
+        kp_1, des_1 = descriptor.compute(img_bw_1, detector.detect(img_bw_1, None))
+    
+    return kp_0, kp_1, get_good_matches(des_0, des_1, matching_config)
+
+def find_transform(src_pts, dst_pts, transform=ALIGN_RIGID, rans_threshold=5.0):
+    if transform == ALIGN_HOMOGRAPHY:
+        return cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, rans_threshold)
+    elif transform == ALIGN_RIGID:
+        return cv2.estimateAffinePartial2D(src_pts, dst_pts, method=cv2.RANSAC, ransacReprojThreshold=rans_threshold)
+    raise InvalidOptionError("transform", transform)
+
+def align_images(img_1, img_0, feature_config=None, matching_config=None, alignment_config=None, plot_config=None, callbacks=None):
+    feature_config = {**_DEFAULT_FEATURE_CONFIG, **(feature_config or {})}
+    matching_config = {**_DEFAULT_MATCHING_CONFIG, **(matching_config or {})}
+    alignment_config = {**_DEFAULT_ALIGNMENT_CONFIG, **(alignment_config or {})}
+    plot_config = {**_DEFAULT_PLOT_CONFIG, **(plot_config or {})}
+    
     try:
-        cv2_border_mode = cv2_border_mode_map[border_mode]
+        cv2_border_mode = _cv2_border_mode_map[alignment_config['border_mode']]
     except KeyError:
-        raise InvalidOptionError("border_mode", border_mode)
-    min_matches = 4 if transform == ALIGN_HOMOGRAPHY else 3
-    metadata = get_img_metadata(img_1)
-    validate_image(img_0, *metadata)
-    if message_callback:
-        message_callback()
-    kp_0, kp_1, good_matches = detect_and_compute(img_0, img_1, detector, descriptor,
-                 match_method, flann_idx_kdtree, flann_trees,
-                 flann_checks, match_threshold)
+        raise InvalidOptionError("border_mode", alignment_config['border_mode'])
+    
+    min_matches = 4 if alignment_config['transform'] == ALIGN_HOMOGRAPHY else 3
+    validate_image(img_0, *get_img_metadata(img_1))
+    
+    if callbacks and 'message' in callbacks:
+        callbacks['message']()
+    
+    kp_0, kp_1, good_matches = detect_and_compute(img_0, img_1, feature_config, matching_config)
     n_good_matches = len(good_matches)
-    if matches_message_callback:
-        matches_message_callback(n_good_matches)
+    
+    if callbacks and 'matches_message' in callbacks:
+        callbacks['matches_message'](n_good_matches)
+    
     img_warp = None
     if n_good_matches >= min_matches:
         src_pts = np.float32([kp_0[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
         dst_pts = np.float32([kp_1[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
-        M, msk = find_transform(src_pts, dst_pts, transform, rans_threshold)
+        M, msk = find_transform(src_pts, dst_pts, alignment_config['transform'], alignment_config['rans_threshold'])
         h, w = img_0.shape[:2]
-        # may be useful for future applications
-        # pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0]]).reshape(-1, 1 ,2)
-        if align_message_callback:
-            align_message_callback()
-        if transform == ALIGN_HOMOGRAPHY:
-            # may be useful for future applications
-            # dst = cv2.perspectiveTransform(pts, M)
+        
+        if callbacks and 'align_message' in callbacks:
+            callbacks['align_message']()
+        if alignment_config['transform'] == ALIGN_HOMOGRAPHY:
             img_warp = cv2.warpPerspective(img_0, M, (w, h),
-                                           borderMode=cv2_border_mode,
-                                           borderValue=border_value)
-            if border_mode == BORDER_REPLICATE_BLUR:
-                mask = cv2.warpPerspective(np.ones_like(img_0, dtype=np.uint8),
-                                           M, (w, h), borderMode=cv2.BORDER_CONSTANT,
-                                           borderValue=0)
-        elif transform == ALIGN_RIGID:
-            # may be useful for future applications
-            # dst = cv2.transform(pts, M)
+                                           borderMode=cv2_border_mode, borderValue=alignment_config['border_value'])
+            if alignment_config['border_mode'] == BORDER_REPLICATE_BLUR:
+                mask = cv2.warpPerspective(np.ones_like(img_0, dtype=np.uint8), M, (w, h),
+                                           borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+        elif alignment_config['transform'] == ALIGN_RIGID:
             img_warp = cv2.warpAffine(img_0, M, (img_0.shape[1], img_0.shape[0]),
-                                      borderMode=cv2_border_mode,
-                                      borderValue=border_value)
-            if border_mode == BORDER_REPLICATE_BLUR:
+                                      borderMode=cv2_border_mode, borderValue=alignment_config['border_value'])
+            if alignment_config['border_mode'] == BORDER_REPLICATE_BLUR:
                 mask = cv2.warpAffine(np.ones_like(img_0, dtype=np.uint8), M, (w, h),
                                       borderMode=cv2.BORDER_CONSTANT, borderValue=0)
-        if border_mode == BORDER_REPLICATE_BLUR:
-            if blur_message_callback:
-                blur_message_callback()
+        if alignment_config['border_mode'] == BORDER_REPLICATE_BLUR:
+            if callbacks and 'blur_message' in callbacks:
+                callbacks['blur_message']()
             mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-            blurred_warp = cv2.GaussianBlur(img_warp, (21, 21), sigmaX=border_blur)
+            blurred_warp = cv2.GaussianBlur(img_warp, (21, 21), sigmaX=alignment_config['border_blur'])
             img_warp[mask == 0] = blurred_warp[mask == 0]
-        if plot_matches:
+        if plot_config['enabled']:
             matches_mask = msk.ravel().tolist()
-            draw_params = dict(matchColor=(0, 255, 0), singlePointColor=None,
-                               matchesMask=matches_mask, flags=2)
-            img_match = cv2.cvtColor(cv2.drawMatches(img_8bit(img_0), kp_0, img_8bit(img_1), kp_1, good_matches,
-                                                     None, **draw_params), cv2.COLOR_BGR2RGB)
+            img_match = cv2.cvtColor(cv2.drawMatches(img_8bit(img_0), kp_0, img_8bit(img_1), kp_1, good_matches, None, 
+                matchColor=(0, 255, 0), singlePointColor=None, matchesMask=matches_mask, flags=2), cv2.COLOR_BGR2RGB)
             plt.figure(figsize=(10, 5))
             plt.imshow(img_match, 'gray')
-            plt.savefig(plot_path)
+            plt.savefig(plot_config['path'])
+    
     return n_good_matches, img_warp
 
-
 class AlignFrames:
-    def __init__(self, detector='SIFT', descriptor='SIFT', match_method='KNN', flann_idx_kdtree=2,
-                 flann_trees=5, flann_checks=50, match_threshold=0.75, transform=ALIGN_RIGID,
-                 rans_threshold=5.0, border_mode=BORDER_REPLICATE_BLUR, border_value=(0, 0, 0, 0),
-                 border_blur=50, plot_matches=False):
-        self.detector = detector
-        self.descriptor = descriptor
-        self.match_method = match_method
-        self.flann_idx_kdtree = flann_idx_kdtree
-        self.flann_trees = flann_trees
-        self.flann_checks = flann_checks
-        self.match_threshold = match_threshold
-        self.transform = transform
-        self.min_matches = 4 if self.transform == ALIGN_HOMOGRAPHY else 3
-        self.rans_threshold = rans_threshold
-        self.border_mode = border_mode
-        self.border_blur = border_blur
-        self.border_value = border_value
-        self.plot_matches = plot_matches
+    def __init__(self, feature_config=None, matching_config=None, alignment_config=None, plot_config=None):
+        self.feature_config = {**_DEFAULT_FEATURE_CONFIG, **(feature_config or {})}
+        self.matching_config = {**_DEFAULT_MATCHING_CONFIG, **(matching_config or {})}
+        self.alignment_config = {**_DEFAULT_ALIGNMENT_CONFIG, **(alignment_config or {})}
+        self.plot_config = {**_DEFAULT_PLOT_CONFIG, **(plot_config or {})}
+        self.min_matches = 4 if self.alignment_config['transform'] == ALIGN_HOMOGRAPHY else 3
 
     def run_frame(self, idx, ref_idx, img_0):
         if idx == self.process.ref_idx:
@@ -178,21 +189,27 @@ class AlignFrames:
         return self.align_images(idx, img_ref, img_0)
 
     def align_images(self, idx, img_1, img_0):
-        n_good_matches, img = align_images(img_1, img_0,
-                     self.detector, self.descriptor,
-                     self.match_method, self.flann_idx_kdtree, self.flann_trees,
-                     self.flann_checks, self.match_threshold,
-                     self.transform, self.rans_threshold,
-                     self.border_mode, self.border_value, self.border_blur,
-                     self.plot_matches,
-                     self.process.plot_path + "/" + self.process.name + "-matches-{:04d}.pdf".format(idx),
-                     message_callback=lambda: self.process.sub_message_r(': find matches'),
-                     matches_message_callback=lambda n_good_matches: self.process.sub_message_r(": matches: {}".format(n_good_matches)),
-                     align_message_callback=lambda: self.process.sub_message_r(': align images'),
-                     blur_message_callback=lambda: self.process.sub_message_r(': blur borders'))
+        current_plot_config = {
+            'enabled': self.plot_config['enabled'],
+            'path': f"{self.process.plot_path}/{self.process.name}-matches-{idx:04d}.pdf"
+        }
+        callbacks = {
+            'message': lambda: self.process.sub_message_r(': find matches'),
+            'matches_message': lambda n: self.process.sub_message_r(f": matches: {n}"),
+            'align_message': lambda: self.process.sub_message_r(': align images'),
+            'blur_message': lambda: self.process.sub_message_r(': blur borders')
+        }
+        n_good_matches, img = align_images(
+            img_1, img_0,
+            feature_config=self.feature_config,
+            matching_config=self.matching_config,
+            alignment_config=self.alignment_config,
+            plot_config=current_plot_config,
+            callbacks=callbacks
+        )
         self.n_matches[idx] = n_good_matches
         if n_good_matches < self.min_matches:
-            self.process.sub_message(": image not aligned, too few matches found: {}".format(n_good_matches), level=logging.CRITICAL)
+            self.process.sub_message(f": image not aligned, too few matches found: {n_good_matches}", level=logging.CRITICAL)
             raise AlignmentError(idx, f"too few matches found: {n_good_matches} < {self.min_matches}")
         return img
 
@@ -206,20 +223,14 @@ class AlignFrames:
         no_ref = (x != self.process.ref_idx + 1)
         x = x[no_ref]
         y = self.n_matches[no_ref]
-        if self.process.ref_idx == 0:
-            y_max = y[1]
-        elif self.process.ref_idx == len(y) - 1:
-            y_max = y[-1]
-        else:
-            y_max = (y[self.process.ref_idx - 1] + y[self.process.ref_idx]) / 2
-        plt.plot([self.process.ref_idx + 1, self.process.ref_idx + 1], [0, y_max],
-                 color='cornflowerblue', linestyle='--', label='reference frame')
-        plt.plot([x[0], x[-1]], [self.min_matches, self.min_matches], color='lightgray',
-                 linestyle='--', label='min. matches')
+        y_max = y[1] if self.process.ref_idx == 0 else y[-1] if self.process.ref_idx == len(y) - 1 else (y[self.process.ref_idx - 1] + y[self.process.ref_idx]) / 2
+        
+        plt.plot([self.process.ref_idx + 1, self.process.ref_idx + 1], [0, y_max], color='cornflowerblue', linestyle='--', label='reference frame')
+        plt.plot([x[0], x[-1]], [self.min_matches, self.min_matches], color='lightgray', linestyle='--', label='min. matches')
         plt.plot(x, y, color='navy', label='matches')
         plt.xlabel('frame')
         plt.ylabel('# of matches')
         plt.legend()
         plt.ylim(0)
         plt.xlim(x[0], x[-1])
-        save_plot(self.process.plot_path + "/" + self.process.name + "-matches.pdf")
+        save_plot(f"{self.process.plot_path}/{self.process.name}-matches.pdf")

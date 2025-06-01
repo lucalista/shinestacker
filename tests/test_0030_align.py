@@ -7,7 +7,7 @@ def test_jpg():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg")
         job.add_action(Actions("align-jpg", output_path="output/img-jpg-align",
-                               actions=[AlignFrames(plot_matches=True)]))
+                               actions=[AlignFrames(plot_config={'enabled': True})]))
         job.run()
     except Exception:
         assert False
@@ -17,7 +17,7 @@ def test_tif():
     try:
         job = StackJob("job", "./", input_path="input/img-tif")
         job.add_action(Actions("align-tif", output_path="output/img-tif-align",
-                               actions=[AlignFrames(plot_matches=True)]))
+                               actions=[AlignFrames(plot_config={'enabled': True})]))
         job.run()
     except Exception:
         assert False
