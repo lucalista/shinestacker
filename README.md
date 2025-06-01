@@ -82,7 +82,7 @@ Arguments for the constructor of ```Actions``` are for the :
 job.add_action(Actions("align", actions=[AlignFrames(*options)])
 ```
 Arguments for the constructor ```AlignFrames``` of are:
-* ```feature_config``` (optional, default: ```None```): a dictionary specifying the following parameters:
+* ```feature_config``` (optional, default: ```None```): a dictionary specifying the following parameters, with the corresponding default values:
 ```python
 {
     'detector': DETECTOR_SIFT,
