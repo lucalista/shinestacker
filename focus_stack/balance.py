@@ -118,7 +118,7 @@ class LinearMap(CorrectionMap):
 
 
 class Correction:
-    def __init__(self, channels, mask_size=None, intensity_interval=None, img_scale=1, corr_map=LINEAR, plot_histograms=False):
+    def __init__(self, channels, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=LINEAR, plot_histograms=False):
         self.mask_size = mask_size
         self.intensity_interval = intensity_interval
         self.plot_histograms = plot_histograms
@@ -184,7 +184,7 @@ class Correction:
 
 
 class LumiCorrection(Correction):
-    def __init__(self, mask_size=None, intensity_interval=None, img_scale=1, corr_map=LINEAR, plot_histograms=False):
+    def __init__(self, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=LINEAR, plot_histograms=False):
         Correction.__init__(self, 1, mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
 
     def get_hist(self, image, idx):
@@ -217,7 +217,7 @@ class LumiCorrection(Correction):
 
 
 class RGBCorrection(Correction):
-    def __init__(self, mask_size=None, intensity_interval=None, img_scale=1, corr_map=LINEAR, plot_histograms=False):
+    def __init__(self, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=LINEAR, plot_histograms=False):
         Correction.__init__(self, 3, mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
 
     def get_hist(self, image, idx):
@@ -249,7 +249,7 @@ class RGBCorrection(Correction):
 
 
 class Ch2Correction(Correction):
-    def __init__(self, mask_size=None, intensity_interval=None, img_scale=1, corr_map=LINEAR, plot_histograms=False):
+    def __init__(self, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=LINEAR, plot_histograms=False):
         Correction.__init__(self, 2, mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
 
     def preprocess(self, image):
@@ -285,7 +285,7 @@ class Ch2Correction(Correction):
 
 
 class SVCorrection(Ch2Correction):
-    def __init__(self, mask_size=None, intensity_interval=None, img_scale=1, corr_map=LINEAR, plot_histograms=False):
+    def __init__(self, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=LINEAR, plot_histograms=False):
         Ch2Correction.__init__(self, mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
         self.labels = ("H", "S", "V")
         self.colors = ("hotpink", "orange", "navy")
@@ -298,7 +298,7 @@ class SVCorrection(Ch2Correction):
 
 
 class LSCorrection(Ch2Correction):
-    def __init__(self, mask_size=None, intensity_interval=None, img_scale=1, corr_map=LINEAR, plot_histograms=False):
+    def __init__(self, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=LINEAR, plot_histograms=False):
         Ch2Correction.__init__(self, mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
         self.labels = ("H", "L", "S")
         self.colors = ("hotpink", "navy", "orange")
