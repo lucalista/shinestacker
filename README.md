@@ -57,7 +57,7 @@ The following python modules:
 * tifffile
 * imagecodecs
 * psdtags
-* 
+
 ## Installation
 You can clone the pagkage from GitHub:
 
