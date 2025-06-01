@@ -1,7 +1,5 @@
 # Focus Stacking Processing Framework
 
-![Demo](img/flies.gif) ![Result](img/flies_stack.jpg)
-
 ## Quick Start
 ```python
 from focus_stack import *
@@ -12,6 +10,7 @@ job.run()
 ```
 
 <img src='img/flies.gif' width="400">  <img src='img/flies_stack.jpg' width="400">
+
 
 ## Usage example
 
