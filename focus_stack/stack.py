@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import os
 from termcolor import colored
-from .utils import copy_exif
+from .exif import copy_exif
 from focus_stack.utils import read_img, write_img
 from focus_stack.stack_framework import FrameDirectory, JobBase, ActionList
 from focus_stack.exceptions import InvalidOptionError, ImageLoadError

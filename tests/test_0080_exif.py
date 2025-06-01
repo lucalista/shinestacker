@@ -4,7 +4,7 @@ import os
 import logging
 from PIL import Image
 from PIL.ExifTags import TAGS
-from focus_stack.utils import get_exif, copy_exif, print_exif
+from focus_stack.exif import get_exif, copy_exif, print_exif
 from focus_stack.logging import setup_logging
 
 

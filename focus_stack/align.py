@@ -183,7 +183,7 @@ class AlignFrames:
             feature_config=self.feature_config,
             matching_config=self.matching_config,
             alignment_config=self.alignment_config,
-            plot_path= f"{self.process.plot_path}/{self.process.name}-matches-{idx:04d}.pdf" if  self.plot_histograms else None,
+            plot_path=f"{self.process.plot_path}/{self.process.name}-matches-{idx:04d}.pdf" if self.plot_histograms else None,
             callbacks=callbacks
         )
         self.n_matches[idx] = n_good_matches
