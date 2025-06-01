@@ -275,7 +275,7 @@ job.add_action(Actions("align", actions=[MaskNoise(),
 Arguments for the constructor of ```NoiseDetection``` are:
 * ```noise_mask``` (optional, default: ```noise-map/hot-rgb.png```): filename of the noise mask
 *  ```kernel_size``` (optional, default: 3): blur size use to extract noisy pixels
-*  ```method``` (optional, default: ```MEAN```): possible values: ```MEAN```, ```MEDIAN```. Use mean or median of neighborhood pixels to replace a noisy pixel.
+*  ```method``` (optional, default: ```INTERPOLATE_MEAN```): possible values: ```INTERPOLATE_MEAN```, ```INTERPOLATE_MEDIAN```. Interpolate using mean or median of neighborhood pixels to replace a noisy pixel.
 
 ### Credits:
 

@@ -9,6 +9,13 @@ import os
 import errno
 
 
+_DEFAULT_NOISE_MAP_FILENAME = "hot_pixels.png"
+INTERPOLATE_MEAN = 'MEAN'
+INTERPOLATE_MEDIAN = 'MEDIAN'
+
+_VALID_INTERPOLATE = {INTERPOLATE_MEAN, INTERPOLATE_MEDIAN}
+
+
 def mean_image(file_paths, message_callback=None, progress_callback=None):
     mean_img = None
     for path in file_paths:
@@ -32,12 +39,9 @@ def mean_image(file_paths, message_callback=None, progress_callback=None):
     return (mean_img / len(file_paths)).astype(np.uint8)
 
 
-DEFAULT_NOISE_MAP_FILENAME = "hot_pixels.png"
-
-
 class NoiseDetection(FrameMultiDirectory, JobBase):
     def __init__(self, name="noise-map", input_path=None, output_path=None, working_path=None, plot_path='plots',
-                 channel_thresholds=(13, 13, 13), blur_size=5, file_name=DEFAULT_NOISE_MAP_FILENAME):
+                 channel_thresholds=(13, 13, 13), blur_size=5, file_name=_DEFAULT_NOISE_MAP_FILENAME):
         FrameMultiDirectory.__init__(self, name, input_path, output_path, working_path, plot_path, 1, False)
         JobBase.__init__(self, name)
         self.channel_thresholds = channel_thresholds
@@ -84,12 +88,12 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         save_plot(self.plot_path + "/" + self.name + "-hot-pixels.pdf")
 
 
-MEAN = 'MEAN'
-MEDIAN = 'MEDIAN'
+
 
 
 class MaskNoise:
-    def __init__(self, noise_mask="noise-map/" + DEFAULT_NOISE_MAP_FILENAME, kernel_size=3, method=MEAN):
+    def __init__(self, noise_mask="noise-map/" + _DEFAULT_NOISE_MAP_FILENAME, kernel_size=3,
+                 method=INTERPOLATE_MEAN):
         self.noise_mask = noise_mask
         self.kernel_size = kernel_size
         self.ks2 = self.kernel_size // 2
@@ -124,8 +128,8 @@ class MaskNoise:
             ]
             valid_pixels = neighborhood[neighborhood != 0]
             if len(valid_pixels) > 0:
-                if self.method == MEAN:
+                if self.method == INTERPOLATE_MEAN:
                     corrected[y, x] = np.mean(valid_pixels)
-                elif self.method == MEDIAN:
+                elif self.method == INTERPOLATE_MEDIAN:
                     corrected[y, x] = np.median(valid_pixels)
         return corrected
