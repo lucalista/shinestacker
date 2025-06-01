@@ -42,11 +42,6 @@ _DEFAULT_ALIGNMENT_CONFIG = {
     'border_blur': 50
 }
 
-_DEFAULT_PLOT_CONFIG = {
-    'enabled': False,
-    'path': ''
-}
-
 _cv2_border_mode_map = {
     BORDER_CONSTANT: cv2.BORDER_CONSTANT,
     BORDER_REPLICATE: cv2.BORDER_REPLICATE,
@@ -108,11 +103,10 @@ def find_transform(src_pts, dst_pts, transform=ALIGN_RIGID, rans_threshold=5.0):
     raise InvalidOptionError("transform", transform)
 
 
-def align_images(img_1, img_0, feature_config=None, matching_config=None, alignment_config=None, plot_config=None, callbacks=None):
+def align_images(img_1, img_0, feature_config=None, matching_config=None, alignment_config=None, plot_path=None, callbacks=None):
     feature_config = {**_DEFAULT_FEATURE_CONFIG, **(feature_config or {})}
     matching_config = {**_DEFAULT_MATCHING_CONFIG, **(matching_config or {})}
     alignment_config = {**_DEFAULT_ALIGNMENT_CONFIG, **(alignment_config or {})}
-    plot_config = {**_DEFAULT_PLOT_CONFIG, **(plot_config or {})}
     try:
         cv2_border_mode = _cv2_border_mode_map[alignment_config['border_mode']]
     except KeyError:
@@ -151,7 +145,7 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
             mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
             blurred_warp = cv2.GaussianBlur(img_warp, (21, 21), sigmaX=alignment_config['border_blur'])
             img_warp[mask == 0] = blurred_warp[mask == 0]
-        if plot_config['enabled']:
+        if plot_path is not None:
             matches_mask = msk.ravel().tolist()
             img_match = cv2.cvtColor(cv2.drawMatches(img_8bit(img_0), kp_0, img_8bit(img_1),
                                                      kp_1, good_matches, None, matchColor=(0, 255, 0),
@@ -159,17 +153,17 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
                                                      flags=2), cv2.COLOR_BGR2RGB)
             plt.figure(figsize=(10, 5))
             plt.imshow(img_match, 'gray')
-            plt.savefig(plot_config['path'])
+            plt.savefig(plot_path)
     return n_good_matches, img_warp
 
 
 class AlignFrames:
-    def __init__(self, feature_config=None, matching_config=None, alignment_config=None, plot_config=None):
+    def __init__(self, feature_config=None, matching_config=None, alignment_config=None, plot_histograms=False):
         self.feature_config = {**_DEFAULT_FEATURE_CONFIG, **(feature_config or {})}
         self.matching_config = {**_DEFAULT_MATCHING_CONFIG, **(matching_config or {})}
         self.alignment_config = {**_DEFAULT_ALIGNMENT_CONFIG, **(alignment_config or {})}
-        self.plot_config = {**_DEFAULT_PLOT_CONFIG, **(plot_config or {})}
         self.min_matches = 4 if self.alignment_config['transform'] == ALIGN_HOMOGRAPHY else 3
+        self.plot_histograms = plot_histograms
 
     def run_frame(self, idx, ref_idx, img_0):
         if idx == self.process.ref_idx:
@@ -178,10 +172,6 @@ class AlignFrames:
         return self.align_images(idx, img_ref, img_0)
 
     def align_images(self, idx, img_1, img_0):
-        current_plot_config = {
-            'enabled': self.plot_config['enabled'],
-            'path': f"{self.process.plot_path}/{self.process.name}-matches-{idx:04d}.pdf"
-        }
         callbacks = {
             'message': lambda: self.process.sub_message_r(': find matches'),
             'matches_message': lambda n: self.process.sub_message_r(f": matches: {n}"),
@@ -193,7 +183,7 @@ class AlignFrames:
             feature_config=self.feature_config,
             matching_config=self.matching_config,
             alignment_config=self.alignment_config,
-            plot_config=current_plot_config,
+            plot_path= f"{self.process.plot_path}/{self.process.name}-matches-{idx:04d}.pdf" if  self.plot_histograms else None,
             callbacks=callbacks
         )
         self.n_matches[idx] = n_good_matches

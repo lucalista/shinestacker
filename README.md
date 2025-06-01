@@ -139,17 +139,7 @@ Arguments for the constructor ```AlignFrames``` of are:
   * ```BORDER_REPLICATE_BLUR``` (default): same as above, but the border is blurred. The amount of blurring is specified by the parameter ```border_blur```.
 * ```border_value``` (optional, default: ```(0, 0, 0, 0)```): border value. See [Adding borders to your images](https://docs.opencv.org/3.4/dc/da3/tutorial_copyMakeBorder.html) for more details.
 * ```border_blur``` (optional, default: ```50```): amount of border blurring, in pixels. Only applied if ```border_mode``` is set to ```BORDER_REPLICATE_BLUR```, which is the default option.
-
-
-* ```plot_config``` (optional, default; ```None```): a dictionary specifying the following parameters, with the corresponding default values:
-```python
-{
-    'enabled': False,
-    'path': ''
-}
-```
-* ```enabled``` (optional, default: ```False```): if ```True```, for each image the matches identified with respect to the reference image are plotted. May be useful for inspection and debugging.
-* ```path``` (optional, default: ```''```): unused, applied only for internal testing.
+* ```plot_histograms```  (optional, default: ```False```): if ```True```, for each image and for the reference image histograms with pixel content are plotted. May be useful for inspection and debugging.
  
 ### Luminosity and color balance
 
