@@ -4,7 +4,7 @@
 ```python
 from focus_stack import *
 job = StackJob("demo", "/path/to/images", input_path="src")
-job.add_action(AlignFrames())
+job.add_action(Actions("align", actions=[AlignFrames()]))
 job.add_action(FocusStack("result", PyramidStack()))
 job.run()
 ```
