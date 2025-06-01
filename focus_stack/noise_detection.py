@@ -10,11 +10,11 @@ import os
 import errno
         
 
-def mean_image(file_paths, progress_callback=None, message_callback=None, update_message_callback=None):
+def mean_image(file_paths, message_callback=None, progress_callback=None):
     mean_img = None
     for path in file_paths:
-        if update_message_callback:
-            update_message_callback(f"reading frame: {path.split('/')[-1]}")
+        if message_callback:
+            message_callback(path)
         if not os.path.exists(path):
             raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)
         try:
@@ -55,9 +55,8 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         bar = make_tqdm_bar(self.name, len(in_paths))
         mean_img = mean_image(
             file_paths=in_paths,
+            message_callback=lambda path: self.print_message_r(colored(f"reading frame: {path.split('/')[-1]}", "blue")),
             progress_callback=lambda: bar.update(1),
-            message_callback=self.print_message,
-            update_message_callback=lambda msg: self.print_message_r(colored(msg, "blue"))
         )
         bar.close()
         blurred = cv2.GaussianBlur(mean_img, (self.blur_size, self.blur_size), 0)
