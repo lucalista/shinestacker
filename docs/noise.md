@@ -21,15 +21,15 @@ Arguments for the constructor of ```NoiseDetection``` are:
 After the noisy pixel mask has been determined, noisy pixels are then masked adding the action ```MaskNoise``` to the ```Actions``` module:
 
 ```python
-job.add_action(Actions("mask", actions=[MaskNoise(*options)]))
+job.add_action(Actions("mask", [MaskNoise(*options)]))
 ```
 
 Or as preliminary stage to more actions:
 ```python
-job.add_action(Actions("align", actions=[MaskNoise(),
-                                         AlignFrames(),
-                                         BalanceFrames(mask_size=0.9,
-                                         intensity_interval={'min': 150, 'max':65385})]))
+job.add_action(Actions("align", [MaskNoise(),
+                                 AlignFrames(),
+                                 BalanceFrames(mask_size=0.9,
+                                               intensity_interval={'min': 150, 'max':65385})]))
 ```
 
 Arguments for the constructor of ```NoiseDetection``` are:

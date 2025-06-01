@@ -7,7 +7,7 @@
 from focus_stack import *
 
 job = StackJob("demo", "/path/to/images", input_path="src")
-job.add_action(Actions("align", actions=[AlignFrames()]))
+job.add_action(Actions("align", [AlignFrames()]))
 job.add_action(FocusStack("result", PyramidStack()))
 job.run()
 ```
@@ -23,9 +23,9 @@ job.run()
 
 job = StackJob("job", "E:/Focus stacking/My image directory/", input_path="src")
 job.add_action(Actions("align",
-                       actions=[MaskNoise(), Vignetting(), AlignFrames(),
-                                BalanceFrames(mask_size=0.9,
-                                              intensity_interval={'min': 150, 'max': 65385})]))
+                       [MaskNoise(), Vignetting(), AlignFrames(),
+                        BalanceFrames(mask_size=0.9,
+                                      intensity_interval={'min': 150, 'max': 65385})]))
 job.add_action(FocusStackBunch("batches", PyramidStack(), frames=10, overlap=2, denoise=0.8))
 job.add_action(FocusStack("stack", PyramidStack(), postfix='_pyramid', denoise=0.8))
 job.add_action(FocusStack("stack", DepthMapStack(), input_path='batches', postfix='_depthmap', denoise=0.8))

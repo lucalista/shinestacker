@@ -1,7 +1,7 @@
 # Luminosity and color balance
 
 ```python
-job.add_action(Actions("balance", actions=[BalanceFrames(*options)])
+job.add_action(Actions("balance", [BalanceFrames(*options)])
 ```
   
 Arguments for the constructor of ```BalanceFrames``` are:

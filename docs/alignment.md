@@ -1,7 +1,7 @@
 ### Alignment and registration: scale, tanslation and rotation correction, or full perspective correction
 
 ```python
-job.add_action(Actions("align", actions=[AlignFrames(*options)])
+job.add_action(Actions("align", [AlignFrames(*options)])
 ```
 Arguments for the constructor ```AlignFrames``` of are:
 * ```feature_config``` (optional, default: ```None```): a dictionary specifying the following parameters, with the corresponding default values:

@@ -16,7 +16,7 @@ Arguments are:
 The class ```Actions``` runs multiple actions on each of the frames appearing in a path.
 
 ```python
-job.add_action(Actions(name, actions=[...], *options))
+job.add_action(Actions(name, [...], *options))
 ```
 Arguments for the constructor of ```Actions``` are for the :
 * ```name```: the name of the action, used for printout, and possibly for output path

@@ -1,7 +1,7 @@
 # Vignetting correction
 
 ```python
-job.add_action(Actions("vignette", actions=[Vignetting(*options)])
+job.add_action(Actions("vignette", [Vignetting(*options)])
 ```
 
 Applies a radial luminosity correction determined from the mean pixel luminosity, spotting vignetting effect at the image borders. The correction is determined by modeling the mean luminosity as a function of the distance $r$ from the image center with the following asymmetric sigmoid model:
