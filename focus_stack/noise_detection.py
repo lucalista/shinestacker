@@ -88,9 +88,6 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         save_plot(self.plot_path + "/" + self.name + "-hot-pixels.pdf")
 
 
-
-
-
 class MaskNoise:
     def __init__(self, noise_mask="noise-map/" + _DEFAULT_NOISE_MAP_FILENAME, kernel_size=3,
                  method=INTERPOLATE_MEAN):

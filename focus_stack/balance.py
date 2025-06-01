@@ -6,19 +6,22 @@ from scipy.interpolate import interp1d
 from focus_stack.utils import read_img, save_plot
 from focus_stack.exceptions import InvalidOptionError
 
-LINEAR = "LINEAR"
-GAMMA = "GAMMA"
-MATCH_HIST = "MATCH_HIST"
-LUMI = "LUMI"
-RGB = "RGB"
-HSV = "HSV"
-HLS = "HLS"
-default_img_scale = 8
+BALANCE_LINEAR = "LINEAR"
+BALANCE_GAMMA = "GAMMA"
+BALANCE_MATCH_HIST = "MATCH_HIST"
+BALANCE_LUMI = "LUMI"
+BALANCE_RGB = "RGB"
+BALANCE_HSV = "HSV"
+BALANCE_HLS = "HLS"
 
+_DEFAULT_IMG_SCALE = 8
+_DEFAULT_CORR_MAP = BALANCE_LINEAR
+_DEFAULT_CHANNEL = BALANCE_LUMI
 _DEFAULT_INTENSITY_INTERVAL = {
     'min': 0,
     'max': -1
 }
+
 
 class CorrectionMapBase:
     def __init__(self, dtype, ref_hist, intensity_interval=None):
@@ -118,11 +121,11 @@ class LinearMap(CorrectionMap):
 
 
 class Correction:
-    def __init__(self, channels, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=LINEAR, plot_histograms=False):
+    def __init__(self, channels, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=_DEFAULT_CORR_MAP, plot_histograms=False):
         self.mask_size = mask_size
         self.intensity_interval = intensity_interval
         self.plot_histograms = plot_histograms
-        self.img_scale = default_img_scale if img_scale == -1 else img_scale
+        self.img_scale = _DEFAULT_IMG_SCALE if img_scale == -1 else img_scale
         self.corr_map = corr_map
         self.channels = channels
 
@@ -130,11 +133,11 @@ class Correction:
         self.dtype = ref_image.dtype
         self.two_n = 256 if ref_image.dtype == np.uint8 else 65536
         hist = self.get_hist(self.preprocess(ref_image), ref_idx)
-        if self.corr_map == LINEAR:
+        if self.corr_map == BALANCE_LINEAR:
             self.corr_map = LinearMap(self.dtype, hist, self.intensity_interval)
-        elif self.corr_map == GAMMA:
+        elif self.corr_map == BALANCE_GAMMA:
             self.corr_map = GammaMap(self.dtype, hist, self.intensity_interval)
-        elif self.corr_map == MATCH_HIST:
+        elif self.corr_map == BALANCE_MATCH_HIST:
             self.corr_map = MatchHist(self.dtype, hist, self.intensity_interval)
         else:
             raise InvalidOptionError("corr_map", self.corr_map)
@@ -184,7 +187,7 @@ class Correction:
 
 
 class LumiCorrection(Correction):
-    def __init__(self, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=LINEAR, plot_histograms=False):
+    def __init__(self, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=_DEFAULT_CORR_MAP, plot_histograms=False):
         Correction.__init__(self, 1, mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
 
     def get_hist(self, image, idx):
@@ -217,7 +220,7 @@ class LumiCorrection(Correction):
 
 
 class RGBCorrection(Correction):
-    def __init__(self, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=LINEAR, plot_histograms=False):
+    def __init__(self, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=_DEFAULT_CORR_MAP, plot_histograms=False):
         Correction.__init__(self, 3, mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
 
     def get_hist(self, image, idx):
@@ -249,7 +252,7 @@ class RGBCorrection(Correction):
 
 
 class Ch2Correction(Correction):
-    def __init__(self, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=LINEAR, plot_histograms=False):
+    def __init__(self, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=_DEFAULT_CORR_MAP, plot_histograms=False):
         Correction.__init__(self, 2, mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
 
     def preprocess(self, image):
@@ -285,7 +288,7 @@ class Ch2Correction(Correction):
 
 
 class SVCorrection(Ch2Correction):
-    def __init__(self, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=LINEAR, plot_histograms=False):
+    def __init__(self, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=_DEFAULT_CORR_MAP, plot_histograms=False):
         Ch2Correction.__init__(self, mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
         self.labels = ("H", "S", "V")
         self.colors = ("hotpink", "orange", "navy")
@@ -298,7 +301,7 @@ class SVCorrection(Ch2Correction):
 
 
 class LSCorrection(Ch2Correction):
-    def __init__(self, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=LINEAR, plot_histograms=False):
+    def __init__(self, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=_DEFAULT_CORR_MAP, plot_histograms=False):
         Ch2Correction.__init__(self, mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
         self.labels = ("H", "L", "S")
         self.colors = ("hotpink", "navy", "orange")
@@ -311,15 +314,15 @@ class LSCorrection(Ch2Correction):
 
 
 class BalanceFrames:
-    def __init__(self, channel=LUMI, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=LINEAR, plot_histograms=False):
-        img_scale = (1 if corr_map == MATCH_HIST else default_img_scale) if img_scale == -1 else img_scale
-        if channel == LUMI:
+    def __init__(self, channel=_DEFAULT_CHANNEL, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=_DEFAULT_CORR_MAP, plot_histograms=False):
+        img_scale = (1 if corr_map == BALANCE_MATCH_HIST else _DEFAULT_IMG_SCALE) if img_scale == -1 else img_scale
+        if channel == BALANCE_LUMI:
             self.correction = LumiCorrection(mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
-        elif channel == RGB:
+        elif channel == BALANCE_RGB:
             self.correction = RGBCorrection(mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
-        elif channel == HSV:
+        elif channel == BALANCE_HSV:
             self.correction = SVCorrection(mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
-        elif channel == HLS:
+        elif channel == BALANCE_HLS:
             self.correction = LSCorrection(mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
         else:
             raise InvalidOptionError("channel", channel)
