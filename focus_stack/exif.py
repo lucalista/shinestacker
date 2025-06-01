@@ -115,6 +115,40 @@ def get_tiff_dtype_count(value):
     return 2, len(str(value)) + 1  # Default for othre cases (ASCII string)
 
 
+def exif_extra_tags(exif):
+    logger = logging.getLogger(__name__)
+    res_x, res_y = exif.get(RESOLUTIONX), exif.get(RESOLUTIONY)
+    if not (res_x is None or res_y is None):
+        resolution = ((res_x.numerator, res_x.denominator), (res_y.numerator, res_y.denominator))
+    else:
+        resolution = ((720000, 10000), (720000, 10000))
+    res_u = exif.get(RESOLUTIONUNIT)
+    resolutionunit = res_u if res_u is not None else 'inch'
+    sw = exif.get(SOFTWARE)
+    software = sw if sw is not None else "N/A"
+    phint = exif.get(PHOTOMETRICINTERPRETATION)
+    photometric = phint if phint is not None else None
+    extra = []
+    for tag_id in exif:
+        tag, data = TAGS.get(tag_id, tag_id), exif.get(tag_id)
+        if isinstance(data, bytes):
+            try:
+                if tag_id != IMAGERESOURCES and tag_id != INTERCOLORPROFILE:
+                    if tag_id == XMLPACKET:
+                        data = re.sub(b'[^\x20-\x7E]', b'', data)
+                    data = data.decode()
+            except Exception:
+                logger.warning(f"Copy: can't decode EXIF tag {tag:25} [#{tag_id}]")
+                data = '<<< decode error >>>'
+        if isinstance(data, IFDRational):
+            data = (data.numerator, data.denominator)
+        if tag not in NO_COPY_TIFF_TAGS and tag_id not in NO_COPY_TIFF_TAGS_ID:
+            extra.append((tag_id, *get_tiff_dtype_count(data), data, False))
+        else:
+            logger.warning(f"Skip tag {tag:25} [#{tag_id}]")
+    return {'extratags': extra, 'resolution': resolution, 'resolutionunit': resolutionunit, 
+            'software': software, 'photometric': photometric}
+
 def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
     logger = logging.getLogger(__name__)
     ext = in_filename.split(".")[-1]
@@ -151,38 +185,8 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
                     f.write(updated_data)
     elif ext == 'tiff' or ext == 'tif':
         metadata = {"description": "image generated with focusstack package"}
-        extra = []
-        for tag_id in exif:
-            tag, data = TAGS.get(tag_id, tag_id), exif.get(tag_id)
-            if isinstance(data, bytes):
-                try:
-                    if tag_id != IMAGERESOURCES and tag_id != INTERCOLORPROFILE:
-                        if tag_id == XMLPACKET:
-                            data = re.sub(b'[^\x20-\x7E]', b'', data)
-                        data = data.decode()
-                except Exception:
-                    logger.warning(f"Copy: can't decode EXIF tag {tag:25} [#{tag_id}]")
-                    data = '<<< decode error >>>'
-            if isinstance(data, IFDRational):
-                data = (data.numerator, data.denominator)
-            res_x, res_y = exif.get(RESOLUTIONX), exif.get(RESOLUTIONY)
-            if not (res_x is None or res_y is None):
-                resolution = ((res_x.numerator, res_x.denominator), (res_y.numerator, res_y.denominator))
-            else:
-                resolution = ((720000, 10000), (720000, 10000))
-            res_u = exif.get(RESOLUTIONUNIT)
-            resolutionunit = res_u if res_u is not None else 'inch'
-            sw = exif.get(SOFTWARE)
-            software = sw if sw is not None else "N/A"
-            phint = exif.get(PHOTOMETRICINTERPRETATION)
-            photometric = phint if phint is not None else None
-            if tag not in NO_COPY_TIFF_TAGS and tag_id not in NO_COPY_TIFF_TAGS_ID:
-                extra.append((tag_id, *get_tiff_dtype_count(data), data, False))
-            else:
-                logger.info(f"Skip tag {tag:25} [#{tag_id}]")
-        tifffile.imwrite(out_filename, image_new, metadata=metadata, extratags=extra, compression='adobe_deflate',
-                         resolution=resolution, resolutionunit=resolutionunit, software=software,
-                         photometric=photometric)
+        exif_tags = exif_extra_tags(exif)
+        tifffile.imwrite(out_filename, image_new, metadata=metadata, compression='adobe_deflate', **exif_tags)
     elif ext == 'png':
         image_new.save(out_filename, 'PNG', exif=exif, quality=100)
     return exif
