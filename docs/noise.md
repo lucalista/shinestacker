@@ -17,6 +17,7 @@ Arguments for the constructor of ```NoiseDetection``` are:
 * ```channel_thresholds``` (optional, default: ```(13, 13, 13)```): threshold values for noisy pixel detections in the color channels R, G, B, respectively.
 * ```blur_size``` (optional, default: 5): image blur amount for pixel detection.
 * ```file_name``` (optional, default: ```hot```): noise map filename. The noisy pixel map is stored bydefault in the file ```hot-rgb.png```. Noisy pixel maps individyally for the R, G and B channels are also stored in  ```hot-r.png```,  ```hot-g.png``` and  ```hot-b.png```, respectively.
+* ```plot_range``` (optiona, default: (5, 30)): range of the horizontal axis of the plot showing the number of hot pixel as a function of the intensity threshold.
 
 After the noisy pixel mask has been determined, noisy pixels are then masked adding the action ```MaskNoise``` to the ```Actions``` module:
 

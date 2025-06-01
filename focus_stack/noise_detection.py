@@ -41,12 +41,14 @@ def mean_image(file_paths, message_callback=None, progress_callback=None):
 
 class NoiseDetection(FrameMultiDirectory, JobBase):
     def __init__(self, name="noise-map", input_path=None, output_path=None, working_path=None, plot_path='plots',
-                 channel_thresholds=(13, 13, 13), blur_size=5, file_name=_DEFAULT_NOISE_MAP_FILENAME):
+                 channel_thresholds=(13, 13, 13), blur_size=5, file_name=_DEFAULT_NOISE_MAP_FILENAME,
+                 plot_range=(5, 30)):
         FrameMultiDirectory.__init__(self, name, input_path, output_path, working_path, plot_path, 1, False)
         JobBase.__init__(self, name)
         self.channel_thresholds = channel_thresholds
         self.blur_size = blur_size
         self.file_name = file_name
+        self.plot_range = plot_range
 
     def hot_map(self, ch, th):
         return cv2.threshold(ch, th, 255, cv2.THRESH_BINARY)[1]
@@ -72,7 +74,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
             msg.append("{}: {}".format(ch, np.count_nonzero(hot > 0)))
         self.print_message("hot pixels: " + ", ".join(msg))
         cv2.imwrite(self.working_path + '/' + self.output_path + "/" + self.file_name, hot)
-        th_range = range(5, 30)
+        th_range = range(*self.plot_range)
         plt.figure(figsize=(10, 5))
         x = np.array(list(th_range))
         ys = [[np.count_nonzero(self.hot_map(ch, th) > 0) for th in th_range] for ch in channels]
