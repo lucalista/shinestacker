@@ -145,8 +145,8 @@ def exif_extra_tags(exif):
         if tag not in NO_COPY_TIFF_TAGS and tag_id not in NO_COPY_TIFF_TAGS_ID:
             extra.append((tag_id, *get_tiff_dtype_count(data), data, False))
         else:
-            logger.warning(f"Skip tag {tag:25} [#{tag_id}]")
-    return {'extratags': extra, 'resolution': resolution, 'resolutionunit': resolutionunit, 
+            logger.debug(f"Skip tag {tag:25} [#{tag_id}]")
+    return extra, {'resolution': resolution, 'resolutionunit': resolutionunit, 
             'software': software, 'photometric': photometric}
 
 def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
@@ -185,8 +185,9 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
                     f.write(updated_data)
     elif ext == 'tiff' or ext == 'tif':
         metadata = {"description": "image generated with focusstack package"}
-        exif_tags = exif_extra_tags(exif)
-        tifffile.imwrite(out_filename, image_new, metadata=metadata, compression='adobe_deflate', **exif_tags)
+        extra_tags, exif_tags = exif_extra_tags(exif)
+        tifffile.imwrite(out_filename, image_new, metadata=metadata, compression='adobe_deflate', 
+                         extratags=extra_tags, **exif_tags)
     elif ext == 'png':
         image_new.save(out_filename, 'PNG', exif=exif, quality=100)
     return exif

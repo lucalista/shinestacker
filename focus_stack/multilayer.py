@@ -1,9 +1,11 @@
 from focus_stack.stack_framework import FrameMultiDirectory, JobBase
+from focus_stack.exif import exif_extra_tags, get_exif
 from termcolor import colored
 import tifffile
 import numpy as np
 import imagecodecs
 import cv2
+import os
 from psdtags import (
     PsdBlendMode,
     PsdChannel,
@@ -26,11 +28,21 @@ from psdtags import (
     overlay,
 )
 
+EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
+
 
 class MultiLayer(FrameMultiDirectory, JobBase):
-    def __init__(self, name, input_path=None, output_path=None, working_path=None, reverse_order=False):
+    def __init__(self, name, input_path=None, output_path=None, working_path=None, exif_path=None, reverse_order=False):
         FrameMultiDirectory.__init__(self, name, input_path, output_path, working_path, None, 1, reverse_order)
         JobBase.__init__(self, name)
+        self.exif_path = exif_path
+
+    def init(self, job):
+        FrameMultiDirectory.init(self, job)
+        if self.exif_path is None:
+            self.exif_path = job.paths[0]
+        if self.exif_path != '':
+            self.exif_path = self.working_path + "/" + self.exif_path
 
     def run_core(self):
         self.print_message(colored("merging frames in " + self.folder_list_str(), "blue"))
@@ -103,19 +115,26 @@ class MultiLayer(FrameMultiDirectory, JobBase):
                 ),
             ],
         )
+        tiff_tags = {
+            'photometric': 'rgb',
+            'resolution': ((720000, 10000), (720000, 10000)),
+            'resolutionunit': 'inch',
+            'extratags' : [image_source_data.tifftag(maxworkers=4),
+                           (34675, 7, None, imagecodecs.cms_profile('srgb'), True)]
+        }
+        if self.exif_path != '':
+            self.print_message(colored('copying exif data', 'blue'))
+            dirpath, _, fnames = next(os.walk(self.exif_path))
+            fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in EXTENSIONS]
+            exif_filename = self.exif_path + '/' + fnames[0]
+            extra_tags, exif_tags = exif_extra_tags(get_exif(exif_filename))
+            tiff_tags['extratags'] += extra_tags
+            tiff_tags = {**tiff_tags, **exif_tags}
         filename = ".".join(files[-1].split("/")[-1].split(".")[:-1])
         self.print_message(colored("writing multilayer tiff " + self.output_path + '/' + filename + '.tif', "blue"))
         tifffile.imwrite(
             self.working_path + '/' + self.output_path + '/' + filename + '.tif',
             overlay(*((np.concatenate((image, np.expand_dims(transp, axis=-1)), axis=-1), (0, 0)) for image in images),
                     shape=shape),
-            photometric='rgb',
             compression='adobe_deflate',
-            resolution=((720000, 10000), (720000, 10000)),
-            resolutionunit='inch',
-            metadata=None,
-            extratags=[
-                image_source_data.tifftag(maxworkers=4),
-                (34675, 7, None, imagecodecs.cms_profile('srgb'), True),
-            ],
-        )
+            metadata=None, **tiff_tags)
