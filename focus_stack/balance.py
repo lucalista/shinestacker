@@ -6,13 +6,28 @@ from scipy.interpolate import interp1d
 from focus_stack.utils import read_img, save_plot
 from focus_stack.exceptions import InvalidOptionError
 
+LINEAR = "LINEAR"
+GAMMA = "GAMMA"
+MATCH_HIST = "MATCH_HIST"
+LUMI = "LUMI"
+RGB = "RGB"
+HSV = "HSV"
+HLS = "HLS"
+default_img_scale = 8
+
+_DEFAULT_INTENSITY_INTERVAL = {
+    'min': 0,
+    'max': -1
+}
 
 class CorrectionMapBase:
-    def __init__(self, dtype, ref_hist, i_min=0, i_max=-1):
+    def __init__(self, dtype, ref_hist, intensity_interval=None):
+        intensity_interval = {**_DEFAULT_INTENSITY_INTERVAL, **(intensity_interval or {})}
         self.dtype = dtype
         self.two_n = 256 if dtype == np.uint8 else 65536
         self.two_n_1 = self.two_n - 1
         self.id_lut = np.array(list(range(self.two_n)))
+        i_min, i_max = intensity_interval['min'], intensity_interval['max']
         self.i_min = i_min
         self.i_end = i_max + 1 if i_max >= 0 else self.two_n
         self.channels = len(ref_hist)
@@ -41,8 +56,8 @@ class CorrectionMapBase:
 
 
 class MatchHist(CorrectionMapBase):
-    def __init__(self, dtype, ref_hist, i_min=0, i_max=-1):
-        CorrectionMapBase.__init__(self, dtype, ref_hist, i_min, i_max)
+    def __init__(self, dtype, ref_hist, intensity_interval=None):
+        CorrectionMapBase.__init__(self, dtype, ref_hist, intensity_interval)
         self.reference = self.cumsum(ref_hist)
         self.reference_mean = [r.mean() for r in self.reference]
         self.values = [*range(self.two_n)]
@@ -71,8 +86,8 @@ class MatchHist(CorrectionMapBase):
 
 
 class CorrectionMap(CorrectionMapBase):
-    def __init__(self, dtype, ref_hist, i_min=0, i_max=-1):
-        CorrectionMapBase.__init__(self, dtype, ref_hist)
+    def __init__(self, dtype, ref_hist, intensity_interval=None):
+        CorrectionMapBase.__init__(self, dtype, ref_hist, intensity_interval)
         self.reference = [self.mid_val(self.id_lut, h) for h in ref_hist]
 
     def mid_val(self, lut, h):
@@ -80,8 +95,8 @@ class CorrectionMap(CorrectionMapBase):
 
 
 class GammaMap(CorrectionMap):
-    def __init__(self, dtype, ref_hist, i_min=0, i_max=-1):
-        CorrectionMap.__init__(self, dtype, ref_hist, i_min, i_max)
+    def __init__(self, dtype, ref_hist, intensity_interval=None):
+        CorrectionMap.__init__(self, dtype, ref_hist, intensity_interval)
 
     def correction(self, hist):
         return [bisect(lambda x: self.mid_val(self.lut(x), h) - r, 0.1, 5) for h, r in zip(hist, self.reference)]
@@ -92,8 +107,8 @@ class GammaMap(CorrectionMap):
 
 
 class LinearMap(CorrectionMap):
-    def __init__(self, dtype, ref_hist, i_min=0, i_max=-1):
-        CorrectionMap.__init__(self, dtype, ref_hist, i_min, i_max)
+    def __init__(self, dtype, ref_hist, intensity_interval=None):
+        CorrectionMap.__init__(self, dtype, ref_hist, intensity_interval)
 
     def lut(self, correction, reference=None):
         return np.clip(np.arange(0, self.two_n) * correction, 0, self.two_n_1).astype(self.dtype)
@@ -102,16 +117,10 @@ class LinearMap(CorrectionMap):
         return [r / self.mid_val(self.id_lut, h) for h, r in zip(hist, self.reference)]
 
 
-LINEAR = "LINEAR"
-GAMMA = "GAMMA"
-MATCH_HIST = "MATCH_HIST"
-
-
 class Correction:
-    def __init__(self, channels, mask_size=None, i_min=0, i_max=-1, img_scale=1, corr_map=LINEAR, plot_histograms=False):
+    def __init__(self, channels, mask_size=None, intensity_interval=None, img_scale=1, corr_map=LINEAR, plot_histograms=False):
         self.mask_size = mask_size
-        self.i_min = i_min
-        self.i_max = i_max
+        self.intensity_interval = intensity_interval
         self.plot_histograms = plot_histograms
         self.img_scale = default_img_scale if img_scale == -1 else img_scale
         self.corr_map = corr_map
@@ -122,11 +131,11 @@ class Correction:
         self.two_n = 256 if ref_image.dtype == np.uint8 else 65536
         hist = self.get_hist(self.preprocess(ref_image), ref_idx)
         if self.corr_map == LINEAR:
-            self.corr_map = LinearMap(self.dtype, hist, self.i_min, self.i_max)
+            self.corr_map = LinearMap(self.dtype, hist, self.intensity_interval)
         elif self.corr_map == GAMMA:
-            self.corr_map = GammaMap(self.dtype, hist, self.i_min, self.i_max)
+            self.corr_map = GammaMap(self.dtype, hist, self.intensity_interval)
         elif self.corr_map == MATCH_HIST:
-            self.corr_map = MatchHist(self.dtype, hist, self.i_min, self.i_max)
+            self.corr_map = MatchHist(self.dtype, hist, self.intensity_interval)
         else:
             raise InvalidOptionError("corr_map", self.corr_map)
         self.corrections = np.ones((size, self.channels))
@@ -175,8 +184,8 @@ class Correction:
 
 
 class LumiCorrection(Correction):
-    def __init__(self, mask_size=None, i_min=0, i_max=-1, img_scale=1, corr_map=LINEAR, plot_histograms=False):
-        Correction.__init__(self, 1, mask_size, i_min, i_max, img_scale, corr_map, plot_histograms)
+    def __init__(self, mask_size=None, intensity_interval=None, img_scale=1, corr_map=LINEAR, plot_histograms=False):
+        Correction.__init__(self, 1, mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
 
     def get_hist(self, image, idx):
         hist = self.calc_hist_1ch(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY))
@@ -208,8 +217,8 @@ class LumiCorrection(Correction):
 
 
 class RGBCorrection(Correction):
-    def __init__(self, mask_size=None, i_min=0, i_max=-1, img_scale=1, corr_map=LINEAR, plot_histograms=False):
-        Correction.__init__(self, 3, mask_size, i_min, i_max, img_scale, corr_map, plot_histograms)
+    def __init__(self, mask_size=None, intensity_interval=None, img_scale=1, corr_map=LINEAR, plot_histograms=False):
+        Correction.__init__(self, 3, mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
 
     def get_hist(self, image, idx):
         hist = [self.calc_hist_1ch(chan) for chan in cv2.split(image)]
@@ -240,8 +249,8 @@ class RGBCorrection(Correction):
 
 
 class Ch2Correction(Correction):
-    def __init__(self, mask_size=None, i_min=0, i_max=-1, img_scale=1, corr_map=LINEAR, plot_histograms=False):
-        Correction.__init__(self, 2, mask_size, i_min, i_max, img_scale, corr_map, plot_histograms)
+    def __init__(self, mask_size=None, intensity_interval=None, img_scale=1, corr_map=LINEAR, plot_histograms=False):
+        Correction.__init__(self, 2, mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
 
     def preprocess(self, image):
         assert False, 'abstract method'
@@ -276,8 +285,8 @@ class Ch2Correction(Correction):
 
 
 class SVCorrection(Ch2Correction):
-    def __init__(self, mask_size=None, i_min=0, i_max=-1, img_scale=1, corr_map=LINEAR, plot_histograms=False):
-        Ch2Correction.__init__(self, mask_size, i_min, i_max, img_scale, corr_map, plot_histograms)
+    def __init__(self, mask_size=None, intensity_interval=None, img_scale=1, corr_map=LINEAR, plot_histograms=False):
+        Ch2Correction.__init__(self, mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
         self.labels = ("H", "S", "V")
         self.colors = ("hotpink", "orange", "navy")
 
@@ -289,8 +298,8 @@ class SVCorrection(Ch2Correction):
 
 
 class LSCorrection(Ch2Correction):
-    def __init__(self, mask_size=None, i_min=0, i_max=-1, img_scale=1, corr_map=LINEAR, plot_histograms=False):
-        Ch2Correction.__init__(self, mask_size, i_min, i_max, img_scale, corr_map, plot_histograms)
+    def __init__(self, mask_size=None, intensity_interval=None, img_scale=1, corr_map=LINEAR, plot_histograms=False):
+        Ch2Correction.__init__(self, mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
         self.labels = ("H", "L", "S")
         self.colors = ("hotpink", "navy", "orange")
 
@@ -301,24 +310,17 @@ class LSCorrection(Ch2Correction):
         return cv2.cvtColor(image, cv2.COLOR_HLS2BGR)
 
 
-LUMI = "LUMI"
-RGB = "RGB"
-HSV = "HSV"
-HLS = "HLS"
-default_img_scale = 8
-
-
 class BalanceFrames:
-    def __init__(self, channel=LUMI, mask_size=None, i_min=0, i_max=-1, img_scale=-1, corr_map=LINEAR, plot_histograms=False):
+    def __init__(self, channel=LUMI, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=LINEAR, plot_histograms=False):
         img_scale = (1 if corr_map == MATCH_HIST else default_img_scale) if img_scale == -1 else img_scale
         if channel == LUMI:
-            self.correction = LumiCorrection(mask_size, i_min, i_max, img_scale, corr_map, plot_histograms)
+            self.correction = LumiCorrection(mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
         elif channel == RGB:
-            self.correction = RGBCorrection(mask_size, i_min, i_max, img_scale, corr_map, plot_histograms)
+            self.correction = RGBCorrection(mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
         elif channel == HSV:
-            self.correction = SVCorrection(mask_size, i_min, i_max, img_scale, corr_map, plot_histograms)
+            self.correction = SVCorrection(mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
         elif channel == HLS:
-            self.correction = LSCorrection(mask_size, i_min, i_max, img_scale, corr_map, plot_histograms)
+            self.correction = LSCorrection(mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
         else:
             raise InvalidOptionError("channel", channel)
 

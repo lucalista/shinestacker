@@ -61,8 +61,7 @@ _VALID_BORDER_MODES = {BORDER_CONSTANT, BORDER_REPLICATE, BORDER_REPLICATE_BLUR}
 
 
 def get_good_matches(des_0, des_1, matching_config=None):
-    if matching_config is None:
-        matching_config = _DEFAULT_MATCHING_CONFIG
+    matching_config = {**_DEFAULT_MATCHING_CONFIG, **(matching_config or {})}
     if matching_config['method'] == MATCHING_KNN:
         flann = cv2.FlannBasedMatcher(
             dict(algorithm=matching_config['flann_idx_kdtree'], trees=matching_config['flann_trees']),
@@ -76,10 +75,8 @@ def get_good_matches(des_0, des_1, matching_config=None):
 
 
 def detect_and_compute(img_0, img_1, feature_config=None, matching_config=None):
-    if feature_config is None:
-        feature_config = _DEFAULT_FEATURE_CONFIG
-    if matching_config is None:
-        matching_config = _DEFAULT_MATCHING_CONFIG
+    feature_config = {**_DEFAULT_FEATURE_CONFIG, **(feature_config or {})}
+    matching_config = {**_DEFAULT_MATCHING_CONFIG, **(matching_config or {})}
     img_bw_0, img_bw_1 = img_bw_8bit(img_0), img_bw_8bit(img_1)
     detector_map = {
         DETECTOR_SIFT: cv2.SIFT_create,
