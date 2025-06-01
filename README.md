@@ -1,5 +1,7 @@
 # Focus Stacking Processing Framework
 
+<img src='img/flies.gif' width="400">  <img src='img/flies_stack.jpg' width="400">
+
 ## Quick Start
 ```python
 from focus_stack import *
@@ -8,9 +10,6 @@ job.add_action(Actions("align", actions=[AlignFrames()]))
 job.add_action(FocusStack("result", PyramidStack()))
 job.run()
 ```
-
-<img src='img/flies.gif' width="400">  <img src='img/flies_stack.jpg' width="400">
-
 
 ## Usage example
 
@@ -35,7 +34,7 @@ job.run()
 
 ## Documentation
 - [Job creation](docs/job_creation.md)
-- [Processing Pppeline](docs/actions.md)
+- [Processing pipeline](docs/actions.md)
 - [Image alignment](docs/alignment.md)
 - [Color balancing](docs/balancing.md)
 - [Vignetting correction](docs/vignetting.md)
