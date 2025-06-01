@@ -33,8 +33,7 @@ job.run()
 ```
 
 ## Documentation
-- [Job creation](docs/job_creation.md)
-- [Processing pipeline](docs/actions.md)
+- [Job creation and processing pipeline](docs/job.md)
 - [Image alignment](docs/alignment.md)
 - [Color balancing](docs/balancing.md)
 - [Vignetting correction](docs/vignetting.md)
