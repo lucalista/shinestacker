@@ -169,7 +169,10 @@ Arguments for the constructor of ```BalanceFrames``` are:
 ```
 Note that for 8-bit images the maximum intensity is 255, while for 16-bit images the maximum intensity is 65536.
 * ```img_scale``` (optional, default: 8): gets luminosity histogram using every n-th pixel in each dimension. By default, it takes one every 10 pixels in horizontal and vertical directions, i.e.: one every 100 pixels in total.  
-* ```corr_map``` (optional, default: ```LINEAR```, possible values: ```LINEAR```, ```GAMMA``` and ```MATCH_HIST```): applies either a linear mapping or a gamma correction or matches histograms of reference and source images. The gamma correction avoids saturation of high luminosity pixels, but may introduce more distortion than a linear mapping. If ```MATCH_HIST``` is specified as value for ```corr_map```, option ```intensity_interval``` is not used. Note that ```MATCH_HIST``` should be used with ```RGBCorrection```, and it is safer to set ```img_scale=1```.
+* ```corr_map``` (optional, default: ```LINEAR```, possible values: ```LINEAR```, ```GAMMA``` and ```MATCH_HIST```): specifies the type of intensity correction.
+   * ```LINEAR```: a linear correction is applied in order to balance the average intensity of the corrected images to the reference image in the specified channels.
+   * ```GAMMA```: a gamma correction, i.e.: a power law, is applied in order to balance the average intensity of the corrected images to reference image in the specified channels. The gamma correction avoids saturation of low or high intensity pixels which may occur for a linear coorection, but may introduce more distortion than a linear mapping.
+   * ```MATCH_HIST```: the intensity histogram of the corrected image matches the histogram of the reference image in the specified channels. If this option is specified, the option ```intensity_interval``` is not used. This options shoudl better be used with the value ```RGB``` for the ```channel``` option. Note that this option may be somewhat slow for 16-bit images.
 * ```plot_histograms```  (optional, default: ```False```): if ```True```, for each image and for the reference image histograms with pixel content are plotted. May be useful for inspection and debugging.
   
 ### Vignetting correction
