@@ -1,6 +1,5 @@
 from focus_stack.stack_framework import FrameMultiDirectory, JobBase
 from focus_stack.utils import read_img, save_plot, make_tqdm_bar, get_img_metadata, validate_image
-from focus_stack.exceptions import ShapeError, BitDepthError
 from termcolor import colored
 import cv2
 import numpy as np
@@ -8,7 +7,7 @@ import matplotlib.pyplot as plt
 import logging
 import os
 import errno
-        
+
 
 def mean_image(file_paths, message_callback=None, progress_callback=None):
     mean_img = None
@@ -118,8 +117,6 @@ class MaskNoise:
     def correct_channel(self, channel):
         corrected = channel.copy()
         noise_coords = np.argwhere(self.noise_mask > 0)
-        k2 = self.kernel_size // 2
-        k2_1 = k2 + 1
         for y, x in noise_coords:
             neighborhood = channel[
                 max(0, y - self.ks2):min(channel.shape[0], y + self.ks2_1),

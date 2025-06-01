@@ -59,13 +59,13 @@ _VALID_MATCHING_METHODS = {MATCHING_KNN, MATCHING_NORM_HAMMING}
 _VALID_TRANSFORMS = {ALIGN_HOMOGRAPHY, ALIGN_RIGID}
 _VALID_BORDER_MODES = {BORDER_CONSTANT, BORDER_REPLICATE, BORDER_REPLICATE_BLUR}
 
+
 def get_good_matches(des_0, des_1, matching_config=None):
     if matching_config is None:
         matching_config = _DEFAULT_MATCHING_CONFIG
-    
     if matching_config['method'] == MATCHING_KNN:
         flann = cv2.FlannBasedMatcher(
-            dict(algorithm=matching_config['flann_idx_kdtree'], trees=matching_config['flann_trees']), 
+            dict(algorithm=matching_config['flann_idx_kdtree'], trees=matching_config['flann_trees']),
             dict(checks=matching_config['flann_checks']))
         matches = flann.knnMatch(des_0, des_1, k=2)
         good_matches = [m for m, n in matches if m.distance < matching_config['threshold'] * n.distance]
@@ -74,38 +74,34 @@ def get_good_matches(des_0, des_1, matching_config=None):
         good_matches = sorted(bf.match(des_0, des_1), key=lambda x: x.distance)
     return good_matches
 
+
 def detect_and_compute(img_0, img_1, feature_config=None, matching_config=None):
     if feature_config is None:
         feature_config = _DEFAULT_FEATURE_CONFIG
     if matching_config is None:
         matching_config = _DEFAULT_MATCHING_CONFIG
-    
     img_bw_0, img_bw_1 = img_bw_8bit(img_0), img_bw_8bit(img_1)
-    
     detector_map = {
         DETECTOR_SIFT: cv2.SIFT_create,
         DETECTOR_ORB: cv2.ORB_create,
         DETECTOR_SURF: cv2.FastFeatureDetector_create,
         DETECTOR_AKAZE: cv2.AKAZE_create
     }
-    
     descriptor_map = {
         DESCRIPTOR_SIFT: cv2.SIFT_create,
         DESCRIPTOR_ORB: cv2.ORB_create,
         DESCRIPTOR_AKAZE: cv2.AKAZE_create
     }
-    
     detector = detector_map[feature_config['detector']]()
     descriptor = descriptor_map[feature_config['descriptor']]()
-    
     if feature_config['detector'] == feature_config['descriptor'] and feature_config['detector'] in {DETECTOR_SIFT, DETECTOR_AKAZE}:
         kp_0, des_0 = detector.detectAndCompute(img_bw_0, None)
         kp_1, des_1 = detector.detectAndCompute(img_bw_1, None)
     else:
         kp_0, des_0 = descriptor.compute(img_bw_0, detector.detect(img_bw_0, None))
         kp_1, des_1 = descriptor.compute(img_bw_1, detector.detect(img_bw_1, None))
-    
     return kp_0, kp_1, get_good_matches(des_0, des_1, matching_config)
+
 
 def find_transform(src_pts, dst_pts, transform=ALIGN_RIGID, rans_threshold=5.0):
     if transform == ALIGN_HOMOGRAPHY:
@@ -114,36 +110,30 @@ def find_transform(src_pts, dst_pts, transform=ALIGN_RIGID, rans_threshold=5.0):
         return cv2.estimateAffinePartial2D(src_pts, dst_pts, method=cv2.RANSAC, ransacReprojThreshold=rans_threshold)
     raise InvalidOptionError("transform", transform)
 
+
 def align_images(img_1, img_0, feature_config=None, matching_config=None, alignment_config=None, plot_config=None, callbacks=None):
     feature_config = {**_DEFAULT_FEATURE_CONFIG, **(feature_config or {})}
     matching_config = {**_DEFAULT_MATCHING_CONFIG, **(matching_config or {})}
     alignment_config = {**_DEFAULT_ALIGNMENT_CONFIG, **(alignment_config or {})}
     plot_config = {**_DEFAULT_PLOT_CONFIG, **(plot_config or {})}
-    
     try:
         cv2_border_mode = _cv2_border_mode_map[alignment_config['border_mode']]
     except KeyError:
         raise InvalidOptionError("border_mode", alignment_config['border_mode'])
-    
     min_matches = 4 if alignment_config['transform'] == ALIGN_HOMOGRAPHY else 3
     validate_image(img_0, *get_img_metadata(img_1))
-    
     if callbacks and 'message' in callbacks:
         callbacks['message']()
-    
     kp_0, kp_1, good_matches = detect_and_compute(img_0, img_1, feature_config, matching_config)
     n_good_matches = len(good_matches)
-    
     if callbacks and 'matches_message' in callbacks:
         callbacks['matches_message'](n_good_matches)
-    
     img_warp = None
     if n_good_matches >= min_matches:
         src_pts = np.float32([kp_0[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
         dst_pts = np.float32([kp_1[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
         M, msk = find_transform(src_pts, dst_pts, alignment_config['transform'], alignment_config['rans_threshold'])
         h, w = img_0.shape[:2]
-        
         if callbacks and 'align_message' in callbacks:
             callbacks['align_message']()
         if alignment_config['transform'] == ALIGN_HOMOGRAPHY:
@@ -166,13 +156,15 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
             img_warp[mask == 0] = blurred_warp[mask == 0]
         if plot_config['enabled']:
             matches_mask = msk.ravel().tolist()
-            img_match = cv2.cvtColor(cv2.drawMatches(img_8bit(img_0), kp_0, img_8bit(img_1), kp_1, good_matches, None, 
-                matchColor=(0, 255, 0), singlePointColor=None, matchesMask=matches_mask, flags=2), cv2.COLOR_BGR2RGB)
+            img_match = cv2.cvtColor(cv2.drawMatches(img_8bit(img_0), kp_0, img_8bit(img_1),
+                                                     kp_1, good_matches, None, matchColor=(0, 255, 0),
+                                                     singlePointColor=None, matchesMask=matches_mask,
+                                                     flags=2), cv2.COLOR_BGR2RGB)
             plt.figure(figsize=(10, 5))
             plt.imshow(img_match, 'gray')
             plt.savefig(plot_config['path'])
-    
     return n_good_matches, img_warp
+
 
 class AlignFrames:
     def __init__(self, feature_config=None, matching_config=None, alignment_config=None, plot_config=None):
@@ -223,8 +215,8 @@ class AlignFrames:
         no_ref = (x != self.process.ref_idx + 1)
         x = x[no_ref]
         y = self.n_matches[no_ref]
-        y_max = y[1] if self.process.ref_idx == 0 else y[-1] if self.process.ref_idx == len(y) - 1 else (y[self.process.ref_idx - 1] + y[self.process.ref_idx]) / 2
-        
+        y_max = y[1] if self.process.ref_idx == 0 else y[-1] if self.process.ref_idx == len(y) - 1 else (y[self.process.ref_idx - 1] + y[self.process.ref_idx]) / 2 # noqa
+
         plt.plot([self.process.ref_idx + 1, self.process.ref_idx + 1], [0, y_max], color='cornflowerblue', linestyle='--', label='reference frame')
         plt.plot([x[0], x[-1]], [self.min_matches, self.min_matches], color='lightgray', linestyle='--', label='min. matches')
         plt.plot(x, y, color='navy', label='matches')

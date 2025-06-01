@@ -1,7 +1,5 @@
 import time
 from termcolor import colored
-from tqdm.notebook import tqdm_notebook
-from tqdm import tqdm
 from focus_stack.logging import setup_logging
 from focus_stack.utils import make_tqdm_bar
 import logging
