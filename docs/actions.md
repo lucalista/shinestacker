@@ -1,0 +1,17 @@
+# Schedule multiple actions based on a reference image: align and/or balance images
+
+The class ```Actions``` runs multiple actions on each of the frames appearing in a path.
+
+```python
+job.add_action(Actions(name, actions=[...], *options))
+```
+Arguments for the constructor of ```Actions``` are for the :
+* ```name```: the name of the action, used for printout, and possibly for output path
+* ```actions```: array of action object to be applied in cascade
+* ```input_path``` (optional): the subdirectory within ```working_path``` that contains input images to be processed. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
+* ```output_path``` (optional): the subdirectory within ```working_path``` where aligned images are written. If not specified,  it is equal to  ```name```.
+* ```working_path```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_path```.
+* ```plot_path``` (optional, default: ```plots```): the directory within ```working_path``` that contains plots produced by the different actions
+* ```resample``` (optione, default: 1): take every *n*<sup>th</sup> frame in the selected directory. Default: take all frames.
+* ```ref_idx``` (optional): the index of the image used as reference. Images are numbered starting from zero. If not specified, it is the index of the middle image.
+* ```step_process``` (optional): if equal to ```True``` (default), each image is processed with respect to the previous or next image, depending if its file is placed in alphabetic order after or befor the reference image.
