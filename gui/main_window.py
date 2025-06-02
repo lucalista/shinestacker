@@ -40,17 +40,58 @@ class ActionConfigDialog(QDialog):
     
     def _get_configurator(self, action_type: str) -> ActionConfigurator:
         configurators = {
+            "Job": JobConfigurator(),
+            COMBO_ACTIONS: CombinedActionsConfigurator(),
             "NoiseDetection": NoiseDetectionConfigurator(),
             "FocusStack": FocusStackConfigurator(),
             "MultiLayer": MultiLayerConfigurator(),
-            COMBO_ACTIONS: CombinedActionsConfigurator(),
-            # Aggiungi qui altri configuratori per i vari tipi di azione
+            # add more configurators here
         }
         return configurators.get(action_type, DefaultActionConfigurator())
     
     def accept(self):
         self.configurator.update_params(self.action.params)
         super().accept()
+
+
+class PathConfiguratorMixin:
+    def add_path_selection(self, layout, params):
+        working_path = params.get('working_path', '')
+        self.working_path_edit = QLineEdit(working_path)
+        working_path_button = QPushButton("Browse...")
+        
+        input_path = params.get('input_path', '')
+        self.input_path_edit = QLineEdit(input_path)
+        input_path_button = QPushButton("Browse...")
+        
+        working_path_button.clicked.connect(self._browse_working_path)
+        input_path_button.clicked.connect(self._browse_input_path)
+        
+        working_path_layout = QHBoxLayout()
+        working_path_layout.addWidget(self.working_path_edit)
+        working_path_layout.addWidget(working_path_button)
+        layout.addRow("Working Path:", working_path_layout)
+        
+        input_path_layout = QHBoxLayout()
+        input_path_layout.addWidget(self.input_path_edit)
+        input_path_layout.addWidget(input_path_button)
+        layout.addRow("Input Path:", input_path_layout)
+    
+    def _browse_working_path(self):
+        path = QFileDialog.getExistingDirectory(None, "Select Working Directory")
+        if path:
+            self.working_path_edit.setText(path)
+    
+    def _browse_input_path(self):
+        path = QFileDialog.getExistingDirectory(None, "Select Input Directory")
+        if path:
+            self.input_path_edit.setText(path)
+    
+    def update_path_params(self, params):
+        """Aggiorna i parametri con i percorsi selezionati"""
+        params['working_path'] = self.working_path_edit.text()
+        params['input_path'] = self.input_path_edit.text()
+
 
 
 class DefaultActionConfigurator(ActionConfigurator):
@@ -65,9 +106,24 @@ class DefaultActionConfigurator(ActionConfigurator):
         params['name'] = self.name_edit.text()
 
 
-class NoiseDetectionConfigurator(ActionConfigurator):
+class JobConfigurator(ActionConfigurator, PathConfiguratorMixin):
+    def create_form(self, layout, params):
+        if 'name' not in params:
+            params['name'] = ''
+        name_edit = QLineEdit(params['name'])
+        layout.addRow("Job name:", name_edit)
+        self.name_edit = name_edit        
+        self.add_path_selection(layout, params)
+    
+    def update_params(self, params):
+        params['name'] = self.name_edit.text()
+        self.update_path_params(params)
+        
+
+class NoiseDetectionConfigurator(ActionConfigurator, PathConfiguratorMixin):
     def create_form(self, layout, params):
         DefaultActionConfigurator().create_form(layout, params)
+        self.add_path_selection(layout, params)
         threshold = params.get('threshold', 0.5)
         threshold_spin = QDoubleSpinBox()
         threshold_spin.setValue(threshold)
@@ -231,60 +287,19 @@ class MainWindow(QMainWindow):
             self.show_job_config_dialog(job)
 
     def show_job_config_dialog(self, job):
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Configure Job")
-        layout = QFormLayout()
-    
-        name_edit = QLineEdit(job.name)
-        layout.addRow("Job Name:", name_edit)
-    
-        working_path_edit = QLineEdit(job.working_path)
-        working_path_button = QPushButton("Browse...")
-        
-        input_path_edit = QLineEdit(job.input_path)
-        input_path_button = QPushButton("Browse...")
-    
-        def browse_working_path():
-            path = QFileDialog.getExistingDirectory(self, "Select Input Directory")
-            if path:
-                working_path_edit.setText(path)
-        def browse_input_path():
-            path = QFileDialog.getExistingDirectory(self, "Select Input Directory")
-            if path:
-                input_path_edit.setText(path)
-        
-        working_path_button.clicked.connect(browse_working_path)
-        input_path_button.clicked.connect(browse_input_path)
-
-        working_path_layout = QHBoxLayout()
-        working_path_layout.addWidget(working_path_edit)
-        working_path_layout.addWidget(working_path_button)
-        layout.addRow("Working Path:", working_path_layout)
-        
-        input_path_layout = QHBoxLayout()
-        input_path_layout.addWidget(input_path_edit)
-        input_path_layout.addWidget(input_path_button)
-        layout.addRow("Input Path:", input_path_layout)
-        
-        button_box = QHBoxLayout()
-        ok_button = QPushButton("OK")
-        cancel_button = QPushButton("Cancel")
-        button_box.addWidget(ok_button)
-        button_box.addWidget(cancel_button)
-        layout.addRow(button_box)
-
-        def save_and_close():
-            job.name = name_edit.text()
-            job.working_path = working_path_edit.text()
-            job.input_path = input_path_edit.text()
+        job_action = ActionConfig("Job", {
+            'name': job.name,
+            'working_path': job.working_path,
+            'input_path': job.input_path
+        })
+        dialog = ActionConfigDialog(job_action, self)
+        if dialog.exec():
+            job.name = job_action.params['name']
+            job.working_path = job_action.params['working_path']
+            job.input_path = job_action.params['input_path']
             current_row = self.job_list.currentRow()
             if current_row >= 0:
                 self.job_list.item(current_row).setText(job.name)
-            dialog.accept()
-        ok_button.clicked.connect(save_and_close)
-        cancel_button.clicked.connect(dialog.reject)
-        dialog.setLayout(layout)
-        dialog.exec()
 
     def run_job(self):
         current_index = self.job_list.currentRow()
