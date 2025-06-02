@@ -82,18 +82,15 @@ class PyramidStack:
         levels = area.flatten()
         return np.float64(-1. * (levels * np.log(probabilities[levels])).sum())
 
-    def get_probabilities(self, gray_image):
-        levels, counts = np.unique(gray_image.astype(self.dtype), return_counts=True)
-        probabilities = np.zeros((self.n_values), dtype=np.float64)
-        probabilities[levels] = counts.astype(np.float64) / counts.sum()
-        return probabilities
-
     def get_pad(self, padded_image, row, column):
         return padded_image[row + self.pad_amount + self.offset[:, np.newaxis], column + self.pad_amount + self.offset]
 
     def entropy(self, image):
-        probabilities = self.get_probabilities(image)
-        padded_image = cv2.copyMakeBorder(image, self.pad_amount, self.pad_amount, self.pad_amount, self.pad_amount, cv2.BORDER_REFLECT101)
+        levels, counts = np.unique(image.astype(self.dtype), return_counts=True)
+        probabilities = np.zeros((self.n_values), dtype=np.float64)
+        probabilities[levels] = counts.astype(np.float64) / counts.sum()
+        padded_image = cv2.copyMakeBorder(image, self.pad_amount, self.pad_amount, self.pad_amount,
+                                          self.pad_amount, cv2.BORDER_REFLECT101)
         return np.fromfunction(np.vectorize(lambda row, column: self.area_entropy(
             self.get_pad(padded_image, row, column), probabilities)), image.shape[:2], dtype=int)
 
@@ -159,6 +156,7 @@ class PyramidStack:
         images = []
         metadata = None
         for img_path in filenames:
+            self.print_message(': reading file {}'.format(img_path.split('/')[-1]))
             img = read_img(img_path)
             if img is None:
                 raise ImageLoadError(img_path)

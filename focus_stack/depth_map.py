@@ -72,6 +72,7 @@ class DepthMapStack:
         images = []
         metadata = None
         for img_path in filenames:
+            self.print_message(': reading file {}'.format(img_path.split('/')[-1]))
             img = read_img(img_path)
             if img is None:
                 raise ImageLoadError(img_path)

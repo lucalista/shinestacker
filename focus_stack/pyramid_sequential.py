@@ -60,6 +60,18 @@ class PyramidSequentialStack:
             laplacian.append(gaussian[level - 1] - expanded)
         return laplacian[::-1]
 
+    def calculate_entropy(self, image):
+        hist = cv2.calcHist([image.astype(self.dtype)], [0], None, [self.n_values], [0, self.n_values])
+        hist = hist / hist.sum()
+        hist[hist == 0] = 1e-10
+        entropy = -np.sum(hist * np.log(hist))
+        return np.full(image.shape, entropy)
+
+    def calculate_deviation(self, image):
+        mean = cv2.blur(image, (self.kernel_size, self.kernel_size))
+        sq_diff = (image - mean)**2
+        return cv2.blur(sq_diff, (self.kernel_size, self.kernel_size))
+
     def fuse_base(self, base_imgs):
         gray_imgs = [cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2GRAY) for img in base_imgs]
         entropies = [self.calculate_entropy(gray) for gray in gray_imgs]
@@ -82,45 +94,34 @@ class PyramidSequentialStack:
         return fused
 
     def collapse_pyramid(self, pyramid):
-        img = pyramid[0]  # Parte dal livello più piccolo
-        for layer in pyramid[1:]:  # Espande progressivamente
+        img = pyramid[0]
+        for layer in pyramid[1:]:
             expanded = self.expand_layer(img)
             if expanded.shape != layer.shape:
                 expanded = expanded[:layer.shape[0], :layer.shape[1]]
             img = expanded + layer
         return np.clip(np.abs(img), 0, self.n_values - 1)
 
-    def calculate_entropy(self, gray_img):
-        hist = cv2.calcHist([gray_img.astype(np.uint8)], [0], None, [256], [0, 256])
-        hist = hist / hist.sum()
-        hist[hist == 0] = 1e-10
-        entropy = -np.sum(hist * np.log(hist))
-        return np.full(gray_img.shape, entropy)  # Semplificato per l'esempio
-
-    def calculate_deviation(self, gray_img):
-        mean = cv2.blur(gray_img, (self.kernel_size, self.kernel_size))
-        sq_diff = (gray_img - mean)**2
-        return cv2.blur(sq_diff, (self.kernel_size, self.kernel_size))
-
     def focus_stack(self, filenames):
-        images = []
         metadata = None
+        pyramids = []
+        base_levels = []
         for img_path in filenames:
+            self.print_message(': reading file {}'.format(img_path.split('/')[-1]))
             img = read_img(img_path)
             if img is None:
                 raise ImageLoadError(img_path)
             if metadata is None:
                 metadata = get_img_metadata(img)
+                shape, self.dtype = metadata
+                self.n_values = 256 if self.dtype == np.uint8 else 65536
             else:
                 validate_image(img, *metadata)
-            images.append(img)
-        self.dtype = images[0].dtype
-        self.n_values = 256 if self.dtype == np.uint8 else 65536
-        levels = max(1, int(np.log2(min(metadata[0][:2]) / self.min_size)))
-        pyramids = [self.compute_pyramids(img, levels) for img in images]
-        fused_pyramid = []
-        base_levels = [p[-1] for p in pyramids]
-        fused_pyramid.append(self.fuse_base(base_levels))
+            levels = max(1, int(np.log2(min(metadata[0][:2]) / self.min_size)))
+            pyramid = self.compute_pyramids(img, levels)
+            pyramids.append(pyramid)
+            base_levels.append(pyramid[-1])
+        fused_pyramid = [self.fuse_base(base_levels)]
         for level in range(levels - 1, -1, -1):
             current_levels = [p[level] for p in pyramids]
             fused_pyramid.append(self.fuse_laplacian(current_levels))
