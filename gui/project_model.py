@@ -1,4 +1,4 @@
-from focus_stack import StackJob, Actions
+from focus_stack import StackJob
 
 
 class ActionConfig:
@@ -13,7 +13,7 @@ class ActionConfig:
         if not action_class:
             raise ValueError(f"Unknown action type: {self.type_name}")
         return action_class(**self.params)
-        
+
 
 class Job:
     def __init__(self, name: str, working_path: str, input_path: str):

@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout,
-    QFileDialog, QLabel, QComboBox, QMessageBox, QInputDialog, 
+    QFileDialog, QLabel, QComboBox, QMessageBox, QInputDialog,
     QDialog, QFormLayout, QLineEdit, QSpinBox, QDoubleSpinBox)
 from gui.project_model import Project, Job, ActionConfig
 from abc import ABC, abstractmethod
@@ -15,7 +15,7 @@ class ActionConfigurator(ABC):
     @abstractmethod
     def create_form(self, layout: QFormLayout, params: Dict[str, Any]):
         pass
-    
+
     @abstractmethod
     def update_params(self, params: Dict[str, Any]):
         pass
@@ -37,7 +37,7 @@ class ActionConfigDialog(QDialog):
         self.layout.addRow(button_box)
         ok_button.clicked.connect(self.accept)
         cancel_button.clicked.connect(self.reject)
-    
+
     def _get_configurator(self, action_type: str) -> ActionConfigurator:
         configurators = {
             "Job": JobConfigurator(),
@@ -48,7 +48,7 @@ class ActionConfigDialog(QDialog):
             # add more configurators here
         }
         return configurators.get(action_type, DefaultActionConfigurator())
-    
+
     def accept(self):
         self.configurator.update_params(self.action.params)
         super().accept()
@@ -59,39 +59,38 @@ class PathConfiguratorMixin:
         working_path = params.get('working_path', '')
         self.working_path_edit = QLineEdit(working_path)
         working_path_button = QPushButton("Browse...")
-        
+
         input_path = params.get('input_path', '')
         self.input_path_edit = QLineEdit(input_path)
         input_path_button = QPushButton("Browse...")
-        
+
         working_path_button.clicked.connect(self._browse_working_path)
         input_path_button.clicked.connect(self._browse_input_path)
-        
+
         working_path_layout = QHBoxLayout()
         working_path_layout.addWidget(self.working_path_edit)
         working_path_layout.addWidget(working_path_button)
         layout.addRow("Working Path:", working_path_layout)
-        
+
         input_path_layout = QHBoxLayout()
         input_path_layout.addWidget(self.input_path_edit)
         input_path_layout.addWidget(input_path_button)
         layout.addRow("Input Path:", input_path_layout)
-    
+
     def _browse_working_path(self):
         path = QFileDialog.getExistingDirectory(None, "Select Working Directory")
         if path:
             self.working_path_edit.setText(path)
-    
+
     def _browse_input_path(self):
         path = QFileDialog.getExistingDirectory(None, "Select Input Directory")
         if path:
             self.input_path_edit.setText(path)
-    
+
     def update_path_params(self, params):
         """Aggiorna i parametri con i percorsi selezionati"""
         params['working_path'] = self.working_path_edit.text()
         params['input_path'] = self.input_path_edit.text()
-
 
 
 class DefaultActionConfigurator(ActionConfigurator):
@@ -101,7 +100,7 @@ class DefaultActionConfigurator(ActionConfigurator):
         name_edit = QLineEdit(params['name'])
         layout.addRow("Action name:", name_edit)
         self.name_edit = name_edit
-    
+
     def update_params(self, params):
         params['name'] = self.name_edit.text()
 
@@ -112,13 +111,13 @@ class JobConfigurator(ActionConfigurator, PathConfiguratorMixin):
             params['name'] = ''
         name_edit = QLineEdit(params['name'])
         layout.addRow("Job name:", name_edit)
-        self.name_edit = name_edit        
+        self.name_edit = name_edit
         self.add_path_selection(layout, params)
-    
+
     def update_params(self, params):
         params['name'] = self.name_edit.text()
         self.update_path_params(params)
-        
+
 
 class NoiseDetectionConfigurator(ActionConfigurator, PathConfiguratorMixin):
     def create_form(self, layout, params):
@@ -131,7 +130,7 @@ class NoiseDetectionConfigurator(ActionConfigurator, PathConfiguratorMixin):
         threshold_spin.setSingleStep(0.1)
         layout.addRow("Noise threshold:", threshold_spin)
         self.threshold_spin = threshold_spin
-    
+
     def update_params(self, params):
         params['threshold'] = self.threshold_spin.value()
 
@@ -145,28 +144,29 @@ class FocusStackConfigurator(ActionConfigurator):
         method_combo.setCurrentText(method)
         layout.addRow("Stacking method:", method_combo)
         self.method_combo = method_combo
-    
+
     def update_params(self, params):
         params['method'] = self.method_combo.currentText()
+
 
 class MultiLayerConfigurator(ActionConfigurator):
     def create_form(self, layout, params):
         DefaultActionConfigurator().create_form(layout, params)
-        
+
         layers = params.get('layers', 3)
         layers_spin = QSpinBox()
         layers_spin.setValue(layers)
         layers_spin.setRange(1, 10)
         layout.addRow("Number of layers:", layers_spin)
         self.layers_spin = layers_spin
-        
+
         blend_mode = params.get('blend_mode', 'normal')
         blend_combo = QComboBox()
         blend_combo.addItems(['normal', 'multiply', 'screen'])
         blend_combo.setCurrentText(blend_mode)
         layout.addRow("Blend mode:", blend_combo)
         self.blend_combo = blend_combo
-    
+
     def update_params(self, params):
         params['layers'] = self.layers_spin.value()
         params['blend_mode'] = self.blend_combo.currentText()
@@ -175,9 +175,10 @@ class MultiLayerConfigurator(ActionConfigurator):
 class CombinedActionsConfigurator(ActionConfigurator):
     def create_form(self, layout, params):
         DefaultActionConfigurator().create_form(layout, params)
-    
+
     def update_params(self, params):
         pass
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -223,14 +224,14 @@ class MainWindow(QMainWindow):
         hbox_run.addWidget(self.run_job_button)
         hbox_run.addWidget(self.run_all_jobs_button)
         vbox_left.addLayout(hbox_run)
-        
+
         vbox_right = QVBoxLayout()
         vbox_right.addWidget(QLabel("Actions"))
         vbox_right.addWidget(self.action_list)
         vbox_right.addWidget(QLabel("Select Action Type"))
         vbox_right.addWidget(self.action_selector)
         vbox_right.addWidget(self.add_action_button)
-        
+
         self.delete_job_button = QPushButton("Delete Job")
         self.delete_job_button.setEnabled(False)
         self.delete_job_button.clicked.connect(self.delete_job)
@@ -238,15 +239,15 @@ class MainWindow(QMainWindow):
 
         self.job_list.itemSelectionChanged.connect(self.update_delete_buttons_state)
         self.action_list.itemSelectionChanged.connect(self.update_delete_buttons_state)
-        
+
         self.sub_action_selector = QComboBox()
         self.sub_action_selector.addItems(SUB_ACTION_TYPES)
         self.sub_action_selector.setEnabled(False)
-        
+
         self.add_sub_action_button = QPushButton("Add Sub-Action")
         self.add_sub_action_button.clicked.connect(self.add_sub_action)
         self.add_sub_action_button.setEnabled(False)
-        
+
         vbox_right.addWidget(QLabel("Select Sub-Action Type"))
         vbox_right.addWidget(self.sub_action_selector)
         vbox_right.addWidget(self.add_sub_action_button)
@@ -255,7 +256,7 @@ class MainWindow(QMainWindow):
         self.delete_action_button.setEnabled(False)
         self.delete_action_button.clicked.connect(self.delete_action)
         vbox_right.addWidget(self.delete_action_button)
-        
+
         hlayout.addLayout(vbox_left)
         hlayout.addLayout(vbox_right)
 
@@ -271,14 +272,6 @@ class MainWindow(QMainWindow):
         self.job_list.addItem(name)
         self.job_list.setCurrentRow(self.job_list.count() - 1)
         self.job_list.item(self.job_list.count() - 1).setSelected(True)
-
-
-    def on_job_selected(self, index):
-        self.action_list.clear()
-        if 0 <= index < len(self.project.jobs):
-            job = self.project.jobs[index]
-            for action in job.actions:
-                self.action_list.addItem(self.action_text(action))
 
     def on_job_double_clicked(self, item):
         index = self.job_list.row(item)
@@ -308,17 +301,11 @@ class MainWindow(QMainWindow):
             return
         if current_index >= 0:
             print("run: " + self.project.jobs[current_index].name)
-            
+
     def run_all_jobs(self):
         for job in self.project.jobs:
             print("run: " + job.name)
 
-    def action_text(self, action):
-        txt = action.type_name
-        if "name" in action.params.keys() and action.params["name"] != '':
-            txt += ": " + action.params["name"]
-        return txt
-    
     def add_action(self):
         from PySide6.QtWidgets import QInputDialog
 
@@ -334,32 +321,6 @@ class MainWindow(QMainWindow):
         action = ActionConfig(type_name, params)
         self.project.jobs[current_index].actions.append(action)
         self.action_list.addItem(self.action_text(action))
-        
-    def on_action_double_clicked(self, item):
-        job_index = self.job_list.currentRow()
-        if 0 <= job_index < len(self.project.jobs):
-            job = self.project.jobs[job_index]
-            action_index = self.action_list.row(item)
-            action_counter = -1
-            current_action = None
-            is_sub_action = False
-            for action in job.actions:
-                action_counter += 1
-                if action_counter == action_index:
-                    current_action = action
-                    break
-                if action.type_name == COMBO_ACTIONS:
-                    for sub_action in action.sub_actions:
-                        action_counter += 1
-                        if action_counter == action_index:
-                            current_action = sub_action
-                            is_sub_action = True
-                            break
-                    if current_action:
-                        break
-            if current_action:
-                self.show_action_config_dialog(current_action)
-            self.update_delete_buttons_state()
 
     def show_action_config_dialog(self, action):
         dialog = ActionConfigDialog(action, self)
@@ -393,12 +354,9 @@ class MainWindow(QMainWindow):
                             break
                     if current_action:
                         break
-            enable_sub_actions = (current_action and 
-                                not is_sub_action and 
-                                current_action.type_name == COMBO_ACTIONS)
+            enable_sub_actions = (current_action and not is_sub_action and current_action.type_name == COMBO_ACTIONS)
             self.sub_action_selector.setEnabled(enable_sub_actions)
             self.add_sub_action_button.setEnabled(enable_sub_actions)
-            
             if is_sub_action:
                 self.delete_action_button.setText("Delete Sub-action")
             else:
@@ -407,13 +365,12 @@ class MainWindow(QMainWindow):
             self.sub_action_selector.setEnabled(False)
             self.add_sub_action_button.setEnabled(False)
             self.delete_action_button.setText("Delete Action")
-    
+
     def delete_job(self):
         current_index = self.job_list.currentRow()
         if 0 <= current_index < len(self.project.jobs):
             reply = QMessageBox.question(
-                self, 
-                "Confirm Delete",
+                self, "Confirm Delete",
                 f"Are you sure you want to delete job '{self.project.jobs[current_index].name}'?",
                 QMessageBox.Yes | QMessageBox.No
             )
@@ -421,29 +378,13 @@ class MainWindow(QMainWindow):
                 self.job_list.takeItem(current_index)
                 self.project.jobs.pop(current_index)
                 self.action_list.clear()
-    
-    def delete_action(self):
-        job_index = self.job_list.currentRow()
-        action_index = self.action_list.currentRow()
-        if (0 <= job_index < len(self.project.jobs)) and (0 <= action_index < len(self.project.jobs[job_index].actions)):
-            action = self.project.jobs[job_index].actions[action_index]
-            reply = QMessageBox.question(
-                self,
-                "Confirm Delete",
-                f"Are you sure you want to delete action '{self.action_text(action)}'?",
-                QMessageBox.Yes | QMessageBox.No
-            )
-            if reply == QMessageBox.Yes:
-                # Rimuovi dalla lista e dal job
-                self.action_list.takeItem(action_index)
-                self.project.jobs[job_index].actions.pop(action_index)
-    
+
     def action_text(self, action, is_sub_action=False):
         txt = "    " + action.type_name if is_sub_action else action.type_name
         if "name" in action.params.keys() and action.params["name"] != '':
             txt += ": " + action.params["name"]
         return txt
-    
+
     def on_job_selected(self, index):
         self.action_list.clear()
         if 0 <= index < len(self.project.jobs):
@@ -453,12 +394,11 @@ class MainWindow(QMainWindow):
                 if action.type_name == COMBO_ACTIONS:
                     for sub_action in action.sub_actions:
                         self.action_list.addItem(self.action_text(sub_action, is_sub_action=True))
-    
+
     def add_sub_action(self):
         current_job_index = self.job_list.currentRow()
         current_action_index = self.action_list.currentRow()
-        if (current_job_index < 0 or current_action_index < 0 or 
-            current_job_index >= len(self.project.jobs)):
+        if (current_job_index < 0 or current_action_index < 0 or current_job_index >= len(self.project.jobs)):
             return
         job = self.project.jobs[current_job_index]
         action = None
@@ -472,7 +412,7 @@ class MainWindow(QMainWindow):
                 action_counter += len(act.sub_actions)
         if not action or action.type_name != COMBO_ACTIONS:
             return
-        
+
         type_name = self.sub_action_selector.currentText()
         name, ok = QInputDialog.getText(self, "New Sub-Action", "Enter sub-action name:")
         if not ok or not name:
@@ -482,7 +422,7 @@ class MainWindow(QMainWindow):
         action.sub_actions.append(sub_action)
         self.on_job_selected(current_job_index)
         self.action_list.setCurrentRow(current_action_index)
-    
+
     def on_action_double_clicked(self, item):
         job_index = self.job_list.currentRow()
         if 0 <= job_index < len(self.project.jobs):
@@ -491,7 +431,6 @@ class MainWindow(QMainWindow):
             action_counter = -1
             current_action = None
             is_sub_action = False
-            parent_action = None
             for action in job.actions:
                 action_counter += 1
                 if action_counter == action_index:
@@ -503,7 +442,6 @@ class MainWindow(QMainWindow):
                         if action_counter == action_index:
                             current_action = sub_action
                             is_sub_action = True
-                            parent_action = action
                             break
                     if current_action:
                         break
@@ -518,7 +456,7 @@ class MainWindow(QMainWindow):
                         self.sub_action_selector.setEnabled(False)
                         self.add_sub_action_button.setEnabled(False)
                     self.show_action_config_dialog(current_action)
-    
+
     def delete_action(self):
         job_index = self.job_list.currentRow()
         action_index = self.action_list.currentRow()
@@ -529,7 +467,6 @@ class MainWindow(QMainWindow):
             is_sub_action = False
             parent_action = None
             sub_action_index = -1
-            
             for action in job.actions:
                 action_counter += 1
                 if action_counter == action_index:
