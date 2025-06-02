@@ -57,7 +57,7 @@ def test_jpg_rgb():
 def test_jpg_hsv():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg")
-        job.add_action(Actions("balance", 
+        job.add_action(Actions("balance",
                                [BalanceFrames(channel=BALANCE_HSV,
                                               corr_map=BALANCE_LINEAR,
                                               plot_histograms=True)],

@@ -3,9 +3,9 @@ import cv2
 import os
 from termcolor import colored
 from .exif import copy_exif
-from focus_stack.utils import read_img, write_img
+from focus_stack.utils import write_img
 from focus_stack.stack_framework import FrameDirectory, JobBase, ActionList
-from focus_stack.exceptions import InvalidOptionError, ImageLoadError
+from focus_stack.exceptions import InvalidOptionError
 
 EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
@@ -21,11 +21,6 @@ class FocusStackBase:
     def focus_stack(self, filenames):
         self.sub_message_r(': reading input files')
         img_files = sorted([os.path.join(self.input_dir, name) for name in filenames])
-        img_files = [read_img(name) for name in img_files]
-        if any([img is None for img in img_files]):
-            raise ImageLoadError(filenames)
-        dtype = img_files[0].dtype
-        img_files = np.array(img_files, dtype=dtype)
         stacked_img = self.stack_algo.focus_stack(img_files)
         in_filename = filenames[0].split(".")
         out_filename = self.output_dir + "/" + in_filename[0] + self.postfix + '.' + '.'.join(in_filename[1:])
@@ -33,7 +28,7 @@ class FocusStackBase:
             self.sub_message_r(': denoise image')
             stacked_img = cv2.fastNlMeansDenoisingColored(stacked_img, None, self.denoise, self.denoise, 7, 21)
         write_img(out_filename, stacked_img)
-        if self.exif_path != '' and dtype == np.uint8:
+        if self.exif_path != '' and stacked_img.dtype == np.uint8:
             self.sub_message_r(': copy exif data')
             dirpath, _, fnames = next(os.walk(self.exif_path))
             fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in EXTENSIONS]

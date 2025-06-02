@@ -1,7 +1,8 @@
 import numpy as np
 import cv2
 from termcolor import colored
-from focus_stack.exceptions import BitDepthError
+from focus_stack.exceptions import BitDepthError, ImageLoadError
+from focus_stack.utils import read_img, get_img_metadata, validate_image
 
 
 class PyramidStack:
@@ -154,16 +155,28 @@ class PyramidStack:
             image = expanded + layer
         return image
 
-    def focus_stack(self, images):
-        self.images = images
-        self.num_images = images.shape[0]
-        self.dtype = images.dtype
+    def focus_stack(self, filenames):
+        images = []
+        metadata = None
+        for img_path in filenames:
+            img = read_img(img_path)
+            if img is None:
+                raise ImageLoadError(img_path)
+            if metadata is None:
+                metadata = get_img_metadata(img)
+            else:
+                validate_image(img, *metadata)
+            images.append(img)
+        dtype = images[0].dtype
+        self.images = np.array(images, dtype=dtype)
+        self.num_images = self.images.shape[0]
+        self.dtype = self.images.dtype
         if self.dtype == np.uint8:
             self.n_values = 256
         elif self.dtype == np.uint16:
             self.n_values = 65536
         else:
-            raise BitDepthError(images.dtype, self.dtype)
+            raise BitDepthError(self.images.dtype, self.dtype)
         stacked_image = self.collapse(self.fuse_pyramids(
-            self.laplacian_pyramid(int(np.log2(min(images[0].shape[:2]) / self.min_size)))))
+            self.laplacian_pyramid(int(np.log2(min(self.images[0].shape[:2]) / self.min_size)))))
         return np.clip(np.absolute(stacked_image), 0, self.n_values - 1).astype(self.dtype)

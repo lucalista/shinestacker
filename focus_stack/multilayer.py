@@ -119,8 +119,8 @@ class MultiLayer(FrameMultiDirectory, JobBase):
             'photometric': 'rgb',
             'resolution': ((720000, 10000), (720000, 10000)),
             'resolutionunit': 'inch',
-            'extratags' : [image_source_data.tifftag(maxworkers=4),
-                           (34675, 7, None, imagecodecs.cms_profile('srgb'), True)]
+            'extratags': [image_source_data.tifftag(maxworkers=4),
+                          (34675, 7, None, imagecodecs.cms_profile('srgb'), True)]
         }
         if self.exif_path != '':
             self.print_message(colored('copying exif data', 'blue'))

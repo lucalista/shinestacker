@@ -146,8 +146,9 @@ def exif_extra_tags(exif):
             extra.append((tag_id, *get_tiff_dtype_count(data), data, False))
         else:
             logger.debug(f"Skip tag {tag:25} [#{tag_id}]")
-    return extra, {'resolution': resolution, 'resolutionunit': resolutionunit, 
-            'software': software, 'photometric': photometric}
+    return extra, {'resolution': resolution, 'resolutionunit': resolutionunit,
+                   'software': software, 'photometric': photometric}
+
 
 def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
     logger = logging.getLogger(__name__)
@@ -186,7 +187,7 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
     elif ext == 'tiff' or ext == 'tif':
         metadata = {"description": "image generated with focusstack package"}
         extra_tags, exif_tags = exif_extra_tags(exif)
-        tifffile.imwrite(out_filename, image_new, metadata=metadata, compression='adobe_deflate', 
+        tifffile.imwrite(out_filename, image_new, metadata=metadata, compression='adobe_deflate',
                          extratags=extra_tags, **exif_tags)
     elif ext == 'png':
         image_new.save(out_filename, 'PNG', exif=exif, quality=100)

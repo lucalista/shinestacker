@@ -5,6 +5,7 @@ from focus_stack.balance import BalanceFrames, BALANCE_LINEAR, BALANCE_GAMMA, BA
 from focus_stack.stack import FocusStackBunch, FocusStack
 from focus_stack.depth_map import DepthMapStack, ENERGY_SOBEL, ENERGY_LAPLACIAN, MAP_MAX, MAP_AVERAGE
 from focus_stack.pyramid import PyramidStack
+from focus_stack.pyramid_sequential import PyramidSequentialStack
 from focus_stack.multilayer import MultiLayer
 from focus_stack.noise_detection import NoiseDetection, MaskNoise, INTERPOLATE_MEAN, INTERPOLATE_MEDIAN
 from focus_stack.logging import setup_logging, console_logging_overwrite, console_logging_newline

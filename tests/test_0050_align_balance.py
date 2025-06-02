@@ -19,7 +19,7 @@ def test_hls_gamma():
 def test_hsv():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg")
-        job.add_action(Actions("align", 
+        job.add_action(Actions("align",
                                [AlignFrames(),
                                 BalanceFrames(channel=BALANCE_HSV)],
                                output_path="output/img-jpg-align-balance-sv"))

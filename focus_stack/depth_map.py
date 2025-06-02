@@ -1,6 +1,8 @@
 import numpy as np
 import cv2
 from termcolor import colored
+from focus_stack.utils import read_img, get_img_metadata, validate_image
+from focus_stack.exceptions import ImageLoadError
 
 
 def convert_to_grayscale(image):
@@ -66,17 +68,30 @@ class DepthMapStack:
                 focus_map[index] = best_layer == index
             return focus_map
 
-    def focus_stack(self, images):
-        t = images[0].dtype
+    def focus_stack(self, filenames):
+        images = []
+        metadata = None
+        for img_path in filenames:
+            img = read_img(img_path)
+            if img is None:
+                raise ImageLoadError(img_path)
+            if metadata is None:
+                metadata = get_img_metadata(img)
+            else:
+                validate_image(img, *metadata)
+            images.append(img)
+        dtype = images[0].dtype
+        self.images = np.array(images, dtype=dtype)
+        t = self.images[0].dtype
         if t == np.uint8:
             n_values = 255
         elif t == np.uint16:
             n_values = 65535
         else:
             Exception("Invalid image type: " + t.str)
-        gray_images = np.zeros(images.shape[:-1], dtype=t)
-        for index in range(images.shape[0]):
-            gray_images[index] = convert_to_grayscale(images[index])
+        gray_images = np.zeros(self.images.shape[:-1], dtype=t)
+        for index in range(self.images.shape[0]):
+            gray_images[index] = convert_to_grayscale(self.images[index])
         self.print_message(': compute energy map')
         if self.energy == ENERGY_SOBEL:
             energy_map = get_sobel_map(gray_images)
@@ -90,5 +105,5 @@ class DepthMapStack:
         self.print_message(': computing focus map')
         focus_map = self.get_focus_map(energy_map)
         self.print_message(': blending images')
-        stacked_image = blend(images, focus_map)
+        stacked_image = blend(self.images, focus_map)
         return np.clip(np.absolute(stacked_image), 0, n_values).astype(t)
