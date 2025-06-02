@@ -78,16 +78,16 @@ class MainWindow(QMainWindow):
         job = Job(name, working_path='', input_path='')
         self.project.jobs.append(job)
         self.job_list.addItem(name)
+        self.job_list.setCurrentRow(self.job_list.count() - 1)
+        self.job_list.item(self.job_list.count() - 1).setSelected(True)
+
 
     def on_job_selected(self, index):
         self.action_list.clear()
         if 0 <= index < len(self.project.jobs):
             job = self.project.jobs[index]
             for action in job.actions:
-                action_name = action.type_name
-                if "name" in action.params.keys() and action.params["name"] != '':
-                    action_name += ": " + action.params["name"]
-                self.action_list.addItem(action_name)
+                self.action_list.addItem(self.action_text(action))
 
     def on_job_double_clicked(self, item):
         index = self.job_list.row(item)
@@ -167,8 +167,16 @@ class MainWindow(QMainWindow):
     def run_all_jobs(self):
         for job in self.project.jobs:
             print("run: " + job.name)
+
+    def action_text(self, action):
+        txt = action.type_name
+        if "name" in action.params.keys() and action.params["name"] != '':
+            txt += ": " + action.params["name"]
+        return txt
     
     def add_action(self):
+        from PySide6.QtWidgets import QInputDialog
+
         current_index = self.job_list.currentRow()
         if current_index < 0:
             QMessageBox.warning(self, "No Job Selected", "Please select a job first.")
@@ -179,11 +187,10 @@ class MainWindow(QMainWindow):
         name, ok = QInputDialog.getText(self, "New Action", "Enter action name:")
         if not ok or not name:
             return
-        action.params['name'] = name
-
-        action = ActionConfig(type_name, params, output_path)
+        params = {'name': name}
+        action = ActionConfig(type_name, params)
         self.project.jobs[current_index].actions.append(action)
-        self.action_list.addItem(type_name)
+        self.action_list.addItem(self.action_text(action))
         
     def on_action_double_clicked(self, item):
         job_index = self.job_list.currentRow()
@@ -203,7 +210,7 @@ class MainWindow(QMainWindow):
         if 'name' not in action.params.keys():
             action.params['name'] = ''
         name_edit = QLineEdit(action.params['name'])
-        layout.addRow(f"Action {action.type_name} Name:", name_edit)
+        layout.addRow(f"{action.type_name} action name:", name_edit)
         
         button_box = QHBoxLayout()
         ok_button = QPushButton("OK")
@@ -216,10 +223,7 @@ class MainWindow(QMainWindow):
             action.params['name'] = name_edit.text()
             current_row = self.action_list.currentRow()
             if current_row >= 0:
-                action_name = action.type_name
-                if "name" in action.params.keys() and action.params["name"] != '':
-                    action_name += ": " + action.params["name"]
-                self.action_list.item(current_row).setText(action_name)
+                self.action_list.item(current_row).setText(self.action_text(action))
             dialog.accept()
         
         ok_button.clicked.connect(save_and_close)

@@ -1,10 +1,9 @@
 from focus_stack import StackJob, Actions
 
 class ActionConfig:
-    def __init__(self, type_name: str, params: dict = None, output_path: str = None):
+    def __init__(self, type_name: str, params: dict = None):
         self.type_name = type_name
         self.params = params or {}
-        self.output_path = output_path
 
     def create_instance(self):
         from focus_stack import available_actions
