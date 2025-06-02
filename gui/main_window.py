@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
 from gui.project_model import Project, Job, ActionConfig
 from abc import ABC, abstractmethod
 from typing import Dict, Any
+import os.path
 
 COMBO_ACTIONS = "Combined Actions"
 ACTION_TYPES = [COMBO_ACTIONS, "FocusStackBunch", "FocusStack", "MultiLayer", "NoiseDetection"]
@@ -50,8 +51,8 @@ class ActionConfigDialog(QDialog):
         return configurators.get(action_type, DefaultActionConfigurator())
 
     def accept(self):
-        self.configurator.update_params(self.action.params)
-        super().accept()
+        if self.configurator.update_params(self.action.params):
+            super().accept()
 
 
 class PathConfiguratorMixin:
@@ -65,7 +66,7 @@ class PathConfiguratorMixin:
         input_path_button = QPushButton("Browse...")
 
         working_path_button.clicked.connect(self._browse_working_path)
-        input_path_button.clicked.connect(self._browse_input_path)
+        input_path_button.clicked.connect(lambda: self._browse_input_path(self.working_path_edit.text()))
 
         working_path_layout = QHBoxLayout()
         working_path_layout.addWidget(self.working_path_edit)
@@ -75,17 +76,29 @@ class PathConfiguratorMixin:
         input_path_layout = QHBoxLayout()
         input_path_layout.addWidget(self.input_path_edit)
         input_path_layout.addWidget(input_path_button)
-        layout.addRow("Input Path:", input_path_layout)
+        layout.addRow("Input Path (relative to working path):", input_path_layout)
 
     def _browse_working_path(self):
         path = QFileDialog.getExistingDirectory(None, "Select Working Directory")
         if path:
             self.working_path_edit.setText(path)
 
-    def _browse_input_path(self):
-        path = QFileDialog.getExistingDirectory(None, "Select Input Directory")
+    def _browse_input_path(self, working_path):
+        if not working_path:
+            QMessageBox.warning(None, "Error", "Please select working path first")
+            return
+
+        path = QFileDialog.getExistingDirectory(None, "Select Input Directory", working_path)
         if path:
-            self.input_path_edit.setText(path)
+            try:
+                rel_path = os.path.relpath(path, working_path)
+                if rel_path.startswith('..'):
+                    QMessageBox.warning(None, "Invalid Path",
+                                        "Input path must be a subdirectory of working path")
+                    return
+                self.input_path_edit.setText(rel_path)
+            except ValueError:
+                QMessageBox.warning(None, "Error", "Could not compute relative path")
 
     def update_path_params(self, params):
         """Aggiorna i parametri con i percorsi selezionati"""
@@ -116,7 +129,20 @@ class JobConfigurator(ActionConfigurator, PathConfiguratorMixin):
 
     def update_params(self, params):
         params['name'] = self.name_edit.text()
+        working_path = self.working_path_edit.text()
+        input_path = self.input_path_edit.text()
+        if input_path:
+            try:
+                abs_input_path = os.path.normpath(os.path.join(working_path, input_path))
+                if not abs_input_path.startswith(os.path.normpath(working_path)):
+                    QMessageBox.warning(None, "Invalid Path",
+                                        "Input path must be a subdirectory of working path")
+                    return False
+            except Exception as e:
+                QMessageBox.warning(None, "Error", f"Invalid path: {str(e)}")
+                return False
         self.update_path_params(params)
+        return True
 
 
 class NoiseDetectionConfigurator(ActionConfigurator, PathConfiguratorMixin):
@@ -133,6 +159,20 @@ class NoiseDetectionConfigurator(ActionConfigurator, PathConfiguratorMixin):
 
     def update_params(self, params):
         params['threshold'] = self.threshold_spin.value()
+        working_path = self.working_path_edit.text()
+        input_path = self.input_path_edit.text()
+        if input_path:
+            try:
+                abs_input_path = os.path.normpath(os.path.join(working_path, input_path))
+                if not abs_input_path.startswith(os.path.normpath(working_path)):
+                    QMessageBox.warning(None, "Invalid Path",
+                                        "Input path must be a subdirectory of working path")
+                    return False
+            except Exception as e:
+                QMessageBox.warning(None, "Error", f"Invalid path: {str(e)}")
+                return False
+        self.update_path_params(params)
+        return True
 
 
 class FocusStackConfigurator(ActionConfigurator):
@@ -285,8 +325,9 @@ class MainWindow(QMainWindow):
             'working_path': job.working_path,
             'input_path': job.input_path
         })
+
         dialog = ActionConfigDialog(job_action, self)
-        if dialog.exec():
+        if dialog.exec() == QDialog.Accepted:
             job.name = job_action.params['name']
             job.working_path = job_action.params['working_path']
             job.input_path = job_action.params['input_path']
