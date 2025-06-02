@@ -175,8 +175,11 @@ class MainWindow(QMainWindow):
             return
 
         type_name = self.action_selector.currentText()
-        params = {}  # In futuro apri una dialog specifica per ogni tipo
-        output_path = "output"  # default semplificato
+
+        name, ok = QInputDialog.getText(self, "New Action", "Enter action name:")
+        if not ok or not name:
+            return
+        action.params['name'] = name
 
         action = ActionConfig(type_name, params, output_path)
         self.project.jobs[current_index].actions.append(action)
