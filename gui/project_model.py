@@ -1,9 +1,11 @@
 from focus_stack import StackJob, Actions
 
+
 class ActionConfig:
     def __init__(self, type_name: str, params: dict = None):
         self.type_name = type_name
         self.params = params or {}
+        self.sub_actions: list[ActionConfig] = []
 
     def create_instance(self):
         from focus_stack import available_actions
@@ -11,7 +13,7 @@ class ActionConfig:
         if not action_class:
             raise ValueError(f"Unknown action type: {self.type_name}")
         return action_class(**self.params)
-
+        
 
 class Job:
     def __init__(self, name: str, working_path: str, input_path: str):

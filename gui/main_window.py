@@ -1,8 +1,10 @@
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout,
-    QFileDialog, QLabel, QComboBox, QMessageBox
-)
+    QFileDialog, QLabel, QComboBox, QMessageBox, QInputDialog, 
+    QDialog, QFormLayout, QLineEdit)
 from gui.project_model import Project, Job, ActionConfig
+
+SUB_ACTION_TYPES = ["MaskNoise", "Vignetting", "AlignFrames", "BalanceFrames"]
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -62,23 +64,31 @@ class MainWindow(QMainWindow):
         vbox_right.addWidget(self.action_selector)
         vbox_right.addWidget(self.add_action_button)
         
-        # Modifica nella sezione __init__ dove crei i pulsanti
         self.delete_job_button = QPushButton("Delete Job")
-        self.delete_job_button.setEnabled(False)  # Disabilitato inizialmente
+        self.delete_job_button.setEnabled(False)
         self.delete_job_button.clicked.connect(self.delete_job)
-        
-        self.delete_action_button = QPushButton("Delete Action")
-        self.delete_action_button.setEnabled(False)  # Disabilitato inizialmente
-        self.delete_action_button.clicked.connect(self.delete_action)
-        
-        # Aggiungi questi pulsanti ai layout esistenti
         vbox_left.addWidget(self.delete_job_button)
-        vbox_right.addWidget(self.delete_action_button)
-        
-        # Connetti i segnali di selezione per abilitare/disabilitare i pulsanti
+
         self.job_list.itemSelectionChanged.connect(self.update_delete_buttons_state)
         self.action_list.itemSelectionChanged.connect(self.update_delete_buttons_state)
+        
+        self.sub_action_selector = QComboBox()
+        self.sub_action_selector.addItems(SUB_ACTION_TYPES)
+        self.sub_action_selector.setEnabled(False)
+        
+        self.add_sub_action_button = QPushButton("Add Sub-Action")
+        self.add_sub_action_button.clicked.connect(self.add_sub_action)
+        self.add_sub_action_button.setEnabled(False)
+        
+        vbox_right.addWidget(QLabel("Select Sub-Action Type"))
+        vbox_right.addWidget(self.sub_action_selector)
+        vbox_right.addWidget(self.add_sub_action_button)
 
+        self.delete_action_button = QPushButton("Delete Action")
+        self.delete_action_button.setEnabled(False)
+        self.delete_action_button.clicked.connect(self.delete_action)
+        vbox_right.addWidget(self.delete_action_button)
+        
         hlayout.addLayout(vbox_left)
         hlayout.addLayout(vbox_right)
 
@@ -86,8 +96,6 @@ class MainWindow(QMainWindow):
         self.central_widget.setLayout(layout)
 
     def add_job(self):
-        from PySide6.QtWidgets import QInputDialog
-
         name, ok = QInputDialog.getText(self, "New Job", "Enter job name:")
         if not ok or not name:
             return
@@ -113,9 +121,6 @@ class MainWindow(QMainWindow):
             self.show_job_config_dialog(job)
 
     def show_job_config_dialog(self, job):
-        from PySide6.QtWidgets import (QDialog, QFormLayout, QLineEdit, 
-                                     QPushButton, QFileDialog)
-    
         dialog = QDialog(self)
         dialog.setWindowTitle("Configure Job")
         layout = QFormLayout()
@@ -198,9 +203,7 @@ class MainWindow(QMainWindow):
         if current_index < 0:
             QMessageBox.warning(self, "No Job Selected", "Please select a job first.")
             return
-
         type_name = self.action_selector.currentText()
-
         name, ok = QInputDialog.getText(self, "New Action", "Enter action name:")
         if not ok or not name:
             return
@@ -214,20 +217,40 @@ class MainWindow(QMainWindow):
         if 0 <= job_index < len(self.project.jobs):
             job = self.project.jobs[job_index]
             action_index = self.action_list.row(item)
-            action = job.actions[action_index]
-            self.show_action_config_dialog(action)
-
-    def show_action_config_dialog(self, action):
-        from PySide6.QtWidgets import (QDialog, QFormLayout, QLineEdit, 
-                                     QPushButton, QFileDialog)
+            
+            # Trova l'azione corrispondente
+            action_counter = -1
+            current_action = None
+            is_sub_action = False
+            
+            for action in job.actions:
+                action_counter += 1
+                if action_counter == action_index:
+                    current_action = action
+                    break
+                if action.type_name == "Actions":
+                    for sub_action in action.sub_actions:
+                        action_counter += 1
+                        if action_counter == action_index:
+                            current_action = sub_action
+                            is_sub_action = True
+                            break
+                    if current_action:
+                        break
+            if current_action:
+                self.show_action_config_dialog(current_action)
+            self.update_delete_buttons_state()
     
+    def show_action_config_dialog(self, action):       
         dialog = QDialog(self)
-        dialog.setWindowTitle("Configure Action")
+        dialog.setWindowTitle(f"Configure {action.type_name}")
         layout = QFormLayout()
+        
         if 'name' not in action.params.keys():
             action.params['name'] = ''
+        
         name_edit = QLineEdit(action.params['name'])
-        layout.addRow(f"{action.type_name} action name:", name_edit)
+        layout.addRow(f"{action.type_name} name:", name_edit)
         
         button_box = QHBoxLayout()
         ok_button = QPushButton("OK")
@@ -235,23 +258,64 @@ class MainWindow(QMainWindow):
         button_box.addWidget(ok_button)
         button_box.addWidget(cancel_button)
         layout.addRow(button_box)
-
+    
         def save_and_close():
             action.params['name'] = name_edit.text()
-            current_row = self.action_list.currentRow()
-            if current_row >= 0:
-                self.action_list.item(current_row).setText(self.action_text(action))
+            current_job_index = self.job_list.currentRow()
+            self.on_job_selected(current_job_index)
             dialog.accept()
         
         ok_button.clicked.connect(save_and_close)
         cancel_button.clicked.connect(dialog.reject)
-
+    
         dialog.setLayout(layout)
         dialog.exec()
 
     def update_delete_buttons_state(self):
-        self.delete_job_button.setEnabled(len(self.job_list.selectedItems()) > 0)
-        self.delete_action_button.setEnabled(len(self.action_list.selectedItems()) > 0)
+        has_job_selected = len(self.job_list.selectedItems()) > 0
+        has_action_selected = len(self.action_list.selectedItems()) > 0
+        
+        self.delete_job_button.setEnabled(has_job_selected)
+        self.delete_action_button.setEnabled(has_action_selected)
+        
+        if has_action_selected and has_job_selected:
+            job_index = self.job_list.currentRow()
+            action_index = self.action_list.currentRow()
+            job = self.project.jobs[job_index]
+            
+            # Trova l'azione corrispondente
+            action_counter = -1
+            current_action = None
+            is_sub_action = False
+            
+            for action in job.actions:
+                action_counter += 1
+                if action_counter == action_index:
+                    current_action = action
+                    break
+                if action.type_name == "Actions":
+                    for sub_action in action.sub_actions:
+                        action_counter += 1
+                        if action_counter == action_index:
+                            current_action = sub_action
+                            is_sub_action = True
+                            break
+                    if current_action:
+                        break
+            enable_sub_actions = (current_action and 
+                                not is_sub_action and 
+                                current_action.type_name == "Actions")
+            self.sub_action_selector.setEnabled(enable_sub_actions)
+            self.add_sub_action_button.setEnabled(enable_sub_actions)
+            
+            if is_sub_action:
+                self.delete_action_button.setText("Delete Sub-action")
+            else:
+                self.delete_action_button.setText("Delete Action")
+        else:
+            self.sub_action_selector.setEnabled(False)
+            self.add_sub_action_button.setEnabled(False)
+            self.delete_action_button.setText("Delete Action")
     
     def delete_job(self):
         current_index = self.job_list.currentRow()
@@ -264,10 +328,8 @@ class MainWindow(QMainWindow):
             )
             
             if reply == QMessageBox.Yes:
-                # Rimuovi dalla lista e dal progetto
                 self.job_list.takeItem(current_index)
                 self.project.jobs.pop(current_index)
-                # Pulisci la lista delle azioni
                 self.action_list.clear()
     
     def delete_action(self):
@@ -286,3 +348,135 @@ class MainWindow(QMainWindow):
                 # Rimuovi dalla lista e dal job
                 self.action_list.takeItem(action_index)
                 self.project.jobs[job_index].actions.pop(action_index)
+    
+    def action_text(self, action, is_sub_action=False):
+        txt = "    " + action.type_name if is_sub_action else action.type_name
+        if "name" in action.params.keys() and action.params["name"] != '':
+            txt += ": " + action.params["name"]
+        return txt
+    
+    def on_job_selected(self, index):
+        self.action_list.clear()
+        if 0 <= index < len(self.project.jobs):
+            job = self.project.jobs[index]
+            for action in job.actions:
+                self.action_list.addItem(self.action_text(action))
+                if action.type_name == "Actions":
+                    for sub_action in action.sub_actions:
+                        self.action_list.addItem(self.action_text(sub_action, is_sub_action=True))
+    
+    def add_sub_action(self):
+        current_job_index = self.job_list.currentRow()
+        current_action_index = self.action_list.currentRow()
+        
+        if (current_job_index < 0 or current_action_index < 0 or 
+            current_job_index >= len(self.project.jobs)):
+            return
+        
+        job = self.project.jobs[current_job_index]
+        action = None
+        
+        action_counter = -1
+        for i, act in enumerate(job.actions):
+            action_counter += 1
+            if action_counter == current_action_index:
+                action = act
+                break
+            if act.type_name == "Actions":
+                action_counter += len(act.sub_actions)
+        
+        if not action or action.type_name != "Actions":
+            return
+        
+        type_name = self.sub_action_selector.currentText()
+        name, ok = QInputDialog.getText(self, "New Sub-Action", "Enter sub-action name:")
+        if not ok or not name:
+            return
+        
+        params = {'name': name}
+        sub_action = ActionConfig(type_name, params)
+        action.sub_actions.append(sub_action)
+        self.on_job_selected(current_job_index)
+        self.action_list.setCurrentRow(current_action_index)
+    
+    def on_action_double_clicked(self, item):
+        job_index = self.job_list.currentRow()
+        if 0 <= job_index < len(self.project.jobs):
+            job = self.project.jobs[job_index]
+            action_index = self.action_list.row(item)
+            
+            action_counter = -1
+            current_action = None
+            is_sub_action = False
+            parent_action = None
+            
+            for action in job.actions:
+                action_counter += 1
+                if action_counter == action_index:
+                    current_action = action
+                    break
+                if action.type_name == "Actions":
+                    for sub_action in action.sub_actions:
+                        action_counter += 1
+                        if action_counter == action_index:
+                            current_action = sub_action
+                            is_sub_action = True
+                            parent_action = action
+                            break
+                    if current_action:
+                        break
+            
+            if current_action:
+                if is_sub_action:
+                    self.show_action_config_dialog(current_action)
+                else:
+                    if current_action.type_name == "Actions":
+                        # Abilita/disabilita i controlli per sub-actions
+                        self.sub_action_selector.setEnabled(True)
+                        self.add_sub_action_button.setEnabled(True)
+                    else:
+                        self.sub_action_selector.setEnabled(False)
+                        self.add_sub_action_button.setEnabled(False)
+                    self.show_action_config_dialog(current_action)
+    
+    def delete_action(self):
+        job_index = self.job_list.currentRow()
+        action_index = self.action_list.currentRow()
+        
+        if (0 <= job_index < len(self.project.jobs)) and (0 <= action_index < self.action_list.count()):
+            job = self.project.jobs[job_index]
+            action_counter = -1
+            current_action = None
+            is_sub_action = False
+            parent_action = None
+            sub_action_index = -1
+            
+            for action in job.actions:
+                action_counter += 1
+                if action_counter == action_index:
+                    current_action = action
+                    break
+                if action.type_name == "Actions":
+                    for i, sub_action in enumerate(action.sub_actions):
+                        action_counter += 1
+                        if action_counter == action_index:
+                            current_action = sub_action
+                            is_sub_action = True
+                            parent_action = action
+                            sub_action_index = i
+                            break
+                    if current_action:
+                        break
+            if current_action:
+                reply = QMessageBox.question(
+                    self,
+                    "Confirm Delete",
+                    f"Are you sure you want to delete action '{self.action_text(current_action, is_sub_action)}'?",
+                    QMessageBox.Yes | QMessageBox.No
+                )
+                if reply == QMessageBox.Yes:
+                    if is_sub_action:
+                        parent_action.sub_actions.pop(sub_action_index)
+                    else:
+                        job.actions.pop(action_counter)
+                    self.on_job_selected(job_index)
