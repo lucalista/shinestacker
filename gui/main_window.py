@@ -61,6 +61,23 @@ class MainWindow(QMainWindow):
         vbox_right.addWidget(QLabel("Select Action Type"))
         vbox_right.addWidget(self.action_selector)
         vbox_right.addWidget(self.add_action_button)
+        
+        # Modifica nella sezione __init__ dove crei i pulsanti
+        self.delete_job_button = QPushButton("Delete Job")
+        self.delete_job_button.setEnabled(False)  # Disabilitato inizialmente
+        self.delete_job_button.clicked.connect(self.delete_job)
+        
+        self.delete_action_button = QPushButton("Delete Action")
+        self.delete_action_button.setEnabled(False)  # Disabilitato inizialmente
+        self.delete_action_button.clicked.connect(self.delete_action)
+        
+        # Aggiungi questi pulsanti ai layout esistenti
+        vbox_left.addWidget(self.delete_job_button)
+        vbox_right.addWidget(self.delete_action_button)
+        
+        # Connetti i segnali di selezione per abilitare/disabilitare i pulsanti
+        self.job_list.itemSelectionChanged.connect(self.update_delete_buttons_state)
+        self.action_list.itemSelectionChanged.connect(self.update_delete_buttons_state)
 
         hlayout.addLayout(vbox_left)
         hlayout.addLayout(vbox_right)
@@ -231,3 +248,41 @@ class MainWindow(QMainWindow):
 
         dialog.setLayout(layout)
         dialog.exec()
+
+    def update_delete_buttons_state(self):
+        self.delete_job_button.setEnabled(len(self.job_list.selectedItems()) > 0)
+        self.delete_action_button.setEnabled(len(self.action_list.selectedItems()) > 0)
+    
+    def delete_job(self):
+        current_index = self.job_list.currentRow()
+        if 0 <= current_index < len(self.project.jobs):
+            reply = QMessageBox.question(
+                self, 
+                "Confirm Delete",
+                f"Are you sure you want to delete job '{self.project.jobs[current_index].name}'?",
+                QMessageBox.Yes | QMessageBox.No
+            )
+            
+            if reply == QMessageBox.Yes:
+                # Rimuovi dalla lista e dal progetto
+                self.job_list.takeItem(current_index)
+                self.project.jobs.pop(current_index)
+                # Pulisci la lista delle azioni
+                self.action_list.clear()
+    
+    def delete_action(self):
+        job_index = self.job_list.currentRow()
+        action_index = self.action_list.currentRow()
+        if (0 <= job_index < len(self.project.jobs)) and (0 <= action_index < len(self.project.jobs[job_index].actions)):
+            action = self.project.jobs[job_index].actions[action_index]
+            reply = QMessageBox.question(
+                self,
+                "Confirm Delete",
+                f"Are you sure you want to delete action '{self.action_text(action)}'?",
+                QMessageBox.Yes | QMessageBox.No
+            )
+            
+            if reply == QMessageBox.Yes:
+                # Rimuovi dalla lista e dal job
+                self.action_list.takeItem(action_index)
+                self.project.jobs[job_index].actions.pop(action_index)
