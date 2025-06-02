@@ -4,6 +4,10 @@ from PySide6.QtWidgets import (
     QDialog, QFormLayout, QLineEdit)
 from gui.project_model import Project, Job, ActionConfig
 
+COMBO_ACTIONS = "Combined Actions"
+
+ACTION_TYPES = ["NoiseDetection", COMBO_ACTIONS, "FocusStackBunch", "FocusStack", "MultiLayer"]
+
 SUB_ACTION_TYPES = ["MaskNoise", "Vignetting", "AlignFrames", "BalanceFrames"]
 
 class MainWindow(QMainWindow):
@@ -37,13 +41,7 @@ class MainWindow(QMainWindow):
         self.add_action_button.clicked.connect(self.add_action)
 
         self.action_selector = QComboBox()
-        self.action_selector.addItems([
-            "NoiseDetection",
-            "Actions",
-            "FocusStackBunch",
-            "FocusStack",
-            "MultiLayer"
-        ])
+        self.action_selector.addItems(ACTION_TYPES)
 
         layout = QVBoxLayout()
         hlayout = QHBoxLayout()
@@ -228,7 +226,7 @@ class MainWindow(QMainWindow):
                 if action_counter == action_index:
                     current_action = action
                     break
-                if action.type_name == "Actions":
+                if action.type_name == COMBO_ACTIONS:
                     for sub_action in action.sub_actions:
                         action_counter += 1
                         if action_counter == action_index:
@@ -293,7 +291,7 @@ class MainWindow(QMainWindow):
                 if action_counter == action_index:
                     current_action = action
                     break
-                if action.type_name == "Actions":
+                if action.type_name == COMBO_ACTIONS:
                     for sub_action in action.sub_actions:
                         action_counter += 1
                         if action_counter == action_index:
@@ -304,7 +302,7 @@ class MainWindow(QMainWindow):
                         break
             enable_sub_actions = (current_action and 
                                 not is_sub_action and 
-                                current_action.type_name == "Actions")
+                                current_action.type_name == COMBO_ACTIONS)
             self.sub_action_selector.setEnabled(enable_sub_actions)
             self.add_sub_action_button.setEnabled(enable_sub_actions)
             
@@ -361,7 +359,7 @@ class MainWindow(QMainWindow):
             job = self.project.jobs[index]
             for action in job.actions:
                 self.action_list.addItem(self.action_text(action))
-                if action.type_name == "Actions":
+                if action.type_name == COMBO_ACTIONS:
                     for sub_action in action.sub_actions:
                         self.action_list.addItem(self.action_text(sub_action, is_sub_action=True))
     
@@ -382,10 +380,10 @@ class MainWindow(QMainWindow):
             if action_counter == current_action_index:
                 action = act
                 break
-            if act.type_name == "Actions":
+            if act.type_name == COMBO_ACTIONS:
                 action_counter += len(act.sub_actions)
         
-        if not action or action.type_name != "Actions":
+        if not action or action.type_name != COMBO_ACTIONS:
             return
         
         type_name = self.sub_action_selector.currentText()
@@ -415,7 +413,7 @@ class MainWindow(QMainWindow):
                 if action_counter == action_index:
                     current_action = action
                     break
-                if action.type_name == "Actions":
+                if action.type_name == COMBO_ACTIONS:
                     for sub_action in action.sub_actions:
                         action_counter += 1
                         if action_counter == action_index:
@@ -430,8 +428,7 @@ class MainWindow(QMainWindow):
                 if is_sub_action:
                     self.show_action_config_dialog(current_action)
                 else:
-                    if current_action.type_name == "Actions":
-                        # Abilita/disabilita i controlli per sub-actions
+                    if current_action.type_name == COMBO_ACTIONS:
                         self.sub_action_selector.setEnabled(True)
                         self.add_sub_action_button.setEnabled(True)
                     else:
@@ -456,7 +453,7 @@ class MainWindow(QMainWindow):
                 if action_counter == action_index:
                     current_action = action
                     break
-                if action.type_name == "Actions":
+                if action.type_name == COMBO_ACTIONS:
                     for i, sub_action in enumerate(action.sub_actions):
                         action_counter += 1
                         if action_counter == action_index:
