@@ -7,6 +7,12 @@ class ActionConfig:
         self.params = params or {}
         self.sub_actions: list[ActionConfig] = []
 
+    def add_sub_action(self, action):
+        self.sub_actions.append(action)
+
+    def pop_sub_action(self, index):
+        self.sub_actions.pop(index)
+
     def create_instance(self):
         # dummy implementation for now
         from focus_stack import available_actions

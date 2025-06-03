@@ -211,26 +211,26 @@ class DefaultActionConfigurator(ActionConfigurator):
 class JobConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, params):
         super().create_form(layout, params, "Job")
-        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working Path', required=True)
-        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input Path (rel.)', required=False)
+        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
+        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input rel. path', required=False)
 
 class NoiseDetectionConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, params):
         super().create_form(layout, params, "Job")
-        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working Path', required=True)
-        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input Path (rel.)', required=False)
+        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
+        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input rel. path', required=False)
 
 class FocusStackConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, params):
         super().create_form(layout, params, "Job")
-        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working Path', required=True)
-        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input Path (rel.)', required=False)
+        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
+        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input rel. path', required=False)
 
 class MultiLayerConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, params):
         super().create_form(layout, params, "Job")
-        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working Path', required=True)
-        self.builder.add_field('input_path', FIELD_ABS_PATH, 'Input Path (rel.)', required=False)
+        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
+        self.builder.add_field('input_path', FIELD_ABS_PATH, 'Input rel. path', required=False)
 
 class CombinedActionsConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, params):

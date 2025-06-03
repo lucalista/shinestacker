@@ -131,13 +131,11 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "No Job Selected", "Please select a job first.")
             return
         type_name = self.action_selector.currentText()
-        name, ok = QInputDialog.getText(self, "New Action", "Enter action name:")
-        if not ok or not name:
-            return
-        params = {'name': name}
-        action = ActionConfig(type_name, params)
-        self.project.jobs[current_index].sub_actions.append(action)
-        self.action_list.addItem(self.action_text(action))
+        action = ActionConfig(type_name)
+        dialog = ActionConfigDialog(action, self)
+        if dialog.exec() == QDialog.Accepted:     
+            self.project.jobs[current_index].add_sub_action(action)
+            self.action_list.addItem(self.action_text(action))
 
     def show_action_config_dialog(self, action):
         dialog = ActionConfigDialog(action, self)
@@ -236,7 +234,7 @@ class MainWindow(QMainWindow):
             return
         params = {'name': name}
         sub_action = ActionConfig(type_name, params)
-        action.sub_actions.append(sub_action)
+        action.add_sub_action(sub_action)
         self.on_job_selected(current_job_index)
         self.action_list.setCurrentRow(current_action_index)
 
@@ -309,7 +307,7 @@ class MainWindow(QMainWindow):
                 )
                 if reply == QMessageBox.Yes:
                     if is_sub_action:
-                        parent_action.sub_actions.pop(sub_action_index)
+                        parent_action.pop_sub_action(sub_action_index)
                     else:
-                        job.sub_actions.pop(action_counter)
+                        job.pop_sub_action(action_counter)
                     self.on_job_selected(job_index)
