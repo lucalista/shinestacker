@@ -21,6 +21,145 @@ class ActionConfigurator(ABC):
     def update_params(self, params: Dict[str, Any]):
         pass
 
+class FieldBuilder:
+    def __init__(self, layout, params):
+        self.layout = layout
+        self.params = params
+        self.fields = {}
+        
+    def add_field(self, tag: str, field_type: str, label: str, 
+                 required: bool = False, **kwargs):
+        if field_type == 'text':
+            widget = self._create_text_field(tag, **kwargs)
+        elif field_type == 'abs_path':
+            widget = self._create_abs_path_field(tag, **kwargs)
+        elif field_type == 'rel_path':
+            widget = self._create_rel_path_field(tag, **kwargs)
+        elif field_type == 'float':
+            widget = self._create_float_field(tag, **kwargs)
+        elif field_type == 'int':
+            widget = self._create_int_field(tag, **kwargs)
+        elif field_type == 'combo':
+            widget = self._create_combo_field(tag, **kwargs)
+        else:
+            raise ValueError(f"Unknown field type: {field_type}")
+        
+        self.fields[tag] = {
+            'widget': widget,
+            'type': field_type,
+            'required': required,
+            **kwargs
+        }
+        self.layout.addRow(f"{label}:", widget[0] if isinstance(widget, tuple) else widget)
+        return widget
+
+    def get_working_path(self):
+        if 'working_path' not in self.fields.keys():
+            return ''
+        return self.fields['working_path']['widget'].itemAt(0).widget().text()
+    
+    def update_params(self, params: Dict[str, Any]) -> bool:
+        for tag, field in self.fields.items():
+            if field['type'] == 'name':
+                params[tag] = field['widget'].text()
+            elif field['type'] in ('abs_path', 'rel_path'):
+                params[tag] = field['widget'].itemAt(0).widget().text()
+            elif field['type'] == 'float':
+                params[tag] = field['widget'].value()
+            elif field['type'] == 'int':
+                params[tag] = field['widget'].value()
+            elif field['type'] == 'combo':
+                params[tag] = field['widget'].currentText()
+            if field['required'] and not params[tag]:
+                QMessageBox.warning(None, "Error", f"{tag} is required")
+                return False
+            if field['type'] == 'rel_path' and 'working_path' in params:
+                try:
+                    working_path = self.get_working_path()
+                    abs_path = os.path.normpath(os.path.join(working_path, params[tag]))
+                    if not abs_path.startswith(os.path.normpath(working_path)):
+                        QMessageBox.warning(None, "Invalid Path", 
+                                           f"{tag} must be a subdirectory of working path")
+                        return False
+                except Exception as e:
+                    QMessageBox.warning(None, "Error", f"Invalid path: {str(e)}")
+                    return False
+        return True
+    
+    def _create_text_field(self, tag, **kwargs):
+        value = self.params.get(tag, '')
+        edit = QLineEdit(value)
+        return edit
+        
+    def _create_abs_path_field(self, tag, **kwargs):
+        value = self.params.get(tag, '')
+        edit = QLineEdit(value)
+        button = QPushButton("Browse...")
+        def browse():
+            path = QFileDialog.getExistingDirectory(None, f"Select {tag.replace('_', ' ')}")
+            if path:
+                edit.setText(path)
+        button.clicked.connect(browse)
+        layout = QHBoxLayout()
+        layout.addWidget(edit)
+        layout.addWidget(button)
+        return layout
+    
+    def _create_rel_path_field(self, tag, **kwargs):
+        value = self.params.get(tag, '')
+        edit = QLineEdit(value)
+        button = QPushButton("Browse...")
+        def browse():
+            working_path = self.get_working_path()
+            if not working_path:
+                QMessageBox.warning(None, "Error", "Please set working path first")
+                return
+            path = QFileDialog.getExistingDirectory(
+                None, 
+                f"Select {tag.replace('_', ' ')}",
+                working_path
+            )
+            if path:
+                try:
+                    rel_path = os.path.relpath(path, working_path)
+                    if rel_path.startswith('..'):
+                        QMessageBox.warning(None, "Invalid Path",
+                                          f"{tag} must be a subdirectory of working path")
+                        return
+                    edit.setText(rel_path)
+                except ValueError:
+                    QMessageBox.warning(None, "Error", "Could not compute relative path")
+        
+        button.clicked.connect(browse)
+        layout = QHBoxLayout()
+        layout.addWidget(edit)
+        layout.addWidget(button)
+        return layout
+    
+    def _create_float_field(self, tag, default=0.0, min=0.0, max=1.0, step=0.1, **kwargs):
+        value = self.params.get(tag, default)
+        spin = QDoubleSpinBox()
+        spin.setValue(value)
+        spin.setRange(min, max)
+        spin.setSingleStep(step)
+        return spin
+    
+    def _create_int_field(self, tag, default=1, min=1, max=10, **kwargs):
+        value = self.params.get(tag, default)
+        spin = QSpinBox()
+        spin.setValue(value)
+        spin.setRange(min, max)
+        return spin
+    
+    def _create_combo_field(self, tag, options=None, default=None, **kwargs):
+        options = options or []
+        value = self.params.get(tag, default or options[0] if options else '')
+        combo = QComboBox()
+        combo.addItems(options)
+        if value in options:
+            combo.setCurrentText(value)
+        return combo
+
 
 class ActionConfigDialog(QDialog):
     def __init__(self, action: ActionConfig, parent=None):
@@ -55,213 +194,37 @@ class ActionConfigDialog(QDialog):
             super().accept()
 
 
-class PathConfiguratorMixin:
-    def add_path_fields(self, layout, params, fields):
-        self.path_fields = {}   
-        for param_name, label, required in fields:
-            path_value = params.get(param_name, '')
-            path_edit = QLineEdit(path_value)
-            browse_button = QPushButton("Browse...")
-            self.path_fields[param_name] = {
-                'edit': path_edit,
-                'button': browse_button,
-                'required': required
-            }
-            path_layout = QHBoxLayout()
-            path_layout.addWidget(path_edit)
-            path_layout.addWidget(browse_button)
-            layout.addRow(f"{label} (relative):", path_layout)
-            browse_button.clicked.connect(
-                lambda _, p=param_name: self._browse_path(p)
-            )
-
-    def _browse_path(self, param_name):
-        working_path = self.working_path_edit.text() if hasattr(self, 'working_path_edit') else ""
-        if not working_path and self.path_fields[param_name]['required']:
-            QMessageBox.warning(None, "Error", "Please set working path first")
-            return
-        path = QFileDialog.getExistingDirectory(
-            None, 
-            f"Select {param_name.replace('_', ' ')} directory",
-            working_path
-        )
-        if path:
-            try:
-                rel_path = os.path.relpath(path, working_path) if working_path else path
-                if working_path and rel_path.startswith('..'):
-                    QMessageBox.warning(None, "Invalid Path",
-                                        f"{param_name} must be a subdirectory of working path")
-                    return
-                self.path_fields[param_name]['edit'].setText(rel_path)
-            except ValueError:
-                QMessageBox.warning(None, "Error", "Could not compute relative path")
-
-    def update_path_params(self, params, working_path_field='working_path'):
-        working_path = ""
-        if hasattr(self, working_path_field + '_edit'):
-            working_path = getattr(self, working_path_field + '_edit').text()
-            params[working_path_field] = working_path   
-        for param_name, widgets in self.path_fields.items():
-            rel_path = widgets['edit'].text()
-            params[param_name] = rel_path
-            if widgets['required'] and not rel_path:
-                QMessageBox.warning(None, "Error", f"{param_name} is required")
-                return False
-            if working_path and rel_path:
-                try:
-                    abs_path = os.path.normpath(os.path.join(working_path, rel_path))
-                    if not abs_path.startswith(os.path.normpath(working_path)):
-                        QMessageBox.warning(None, "Invalid Path", 
-                                           f"{param_name} must be a subdirectory of working path")
-                        return False
-                except Exception as e:
-                    QMessageBox.warning(None, "Error", f"Invalid path: {str(e)}")
-                    return False
-        return True
-
-
-class BasicPathConfigurator(ActionConfigurator, PathConfiguratorMixin):
-    def create_form(self, layout, params):
-        working_path = params.get('working_path', '')
-        self.working_path_edit = QLineEdit(working_path)
-        working_path_button = QPushButton("Browse...")
-        working_path_button.clicked.connect(self._browse_working_path)
-        working_layout = QHBoxLayout()
-        working_layout.addWidget(self.working_path_edit)
-        working_layout.addWidget(working_path_button)
-        layout.addRow("Working Path:", working_layout)
-        self.add_path_fields(layout, params, [
-            ('input_path', 'Input Path', True),
-            ('plot_path', 'Plot Path', False),
-            ('exif_path', 'EXIF Path', False)
-        ])
-    
-    def update_params(self, params):
-        return self.update_path_params(params)
-    
-    def _browse_working_path(self):
-        path = QFileDialog.getExistingDirectory(None, "Select Working Directory")
-        if path:
-            self.working_path_edit.setText(path)
-
-
-class OutputOnlyConfigurator(ActionConfigurator, PathConfiguratorMixin):
-    def create_form(self, layout, params):
-        self.add_path_fields(layout, params, [
-            ('output_path', 'Output Path', True)
-        ])
-    
-    def update_params(self, params):
-        return self.update_path_params(params, working_path_field=None)
-
-
 class DefaultActionConfigurator(ActionConfigurator):
-    def create_form(self, layout, params, label="Action"):
-        if 'name' not in params:
-            params['name'] = ''
-        self.name_edit = QLineEdit(params['name'])
-        layout.addRow(f"{label} name:", self.name_edit)
-
-    def update_params(self, params):
-        params['name'] = self.name_edit.text()
-        return True
-
-
-class JobConfigurator(DefaultActionConfigurator, PathConfiguratorMixin):
-    def create_form(self, layout, params):
-        DefaultActionConfigurator.create_form(self, layout, params, "Job")
-        working_path = params.get('working_path', '')
-        self.working_path_edit = QLineEdit(working_path)
-        working_path_button = QPushButton("Browse...")
-        working_path_button.clicked.connect(self._browse_working_path)
-        working_layout = QHBoxLayout()
-        working_layout.addWidget(self.working_path_edit)
-        working_layout.addWidget(working_path_button)
-        layout.addRow("Working Path:", working_layout)
-        self.add_path_fields(layout, params, [
-            ('input_path', 'Input Path', False),
-        ])
-
-    def update_params(self, params):
-        DefaultActionConfigurator.update_params(self, params)
-        return self.update_path_params(params)
-    
-    def _browse_working_path(self):
-        path = QFileDialog.getExistingDirectory(None, "Select Working Directory")
-        if path:
-            self.working_path_edit.setText(path)
-
-class NoiseDetectionConfigurator(ActionConfigurator, PathConfiguratorMixin):
-    def create_form(self, layout, params):
-        DefaultActionConfigurator().create_form(layout, params)
-        working_path = params.get('working_path', '')
-        self.working_path_edit = QLineEdit(working_path)
-        working_path_button = QPushButton("Browse...")
-        working_path_button.clicked.connect(self._browse_working_path)
-        working_layout = QHBoxLayout()
-        working_layout.addWidget(self.working_path_edit)
-        working_layout.addWidget(working_path_button)
-        layout.addRow("Working Path:", working_layout)
-        self.add_path_fields(layout, params, [
-            ('input_path', 'Input Path', True),
-            ('noise_map_path', 'Noise Map Path', False)
-        ])
-        threshold = params.get('threshold', 0.5)
-        threshold_spin = QDoubleSpinBox()
-        threshold_spin.setValue(threshold)
-        threshold_spin.setRange(0, 1)
-        threshold_spin.setSingleStep(0.1)
-        layout.addRow("Noise threshold:", threshold_spin)
-        self.threshold_spin = threshold_spin
+    def create_form(self, layout, params, tag='Action'):
+        self.builder = FieldBuilder(layout, params)
+        self.builder.add_field('name', 'text', f'{tag} name:', required=True)
     
     def update_params(self, params):
-        if not self.update_path_params(params):
-            return False
-        params['threshold'] = self.threshold_spin.value()
-        return True
-    
-    def _browse_working_path(self):
-        path = QFileDialog.getExistingDirectory(None, "Select Working Directory")
-        if path:
-            self.working_path_edit.setText(path)
+        return self.builder.update_params(params)
 
-
-class FocusStackConfigurator(ActionConfigurator):
+class JobConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, params):
-        DefaultActionConfigurator().create_form(layout, params)
-        method = params.get('method', 'pyramids')
-        method_combo = QComboBox()
-        method_combo.addItems(['pyramids', 'depth map'])
-        method_combo.setCurrentText(method)
-        layout.addRow("Stacking method:", method_combo)
-        self.method_combo = method_combo
+        super().create_form(layout, params, "Job")
+        self.builder.add_field('working_path', 'abs_path', 'Working Path', required=True)
+        self.builder.add_field('input_path', 'rel_path', 'Input Path (rel.)', required=False)
 
-    def update_params(self, params):
-        params['method'] = self.method_combo.currentText()
-        return True
-
-class MultiLayerConfigurator(ActionConfigurator):
+class NoiseDetectionConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, params):
-        DefaultActionConfigurator().create_form(layout, params)
+        super().create_form(layout, params, "Job")
+        self.builder.add_field('working_path', 'abs_path', 'Working Path', required=True)
+        self.builder.add_field('input_path', 'rel_path', 'Input Path (rel.)', required=False)
 
-        layers = params.get('layers', 3)
-        layers_spin = QSpinBox()
-        layers_spin.setValue(layers)
-        layers_spin.setRange(1, 10)
-        layout.addRow("Number of layers:", layers_spin)
-        self.layers_spin = layers_spin
+class FocusStackConfigurator(DefaultActionConfigurator):
+    def create_form(self, layout, params):
+        super().create_form(layout, params, "Job")
+        self.builder.add_field('working_path', 'abs_path', 'Working Path', required=True)
+        self.builder.add_field('input_path', 'rel_path', 'Input Path (rel.)', required=False)
 
-        blend_mode = params.get('blend_mode', 'normal')
-        blend_combo = QComboBox()
-        blend_combo.addItems(['normal', 'multiply', 'screen'])
-        blend_combo.setCurrentText(blend_mode)
-        layout.addRow("Blend mode:", blend_combo)
-        self.blend_combo = blend_combo
-
-    def update_params(self, params):
-        params['layers'] = self.layers_spin.value()
-        params['blend_mode'] = self.blend_combo.currentText()
-        return True
+class MultiLayerConfigurator(DefaultActionConfigurator):
+    def create_form(self, layout, params):
+        super().create_form(layout, params, "Job")
+        self.builder.add_field('working_path', 'abs_path', 'Working Path', required=True)
+        self.builder.add_field('input_path', 'rel_path', 'Input Path (rel.)', required=False)
 
 class CombinedActionsConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, params):
