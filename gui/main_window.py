@@ -93,12 +93,7 @@ class MainWindow(QMainWindow):
         self.central_widget.setLayout(layout)
 
     def add_job(self):
-        '''
-        name, ok = QInputDialog.getText(self, "New Job", "Enter job name:")
-        if not ok or not name:
-            return
-        '''
-        job_action = ActionConfig("Job",  {'name': '', 'working_path': '', 'input_path': ''})
+        job_action = ActionConfig("Job")
         dialog = ActionConfigDialog(job_action, self)
         if dialog.exec() == QDialog.Accepted:
             self.project.jobs.append(job_action)
@@ -141,7 +136,7 @@ class MainWindow(QMainWindow):
             return
         params = {'name': name}
         action = ActionConfig(type_name, params)
-        self.project.jobs[current_index].actions.append(action)
+        self.project.jobs[current_index].sub_actions.append(action)
         self.action_list.addItem(self.action_text(action))
 
     def show_action_config_dialog(self, action):
@@ -162,7 +157,7 @@ class MainWindow(QMainWindow):
             action_counter = -1
             current_action = None
             is_sub_action = False
-            for action in job.actions:
+            for action in job.sub_actions:
                 action_counter += 1
                 if action_counter == action_index:
                     current_action = action
@@ -225,7 +220,7 @@ class MainWindow(QMainWindow):
         job = self.project.jobs[current_job_index]
         action = None
         action_counter = -1
-        for i, act in enumerate(job.actions):
+        for i, act in enumerate(job.sub_actions):
             action_counter += 1
             if action_counter == current_action_index:
                 action = act
@@ -253,7 +248,7 @@ class MainWindow(QMainWindow):
             action_counter = -1
             current_action = None
             is_sub_action = False
-            for action in job.actions:
+            for action in job.sub_actions:
                 action_counter += 1
                 if action_counter == action_index:
                     current_action = action
@@ -289,7 +284,7 @@ class MainWindow(QMainWindow):
             is_sub_action = False
             parent_action = None
             sub_action_index = -1
-            for action in job.actions:
+            for action in job.sub_actions:
                 action_counter += 1
                 if action_counter == action_index:
                     current_action = action
@@ -316,5 +311,5 @@ class MainWindow(QMainWindow):
                     if is_sub_action:
                         parent_action.sub_actions.pop(sub_action_index)
                     else:
-                        job.actions.pop(action_counter)
+                        job.sub_actions.pop(action_counter)
                     self.on_job_selected(job_index)
