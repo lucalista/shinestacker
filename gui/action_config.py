@@ -60,7 +60,7 @@ class FieldBuilder:
     
     def update_params(self, params: Dict[str, Any]) -> bool:
         for tag, field in self.fields.items():
-            if field['type'] == 'name':
+            if field['type'] == 'text':
                 params[tag] = field['widget'].text()
             elif field['type'] in ('abs_path', 'rel_path'):
                 params[tag] = field['widget'].itemAt(0).widget().text()
@@ -197,7 +197,7 @@ class ActionConfigDialog(QDialog):
 class DefaultActionConfigurator(ActionConfigurator):
     def create_form(self, layout, params, tag='Action'):
         self.builder = FieldBuilder(layout, params)
-        self.builder.add_field('name', 'text', f'{tag} name:', required=True)
+        self.builder.add_field('name', 'text', f'{tag} name', required=True)
     
     def update_params(self, params):
         return self.builder.update_params(params)

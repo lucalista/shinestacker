@@ -109,12 +109,10 @@ class MainWindow(QMainWindow):
             job_action = ActionConfig("Job", job.params)
             dialog = ActionConfigDialog(job_action, self)
             if dialog.exec() == QDialog.Accepted:
-                job.name = job_action.params['name']
-                job.working_path = job_action.params['working_path']
-                job.input_path = job_action.params['input_path']
+                job.params = job_action.params
                 current_row = self.job_list.currentRow()
                 if current_row >= 0:
-                    self.job_list.item(current_row).setText(job.name)
+                    self.job_list.item(current_row).setText(job.params['name'])
 
     def run_job(self):
         current_index = self.job_list.currentRow()
