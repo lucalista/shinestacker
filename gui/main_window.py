@@ -160,7 +160,7 @@ class MainWindow(QMainWindow):
                 if action_counter == action_index:
                     current_action = action
                     break
-                if action.type_name == COMBO_ACTIONS:
+                if len(action.sub_actions) > 0:
                     for sub_action in action.sub_actions:
                         action_counter += 1
                         if action_counter == action_index:
@@ -195,9 +195,10 @@ class MainWindow(QMainWindow):
                 self.action_list.clear()
 
     def action_text(self, action, is_sub_action=False):
-        txt = "    " + action.type_name if is_sub_action else action.type_name
+        txt = "    " if is_sub_action else ""
         if "name" in action.params.keys() and action.params["name"] != '':
-            txt += ": " + action.params["name"]
+            txt += action.params["name"]
+        txt += f" [{action.type_name}]"
         return txt
 
     def on_job_selected(self, index):
@@ -206,7 +207,7 @@ class MainWindow(QMainWindow):
             job = self.project.jobs[index]
             for action in job.sub_actions:
                 self.action_list.addItem(self.action_text(action))
-                if action.type_name == COMBO_ACTIONS:
+                if len(action.sub_actions) > 0:
                     for sub_action in action.sub_actions:
                         self.action_list.addItem(self.action_text(sub_action, is_sub_action=True))
 
@@ -223,11 +224,9 @@ class MainWindow(QMainWindow):
             if action_counter == current_action_index:
                 action = act
                 break
-            if act.type_name == COMBO_ACTIONS:
-                action_counter += len(act.sub_actions)
+            action_counter += len(act.sub_actions)
         if not action or action.type_name != COMBO_ACTIONS:
             return
-
         type_name = self.sub_action_selector.currentText()
         sub_action = ActionConfig(type_name)
         dialog = ActionConfigDialog(sub_action, self)
@@ -249,7 +248,7 @@ class MainWindow(QMainWindow):
                 if action_counter == action_index:
                     current_action = action
                     break
-                if action.type_name == COMBO_ACTIONS:
+                if len(action.type_name) > 0:
                     for sub_action in action.sub_actions:
                         action_counter += 1
                         if action_counter == action_index:
@@ -285,7 +284,7 @@ class MainWindow(QMainWindow):
                 if action_counter == action_index:
                     current_action = action
                     break
-                if action.type_name == COMBO_ACTIONS:
+                if len(action.sub_actions)>0:
                     for i, sub_action in enumerate(action.sub_actions):
                         action_counter += 1
                         if action_counter == action_index:

@@ -5,10 +5,12 @@ class ActionConfig:
     def __init__(self, type_name: str, params: dict = None):
         self.type_name = type_name
         self.params = params or {}
+        self.parent = None
         self.sub_actions: list[ActionConfig] = []
 
     def add_sub_action(self, action):
         self.sub_actions.append(action)
+        action.parent = self
 
     def pop_sub_action(self, index):
         self.sub_actions.pop(index)
