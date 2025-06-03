@@ -105,10 +105,8 @@ class MainWindow(QMainWindow):
         index = self.job_list.row(item)
         if 0 <= index < len(self.project.jobs):
             job = self.project.jobs[index]
-            job_action = ActionConfig("Job", job.params)
-            dialog = ActionConfigDialog(job_action, self)
+            dialog = ActionConfigDialog(job, self)
             if dialog.exec() == QDialog.Accepted:
-                job.params = job_action.params
                 current_row = self.job_list.currentRow()
                 if current_row >= 0:
                     self.job_list.item(current_row).setText(job.params['name'])

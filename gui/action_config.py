@@ -56,7 +56,7 @@ class FieldBuilder:
             'required': required,
             **kwargs
         }
-        self.layout.addRow(f"{label}:", widget[0] if isinstance(widget, tuple) else widget)
+        self.layout.addRow(f"{label}:", widget)
         return widget
 
     def get_working_path(self):
@@ -225,12 +225,14 @@ class FocusStackConfigurator(DefaultActionConfigurator):
         super().create_form(layout, params, "Job")
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
         self.builder.add_field('input_path', FIELD_REL_PATH, 'Input rel. path', required=False)
+        self.builder.add_field('output_path', FIELD_REL_PATH, 'Output rel. path', required=False)
 
 class MultiLayerConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, params):
         super().create_form(layout, params, "Job")
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
         self.builder.add_field('input_path', FIELD_ABS_PATH, 'Input rel. path', required=False)
+        self.builder.add_field('output_path', FIELD_REL_PATH, 'Output rel. path', required=False)
 
 class CombinedActionsConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, params):

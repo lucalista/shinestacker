@@ -16,12 +16,15 @@ class ActionConfig:
         self.sub_actions.pop(index)
 
     def create_instance(self):
+        pass
         # dummy implementation for now
+'''
         from focus_stack import available_actions
         action_class = available_actions.get(self.type_name)
         if not action_class:
             raise ValueError(f"Unknown action type: {self.type_name}")
         return action_class(**self.params)
+'''
 
 class Project:
     def __init__(self):
