@@ -2,7 +2,7 @@ from PySide6.QtWidgets import (
     QMainWindow, QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout,
     QFileDialog, QLabel, QComboBox, QMessageBox, QInputDialog,
     QDialog, QFormLayout, QLineEdit, QSpinBox, QDoubleSpinBox)
-from gui.project_model import Project, Job, ActionConfig
+from gui.project_model import Project, ActionConfig
 from abc import ABC, abstractmethod
 from typing import Dict, Any
 import os.path

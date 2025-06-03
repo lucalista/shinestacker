@@ -8,31 +8,16 @@ class ActionConfig:
         self.sub_actions: list[ActionConfig] = []
 
     def create_instance(self):
+        # dummy implementation for now
         from focus_stack import available_actions
         action_class = available_actions.get(self.type_name)
         if not action_class:
             raise ValueError(f"Unknown action type: {self.type_name}")
         return action_class(**self.params)
 
-
-class Job:
-    def __init__(self, name: str, working_path: str, input_path: str):
-        self.name = name
-        self.working_path = working_path
-        self.input_path = input_path
-        self.actions: list[ActionConfig] = []
-
-    def to_stack_job(self):
-        job = StackJob(self.name, self.working_path, self.input_path)
-        for action_cfg in self.actions:
-            action = action_cfg.create_instance()
-            job.add_action(action)
-        return job
-
-
 class Project:
     def __init__(self):
-        self.jobs: list[Job] = []
+        self.jobs: list[ActionConfig] = []
 
     def run_all(self):
         for job in self.jobs:

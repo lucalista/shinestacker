@@ -2,7 +2,7 @@ from PySide6.QtWidgets import (
     QMainWindow, QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout,
     QFileDialog, QLabel, QComboBox, QMessageBox, QInputDialog,
     QDialog, QFormLayout, QLineEdit, QSpinBox, QDoubleSpinBox)
-from gui.project_model import Project, Job, ActionConfig
+from gui.project_model import Project, ActionConfig
 from gui.action_config import *
 from abc import ABC, abstractmethod
 from typing import Dict, Any
@@ -96,7 +96,7 @@ class MainWindow(QMainWindow):
         name, ok = QInputDialog.getText(self, "New Job", "Enter job name:")
         if not ok or not name:
             return
-        job = Job(name, working_path='', input_path='')
+        job = ActionConfig("Job",  {'name': name, 'working_path': '', 'input_path': ''})
         self.project.jobs.append(job)
         self.job_list.addItem(name)
         self.job_list.setCurrentRow(self.job_list.count() - 1)
@@ -106,23 +106,19 @@ class MainWindow(QMainWindow):
         index = self.job_list.row(item)
         if 0 <= index < len(self.project.jobs):
             job = self.project.jobs[index]
-            self.show_job_config_dialog(job)
-
-    def show_job_config_dialog(self, job):
-        job_action = ActionConfig("Job", {
-            'name': job.name,
-            'working_path': job.working_path,
-            'input_path': job.input_path
-        })
-
-        dialog = ActionConfigDialog(job_action, self)
-        if dialog.exec() == QDialog.Accepted:
-            job.name = job_action.params['name']
-            job.working_path = job_action.params['working_path']
-            job.input_path = job_action.params['input_path']
-            current_row = self.job_list.currentRow()
-            if current_row >= 0:
-                self.job_list.item(current_row).setText(job.name)
+            job_action = ActionConfig("Job", {
+                'name': job.params['name'],
+                'working_path': job.params['working_path'],
+                'input_path': job.params['input_path']
+            })
+            dialog = ActionConfigDialog(job_action, self)
+            if dialog.exec() == QDialog.Accepted:
+                job.name = job_action.params['name']
+                job.working_path = job_action.params['working_path']
+                job.input_path = job_action.params['input_path']
+                current_row = self.job_list.currentRow()
+                if current_row >= 0:
+                    self.job_list.item(current_row).setText(job.name)
 
     def run_job(self):
         current_index = self.job_list.currentRow()
@@ -137,8 +133,6 @@ class MainWindow(QMainWindow):
             print("run: " + job.name)
 
     def add_action(self):
-        from PySide6.QtWidgets import QInputDialog
-
         current_index = self.job_list.currentRow()
         if current_index < 0:
             QMessageBox.warning(self, "No Job Selected", "Please select a job first.")
@@ -219,7 +213,7 @@ class MainWindow(QMainWindow):
         self.action_list.clear()
         if 0 <= index < len(self.project.jobs):
             job = self.project.jobs[index]
-            for action in job.actions:
+            for action in job.sub_actions:
                 self.action_list.addItem(self.action_text(action))
                 if action.type_name == COMBO_ACTIONS:
                     for sub_action in action.sub_actions:
