@@ -106,11 +106,7 @@ class MainWindow(QMainWindow):
         index = self.job_list.row(item)
         if 0 <= index < len(self.project.jobs):
             job = self.project.jobs[index]
-            job_action = ActionConfig("Job", {
-                'name': job.params['name'],
-                'working_path': job.params['working_path'],
-                'input_path': job.params['input_path']
-            })
+            job_action = ActionConfig("Job", job.params)
             dialog = ActionConfigDialog(job_action, self)
             if dialog.exec() == QDialog.Accepted:
                 job.name = job_action.params['name']
