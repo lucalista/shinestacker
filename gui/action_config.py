@@ -7,8 +7,13 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any
 import os.path
 
-COMBO_ACTIONS = "Combined Actions"
-ACTION_TYPES = [COMBO_ACTIONS, "FocusStackBunch", "FocusStack", "MultiLayer", "NoiseDetection"]
+ACTION_JOB = "Job"
+ACTION_COMBO = "Combined Actions"
+ACTION_NOISEDETECTION = "NoiseDetection"
+ACTION_FOCUSSTACK = "FocusStack"
+ACTION_FOCUSSTACKBUNCH = "FocusStackBunch"
+ACTION_MULTILAYER = "MultiLayer"
+ACTION_TYPES = [ACTION_COMBO, ACTION_FOCUSSTACKBUNCH, ACTION_FOCUSSTACK, ACTION_MULTILAYER, ACTION_NOISEDETECTION]
 SUB_ACTION_TYPES = ["MaskNoise", "Vignetting", "AlignFrames", "BalanceFrames"]
 FIELD_TEXT = 'text'
 FIELD_ABS_PATH = 'abs_path'
@@ -186,11 +191,12 @@ class ActionConfigDialog(QDialog):
 
     def _get_configurator(self, action_type: str) -> ActionConfigurator:
         configurators = {
-            "Job": JobConfigurator(),
-            COMBO_ACTIONS: CombinedActionsConfigurator(),
-            "NoiseDetection": NoiseDetectionConfigurator(),
-            "FocusStack": FocusStackConfigurator(),
-            "MultiLayer": MultiLayerConfigurator(),
+            ACTION_JOB: JobConfigurator(),
+            ACTION_COMBO: CombinedActionsConfigurator(),
+            ACTION_NOISEDETECTION: NoiseDetectionConfigurator(),
+            ACTION_FOCUSSTACK: FocusStackConfigurator(),
+            ACTION_FOCUSSTACKBUNCH: FocusStackBunchConfigurator(),
+            ACTION_MULTILAYER: MultiLayerConfigurator(),
             # add more configurators here
         }
         return configurators.get(action_type, DefaultActionConfigurator())
@@ -216,20 +222,27 @@ class JobConfigurator(DefaultActionConfigurator):
 
 class NoiseDetectionConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, params):
-        super().create_form(layout, params, "Job")
+        super().create_form(layout, params)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
         self.builder.add_field('input_path', FIELD_REL_PATH, 'Input rel. path', required=False)
 
 class FocusStackConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, params):
-        super().create_form(layout, params, "Job")
+        super().create_form(layout, params)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
         self.builder.add_field('input_path', FIELD_REL_PATH, 'Input rel. path', required=False)
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output rel. path', required=False)
 
+class FocusStackBunchConfigurator(DefaultActionConfigurator):
+    def create_form(self, layout, params):
+        super().create_form(layout, params)
+        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
+        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input rel. path', required=False)
+        self.builder.add_field('output_path', FIELD_REL_PATH, 'Output rel. path', required=False)
+        
 class MultiLayerConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, params):
-        super().create_form(layout, params, "Job")
+        super().create_form(layout, params)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
         self.builder.add_field('input_path', FIELD_ABS_PATH, 'Input rel. path', required=False)
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output rel. path', required=False)
