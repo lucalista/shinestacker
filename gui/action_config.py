@@ -10,7 +10,13 @@ import os.path
 COMBO_ACTIONS = "Combined Actions"
 ACTION_TYPES = [COMBO_ACTIONS, "FocusStackBunch", "FocusStack", "MultiLayer", "NoiseDetection"]
 SUB_ACTION_TYPES = ["MaskNoise", "Vignetting", "AlignFrames", "BalanceFrames"]
-
+FIELD_TEXT = 'text'
+FIELD_ABS_PATH = 'abs_path'
+FIELD_REL_PATH = 'rel_path'
+FIELD_FLOAT = 'float'
+FIELD_INT = 'int'
+FIELD_COMBO = 'combo'
+FIELD_TYPES = [FIELD_TEXT, FIELD_ABS_PATH, FIELD_REL_PATH, FIELD_FLOAT, FIELD_INT, FIELD_COMBO]
 
 class ActionConfigurator(ABC):
     @abstractmethod
@@ -29,17 +35,17 @@ class FieldBuilder:
         
     def add_field(self, tag: str, field_type: str, label: str, 
                  required: bool = False, **kwargs):
-        if field_type == 'text':
+        if field_type == FIELD_TEXT:
             widget = self._create_text_field(tag, **kwargs)
-        elif field_type == 'abs_path':
+        elif field_type == FIELD_ABS_PATH:
             widget = self._create_abs_path_field(tag, **kwargs)
-        elif field_type == 'rel_path':
+        elif field_type == FIELD_REL_PATH:
             widget = self._create_rel_path_field(tag, **kwargs)
-        elif field_type == 'float':
+        elif field_type == FIELD_FLOAT:
             widget = self._create_float_field(tag, **kwargs)
-        elif field_type == 'int':
+        elif field_type == FIELD_INT:
             widget = self._create_int_field(tag, **kwargs)
-        elif field_type == 'combo':
+        elif field_type == FIELD_COMBO:
             widget = self._create_combo_field(tag, **kwargs)
         else:
             raise ValueError(f"Unknown field type: {field_type}")
@@ -60,20 +66,20 @@ class FieldBuilder:
     
     def update_params(self, params: Dict[str, Any]) -> bool:
         for tag, field in self.fields.items():
-            if field['type'] == 'text':
+            if field['type'] == FIELD_TEXT:
                 params[tag] = field['widget'].text()
-            elif field['type'] in ('abs_path', 'rel_path'):
+            elif field['type'] in (FIELD_ABS_PATH, FIELD_REL_PATH):
                 params[tag] = field['widget'].itemAt(0).widget().text()
-            elif field['type'] == 'float':
+            elif field['type'] == FIELD_FLOAT:
                 params[tag] = field['widget'].value()
-            elif field['type'] == 'int':
+            elif field['type'] == FIELD_INT:
                 params[tag] = field['widget'].value()
-            elif field['type'] == 'combo':
+            elif field['type'] == FIELD_COMBO:
                 params[tag] = field['widget'].currentText()
             if field['required'] and not params[tag]:
                 QMessageBox.warning(None, "Error", f"{tag} is required")
                 return False
-            if field['type'] == 'rel_path' and 'working_path' in params:
+            if field['type'] == FIELD_REL_PATH and 'working_path' in params:
                 try:
                     working_path = self.get_working_path()
                     abs_path = os.path.normpath(os.path.join(working_path, params[tag]))
@@ -197,7 +203,7 @@ class ActionConfigDialog(QDialog):
 class DefaultActionConfigurator(ActionConfigurator):
     def create_form(self, layout, params, tag='Action'):
         self.builder = FieldBuilder(layout, params)
-        self.builder.add_field('name', 'text', f'{tag} name', required=True)
+        self.builder.add_field('name', FIELD_TEXT, f'{tag} name', required=True)
     
     def update_params(self, params):
         return self.builder.update_params(params)
@@ -205,26 +211,26 @@ class DefaultActionConfigurator(ActionConfigurator):
 class JobConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, params):
         super().create_form(layout, params, "Job")
-        self.builder.add_field('working_path', 'abs_path', 'Working Path', required=True)
-        self.builder.add_field('input_path', 'rel_path', 'Input Path (rel.)', required=False)
+        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working Path', required=True)
+        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input Path (rel.)', required=False)
 
 class NoiseDetectionConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, params):
         super().create_form(layout, params, "Job")
-        self.builder.add_field('working_path', 'abs_path', 'Working Path', required=True)
-        self.builder.add_field('input_path', 'rel_path', 'Input Path (rel.)', required=False)
+        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working Path', required=True)
+        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input Path (rel.)', required=False)
 
 class FocusStackConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, params):
         super().create_form(layout, params, "Job")
-        self.builder.add_field('working_path', 'abs_path', 'Working Path', required=True)
-        self.builder.add_field('input_path', 'rel_path', 'Input Path (rel.)', required=False)
+        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working Path', required=True)
+        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input Path (rel.)', required=False)
 
 class MultiLayerConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, params):
         super().create_form(layout, params, "Job")
-        self.builder.add_field('working_path', 'abs_path', 'Working Path', required=True)
-        self.builder.add_field('input_path', 'rel_path', 'Input Path (rel.)', required=False)
+        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working Path', required=True)
+        self.builder.add_field('input_path', FIELD_ABS_PATH, 'Input Path (rel.)', required=False)
 
 class CombinedActionsConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, params):
