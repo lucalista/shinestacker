@@ -93,14 +93,18 @@ class MainWindow(QMainWindow):
         self.central_widget.setLayout(layout)
 
     def add_job(self):
+        '''
         name, ok = QInputDialog.getText(self, "New Job", "Enter job name:")
         if not ok or not name:
             return
-        job = ActionConfig("Job",  {'name': name, 'working_path': '', 'input_path': ''})
-        self.project.jobs.append(job)
-        self.job_list.addItem(name)
-        self.job_list.setCurrentRow(self.job_list.count() - 1)
-        self.job_list.item(self.job_list.count() - 1).setSelected(True)
+        '''
+        job_action = ActionConfig("Job",  {'name': '', 'working_path': '', 'input_path': ''})
+        dialog = ActionConfigDialog(job_action, self)
+        if dialog.exec() == QDialog.Accepted:
+            self.project.jobs.append(job_action)
+            self.job_list.addItem(job_action.params['name'])
+            self.job_list.setCurrentRow(self.job_list.count() - 1)
+            self.job_list.item(self.job_list.count() - 1).setSelected(True)
 
     def on_job_double_clicked(self, item):
         index = self.job_list.row(item)
