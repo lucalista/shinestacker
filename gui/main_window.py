@@ -229,14 +229,12 @@ class MainWindow(QMainWindow):
             return
 
         type_name = self.sub_action_selector.currentText()
-        name, ok = QInputDialog.getText(self, "New Sub-Action", "Enter sub-action name:")
-        if not ok or not name:
-            return
-        params = {'name': name}
-        sub_action = ActionConfig(type_name, params)
-        action.add_sub_action(sub_action)
-        self.on_job_selected(current_job_index)
-        self.action_list.setCurrentRow(current_action_index)
+        sub_action = ActionConfig(type_name)
+        dialog = ActionConfigDialog(sub_action, self)
+        if dialog.exec() == QDialog.Accepted:
+            action.add_sub_action(sub_action)
+            self.on_job_selected(current_job_index)
+            self.action_list.setCurrentRow(current_action_index)
 
     def on_action_double_clicked(self, item):
         job_index = self.job_list.currentRow()
