@@ -58,6 +58,7 @@ class FieldBuilder:
         self.fields[tag] = {
             'widget': widget,
             'type': field_type,
+            'label': label,
             'required': required,
             **kwargs
         }
@@ -96,7 +97,7 @@ class FieldBuilder:
                 if tag == 'working_path' and self.get_working_path() != '':
                     required = False
                 if required:
-                    QMessageBox.warning(None, "Error", f"{tag} is required")
+                    QMessageBox.warning(None, "Error", f"{field['label']} is required")
                     return False
             if field['type'] == FIELD_REL_PATH and 'working_path' in params:
                 try:
@@ -104,8 +105,12 @@ class FieldBuilder:
                     abs_path = os.path.normpath(os.path.join(working_path, params[tag]))
                     if not abs_path.startswith(os.path.normpath(working_path)):
                         QMessageBox.warning(None, "Invalid Path", 
-                                           f"{tag} must be a subdirectory of working path")
+                                           f"{field['label']} must be a subdirectory of working path")
                         return False
+                    if field.get('must_exist', False) and not os.path.exists(abs_path):
+                        QMessageBox.warning(None, "Invalid Path",
+                                            f"{field['label']} {abs_path} does not exist")
+                        return                                  
                 except Exception as e:
                     QMessageBox.warning(None, "Error", f"Invalid path: {str(e)}")
                     return False
@@ -156,13 +161,8 @@ class FieldBuilder:
                     rel_path = os.path.relpath(path, working_path)
                     if rel_path.startswith('..'):
                         QMessageBox.warning(None, "Invalid Path",
-                                          f"{tag} must be a subdirectory of working path")
+                                          f"{self.field['tag']['label']} must be a subdirectory of working path")
                         return
-                    if kwarge.get('must_exist', False):
-                        if not os.path.exists(working_path + "/" rel_path)
-                        QMessageBox.warning(None, "Invalid Path",
-                                          f"{tag} {rel_path} does not exist")
-                        return                        
                     edit.setText(rel_path)
                 except ValueError:
                     QMessageBox.warning(None, "Error", "Could not compute relative path")
@@ -253,7 +253,7 @@ class JobConfigurator(DefaultActionConfigurator):
         super().create_form(layout, action, "Job")
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
         self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
-                               placeholder='relative to working path')
+                               must_exist=True, placeholder='relative to working path')
 
 class NoiseDetectionConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
@@ -261,14 +261,14 @@ class NoiseDetectionConfigurator(DefaultActionConfigurator):
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True,
                                placeholder='inherit from job')
         self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
-                               placeholder='relative to working path')
+                               must_exist=True, placeholder='relative to working path')
 
 class FocusStackConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
         super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
         self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
-                               placeholder='rel. to working path')
+                               must_exist=True, placeholder='rel. to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
 
@@ -277,7 +277,7 @@ class FocusStackBunchConfigurator(DefaultActionConfigurator):
         super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
         self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
-                               placeholder='rel. to working path')
+                               must_exist=True, placeholder='rel. to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
         
@@ -286,7 +286,7 @@ class MultiLayerConfigurator(DefaultActionConfigurator):
         super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
         self.builder.add_field('input_path', FIELD_ABS_PATH, 'Input path', required=False,
-                               placeholder='relative to working path')
+                               must_exist=True, placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
 
