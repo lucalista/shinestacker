@@ -15,6 +15,13 @@ class ActionConfig:
     def pop_sub_action(self, index):
         self.sub_actions.pop(index)
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        return state
+    
+    def __setstate__(self, state):
+        self.__dict__.update(state)            
+
     def create_instance(self):
         pass
         # dummy implementation for now
@@ -34,3 +41,10 @@ class Project:
         for job in self.jobs:
             stack_job = job.to_stack_job()
             stack_job.run()
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        return state
+    
+    def __setstate__(self, state):
+        self.__dict__.update(state)            
