@@ -2,9 +2,9 @@ from PySide6.QtWidgets import (
     QMainWindow, QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout,
     QFileDialog, QLabel, QComboBox, QMessageBox, QInputDialog, QFileDialog,
     QDialog, QFormLayout, QLineEdit, QSpinBox, QDoubleSpinBox, QMenu)
-from PySide6.QtGui import QAction, QIcon, QKeySequence
 from gui.project_model import Project, ActionConfig
 from gui.action_config import *
+from gui.menu import WindowMenu
 from abc import ABC, abstractmethod
 from typing import Dict, Any
 import os.path
@@ -12,42 +12,31 @@ import os
 import jsonpickle
 import json
 
-class MainWindow(QMainWindow):
+class MainWindow(WindowMenu):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Focus Stacking GUI")
         self.resize(800, 600)
-
         self.project = Project()
-
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
-
         self.job_list = QListWidget()
         self.job_list.currentRowChanged.connect(self.on_job_selected)
         self.job_list.itemDoubleClicked.connect(self.on_job_double_clicked)
-
         self.action_list = QListWidget()
         self.action_list.itemDoubleClicked.connect(self.on_action_double_clicked)
-
         self.add_job_button = QPushButton("Add Job")
         self.add_job_button.clicked.connect(self.add_job)
-
         self.run_job_button = QPushButton("Run Job")
         self.run_job_button.clicked.connect(self.run_job)
-
         self.run_all_jobs_button = QPushButton("Run All Jobs")
         self.run_all_jobs_button.clicked.connect(self.run_all_jobs)
-
         self.add_action_button = QPushButton("Add Action")
         self.add_action_button.clicked.connect(self.add_action)
-
         self.action_selector = QComboBox()
         self.action_selector.addItems(ACTION_TYPES)
-
         layout = QVBoxLayout()
         hlayout = QHBoxLayout()
-
         vbox_left = QVBoxLayout()
         vbox_left.addWidget(QLabel("Jobs"))
         vbox_left.addWidget(self.job_list)
@@ -56,165 +45,35 @@ class MainWindow(QMainWindow):
         hbox_run.addWidget(self.run_job_button)
         hbox_run.addWidget(self.run_all_jobs_button)
         vbox_left.addLayout(hbox_run)
-
         vbox_right = QVBoxLayout()
         vbox_right.addWidget(QLabel("Actions"))
         vbox_right.addWidget(self.action_list)
         vbox_right.addWidget(QLabel("Select Action Type"))
         vbox_right.addWidget(self.action_selector)
         vbox_right.addWidget(self.add_action_button)
-
         self.delete_job_button = QPushButton("Delete Job")
         self.delete_job_button.setEnabled(False)
         self.delete_job_button.clicked.connect(self.delete_job)
         vbox_left.addWidget(self.delete_job_button)
-
         self.job_list.itemSelectionChanged.connect(self.update_delete_buttons_state)
         self.action_list.itemSelectionChanged.connect(self.update_delete_buttons_state)
-
         self.sub_action_selector = QComboBox()
         self.sub_action_selector.addItems(SUB_ACTION_TYPES)
         self.sub_action_selector.setEnabled(False)
-
         self.add_sub_action_button = QPushButton("Add Sub-Action")
         self.add_sub_action_button.clicked.connect(self.add_sub_action)
         self.add_sub_action_button.setEnabled(False)
-
         vbox_right.addWidget(QLabel("Select Sub-Action Type"))
         vbox_right.addWidget(self.sub_action_selector)
         vbox_right.addWidget(self.add_sub_action_button)
-
         self.delete_action_button = QPushButton("Delete Action")
         self.delete_action_button.setEnabled(False)
         self.delete_action_button.clicked.connect(self.delete_action)
         vbox_right.addWidget(self.delete_action_button)
-
         hlayout.addLayout(vbox_left)
         hlayout.addLayout(vbox_right)
-
         layout.addLayout(hlayout)
         self.central_widget.setLayout(layout)
-
-        self._setup_menu_bar()
-        self._current_file = None
-
-    def _setup_menu_bar(self):
-        menubar = self.menuBar()
-        
-        file_menu = menubar.addMenu("&File")
-        
-        new_action = QAction("&New", self)
-        new_action.setShortcut("Ctrl+N")
-        new_action.triggered.connect(self._new_project)
-        file_menu.addAction(new_action)
-
-        open_action = QAction("&Open...", self)
-        open_action.setShortcut("Ctrl+O")
-        open_action.triggered.connect(self._open_project)
-        file_menu.addAction(open_action)
-
-        save_action = QAction("&Save", self)
-        save_action.setShortcut("Ctrl+S")
-        save_action.triggered.connect(self._save_project)
-        file_menu.addAction(save_action)
-        
-        save_as_action = QAction("Save &As...", self)
-        save_as_action.setShortcut("Ctrl+Shift+S")
-        save_as_action.triggered.connect(self._save_project_as)
-        file_menu.addAction(save_as_action)
-        
-        file_menu.addSeparator()
-        
-        exit_action = QAction("&Shut down ", self)
-        exit_action.setShortcut("Ctrl+Q")        
-        exit_action.triggered.connect(self.close)
-        file_menu.addAction(exit_action)
-
-    def _new_project(self):
-        if self._check_unsaved_changes():
-            self.project = Project()
-            self._current_file = None
-            self._update_title()
-            self.job_list.clear()
-            self.action_list.clear()
-    
-    def _open_project(self):
-        if not self._check_unsaved_changes():
-            return
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, "Open Project", "",
-            "Project Files (*.fsp);;All Files (*)")
-        if file_path:
-            try:
-                file = open(file_path, 'r')
-                json_obj = json.load(file)
-                self.project = Project.from_dict(json_obj['project'])
-                self._current_file = file_path
-                self._update_title()
-                self._refresh_ui()
-            except Exception as e:
-                QMessageBox.critical(self, "Error", f"Cannot open file:\n{str(e)}")
-    
-    def _save_project(self):
-        if self._current_file:
-            self._do_save(self._current_file)
-        else:
-            self._save_project_as()
-    
-    def _save_project_as(self):
-        file_path, _ = QFileDialog.getSaveFileName(
-            self, "Save Project As", "",
-            "Project Files (*.fsp);;All Files (*)"
-        )
-        if file_path:
-            if not file_path.endswith('.fsp'):
-                file_path += '.fsp'
-            self._do_save(file_path)
-            self._current_file = file_path
-            self._update_title()
-
-    def _do_save(self, file_path):
-        try:
-            json_obj = jsonpickle.encode({
-                'project': self.project.to_dict(),
-                'version': 1
-            })
-            f = open(file_path, 'w')
-            f.write(json_obj)
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Cannot save file:\n{str(e)}")
-            
-    def _check_unsaved_changes(self) -> bool:
-        return True
-        # ignore the following code
-        reply = QMessageBox.question(
-            self,
-            "Unsaved Changes",
-            "The project has unsaved changes. Do you want to continue?",
-            QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel
-        )
-        
-        if reply == QMessageBox.Save:
-            self._save_project()
-            return True
-        elif reply == QMessageBox.Discard:
-            return True
-        else:  # Cancel
-            return False
-    
-    def _update_title(self):
-        title = "Focus Stacking GUI"
-        if self._current_file:
-            title += f" - {os.path.basename(self._current_file)}"
-        self.setWindowTitle(title)
-    
-    def _refresh_ui(self):
-        self.job_list.clear()
-        for job in self.project.jobs:
-            self.job_list.addItem(job.params['name'])
-        
-        if self.project.jobs:
-            self.job_list.setCurrentRow(0)        
 
     def add_job(self):
         job_action = ActionConfig("Job")

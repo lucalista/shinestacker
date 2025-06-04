@@ -1,6 +1,3 @@
-from focus_stack import StackJob
-
-
 class ActionConfig:
     def __init__(self, type_name: str, params: dict=None, parent=None):
         self.type_name = type_name
@@ -32,7 +29,8 @@ class ActionConfig:
         for s in a.sub_actions:
             s.parent = a
         return a
-    
+
+
 class Project:
     def __init__(self):
         self.jobs: list[ActionConfig] = []
@@ -53,4 +51,3 @@ class Project:
             for s in j.sub_actions:
                 s.parent = j
         return p
-            
