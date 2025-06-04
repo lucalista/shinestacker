@@ -158,6 +158,11 @@ class FieldBuilder:
                         QMessageBox.warning(None, "Invalid Path",
                                           f"{tag} must be a subdirectory of working path")
                         return
+                    if kwarge.get('must_exist', False):
+                        if not os.path.exists(working_path + "/" rel_path)
+                        QMessageBox.warning(None, "Invalid Path",
+                                          f"{tag} {rel_path} does not exist")
+                        return                        
                     edit.setText(rel_path)
                 except ValueError:
                     QMessageBox.warning(None, "Error", "Could not compute relative path")
