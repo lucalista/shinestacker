@@ -1,7 +1,8 @@
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout,
-    QFileDialog, QLabel, QComboBox, QMessageBox, QInputDialog,
+    QFileDialog, QLabel, QComboBox, QMessageBox, QInputDialog, QSizePolicy,
     QDialog, QFormLayout, QLineEdit, QSpinBox, QDoubleSpinBox)
+from PySide6.QtCore import Qt
 from gui.project_model import Project, ActionConfig
 from abc import ABC, abstractmethod
 from typing import Dict, Any
@@ -63,9 +64,12 @@ class FieldBuilder:
         self.layout.addRow(f"{label}:", widget)
         return widget
 
+    def get_path_widget(self, widget):
+        return widget.layout().itemAt(0).widget()
+
     def get_working_path(self):
         if 'working_path' in self.fields.keys():
-            working_path = self.fields['working_path']['widget'].itemAt(0).widget().text()
+            working_path = self.get_path_widget(self.fields['working_path']['widget']).text()
             if working_path != '':
                 return working_path
         parent = self.action.parent
@@ -80,7 +84,7 @@ class FieldBuilder:
             if field['type'] == FIELD_TEXT:
                 params[tag] = field['widget'].text()
             elif field['type'] in (FIELD_ABS_PATH, FIELD_REL_PATH):
-                params[tag] = field['widget'].itemAt(0).widget().text()
+                params[tag] = self.get_path_widget(field['widget']).text()
             elif field['type'] == FIELD_FLOAT:
                 params[tag] = field['widget'].value()
             elif field['type'] == FIELD_INT:
@@ -126,7 +130,11 @@ class FieldBuilder:
         layout = QHBoxLayout()
         layout.addWidget(edit)
         layout.addWidget(button)
-        return layout
+        layout.setContentsMargins(0, 0, 0, 0)
+        container = QWidget()
+        container.setLayout(layout)
+        container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        return container
     
     def _create_rel_path_field(self, tag, **kwargs):
         value = self.action.params.get(tag, '')
@@ -157,7 +165,11 @@ class FieldBuilder:
         layout = QHBoxLayout()
         layout.addWidget(edit)
         layout.addWidget(button)
-        return layout
+        layout.setContentsMargins(0, 0, 0, 0)
+        container = QWidget()
+        container.setLayout(layout)
+        container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        return container
     
     def _create_float_field(self, tag, default=0.0, min=0.0, max=1.0, step=0.1, **kwargs):
         value = self.params.get(tag, default)
@@ -189,9 +201,13 @@ class ActionConfigDialog(QDialog):
         super().__init__(parent)
         self.action = action
         self.setWindowTitle(f"Configure {action.type_name}")
-        self.resize(600, self.height());
+        self.resize(500, self.height());
         self.configurator = self._get_configurator(action.type_name)
         self.layout = QFormLayout(self)
+        self.layout.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
+        self.layout.setRowWrapPolicy(QFormLayout.DontWrapRows)
+        self.layout.setFormAlignment(Qt.AlignLeft | Qt.AlignTop)
+        self.layout.setLabelAlignment(Qt.AlignLeft)
         self.configurator.create_form(self.layout, action)
         button_box = QHBoxLayout()
         ok_button = QPushButton("OK")
@@ -232,7 +248,7 @@ class JobConfigurator(DefaultActionConfigurator):
         super().create_form(layout, action, "Job")
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
         self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
-                               placeholder='rel. to working path')
+                               placeholder='relative to working path')
 
 class NoiseDetectionConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
@@ -240,7 +256,7 @@ class NoiseDetectionConfigurator(DefaultActionConfigurator):
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True,
                                placeholder='inherit from job')
         self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
-                               placeholder='rel. to working path')
+                               placeholder='relative to working path')
 
 class FocusStackConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
@@ -249,7 +265,7 @@ class FocusStackConfigurator(DefaultActionConfigurator):
         self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
                                placeholder='rel. to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
-                               placeholder='rel. to working path')
+                               placeholder='relative to working path')
 
 class FocusStackBunchConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
@@ -258,16 +274,16 @@ class FocusStackBunchConfigurator(DefaultActionConfigurator):
         self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
                                placeholder='rel. to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
-                               placeholder='rel. to working path')
+                               placeholder='relative to working path')
         
 class MultiLayerConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
         super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
         self.builder.add_field('input_path', FIELD_ABS_PATH, 'Input path', required=False,
-                               placeholder='rel. to working path')
+                               placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
-                               placeholder='rel. to working path')
+                               placeholder='relative to working path')
 
 class CombinedActionsConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
