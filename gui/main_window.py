@@ -9,7 +9,8 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any
 import os.path
 import os
-import pickle
+import jsonpickle
+import json
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -141,11 +142,13 @@ class MainWindow(QMainWindow):
         if not self._check_unsaved_changes():
             return
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Open Project", "", "Project Files (*.fsp);;All Files (*)")
+            self, "Open Project", "",
+            "Project Files (*.fsp);;All Files (*)")
         if file_path:
             try:
-                with open(file_path, 'rb') as f:
-                    self.project = pickle.load(f)
+                file = open(file_path, 'r')
+                json_obj = json.load(file)
+                self.project = Project.from_dict(json_obj['project'])
                 self._current_file = file_path
                 self._update_title()
                 self._refresh_ui()
@@ -169,14 +172,18 @@ class MainWindow(QMainWindow):
             self._do_save(file_path)
             self._current_file = file_path
             self._update_title()
-    
+
     def _do_save(self, file_path):
         try:
-            with open(file_path, 'wb') as f:
-                pickle.dump(self.project, f)
+            json_obj = jsonpickle.encode({
+                'project': self.project.to_dict(),
+                'version': 1
+            })
+            f = open(file_path, 'w')
+            f.write(json_obj)
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Cannot save file:\n{str(e)}")
-    
+            
     def _check_unsaved_changes(self) -> bool:
         return True
         # ignore the following code
@@ -204,7 +211,7 @@ class MainWindow(QMainWindow):
     def _refresh_ui(self):
         self.job_list.clear()
         for job in self.project.jobs:
-            self.job_list.addItem(job.name)
+            self.job_list.addItem(job.params['name'])
         
         if self.project.jobs:
             self.job_list.setCurrentRow(0)        
@@ -242,7 +249,7 @@ class MainWindow(QMainWindow):
 
     def run_all_jobs(self):
         for job in self.project.jobs:
-            print("run: " + job.name)
+            print("run: " + job.params['name'])
 
     def add_action(self):
         current_index = self.job_list.currentRow()
