@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout,
     QFileDialog, QLabel, QComboBox, QMessageBox, QInputDialog, QSizePolicy,
-    QDialog, QFormLayout, QLineEdit, QSpinBox, QDoubleSpinBox)
+    QDialog, QFormLayout, QLineEdit, QSpinBox, QDoubleSpinBox, QCheckBox)
 from PySide6.QtCore import Qt
 from gui.project_model import Project, ActionConfig
 from abc import ABC, abstractmethod
@@ -21,6 +21,7 @@ FIELD_ABS_PATH = 'abs_path'
 FIELD_REL_PATH = 'rel_path'
 FIELD_FLOAT = 'float'
 FIELD_INT = 'int'
+FIELD_BOOL = 'bool'
 FIELD_COMBO = 'combo'
 FIELD_TYPES = [FIELD_TEXT, FIELD_ABS_PATH, FIELD_REL_PATH, FIELD_FLOAT, FIELD_INT, FIELD_COMBO]
 
@@ -51,6 +52,8 @@ class FieldBuilder:
             widget = self._create_float_field(tag, **kwargs)
         elif field_type == FIELD_INT:
             widget = self._create_int_field(tag, **kwargs)
+        elif field_type == FIELD_BOOL:
+            widget = self._create_bool_field(tag, **kwargs)
         elif field_type == FIELD_COMBO:
             widget = self._create_combo_field(tag, **kwargs)
         else:
@@ -179,19 +182,17 @@ class FieldBuilder:
         return container
     
     def _create_float_field(self, tag, default=0.0, min=0.0, max=1.0, step=0.1, **kwargs):
-        value = self.action.params.get(tag, default)
         spin = QDoubleSpinBox()
-        spin.setValue(value)
+        spin.setValue(self.action.params.get(tag, default))
         spin.setRange(min, max)
         spin.setSingleStep(step)
         return spin
     
     def _create_int_field(self, tag, default=0, min=0, max=100, **kwargs):
-        value = self.action.params.get(tag, default)
         spin = QSpinBox()
-        # spin.setSpecialValueText("-");
-        spin.setValue(value)
         spin.setRange(min, max)
+        spin.setSpecialValueText('-')
+        spin.setValue(self.action.params.get(tag, default))
         return spin
     
     def _create_combo_field(self, tag, options=None, default=None, **kwargs):
@@ -203,6 +204,10 @@ class FieldBuilder:
             combo.setCurrentText(value)
         return combo
 
+    def _create_bool_field(self, tag, default=False, **kwargs):
+        checkbox = QCheckBox()
+        checkbox.setChecked(self.action.params.get(tag, default))
+        return checkbox
 
 class ActionConfigDialog(QDialog):
     def __init__(self, action: ActionConfig, parent=None):
@@ -306,5 +311,6 @@ class CombinedActionsConfigurator(DefaultActionConfigurator):
                                placeholder='relative to working path')
         self.builder.add_field('resample', FIELD_INT, 'Resample frames', required=False,
                               default=1, min=1, max=100)
-        self.builder.add_field('ref_idx', FIELD_INT, 'Reference frames index', required=False,
+        self.builder.add_field('ref_idx', FIELD_INT, 'Reference frame index', required=False,
                               default=-1, min=-1, max=1000)
+        self.builder.add_field('step_process', FIELD_BOOL, 'Step process', required=False, default=True)
