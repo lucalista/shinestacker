@@ -132,6 +132,7 @@ class FieldBuilder:
             if path:
                 edit.setText(path)
         button.clicked.connect(browse)
+        button.setAutoDefault(False)
         layout = QHBoxLayout()
         layout.addWidget(edit)
         layout.addWidget(button)
@@ -167,6 +168,7 @@ class FieldBuilder:
                 except ValueError:
                     QMessageBox.warning(None, "Error", "Could not compute relative path")
         button.clicked.connect(browse)
+        button.setAutoDefault(False)
         layout = QHBoxLayout()
         layout.addWidget(edit)
         layout.addWidget(button)
@@ -177,23 +179,24 @@ class FieldBuilder:
         return container
     
     def _create_float_field(self, tag, default=0.0, min=0.0, max=1.0, step=0.1, **kwargs):
-        value = self.params.get(tag, default)
+        value = self.action.params.get(tag, default)
         spin = QDoubleSpinBox()
         spin.setValue(value)
         spin.setRange(min, max)
         spin.setSingleStep(step)
         return spin
     
-    def _create_int_field(self, tag, default=1, min=1, max=10, **kwargs):
-        value = self.params.get(tag, default)
+    def _create_int_field(self, tag, default=0, min=0, max=100, **kwargs):
+        value = self.action.params.get(tag, default)
         spin = QSpinBox()
+        # spin.setSpecialValueText("-");
         spin.setValue(value)
         spin.setRange(min, max)
         return spin
     
     def _create_combo_field(self, tag, options=None, default=None, **kwargs):
         options = options or []
-        value = self.params.get(tag, default or options[0] if options else '')
+        value = self.action.params.get(tag, default or options[0] if options else '')
         combo = QComboBox()
         combo.addItems(options)
         if value in options:
@@ -216,6 +219,7 @@ class ActionConfigDialog(QDialog):
         self.configurator.create_form(self.layout, action)
         button_box = QHBoxLayout()
         ok_button = QPushButton("OK")
+        ok_button.setFocus()
         cancel_button = QPushButton("Cancel")
         button_box.addWidget(ok_button)
         button_box.addWidget(cancel_button)
@@ -293,3 +297,14 @@ class MultiLayerConfigurator(DefaultActionConfigurator):
 class CombinedActionsConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
+        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
+        self.builder.add_field('input_path', FIELD_ABS_PATH, 'Input path', required=False,
+                               must_exist=True, placeholder='relative to working path')
+        self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
+                               placeholder='relative to working path')
+        self.builder.add_field('plot_path', FIELD_REL_PATH, 'Plots path', required=False,
+                               placeholder='relative to working path')
+        self.builder.add_field('resample', FIELD_INT, 'Resample frames', required=False,
+                              default=1, min=1, max=100)
+        self.builder.add_field('ref_idx', FIELD_INT, 'Reference frames index', required=False,
+                              default=-1, min=-1, max=1000)
