@@ -33,9 +33,9 @@ class ActionConfigurator(ABC):
         pass
 
 class FieldBuilder:
-    def __init__(self, layout, params):
+    def __init__(self, layout, action):
         self.layout = layout
-        self.params = params
+        self.action = action
         self.fields = {}
         
     def add_field(self, tag: str, field_type: str, label: str, 
@@ -98,12 +98,12 @@ class FieldBuilder:
         return True
     
     def _create_text_field(self, tag, **kwargs):
-        value = self.params.get(tag, '')
+        value = self.action.params.get(tag, '')
         edit = QLineEdit(value)
         return edit
         
     def _create_abs_path_field(self, tag, **kwargs):
-        value = self.params.get(tag, '')
+        value = self.action.params.get(tag, '')
         edit = QLineEdit(value)
         button = QPushButton("Browse...")
         def browse():
@@ -117,7 +117,7 @@ class FieldBuilder:
         return layout
     
     def _create_rel_path_field(self, tag, **kwargs):
-        value = self.params.get(tag, '')
+        value = self.action.params.get(tag, '')
         edit = QLineEdit(value)
         button = QPushButton("Browse...")
         def browse():
@@ -179,7 +179,7 @@ class ActionConfigDialog(QDialog):
         self.setWindowTitle(f"Configure {action.type_name}")
         self.configurator = self._get_configurator(action.type_name)
         self.layout = QFormLayout(self)
-        self.configurator.create_form(self.layout, action.params)
+        self.configurator.create_form(self.layout, action)
         button_box = QHBoxLayout()
         ok_button = QPushButton("OK")
         cancel_button = QPushButton("Cancel")
@@ -207,46 +207,46 @@ class ActionConfigDialog(QDialog):
 
 
 class DefaultActionConfigurator(ActionConfigurator):
-    def create_form(self, layout, params, tag='Action'):
-        self.builder = FieldBuilder(layout, params)
+    def create_form(self, layout, action, tag='Action'):
+        self.builder = FieldBuilder(layout, action)
         self.builder.add_field('name', FIELD_TEXT, f'{tag} name', required=True)
     
     def update_params(self, params):
         return self.builder.update_params(params)
 
 class JobConfigurator(DefaultActionConfigurator):
-    def create_form(self, layout, params):
-        super().create_form(layout, params, "Job")
+    def create_form(self, layout, action):
+        super().create_form(layout, action, "Job")
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
         self.builder.add_field('input_path', FIELD_REL_PATH, 'Input rel. path', required=False)
 
 class NoiseDetectionConfigurator(DefaultActionConfigurator):
-    def create_form(self, layout, params):
-        super().create_form(layout, params)
+    def create_form(self, layout, action):
+        super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
         self.builder.add_field('input_path', FIELD_REL_PATH, 'Input rel. path', required=False)
 
 class FocusStackConfigurator(DefaultActionConfigurator):
-    def create_form(self, layout, params):
-        super().create_form(layout, params)
+    def create_form(self, layout, action):
+        super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
         self.builder.add_field('input_path', FIELD_REL_PATH, 'Input rel. path', required=False)
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output rel. path', required=False)
 
 class FocusStackBunchConfigurator(DefaultActionConfigurator):
-    def create_form(self, layout, params):
-        super().create_form(layout, params)
+    def create_form(self, layout, action):
+        super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
         self.builder.add_field('input_path', FIELD_REL_PATH, 'Input rel. path', required=False)
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output rel. path', required=False)
         
 class MultiLayerConfigurator(DefaultActionConfigurator):
-    def create_form(self, layout, params):
-        super().create_form(layout, params)
+    def create_form(self, layout, action):
+        super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
         self.builder.add_field('input_path', FIELD_ABS_PATH, 'Input rel. path', required=False)
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output rel. path', required=False)
 
 class CombinedActionsConfigurator(DefaultActionConfigurator):
-    def create_form(self, layout, params):
-        DefaultActionConfigurator.create_form(self, layout, params)
+    def create_form(self, layout, action):
+        DefaultActionConfigurator.create_form(self, layout, action)

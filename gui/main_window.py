@@ -167,7 +167,7 @@ class MainWindow(QMainWindow):
                             break
                     if current_action:
                         break
-            enable_sub_actions = (current_action and not is_sub_action and current_action.type_name == COMBO_ACTIONS)
+            enable_sub_actions = (current_action and not is_sub_action and current_action.type_name == ACTION_COMBO)
             self.sub_action_selector.setEnabled(enable_sub_actions)
             self.add_sub_action_button.setEnabled(enable_sub_actions)
             if is_sub_action:
@@ -223,7 +223,7 @@ class MainWindow(QMainWindow):
                 action = act
                 break
             action_counter += len(act.sub_actions)
-        if not action or action.type_name != COMBO_ACTIONS:
+        if not action or action.type_name != ACTION_COMBO:
             return
         type_name = self.sub_action_selector.currentText()
         sub_action = ActionConfig(type_name)
@@ -259,7 +259,7 @@ class MainWindow(QMainWindow):
                 if is_sub_action:
                     self.show_action_config_dialog(current_action)
                 else:
-                    if current_action.type_name == COMBO_ACTIONS:
+                    if current_action.type_name == ACTION_COMBO:
                         self.sub_action_selector.setEnabled(True)
                         self.add_sub_action_button.setEnabled(True)
                     else:
