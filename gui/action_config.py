@@ -65,9 +65,15 @@ class FieldBuilder:
         return widget
 
     def get_working_path(self):
-        if 'working_path' not in self.fields.keys():
-            return ''
-        return self.fields['working_path']['widget'].itemAt(0).widget().text()
+        if 'working_path' in self.fields.keys():
+            return self.fields['working_path']['widget'].itemAt(0).widget().text()
+        else:
+            parent = self.action.parent
+            if parent is not None and 'working_path' in parent.params.keys():
+                return parent.params['working_path']
+            else:
+                return ''
+            
     
     def update_params(self, params: Dict[str, Any]) -> bool:
         for tag, field in self.fields.items():
