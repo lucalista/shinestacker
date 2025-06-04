@@ -96,7 +96,7 @@ class MainWindow(QMainWindow):
         self.central_widget.setLayout(layout)
 
         self._setup_menu_bar()
-        self._current_file = None  # Tiene traccia del file corrente
+        self._current_file = None
 
     def _setup_menu_bar(self):
         menubar = self.menuBar()

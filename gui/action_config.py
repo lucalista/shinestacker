@@ -277,7 +277,7 @@ class FocusStackConfigurator(DefaultActionConfigurator):
         super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
         self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
-                               must_exist=True, placeholder='rel. to working path')
+                               must_exist=True, placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
 
@@ -286,7 +286,7 @@ class FocusStackBunchConfigurator(DefaultActionConfigurator):
         super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
         self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
-                               must_exist=True, placeholder='rel. to working path')
+                               must_exist=True, placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
         
