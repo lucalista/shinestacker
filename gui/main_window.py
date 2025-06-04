@@ -111,6 +111,10 @@ class MainWindow(QMainWindow):
                 if current_row >= 0:
                     self.job_list.item(current_row).setText(job.params['name'])
 
+    def get_current_job(self):
+        current_index = self.job_list.currentRow()
+        return None if current_index < 0 else self.project.jobs[current_index]
+
     def run_job(self):
         current_index = self.job_list.currentRow()
         if current_index < 0:
@@ -130,6 +134,7 @@ class MainWindow(QMainWindow):
             return
         type_name = self.action_selector.currentText()
         action = ActionConfig(type_name)
+        action.parent = self.get_current_job()
         dialog = ActionConfigDialog(action, self)
         if dialog.exec() == QDialog.Accepted:     
             self.project.jobs[current_index].add_sub_action(action)

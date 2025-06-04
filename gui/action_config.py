@@ -54,7 +54,6 @@ class FieldBuilder:
             widget = self._create_combo_field(tag, **kwargs)
         else:
             raise ValueError(f"Unknown field type: {field_type}")
-        
         self.fields[tag] = {
             'widget': widget,
             'type': field_type,
@@ -66,13 +65,14 @@ class FieldBuilder:
 
     def get_working_path(self):
         if 'working_path' in self.fields.keys():
-            return self.fields['working_path']['widget'].itemAt(0).widget().text()
+            working_path = self.fields['working_path']['widget'].itemAt(0).widget().text()
+            if working_path != '':
+                return working_path
+        parent = self.action.parent
+        if parent is not None and 'working_path' in parent.params.keys():
+            return parent.params['working_path']
         else:
-            parent = self.action.parent
-            if parent is not None and 'working_path' in parent.params.keys():
-                return parent.params['working_path']
-            else:
-                return ''
+            return ''
             
     
     def update_params(self, params: Dict[str, Any]) -> bool:
@@ -88,8 +88,12 @@ class FieldBuilder:
             elif field['type'] == FIELD_COMBO:
                 params[tag] = field['widget'].currentText()
             if field['required'] and not params[tag]:
-                QMessageBox.warning(None, "Error", f"{tag} is required")
-                return False
+                required = True
+                if tag == 'working_path' and self.get_working_path() != '':
+                    required = False
+                if required:
+                    QMessageBox.warning(None, "Error", f"{tag} is required")
+                    return False
             if field['type'] == FIELD_REL_PATH and 'working_path' in params:
                 try:
                     working_path = self.get_working_path()
@@ -106,11 +110,13 @@ class FieldBuilder:
     def _create_text_field(self, tag, **kwargs):
         value = self.action.params.get(tag, '')
         edit = QLineEdit(value)
+        edit.setPlaceholderText(kwargs.get('placeholder', ''))        
         return edit
         
     def _create_abs_path_field(self, tag, **kwargs):
         value = self.action.params.get(tag, '')
         edit = QLineEdit(value)
+        edit.setPlaceholderText(kwargs.get('placeholder', ''))
         button = QPushButton("Browse...")
         def browse():
             path = QFileDialog.getExistingDirectory(None, f"Select {tag.replace('_', ' ')}")
@@ -125,6 +131,7 @@ class FieldBuilder:
     def _create_rel_path_field(self, tag, **kwargs):
         value = self.action.params.get(tag, '')
         edit = QLineEdit(value)
+        edit.setPlaceholderText(kwargs.get('placeholder', ''))        
         button = QPushButton("Browse...")
         def browse():
             working_path = self.get_working_path()
@@ -146,7 +153,6 @@ class FieldBuilder:
                     edit.setText(rel_path)
                 except ValueError:
                     QMessageBox.warning(None, "Error", "Could not compute relative path")
-        
         button.clicked.connect(browse)
         layout = QHBoxLayout()
         layout.addWidget(edit)
@@ -183,6 +189,7 @@ class ActionConfigDialog(QDialog):
         super().__init__(parent)
         self.action = action
         self.setWindowTitle(f"Configure {action.type_name}")
+        self.resize(600, self.height());
         self.configurator = self._get_configurator(action.type_name)
         self.layout = QFormLayout(self)
         self.configurator.create_form(self.layout, action)
@@ -224,34 +231,43 @@ class JobConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
         super().create_form(layout, action, "Job")
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
-        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input rel. path', required=False)
+        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
+                               placeholder='rel. to working path')
 
 class NoiseDetectionConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
         super().create_form(layout, action)
-        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
-        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input rel. path', required=False)
+        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True,
+                               placeholder='inherit from job')
+        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
+                               placeholder='rel. to working path')
 
 class FocusStackConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
         super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
-        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input rel. path', required=False)
-        self.builder.add_field('output_path', FIELD_REL_PATH, 'Output rel. path', required=False)
+        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
+                               placeholder='rel. to working path')
+        self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
+                               placeholder='rel. to working path')
 
 class FocusStackBunchConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
         super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
-        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input rel. path', required=False)
-        self.builder.add_field('output_path', FIELD_REL_PATH, 'Output rel. path', required=False)
+        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
+                               placeholder='rel. to working path')
+        self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
+                               placeholder='rel. to working path')
         
 class MultiLayerConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
         super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
-        self.builder.add_field('input_path', FIELD_ABS_PATH, 'Input rel. path', required=False)
-        self.builder.add_field('output_path', FIELD_REL_PATH, 'Output rel. path', required=False)
+        self.builder.add_field('input_path', FIELD_ABS_PATH, 'Input path', required=False,
+                               placeholder='rel. to working path')
+        self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
+                               placeholder='rel. to working path')
 
 class CombinedActionsConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
