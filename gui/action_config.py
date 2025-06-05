@@ -317,7 +317,15 @@ class FocusStackConfigurator(DefaultActionConfigurator):
                                must_exist=True, placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
-
+        self.builder.add_field('exif_path', FIELD_REL_PATH, 'Exif data path', required=False,
+                               placeholder='relative to working path')
+        self.builder.add_field('postfix', FIELD_TEXT, 'Ouptut filename postfix', required=False,
+                               default="_stack", placeholder="_stack")
+        self.builder.add_field('denoise', FIELD_FLOAT, 'Denoise', required=False,
+                               default=0, min=0, max=10)
+        self.builder.add_field('stacker', FIELD_COMBO, 'Stack algorithm', required=True,
+                               options=['Pyramid', 'Depth map'], default='Pyramid')
+                               
 class FocusStackBunchConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
         super().create_form(layout, action)
@@ -326,6 +334,17 @@ class FocusStackBunchConfigurator(DefaultActionConfigurator):
                                must_exist=True, placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
+        self.builder.add_field('exif_path', FIELD_REL_PATH, 'Exif data path', required=False,
+                               placeholder='relative to working path')
+        self.builder.add_field('frames', FIELD_INT, 'Frames', required=False,
+                               default=10, min=1, max=100)
+        self.builder.add_field('overlap', FIELD_INT, 'Overlapping frames', required=False,
+                               default=2, min=0, max=100)
+        self.builder.add_field('denoise', FIELD_FLOAT, 'Denoise', required=False,
+                               default=0, min=0, max=10)
+        self.builder.add_field('stacker', FIELD_COMBO, 'Stack algorithm', required=True,
+                               options=['Pyramid', 'Depth map'], default='Pyramid')
+                               
         
 class MultiLayerConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
@@ -346,7 +365,7 @@ class CombinedActionsConfigurator(DefaultActionConfigurator):
                                placeholder='relative to working path')
         self.builder.add_field('plot_path', FIELD_REL_PATH, 'Plots path', required=False,
                                placeholder='relative to working path')
-        self.builder.add_field('resample', FIELD_INT, 'Resample frames', required=False,
+        self.builder.add_field('resample', FIELD_INT, 'Resample frame stack', required=False,
                               default=1, min=1, max=100)
         self.builder.add_field('ref_idx', FIELD_INT, 'Reference frame index', required=False,
                               default=-1, min=-1, max=1000)
