@@ -15,7 +15,11 @@ ACTION_FOCUSSTACK = "FocusStack"
 ACTION_FOCUSSTACKBUNCH = "FocusStackBunch"
 ACTION_MULTILAYER = "MultiLayer"
 ACTION_TYPES = [ACTION_COMBO, ACTION_FOCUSSTACKBUNCH, ACTION_FOCUSSTACK, ACTION_MULTILAYER, ACTION_NOISEDETECTION]
-SUB_ACTION_TYPES = ["MaskNoise", "Vignetting", "AlignFrames", "BalanceFrames"]
+ACTION_MASKNOISE = "MaskNoise"
+ACTION_VIGNETTING = "Vignetting"
+ACTION_ALIGNFRAMES = "AlignFrames"
+ACTION_BALANCEFRAMES = "BalanceFrames"
+SUB_ACTION_TYPES = [ACTION_MASKNOISE, ACTION_VIGNETTING, ACTION_ALIGNFRAMES, ACTION_BALANCEFRAMES]
 FIELD_TEXT = 'text'
 FIELD_ABS_PATH = 'abs_path'
 FIELD_REL_PATH = 'rel_path'
@@ -81,8 +85,10 @@ class FieldBuilder:
             if working_path != '':
                 return working_path
         parent = self.action.parent
-        if parent is not None and 'working_path' in parent.params.keys():
-            return parent.params['working_path']
+        while parent is not None:
+            if 'working_path' in parent.params.keys() and parent.params['working_path'] != '':
+                return parent.params['working_path']
+            parent = parent.parent
         else:
             return ''
             
@@ -156,22 +162,33 @@ class FieldBuilder:
         edit = QLineEdit(value)
         edit.setPlaceholderText(kwargs.get('placeholder', ''))        
         button = QPushButton("Browse...")
+        path_type = kwargs.get('path_type', 'directory')
+        label = kwargs.get('label', tag).replace('_', ' ')
         def browse():
             working_path = self.get_working_path()
             if not working_path:
                 QMessageBox.warning(None, "Error", "Please set working path first")
                 return
-            path = QFileDialog.getExistingDirectory(
-                None, 
-                f"Select {tag.replace('_', ' ')}",
-                working_path
-            )
+            if path_type == 'directory':
+                path = QFileDialog.getExistingDirectory(
+                    None, 
+                    f"Select {label}",
+                    working_path
+                )
+            elif path_type == 'file':
+                path = QFileDialog.getOpenFileName(
+                    None, 
+                    f"Select {label}",
+                    working_path
+                )[0]
+            else:
+                raise ValueError("path_type must be 'directory' (default) or 'file'.")
             if path:
                 try:
                     rel_path = os.path.relpath(path, working_path)
                     if rel_path.startswith('..'):
                         QMessageBox.warning(None, "Invalid Path",
-                                          f"{self.field['tag']['label']} must be a subdirectory of working path")
+                                          f"{label} must be a subdirectory of working path")
                         return
                     edit.setText(rel_path)
                 except ValueError:
@@ -265,7 +282,10 @@ class ActionConfigDialog(QDialog):
             ACTION_FOCUSSTACK: FocusStackConfigurator(),
             ACTION_FOCUSSTACKBUNCH: FocusStackBunchConfigurator(),
             ACTION_MULTILAYER: MultiLayerConfigurator(),
-            # add more configurators here
+            ACTION_MASKNOISE: MaskNoiseConfigurator(),
+            ACTION_VIGNETTING: VignettingConfigurator(),
+            ACTION_ALIGNFRAMES: AlignFramesConfigurator(),
+            ACTION_BALANCEFRAMES: BalanceFramesConfigurator(),
         }
         return configurators.get(action_type, DefaultActionConfigurator())
 
@@ -372,3 +392,28 @@ class CombinedActionsConfigurator(DefaultActionConfigurator):
         self.builder.add_field('ref_idx', FIELD_INT, 'Reference frame index', required=False,
                               default=-1, min=-1, max=1000)
         self.builder.add_field('step_process', FIELD_BOOL, 'Step process', required=False, default=True)
+
+class MaskNoiseConfigurator(DefaultActionConfigurator):
+    def create_form(self, layout, action):
+        DefaultActionConfigurator.create_form(self, layout, action)
+        self.builder.add_field('noise_mask', FIELD_REL_PATH, 'Noise mask file', required=False,
+                               path_type='file', must_exist=True,
+                               default='noise-map/hot-rgb.png', placeholder='noise-map/hot-rgb.png')
+        self.builder.add_field('kernel_size', FIELD_INT, 'Kernel size', required=False,
+                              default=3, min=1, max=10)
+        self.builder.add_field('method', FIELD_COMBO, 'Interpolation method', required=False,
+                               options=['Mean', 'Median'], default='Mean')
+    
+class VignettingConfigurator(DefaultActionConfigurator):
+    def create_form(self, layout, action):
+        DefaultActionConfigurator.create_form(self, layout, action)
+    
+class AlignFramesConfigurator(DefaultActionConfigurator):
+    def create_form(self, layout, action):
+        DefaultActionConfigurator.create_form(self, layout, action)
+    
+class BalanceFramesConfigurator(DefaultActionConfigurator):
+    def create_form(self, layout, action):
+        DefaultActionConfigurator.create_form(self, layout, action)
+    
+

@@ -9,7 +9,7 @@ import os
 import errno
 
 
-_DEFAULT_NOISE_MAP_FILENAME = "hot_pixels.png"
+_DEFAULT_NOISE_MAP_FILENAME = "noise_map/hot_pixels.png"
 INTERPOLATE_MEAN = 'MEAN'
 INTERPOLATE_MEDIAN = 'MEDIAN'
 
@@ -73,7 +73,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         for ch, hot in zip(['rgb', 'r', 'g', 'b', ], [hot_rgb] + hot_px):
             msg.append("{}: {}".format(ch, np.count_nonzero(hot > 0)))
         self.print_message("hot pixels: " + ", ".join(msg))
-        cv2.imwrite(self.working_path + '/' + self.output_path + "/" + self.file_name, hot)
+        cv2.imwrite(self.working_path + '/' + self.file_name, hot)
         th_range = range(*self.plot_range)
         plt.figure(figsize=(10, 5))
         x = np.array(list(th_range))
