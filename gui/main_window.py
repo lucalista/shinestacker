@@ -104,7 +104,7 @@ class MainWindow(WindowMenu):
             QMessageBox.warning(self, "No Job Selected", "Please select a job first.")
             return
         if current_index >= 0:
-            print("run: " + self.project.jobs[current_index].name)
+            print("run: " + self.project.jobs[current_index].params['name'])
 
     def run_all_jobs(self):
         for job in self.project.jobs:
