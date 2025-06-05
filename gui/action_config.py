@@ -354,6 +354,8 @@ class MultiLayerConfigurator(DefaultActionConfigurator):
                                must_exist=True, placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
+        self.builder.add_field('exif_path', FIELD_REL_PATH, 'Exif data path', required=False,
+                               placeholder='relative to working path')
 
 class CombinedActionsConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
