@@ -21,9 +21,11 @@ FIELD_ABS_PATH = 'abs_path'
 FIELD_REL_PATH = 'rel_path'
 FIELD_FLOAT = 'float'
 FIELD_INT = 'int'
+FIELD_INT_TUPLE = 'int_tuple'
 FIELD_BOOL = 'bool'
 FIELD_COMBO = 'combo'
-FIELD_TYPES = [FIELD_TEXT, FIELD_ABS_PATH, FIELD_REL_PATH, FIELD_FLOAT, FIELD_INT, FIELD_COMBO]
+FIELD_TYPES = [FIELD_TEXT, FIELD_ABS_PATH, FIELD_REL_PATH, FIELD_FLOAT,
+               FIELD_INT, FIELD_INT_TUPLE, FIELD_BOOL, FIELD_COMBO]
 
 class ActionConfigurator(ABC):
     @abstractmethod
@@ -52,6 +54,8 @@ class FieldBuilder:
             widget = self._create_float_field(tag, **kwargs)
         elif field_type == FIELD_INT:
             widget = self._create_int_field(tag, **kwargs)
+        elif field_type == FIELD_INT_TUPLE:
+            widget = self._create_int_tuple_field(tag, **kwargs)
         elif field_type == FIELD_BOOL:
             widget = self._create_bool_field(tag, **kwargs)
         elif field_type == FIELD_COMBO:
@@ -93,6 +97,8 @@ class FieldBuilder:
                 params[tag] = field['widget'].value()
             elif field['type'] == FIELD_INT:
                 params[tag] = field['widget'].value()
+            elif field['type'] == FIELD_INT_TUPLE:
+                params[tag] = [field['widget'].layout().itemAt(1 + i * 2).widget().value() for i in range(field['size'])]
             elif field['type'] == FIELD_COMBO:
                 params[tag] = field['widget'].currentText()
             if field['required'] and not params[tag]:
@@ -191,9 +197,27 @@ class FieldBuilder:
     def _create_int_field(self, tag, default=0, min=0, max=100, **kwargs):
         spin = QSpinBox()
         spin.setRange(min, max)
-        spin.setSpecialValueText('-')
         spin.setValue(self.action.params.get(tag, default))
         return spin
+
+    def _create_int_tuple_field(self, tag, size=1, default=[0]*100, min=[0]*100, max=[100]*100, **kwargs):
+        layout = QHBoxLayout()
+        spins = [QSpinBox() for i in range(size)]
+        labels = kwargs.get('labels', ('')*size)
+        value = self.action.params.get(tag, default)
+        for i, spin in enumerate(spins):
+            spin.setRange(min[i], max[i])
+            spin.setValue(value[i])
+            spin.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+            label = QLabel(labels[i] + ":")
+            label.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+            layout.addWidget(label)
+            layout.addWidget(spin)
+        layout.setContentsMargins(0, 0, 0, 0)
+        container = QWidget()
+        container.setLayout(layout)
+        container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        return container
     
     def _create_combo_field(self, tag, options=None, default=None, **kwargs):
         options = options or []
@@ -271,6 +295,18 @@ class NoiseDetectionConfigurator(DefaultActionConfigurator):
                                placeholder='inherit from job')
         self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
                                must_exist=True, placeholder='relative to working path')
+        self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
+                               placeholder='relative to working path')
+        self.builder.add_field('plot_path', FIELD_REL_PATH, 'Plots path', required=False,
+                               placeholder='relative to working path')
+        self.builder.add_field('channel_thresholds', FIELD_INT_TUPLE, 'Noise threshold', required=False, size=3,
+                               default=[13, 13, 13], labels=['r', 'g', 'b'], min=[1]*3, max=[1000]*3)
+        self.builder.add_field('blur_size', FIELD_INT, 'Blur size (px)', required=False,
+                               default=5, min=1, max=50)
+        self.builder.add_field('file_name', FIELD_TEXT, 'File name', required=False,
+                               default="hot", placeholder="hot")
+        self.builder.add_field('plot_range', FIELD_INT_TUPLE, 'Plot range', required=False, size=2, 
+                               default=[5, 30], labels=['min', 'max'], min=[0]*2, max=[1000]*2)
 
 class FocusStackConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
