@@ -208,11 +208,12 @@ class FieldBuilder:
         for i, spin in enumerate(spins):
             spin.setRange(min[i], max[i])
             spin.setValue(value[i])
-            spin.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+            spin.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             label = QLabel(labels[i] + ":")
             label.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
             layout.addWidget(label)
             layout.addWidget(spin)
+            layout.setStretch(layout.count() - 1, 1)
         layout.setContentsMargins(0, 0, 0, 0)
         container = QWidget()
         container.setLayout(layout)
