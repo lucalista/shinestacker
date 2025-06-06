@@ -10,7 +10,10 @@ class ActionConfig:
         action.parent = self
 
     def pop_sub_action(self, index):
-        self.sub_actions.pop(index)
+        if index < len(self.sub_actions):
+            self.sub_actions.pop(index)
+        else:
+            raise Exception(f"can't pop sub-action {index}, lenght is {len(self.sub_actions)}")
 
     def create_instance(self):
         pass
