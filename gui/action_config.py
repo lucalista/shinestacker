@@ -47,7 +47,7 @@ class FieldBuilder:
         self.fields = {}
 
     def add_field(self, tag: str, field_type: str, label: str, 
-                 required: bool = False, **kwargs):
+                  required: bool = False, add_to_layout=None, **kwargs):
         if field_type == FIELD_TEXT:
             widget = self._create_text_field(tag, **kwargs)
         elif field_type == FIELD_ABS_PATH:
@@ -73,7 +73,9 @@ class FieldBuilder:
             'required': required,
             **kwargs
         }
-        self.layout.addRow(f"{label}:", widget)
+        if add_to_layout is None:
+            add_to_layout = self.layout
+        add_to_layout.addRow(f"{label}:", widget)
         return widget
 
     def get_path_widget(self, widget):
@@ -335,7 +337,7 @@ class NoiseDetectionConfigurator(DefaultActionConfigurator):
         self.builder.add_field('plot_range', FIELD_INT_TUPLE, 'Plot range', required=False, size=2, 
                                default=[5, 30], labels=['min', 'max'], min=[0]*2, max=[1000]*2)
 
-class FocusStackConfigurator(DefaultActionConfigurator):
+class FocusStackBaseConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
         super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
@@ -343,33 +345,69 @@ class FocusStackConfigurator(DefaultActionConfigurator):
                                must_exist=True, placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
+
+    def common_fields(self, layout, action):
+        self.builder.add_field('denoise', FIELD_FLOAT, 'Denoise', required=False,
+                               default=0, min=0, max=10)
+        self.add_bold_label("Stacking algorithm:")
+        combo = self.builder.add_field('stacker', FIELD_COMBO, 'Stacking algorithm', required=True,
+                                       options=['Pyramid', 'Depth map'], default='Pyramid')
+        combo.setCurrentIndex(0)
+        combo.setCurrentText('Pyramid')
+        def change():
+            text = combo.currentText()
+            if text == 'Pyramid':
+                q_depthmap.hide()
+                q_pyramid.show()
+            elif text == 'Depth map':
+                q_pyramid.hide()
+                q_depthmap.show()
+        q_pyramid, q_depthmap = QWidget(), QWidget()
+        change()
+        for q in [q_pyramid, q_depthmap]:
+            layout = QFormLayout()
+            layout.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
+            layout.setRowWrapPolicy(QFormLayout.DontWrapRows)
+            layout.setFormAlignment(Qt.AlignLeft | Qt.AlignTop)
+            layout.setLabelAlignment(Qt.AlignLeft)
+            q.setLayout(layout)
+        self.builder.add_field('pyramid_min_size', FIELD_INT, 'Minimum size (px)', required=False, add_to_layout=q_pyramid.layout(),
+                               default=32, min=2, max=256)        
+        self.builder.add_field('pyramid_kernel_size', FIELD_INT, 'Kernel size (px)', required=False, add_to_layout=q_pyramid.layout(),
+                               default=5, min=3, max=21)        
+        self.builder.add_field('pyramid_gen_kernel', FIELD_FLOAT, 'Gen. kernel', required=False, add_to_layout=q_pyramid.layout(),
+                               default=0.4, min=0.0, max=2.0)        
+
+        self.builder.add_field('depthmap_energy', FIELD_COMBO, 'Energy', required=False, add_to_layout=q_depthmap.layout(),
+                               options=['Laplacian', 'Sobel'], default='Laplacian')
+        self.builder.add_field('depthmap_kernel_size', FIELD_INT, 'Kernel size (px)', required=False, add_to_layout=q_depthmap.layout(),
+                               default=5, min=3, max=21)
+        self.builder.add_field('depthmap_blur_size', FIELD_INT, 'Blurl size (px)', required=False, add_to_layout=q_depthmap.layout(),
+                               default=5, min=1, max=21)
+        self.builder.add_field('depthmap_smooth_size', FIELD_INT, 'Smooth size (px)', required=False, add_to_layout=q_depthmap.layout(),
+                               default=32, min=1, max=256)
+        
+        self.builder.layout.addRow(q_pyramid)
+        self.builder.layout.addRow(q_depthmap)
+        combo.currentIndexChanged.connect(change)
+
+class FocusStackConfigurator(FocusStackBaseConfigurator):
+    def create_form(self, layout, action):
+        super().create_form(layout, action)
         self.builder.add_field('exif_path', FIELD_REL_PATH, 'Exif data path', required=False,
                                placeholder='relative to working path')
         self.builder.add_field('postfix', FIELD_TEXT, 'Ouptut filename postfix', required=False,
                                default="_stack", placeholder="_stack")
-        self.builder.add_field('denoise', FIELD_FLOAT, 'Denoise', required=False,
-                               default=0, min=0, max=10)
-        self.builder.add_field('stacker', FIELD_COMBO, 'Stack algorithm', required=True,
-                               options=['Pyramid', 'Depth map'], default='Pyramid')
+        super().common_fields(layout, action)
                                
-class FocusStackBunchConfigurator(DefaultActionConfigurator):
+class FocusStackBunchConfigurator(FocusStackBaseConfigurator):
     def create_form(self, layout, action):
         super().create_form(layout, action)
-        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
-        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
-                               must_exist=True, placeholder='relative to working path')
-        self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
-                               placeholder='relative to working path')
-        self.builder.add_field('exif_path', FIELD_REL_PATH, 'Exif data path', required=False,
-                               placeholder='relative to working path')
         self.builder.add_field('frames', FIELD_INT, 'Frames', required=False,
                                default=10, min=1, max=100)
         self.builder.add_field('overlap', FIELD_INT, 'Overlapping frames', required=False,
                                default=2, min=0, max=100)
-        self.builder.add_field('denoise', FIELD_FLOAT, 'Denoise', required=False,
-                               default=0, min=0, max=10)
-        self.builder.add_field('stacker', FIELD_COMBO, 'Stack algorithm', required=True,
-                               options=['Pyramid', 'Depth map'], default='Pyramid')
+        super().common_fields(layout, action)
                                
         
 class MultiLayerConfigurator(DefaultActionConfigurator):
