@@ -10,6 +10,8 @@ from typing import Dict, Any
 import os.path
 import os
 import json
+import logging
+
 
 class MainWindow(WindowMenu):
     def __init__(self):
@@ -105,14 +107,16 @@ class MainWindow(WindowMenu):
         if current_index >= 0:
             converter = ProjectConverter()
             job = converter.job(self.project.jobs[current_index])
-            print("run: " + job.name)
+            logger = logging.getLogger(__name__)
+            logger.info("run: " + job.name)
             job.run()
 
     def run_all_jobs(self):
         converter = ProjectConverter()
         jobs = converter.project(self.project)
         for job in jobs:
-            print("run: " + job.name)
+            logger = logging.getLogger(__name__)
+            logger.info("run: " + job.name)
             job.run()
 
     def add_action(self):
