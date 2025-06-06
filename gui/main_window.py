@@ -2,7 +2,7 @@ from PySide6.QtWidgets import (
     QMainWindow, QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout,
     QFileDialog, QLabel, QComboBox, QMessageBox, QInputDialog, QFileDialog,
     QDialog, QFormLayout, QLineEdit, QSpinBox, QDoubleSpinBox, QMenu)
-from gui.project_model import Project, ActionConfig
+from gui.project_model import Project, ActionConfig, ProjectConverter
 from gui.action_config import *
 from gui.menu import WindowMenu
 from abc import ABC, abstractmethod
@@ -103,11 +103,17 @@ class MainWindow(WindowMenu):
             QMessageBox.warning(self, "No Job Selected", "Please select a job first.")
             return
         if current_index >= 0:
-            print("run: " + self.project.jobs[current_index].params['name'])
+            converter = ProjectConverter()
+            job = converter.job(self.project.jobs[current_index])
+            print("run: " + job.name)
+            job.run()
 
     def run_all_jobs(self):
-        for job in self.project.jobs:
-            print("run: " + job.params['name'])
+        converter = ProjectConverter()
+        jobs = converter.project(self.project)
+        for job in jobs:
+            print("run: " + job.name)
+            job.run()
 
     def add_action(self):
         current_index = self.job_list.currentRow()

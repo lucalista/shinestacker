@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any
 import os.path
 import os
-import json
+import json, jsonpickle
 
 class WindowMenu(QMainWindow):
     def __init__(self):

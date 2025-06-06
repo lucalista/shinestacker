@@ -30,7 +30,6 @@ class ActionConfig:
             s.parent = a
         return a
 
-
 class Project:
     def __init__(self):
         self.jobs: list[ActionConfig] = []
@@ -51,3 +50,17 @@ class Project:
             for s in j.sub_actions:
                 s.parent = j
         return p
+
+from focus_stack import StackJob
+
+    
+class ProjectConverter:
+    def project(self, project: Project):
+        return [self.job(j) for j in project.jobs]
+
+    def job(self, job: ActionConfig):
+        name = job.params.get('name', '')
+        working_path = job.params.get('working_path', '')
+        input_path = job.params.get('input_path', '')
+        return StackJob(name, working_path, input_path)
+    
