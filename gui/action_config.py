@@ -453,10 +453,19 @@ class AlignFramesConfigurator(DefaultActionConfigurator):
         self.builder.add_field('border_blur', FIELD_FLOAT, 'Border blur', required=False,
                                default=50, min=0, max=1000, step=1)
         self.add_bold_label("Miscellanea:")
-        self.builder.add_field('plot_histograms', FIELD_BOOL, 'Step process', required=False, default=True)
+        self.builder.add_field('plot_histograms', FIELD_BOOL, 'Plot histograms', required=False, default=True)
     
 class BalanceFramesConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
+        self.builder.add_field('mask_size', FIELD_FLOAT, 'Mask size', required=False,
+                               default=0, min=0, max=5, step=0.1)
+        self.builder.add_field('intensity_interval', FIELD_INT_TUPLE, 'Intensity range', required=False, size=2,
+                               default=[0, -1], labels=['min', 'max'], min=[-1]*2, max=[65536]*2)
+        self.builder.add_field('img_scale', FIELD_INT, 'Image resample', required=False,
+                               default=8, min=1, max=256)
+        self.builder.add_field('corr_map', FIELD_COMBO, 'Correction map', required=False,
+                               options=['Linear', 'Gamma', 'Match histograms'], default='Linear')
+        self.builder.add_field('plot_histograms', FIELD_BOOL, 'Plot histograms', required=False, default=True)
     
 
