@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout,
-    QFileDialog, QLabel, QComboBox, QMessageBox, QInputDialog, QSizePolicy,
+    QFileDialog, QLabel, QComboBox, QMessageBox, QInputDialog, QSizePolicy, QStackedWidget,
     QDialog, QFormLayout, QLineEdit, QSpinBox, QDoubleSpinBox, QCheckBox)
 from PySide6.QtCore import Qt
 from gui.project_model import Project, ActionConfig
@@ -354,16 +354,7 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
                                        options=['Pyramid', 'Depth map'], default='Pyramid')
         combo.setCurrentIndex(0)
         combo.setCurrentText('Pyramid')
-        def change():
-            text = combo.currentText()
-            if text == 'Pyramid':
-                q_depthmap.hide()
-                q_pyramid.show()
-            elif text == 'Depth map':
-                q_pyramid.hide()
-                q_depthmap.show()
         q_pyramid, q_depthmap = QWidget(), QWidget()
-        change()
         for q in [q_pyramid, q_depthmap]:
             layout = QFormLayout()
             layout.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
@@ -371,6 +362,17 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
             layout.setFormAlignment(Qt.AlignLeft | Qt.AlignTop)
             layout.setLabelAlignment(Qt.AlignLeft)
             q.setLayout(layout)
+        stacked = QStackedWidget()            
+        stacked.addWidget(q_pyramid)
+        stacked.addWidget(q_depthmap)
+        def change():
+            text = combo.currentText()
+            if text == 'Pyramid':
+                stacked.setCurrentWidget(q_pyramid)
+            elif text == 'Depth map':
+                stacked.setCurrentWidget(q_depthmap)
+                    
+        change()
         self.builder.add_field('pyramid_min_size', FIELD_INT, 'Minimum size (px)', required=False, add_to_layout=q_pyramid.layout(),
                                default=32, min=2, max=256)        
         self.builder.add_field('pyramid_kernel_size', FIELD_INT, 'Kernel size (px)', required=False, add_to_layout=q_pyramid.layout(),
@@ -387,8 +389,7 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
         self.builder.add_field('depthmap_smooth_size', FIELD_INT, 'Smooth size (px)', required=False, add_to_layout=q_depthmap.layout(),
                                default=32, min=1, max=256)
         
-        self.builder.layout.addRow(q_pyramid)
-        self.builder.layout.addRow(q_depthmap)
+        self.builder.layout.addRow(stacked)
         combo.currentIndexChanged.connect(change)
 
 class FocusStackConfigurator(FocusStackBaseConfigurator):
