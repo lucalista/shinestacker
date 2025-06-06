@@ -9,7 +9,6 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any
 import os.path
 import os
-import jsonpickle
 import json
 
 class MainWindow(WindowMenu):
