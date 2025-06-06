@@ -45,7 +45,7 @@ class FieldBuilder:
         self.layout = layout
         self.action = action
         self.fields = {}
-        
+
     def add_field(self, tag: str, field_type: str, label: str, 
                  required: bool = False, **kwargs):
         if field_type == FIELD_TEXT:
@@ -302,6 +302,12 @@ class DefaultActionConfigurator(ActionConfigurator):
     def update_params(self, params):
         return self.builder.update_params(params)
 
+    def add_bold_label(self, label):
+        label=QLabel(label)
+        label.setStyleSheet("font-weight: bold")
+        self.builder.layout.addRow(label)
+    
+
 class JobConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
         super().create_form(layout, action, "Job")
@@ -418,6 +424,36 @@ class VignettingConfigurator(DefaultActionConfigurator):
 class AlignFramesConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
+        self.add_bold_label("Feature identification:")
+        self.builder.add_field('detector', FIELD_COMBO, 'Detector', required=False,
+                               options=['SIFT', 'ORB', 'SURF', 'AKAZE'], default='SIFT')
+        self.builder.add_field('descriptor', FIELD_COMBO, 'Descriptor', required=False,
+                               options=['SIFT', 'ORB', 'AKAZE'], default='SIFT')
+        self.add_bold_label("Feature matching:")
+        self.builder.add_field('method', FIELD_COMBO, 'Method', required=False,
+                               options=['KNN', 'NORM_HAMMING'], default='KNN')
+        self.builder.add_field('flann_idx_kdtree', FIELD_INT, 'Flann idx kdtree', required=False,
+                              default=2, min=0, max=10)
+        self.builder.add_field('flann_trees', FIELD_INT, 'Flann trees', required=False,
+                              default=5, min=0, max=10)
+        self.builder.add_field('flann_checks', FIELD_INT, 'Flann checks', required=False,
+                              default=50, min=0, max=1000)
+        self.builder.add_field('threshold', FIELD_FLOAT, 'Threshold', required=False,
+                               default=0.75, min=0, max=1, step=0.05)
+        self.add_bold_label("Transform:")
+        self.builder.add_field('transform', FIELD_COMBO, 'Transform', required=False,
+                               options=['Rigid', 'Homography'], default='Rigid')
+        self.builder.add_field('rans_threshold', FIELD_FLOAT, 'Homography RANS threshold', required=False,
+                               default=5.0, min=0, max=20, step=0.1)
+        self.add_bold_label("Border:")
+        self.builder.add_field('border_mode', FIELD_COMBO, 'Border mode', required=False,
+                               options=['Constant', 'Replicate', 'Replicate and blur'], default='Replicate and blur')
+        self.builder.add_field('border_value', FIELD_INT_TUPLE, 'Border value (if constant)', required=False, size=4,
+                               default=[0]*4, labels=['r', 'g', 'b', 'a'], min=[0]*4, max=[255]*4)
+        self.builder.add_field('border_blur', FIELD_FLOAT, 'Border blur', required=False,
+                               default=50, min=0, max=1000, step=1)
+        self.add_bold_label("Miscellanea:")
+        self.builder.add_field('plot_histograms', FIELD_BOOL, 'Step process', required=False, default=True)
     
 class BalanceFramesConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
