@@ -9,7 +9,7 @@ import os
 import errno
 
 
-_DEFAULT_NOISE_MAP_FILENAME = "noise_map/hot_pixels.png"
+_DEFAULT_NOISE_MAP_FILENAME = "noise-map/hot_pixels.png"
 INTERPOLATE_MEAN = 'MEAN'
 INTERPOLATE_MEDIAN = 'MEDIAN'
 
@@ -91,7 +91,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
 
 
 class MaskNoise:
-    def __init__(self, noise_mask="noise-map/" + _DEFAULT_NOISE_MAP_FILENAME, kernel_size=3,
+    def __init__(self, noise_mask=_DEFAULT_NOISE_MAP_FILENAME, kernel_size=3,
                  method=INTERPOLATE_MEAN):
         self.noise_mask = noise_mask
         self.kernel_size = kernel_size
