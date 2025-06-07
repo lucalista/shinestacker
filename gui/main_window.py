@@ -1,16 +1,8 @@
-from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout,
-    QFileDialog, QLabel, QComboBox, QMessageBox, QInputDialog, QFileDialog,
-    QDialog, QFormLayout, QLineEdit, QSpinBox, QDoubleSpinBox, QMenu)
+from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout,
+                               QLabel, QComboBox, QMessageBox, QDialog)
 from gui.project_model import Project, ActionConfig, ProjectConverter
-from gui.action_config import *
+from gui.action_config import ActionConfigDialog, SUB_ACTION_TYPES, ACTION_TYPES, ACTION_COMBO
 from gui.menu import WindowMenu
-from abc import ABC, abstractmethod
-from typing import Dict, Any
-import os.path
-import os
-import json
-import logging
 
 
 class MainWindow(WindowMenu):
@@ -106,11 +98,11 @@ class MainWindow(WindowMenu):
             return
         if current_index >= 0:
             converter = ProjectConverter()
-            job = converter.run_job(self.project.jobs[current_index])
+            converter.run_job(self.project.jobs[current_index])
 
     def run_all_jobs(self):
         converter = ProjectConverter()
-        jobs = converter.run_project(self.project)
+        converter.run_project(self.project)
 
     def add_action(self):
         current_index = self.job_list.currentRow()
@@ -121,7 +113,7 @@ class MainWindow(WindowMenu):
         action = ActionConfig(type_name)
         action.parent = self.get_current_job()
         dialog = ActionConfigDialog(action, self)
-        if dialog.exec() == QDialog.Accepted:     
+        if dialog.exec() == QDialog.Accepted:
             self.project.jobs[current_index].add_sub_action(action)
             self.action_list.addItem(self.action_text(action))
 
@@ -272,7 +264,7 @@ class MainWindow(WindowMenu):
                 if action_counter == action_index:
                     current_action = action
                     break
-                if len(action.sub_actions)>0:
+                if len(action.sub_actions) > 0:
                     for i, sub_action in enumerate(action.sub_actions):
                         action_counter += 1
                         if action_counter == action_index:

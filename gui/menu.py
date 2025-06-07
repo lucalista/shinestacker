@@ -1,11 +1,11 @@
+from PySide6.QtWidgets import (QMessageBox, QFileDialog, QMainWindow)
 from PySide6.QtGui import QAction
-from gui.project_model import Project, ActionConfig
-from gui.action_config import *
-from abc import ABC, abstractmethod
-from typing import Dict, Any
+from gui.project_model import Project
 import os.path
 import os
-import json, jsonpickle
+import json
+import jsonpickle
+
 
 class WindowMenu(QMainWindow):
     def __init__(self):
@@ -31,7 +31,7 @@ class WindowMenu(QMainWindow):
         file_menu.addAction(save_as_action)
         file_menu.addSeparator()
         exit_action = QAction("&Shut down ", self)
-        exit_action.setShortcut("Ctrl+Q")        
+        exit_action.setShortcut("Ctrl+Q")
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
 
@@ -42,7 +42,7 @@ class WindowMenu(QMainWindow):
             self._update_title()
             self.job_list.clear()
             self.action_list.clear()
-    
+
     def _open_project(self):
         if not self._check_unsaved_changes():
             return
@@ -59,16 +59,16 @@ class WindowMenu(QMainWindow):
                 self._refresh_ui()
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Cannot open file:\n{str(e)}")
-    
+
     def _save_project(self):
         if self._current_file:
             self._do_save(self._current_file)
         else:
             self._save_project_as()
-    
+
     def _save_project_as(self):
         file_path, _ = QFileDialog.getSaveFileName(self, "Save Project As", "",
-            "Project Files (*.fsp);;All Files (*)")
+                                                   "Project Files (*.fsp);;All Files (*)")
         if file_path:
             if not file_path.endswith('.fsp'):
                 file_path += '.fsp'
@@ -86,7 +86,7 @@ class WindowMenu(QMainWindow):
             f.write(json_obj)
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Cannot save file:\n{str(e)}")
-            
+
     def _check_unsaved_changes(self) -> bool:
         return True
         # ignore the following code
@@ -100,19 +100,18 @@ class WindowMenu(QMainWindow):
             return True
         elif reply == QMessageBox.Discard:
             return True
-        else:  # Cancel
+        else:
             return False
-    
+
     def _update_title(self):
         title = "Focus Stacking GUI"
         if self._current_file:
             title += f" - {os.path.basename(self._current_file)}"
         self.setWindowTitle(title)
-    
+
     def _refresh_ui(self):
         self.job_list.clear()
         for job in self.project.jobs:
             self.job_list.addItem(job.params['name'])
-        
         if self.project.jobs:
-            self.job_list.setCurrentRow(0)        
+            self.job_list.setCurrentRow(0)

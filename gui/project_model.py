@@ -1,5 +1,5 @@
 class ActionConfig:
-    def __init__(self, type_name: str, params: dict=None, parent=None):
+    def __init__(self, type_name: str, params: dict=None, parent=None): # noqa
         self.type_name = type_name
         self.params = params or {}
         self.parent = parent
@@ -33,6 +33,7 @@ class ActionConfig:
             s.parent = a
         return a
 
+
 class Project:
     def __init__(self):
         self.jobs: list[ActionConfig] = []
@@ -54,6 +55,7 @@ class Project:
                 s.parent = j
         return p
 
+
 from focus_stack import StackJob
 import logging
 
@@ -74,10 +76,9 @@ class ProjectConverter:
             logger = logging.getLogger(__name__)
             logger.info("run: " + job.name)
             job.run()
-    
+
     def run_job(self, job: ActionConfig):
         job = self.job(job)
         logger = logging.getLogger(__name__)
         logger.info("run: " + job.name)
         job.run()
-
