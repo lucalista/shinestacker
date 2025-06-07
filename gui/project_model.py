@@ -61,24 +61,24 @@ import logging
 
 
 class ProjectConverter:
-    def project(self, project: Project):
-        return [self.job(j) for j in project.jobs]
+    def project(self, project: Project, logger_name=None):
+        return [self.job(j, logger_name) for j in project.jobs]
 
-    def job(self, job: ActionConfig):
+    def job(self, job: ActionConfig, logger_name=None):
         name = job.params.get('name', '')
         working_path = job.params.get('working_path', '')
         input_path = job.params.get('input_path', '')
-        return StackJob(name, working_path, input_path)
+        return StackJob(name, working_path, input_path, logger_name=logger_name)
 
-    def run_project(self, project: Project):
-        jobs = self.project(project)
+    def run_project(self, project: Project, logger_name=None):
+        logger = logging.getLogger(__name__ if logger_name is None else logger_name)
+        jobs = self.project(project, logger_name)
         for job in jobs:
-            logger = logging.getLogger(__name__)
             logger.info("run: " + job.name)
             job.run()
 
-    def run_job(self, job: ActionConfig):
-        job = self.job(job)
-        logger = logging.getLogger(__name__)
+    def run_job(self, job: ActionConfig, logger_name=None):
+        logger = logging.getLogger(__name__ if logger_name is None else logger_name)
+        job = self.job(job, logger_name)
         logger.info("run: " + job.name)
         job.run()

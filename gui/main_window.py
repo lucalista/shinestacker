@@ -3,11 +3,24 @@ from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QListWidget, Q
 from gui.project_model import Project, ActionConfig, ProjectConverter
 from gui.action_config import ActionConfigDialog, SUB_ACTION_TYPES, ACTION_TYPES, ACTION_COMBO
 from gui.menu import WindowMenu
+from gui.logging import LogManager, LogWorker, QTextEditLogger
 
 
-class MainWindow(WindowMenu):
+class JobLogWorker(LogWorker):
+    def __init__(self, job, id_str):
+        LogWorker.__init__(self)
+        self.job = job
+        self.id_str = id_str
+
+    def run(self):
+        converter = ProjectConverter()
+        converter.run_job(self.job, self.id_str)
+        self.end_signal.emit(1)
+
+class MainWindow(WindowMenu, LogManager):
     def __init__(self):
-        super().__init__()
+        WindowMenu.__init__(self)
+        LogManager.__init__(self)        
         self.setWindowTitle("Focus Stacking GUI")
         self.resize(800, 600)
         self.project = Project()
@@ -66,6 +79,7 @@ class MainWindow(WindowMenu):
         hlayout.addLayout(vbox_left)
         hlayout.addLayout(vbox_right)
         layout.addLayout(hlayout)
+        
         self.central_widget.setLayout(layout)
 
     def add_job(self):
@@ -91,14 +105,33 @@ class MainWindow(WindowMenu):
         current_index = self.job_list.currentRow()
         return None if current_index < 0 else self.project.jobs[current_index]
 
+    def before_thread_begins(self):
+        self.run_job_button.setEnabled(False)
+        self.run_all_jobs_button.setEnabled(False)
+
+    def _do_handle_end_message(self, int):
+        self.run_job_button.setEnabled(True)
+        self.run_all_jobs_button.setEnabled(True)
+
+    def show_new_window(self, title=None):
+        text_edit = QTextEditLogger()
+        if title is not None:
+            text_edit.setWindowTitle(title)
+        text_edit.resize(600, 600)
+        text_edit.show()
+        self.add_tex_edit(text_edit)
+        return self.last_id_str()
+
     def run_job(self):
         current_index = self.job_list.currentRow()
         if current_index < 0:
             QMessageBox.warning(self, "No Job Selected", "Please select a job first.")
             return
         if current_index >= 0:
-            converter = ProjectConverter()
-            converter.run_job(self.project.jobs[current_index])
+            job = self.project.jobs[current_index]
+            id_str = self.show_new_window("Run job: " + job.params["name"])
+            worker = JobLogWorker(job, id_str)
+            self.start_thread(worker)
 
     def run_all_jobs(self):
         converter = ProjectConverter()

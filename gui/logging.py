@@ -1,6 +1,5 @@
 import os
 import re
-from time import sleep
 import logging
 from rich.logging import RichHandler
 from rich.console import Console
@@ -92,17 +91,7 @@ class LogWorker(QThread):
     end_signal = Signal(int)
 
     def run(self):
-        self.html_signal.emit("<h1>Begin thread</h1><br>")
-        self.log_signal.emit("INFO", "This is an info message.")
-        sleep(0.5)
-        self.log_signal.emit("WARNING", "This is a warning message.")
-        sleep(0.5)
-        for i in range(10):
-            self.log_signal.emit("DEBUG", f"This is a debug message {i}.")
-            self.log_signal.emit("ERROR", "This is an error message.")
-            self.log_signal.emit("CRITICAL", "Crash!!!")
-            sleep(0.1)
-        self.end_signal.emit(1)
+        pass
 
 
 class LogManager:
@@ -118,7 +107,7 @@ class LogManager:
     def add_tex_edit(self, text_edit):
         self.text_edit.append(text_edit)
 
-    def start_thread(self):
+    def start_thread(self, worker: LogWorker):
         self.before_thread_begins()
         logger = logging.getLogger(self.last_id_str())
         logger.setLevel(logging.DEBUG)
@@ -126,7 +115,7 @@ class LogManager:
         self.handler = HtmlRichHandler(text_edit)
         self.handler.setLevel(logging.DEBUG)
         logger.addHandler(self.handler)
-        self.log_worker = LogWorker()
+        self.log_worker = worker
         self.log_worker.log_signal.connect(text_edit.handle_log_message)
         self.log_worker.html_signal.connect(text_edit.handle_html_message)
         self.log_worker.end_signal.connect(self.handle_end_message)

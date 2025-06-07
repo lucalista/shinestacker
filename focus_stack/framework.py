@@ -38,7 +38,10 @@ class JobBase:
             colored(self.name + ": ", "green", attrs=["bold"]) + colored("completed", "green") + trailing_spaces)
 
     def get_logger(self, tqdm=False):
-        return logging.getLogger("tqdm" if tqdm else __name__)
+        if self.logger is None:
+            return logging.getLogger("tqdm" if tqdm else __name__)
+        else:
+            return self.logger
 
     def set_terminator(self, tqdm=None, end='\n'):
         if end is not None:
@@ -65,10 +68,12 @@ class JobBase:
 
 
 class Job(JobBase):
-    def __init__(self, name, log_file="logs/focusstack.log"):
+    def __init__(self, name, logger_name=None, log_file="logs/focusstack.log"):
         JobBase.__init__(self, name)
         self.__actions = []
-        setup_logging(log_file=log_file)
+        if logger_name is None:
+            setup_logging(log_file=log_file)
+        self.logger = None if logger_name is None else logging.getLogger(logger_name)
 
     def time(self):
         return time.time() - self.__t0
@@ -77,6 +82,7 @@ class Job(JobBase):
         pass
 
     def add_action(self, a):
+        a.logger = self.logger
         self.init(a)
         self.__actions.append(a)
 
