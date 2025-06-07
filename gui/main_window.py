@@ -1,10 +1,10 @@
 from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout,
                                QLabel, QComboBox, QMessageBox, QDialog)
-from gui.project_model import Project, ActionConfig, ProjectConverter
+from gui.project_model import Project, ActionConfig
+from gui.project_converter import ProjectConverter
 from gui.action_config import ActionConfigDialog, SUB_ACTION_TYPES, ACTION_TYPES, ACTION_COMBO
 from gui.menu import WindowMenu
 from gui.logging import LogManager, LogWorker, QTextEditLogger
-
 
 class JobLogWorker(LogWorker):
     def __init__(self, job, id_str):
@@ -117,7 +117,7 @@ class MainWindow(WindowMenu, LogManager):
         text_edit = QTextEditLogger()
         if title is not None:
             text_edit.setWindowTitle(title)
-        text_edit.resize(600, 600)
+        text_edit.resize(800, 600)
         text_edit.show()
         self.add_tex_edit(text_edit)
         return self.last_id_str()

@@ -1,3 +1,16 @@
+ACTION_JOB = "Job"
+ACTION_COMBO = "Combined Actions"
+ACTION_NOISEDETECTION = "NoiseDetection"
+ACTION_FOCUSSTACK = "FocusStack"
+ACTION_FOCUSSTACKBUNCH = "FocusStackBunch"
+ACTION_MULTILAYER = "MultiLayer"
+ACTION_TYPES = [ACTION_COMBO, ACTION_FOCUSSTACKBUNCH, ACTION_FOCUSSTACK, ACTION_MULTILAYER, ACTION_NOISEDETECTION]
+ACTION_MASKNOISE = "MaskNoise"
+ACTION_VIGNETTING = "Vignetting"
+ACTION_ALIGNFRAMES = "AlignFrames"
+ACTION_BALANCEFRAMES = "BalanceFrames"
+SUB_ACTION_TYPES = [ACTION_MASKNOISE, ACTION_VIGNETTING, ACTION_ALIGNFRAMES, ACTION_BALANCEFRAMES]
+
 class ActionConfig:
     def __init__(self, type_name: str, params: dict=None, parent=None): # noqa
         self.type_name = type_name
@@ -58,30 +71,3 @@ class Project:
                 s.parent = j
         return p
 
-
-from focus_stack import StackJob
-import logging
-
-
-class ProjectConverter:
-    def project(self, project: Project, logger_name=None):
-        return [self.job(j, logger_name) for j in project.jobs]
-
-    def job(self, job: ActionConfig, logger_name=None):
-        name = job.params.get('name', '')
-        working_path = job.params.get('working_path', '')
-        input_path = job.params.get('input_path', '')
-        return StackJob(name, working_path, input_path, logger_name=logger_name)
-
-    def run_project(self, project: Project, logger_name=None):
-        logger = logging.getLogger(__name__ if logger_name is None else logger_name)
-        jobs = self.project(project, logger_name)
-        for job in jobs:
-            logger.info("run: " + job.name)
-            job.run()
-
-    def run_job(self, job: ActionConfig, logger_name=None):
-        logger = logging.getLogger(__name__ if logger_name is None else logger_name)
-        job = self.job(job, logger_name)
-        logger.info("run: " + job.name)
-        job.run()

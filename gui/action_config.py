@@ -2,23 +2,16 @@ from PySide6.QtWidgets import (QWidget, QPushButton, QHBoxLayout, QFileDialog, Q
                                QMessageBox, QSizePolicy, QStackedWidget, QDialog, QFormLayout,
                                QLineEdit, QSpinBox, QDoubleSpinBox, QCheckBox)
 from PySide6.QtCore import Qt
-from gui.project_model import ActionConfig
+from gui.project_model import (ActionConfig,
+                               ACTION_JOB, ACTION_COMBO, ACTION_NOISEDETECTION, ACTION_FOCUSSTACK,
+                               ACTION_FOCUSSTACKBUNCH, ACTION_MULTILAYER, ACTION_TYPES,
+                               ACTION_MASKNOISE, ACTION_VIGNETTING, ACTION_ALIGNFRAMES,
+                               ACTION_BALANCEFRAMES, SUB_ACTION_TYPES)
+
 from abc import ABC, abstractmethod
 from typing import Dict, Any
 import os.path
 
-ACTION_JOB = "Job"
-ACTION_COMBO = "Combined Actions"
-ACTION_NOISEDETECTION = "NoiseDetection"
-ACTION_FOCUSSTACK = "FocusStack"
-ACTION_FOCUSSTACKBUNCH = "FocusStackBunch"
-ACTION_MULTILAYER = "MultiLayer"
-ACTION_TYPES = [ACTION_COMBO, ACTION_FOCUSSTACKBUNCH, ACTION_FOCUSSTACK, ACTION_MULTILAYER, ACTION_NOISEDETECTION]
-ACTION_MASKNOISE = "MaskNoise"
-ACTION_VIGNETTING = "Vignetting"
-ACTION_ALIGNFRAMES = "AlignFrames"
-ACTION_BALANCEFRAMES = "BalanceFrames"
-SUB_ACTION_TYPES = [ACTION_MASKNOISE, ACTION_VIGNETTING, ACTION_ALIGNFRAMES, ACTION_BALANCEFRAMES]
 FIELD_TEXT = 'text'
 FIELD_ABS_PATH = 'abs_path'
 FIELD_REL_PATH = 'rel_path'

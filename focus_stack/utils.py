@@ -65,6 +65,11 @@ def validate_image(img, expected_shape=None, expected_dtype=None):
 
 def save_plot(filename, show=True):
     logging.getLogger(__name__).debug("save plot file: " + filename)
+    dir_path = os.path.dirname(filename)
+    if not dir_path:
+        dir_path = '.'
+    if not os.path.isdir(dir_path):
+        os.makedirs(dir_path)
     plt.savefig(filename, dpi=150)
     if show:
         try:

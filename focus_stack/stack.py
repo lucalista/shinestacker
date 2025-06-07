@@ -11,7 +11,7 @@ EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
 
 class FocusStackBase:
-    def __init__(self, stack_algo, exif_path=None, postfix='', denoise=0):
+    def __init__(self, stack_algo, exif_path='', postfix='', denoise=0):
         self.stack_algo = stack_algo
         self.exif_path = exif_path
         self.postfix = postfix
@@ -44,9 +44,9 @@ class FocusStackBase:
 
 
 class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
-    def __init__(self, name, stack_algo, input_path=None, output_path=None, working_path=None,
-                 resample=1, exif_path=None, postfix='', frames=10, overlap=0, denoise=0):
-        FrameDirectory.__init__(self, name, input_path, output_path, working_path, None, resample)
+    def __init__(self, name, stack_algo, input_path='', output_path='', working_path='',
+                 resample=1, exif_path='', postfix='', frames=10, overlap=0, denoise=0):
+        FrameDirectory.__init__(self, name, input_path, output_path, working_path, '', resample)
         ActionList.__init__(self, name)
         FocusStackBase.__init__(self, stack_algo, exif_path, postfix, denoise)
         if overlap >= frames:
@@ -69,9 +69,9 @@ class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
 
 
 class FocusStack(FrameDirectory, JobBase, FocusStackBase):
-    def __init__(self, name, stack_algo, input_path=None, output_path=None, working_path=None, resample=1, exif_path=None, postfix='', denoise=0):
+    def __init__(self, name, stack_algo, input_path='', output_path='', working_path='', resample=1, exif_path='', postfix='', denoise=0):
         self.name = name
-        FrameDirectory.__init__(self, name, input_path, output_path, working_path, None, resample)
+        FrameDirectory.__init__(self, name, input_path, output_path, working_path, '', resample)
         JobBase.__init__(self, name)
         FocusStackBase.__init__(self, stack_algo, exif_path, postfix, denoise)
 

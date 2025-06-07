@@ -8,10 +8,10 @@ import os
 
 
 class StackJob(Job):
-    def __init__(self, name, working_path, input_path=None, logger_name=None, log_file="logs/focusstack.log"):
+    def __init__(self, name, working_path, input_path='', logger_name=None, log_file="logs/focusstack.log"):
         check_path_exists(working_path)
         self.working_path = working_path
-        if input_path is None or input_path == '':
+        if input_path == '':
             self.paths = []
         else:
             self.paths = [input_path]
@@ -24,7 +24,7 @@ class StackJob(Job):
 class FramePaths(JobBase):
     EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
-    def __init__(self, name, input_path=None, output_path=None, working_path=None, plot_path='plots', resample=1, reverse_order=False):
+    def __init__(self, name, input_path='', output_path='', working_path='', plot_path='plots', resample=1, reverse_order=False):
         JobBase.__init__(self, name)
         self.name = name
         self.working_path = working_path
@@ -40,19 +40,19 @@ class FramePaths(JobBase):
         self.print_message(colored("focus stacking", 'blue'))
 
     def init(self, job):
-        if self.working_path is None:
+        if self.working_path == '':
             self.working_path = job.working_path
         check_path_exists(self.working_path)
-        if self.output_path is None:
+        if self.output_path == '':
             self.output_path = self.name
         self.output_dir = self.working_path + ('' if self.working_path[-1] == '/' else '/') + self.output_path
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
-        if self.plot_path is not None:
+        if self.plot_path == '':
             self.plot_path = self.working_path + ('' if self.working_path[-1] == '/' else '/') + self.plot_path
             if not os.path.exists(self.plot_path):
                 os.makedirs(self.plot_path)
-        if self.input_path is None:
+        if self.input_path == '':
             assert len(job.paths) > 0, "No input path has been specified in " + job.name
             self.input_path = job.paths[-1]
         job.paths.append(self.output_path)
@@ -61,8 +61,14 @@ class FramePaths(JobBase):
 class FrameDirectory(FramePaths):
     EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
-    def __init__(self, name, input_path=None, output_path=None, working_path=None, plot_path='plots', resample=1, reverse_order=False):
+    def __init__(self, name, input_path='', output_path='', working_path='', plot_path='plots', resample=1, reverse_order=False):
         FramePaths.__init__(self, name, input_path, output_path, working_path, plot_path, resample, reverse_order)
+
+    def folder_list_str(self):
+        if isinstance(self.input_dir, list):
+            return "folder{}: ".format('s' if len(self.input_dir) > 1 else '') + ", ".join([i for i in self.input_dir.replace(self.working_path, '').lstrip('/')])
+        else:
+            return "folder: " + self.input_dir.replace(self.working_path, '').lstrip('/')
 
     def folder_filelist(self, path):
         src_contents = os.walk(self.input_dir)
@@ -85,15 +91,15 @@ class FrameDirectory(FramePaths):
 class FrameMultiDirectory:
     EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
-    def __init__(self, name, input_path=None, output_path=None, working_path=None, plot_path='plots',
+    def __init__(self, name, input_path='', output_path='', working_path='', plot_path='plots',
                  resample=1, reverse_order=False):
         FramePaths.__init__(self, name, input_path, output_path, working_path, plot_path, resample, reverse_order)
 
     def folder_list_str(self):
         if isinstance(self.input_dir, list):
-            return "folder{}: ".format('s' if len(self.input_dir) > 1 else '') + ", ".join([i for i in self.input_dir])
+            return "folder{}: ".format('s' if len(self.input_dir) > 1 else '') + ", ".join([i for i in self.input_dir.replace(self.working_path, '')].lstrip('/'))
         else:
-            return "folder: " + self.input_dir
+            return "folder: " + self.input_dir.replace(self.working_path, '').lstrip('/')
 
     def folder_filelist(self):
         if isinstance(self.input_dir, str):
@@ -130,7 +136,7 @@ class FrameMultiDirectory:
 
 
 class FramesRefActions(FrameDirectory, ActionList):
-    def __init__(self, name, input_path=None, output_path=None, working_path=None, plot_path='plots', resample=1, ref_idx=-1, step_process=False):
+    def __init__(self, name, input_path='', output_path='', working_path='', plot_path='plots', resample=1, ref_idx=-1, step_process=False):
         FrameDirectory.__init__(self, name, input_path, output_path, working_path, plot_path, resample)
         ActionList.__init__(self, name)
         self.ref_idx = ref_idx
@@ -167,7 +173,7 @@ class FramesRefActions(FrameDirectory, ActionList):
 
 
 class Actions(FramesRefActions):
-    def __init__(self, name, actions, input_path=None, output_path=None, working_path=None, plot_path='plots', resample=1, ref_idx=-1, step_process=True):
+    def __init__(self, name, actions, input_path='', output_path='', working_path='', plot_path='plots', resample=1, ref_idx=-1, step_process=True):
         FramesRefActions.__init__(self, name, input_path, output_path, working_path, plot_path, resample, ref_idx, step_process)
         self.__actions = []
         for a in actions:

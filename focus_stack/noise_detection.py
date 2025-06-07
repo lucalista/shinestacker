@@ -40,7 +40,7 @@ def mean_image(file_paths, message_callback=None, progress_callback=None):
 
 
 class NoiseDetection(FrameMultiDirectory, JobBase):
-    def __init__(self, name="noise-map", input_path=None, output_path=None, working_path=None, plot_path='plots',
+    def __init__(self, name="noise-map", input_path='', output_path='', working_path='', plot_path='plots',
                  channel_thresholds=(13, 13, 13), blur_size=5, file_name=_DEFAULT_NOISE_MAP_FILENAME,
                  plot_range=(5, 30)):
         FrameMultiDirectory.__init__(self, name, input_path, output_path, working_path, plot_path, 1, False)
@@ -54,7 +54,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         return cv2.threshold(ch, th, 255, cv2.THRESH_BINARY)[1]
 
     def run_core(self):
-        self.print_message(colored("map noisy pixels, frames in " + self.folder_list_str(), "blue"))
+        self.print_message(colored("map noisy pixels from frames in " + self.folder_list_str(), "blue"))
         files = self.folder_filelist()
         in_paths = [self.working_path + "/" + f for f in files]
         bar = make_tqdm_bar(self.name, len(in_paths))

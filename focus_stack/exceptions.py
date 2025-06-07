@@ -20,6 +20,14 @@ class ImageLoadError(FocusStackError):
         super().__init__(f"Failed to load {path}" + ("" if details == "" else f": {details}"))
 
 
+class ImageSaveError(FocusStackError):
+    """Raised when saving loading fails"""
+    def __init__(self, path, details=""):
+        self.path = path
+        self.details = details
+        super().__init__(f"Failed to save {path}" + ("" if details == "" else f": {details}"))
+
+
 class AlignmentError(FocusStackError):
     """Raised when image alignment fails"""
     def __init__(self, index, details):
