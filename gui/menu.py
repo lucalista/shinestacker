@@ -58,7 +58,7 @@ class WindowMenu(QMainWindow):
                 self._update_title()
                 self._refresh_ui()
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Cannot open file:\n{str(e)}")
+                QMessageBox.critical(self, "Error", f"Cannot open file {file_path}:\n{str(e)}")
 
     def _save_project(self):
         if self._current_file:

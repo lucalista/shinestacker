@@ -19,18 +19,21 @@ class ActionConfig:
         pass
 
     def to_dict(self):
-        return {
+        dict = {
             'type_name': self.type_name,
             'params': self.params,
-            'sub_actions': [a.to_dict() for a in self.sub_actions]
         }
+        if len(self.sub_actions) > 0:
+            dict['sub_actions'] = [a.to_dict() for a in self.sub_actions]
+        return dict
 
     @classmethod
     def from_dict(cls, data):
         a = ActionConfig(data['type_name'], data['params'])
-        a.sub_actions = [ActionConfig.from_dict(s) for s in data['sub_actions']]
-        for s in a.sub_actions:
-            s.parent = a
+        if 'sub_actions' in data.keys():
+            a.sub_actions = [ActionConfig.from_dict(s) for s in data['sub_actions']]
+            for s in a.sub_actions:
+                s.parent = a
         return a
 
 
