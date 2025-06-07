@@ -106,18 +106,11 @@ class MainWindow(WindowMenu):
             return
         if current_index >= 0:
             converter = ProjectConverter()
-            job = converter.job(self.project.jobs[current_index])
-            logger = logging.getLogger(__name__)
-            logger.info("run: " + job.name)
-            job.run()
+            job = converter.run_job(self.project.jobs[current_index])
 
     def run_all_jobs(self):
         converter = ProjectConverter()
-        jobs = converter.project(self.project)
-        for job in jobs:
-            logger = logging.getLogger(__name__)
-            logger.info("run: " + job.name)
-            job.run()
+        jobs = converter.run_project(self.project)
 
     def add_action(self):
         current_index = self.job_list.currentRow()

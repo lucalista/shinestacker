@@ -55,8 +55,9 @@ class Project:
         return p
 
 from focus_stack import StackJob
+import logging
 
-    
+
 class ProjectConverter:
     def project(self, project: Project):
         return [self.job(j) for j in project.jobs]
@@ -66,4 +67,17 @@ class ProjectConverter:
         working_path = job.params.get('working_path', '')
         input_path = job.params.get('input_path', '')
         return StackJob(name, working_path, input_path)
+
+    def run_project(self, project: Project):
+        jobs = self.project(project)
+        for job in jobs:
+            logger = logging.getLogger(__name__)
+            logger.info("run: " + job.name)
+            job.run()
     
+    def run_job(self, job: ActionConfig):
+        job = self.job(job)
+        logger = logging.getLogger(__name__)
+        logger.info("run: " + job.name)
+        job.run()
+
