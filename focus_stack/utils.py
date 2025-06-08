@@ -77,4 +77,4 @@ def save_plot(filename, show=True):
             plt.show()
         except Exception:
             pass
-    plt.close()
+    plt.close('all')

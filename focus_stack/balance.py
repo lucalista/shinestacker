@@ -217,6 +217,7 @@ class LumiCorrection(Correction):
         plt.xlim(x[0], x[-1])
         plt.ylim(0)
         save_plot(self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-balance.pdf")
+        plt.close('all')
 
 
 class RGBCorrection(Correction):
@@ -232,6 +233,7 @@ class RGBCorrection(Correction):
         plt.xlim(0, self.two_n)
         save_plot(self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx),
                   show=self.plot_histograms)
+        plt.close('all')
         return hist
 
     def end(self, ref_idx):
@@ -249,6 +251,7 @@ class RGBCorrection(Correction):
         plt.xlim(x[0], x[-1])
         plt.ylim(0)
         save_plot(self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-balance.pdf")
+        plt.close('all')
 
 
 class Ch2Correction(Correction):
@@ -285,6 +288,7 @@ class Ch2Correction(Correction):
         plt.xlim(x[0], x[-1])
         plt.ylim(0)
         save_plot(self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-balance.pdf")
+        plt.close('all')
 
 
 class SVCorrection(Ch2Correction):

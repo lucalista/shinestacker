@@ -95,6 +95,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         plt.xlim(x[0], x[-1])
         plt.ylim(0)
         save_plot(self.working_path + "/" + self.plot_path + "/" + self.name + "-hot-pixels.pdf")
+        plt.close('all')
 
 
 class MaskNoise:

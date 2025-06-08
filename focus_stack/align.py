@@ -217,3 +217,4 @@ class AlignFrames:
         plt.ylim(0)
         plt.xlim(x[0], x[-1])
         save_plot(self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-matches.pdf")
+        plt.close('all')
