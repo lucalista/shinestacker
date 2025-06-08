@@ -36,7 +36,8 @@ class FramePaths(JobBase):
 
     def set_filelist(self):
         self.filenames = self.folder_filelist(self.input_dir)
-        self.print_message(colored(": {} files ".format(len(self.filenames)) + "in folder: " + self.input_dir.replace(self.working_path, '').lstrip('/'), 'blue'))
+        file_list = self.input_dir.replace(self.working_path, '').lstrip('/')
+        self.print_message(colored(": {} files ".format(len(self.filenames)) + "in folder: " + file_list, 'blue'))
         self.print_message(colored("focus stacking", 'blue'))
 
     def init(self, job):
@@ -67,7 +68,8 @@ class FrameDirectory(FramePaths):
 
     def folder_list_str(self):
         if isinstance(self.input_dir, list):
-            return "folder{}: ".format('s' if len(self.input_dir) > 1 else '') + ", ".join([i for i in self.input_dir.replace(self.working_path, '').lstrip('/')])
+            file_list = ", ".join([i for i in self.input_dir.replace(self.working_path, '').lstrip('/')])
+            return "folder{}: ".format('s' if len(self.input_dir) > 1 else '') + file_list
         else:
             return "folder: " + self.input_dir.replace(self.working_path, '').lstrip('/')
 
@@ -98,7 +100,8 @@ class FrameMultiDirectory:
 
     def folder_list_str(self):
         if isinstance(self.input_dir, list):
-            return "folder{}: ".format('s' if len(self.input_dir) > 1 else '') + ", ".join([d.replace(self.working_path, '').lstrip('/') for d in self.input_dir])
+            file_list = ", ".join([d.replace(self.working_path, '').lstrip('/') for d in self.input_dir])
+            return "folder{}: ".format('s' if len(self.input_dir) > 1 else '') + file_list
         else:
             return "folder: " + self.input_dir.replace(self.working_path, '').lstrip('/')
 
@@ -110,7 +113,7 @@ class FrameMultiDirectory:
             dirs = self.input_dir
             paths = self.input_path
         else:
-            raise Exception("input_dir option must contain a path or an array of paths") 
+            raise Exception("input_dir option must contain a path or an array of paths")
         files = []
         for d, p in zip(dirs, paths):
             src_contents = os.walk(d)

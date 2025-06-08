@@ -47,7 +47,7 @@ class Vignetting:
             res = curve_fit(Vignetting.sigmoid, r_valid, i_valid,
                             p0=[np.max(i_valid), 0.01, np.median(r_valid)])[0]
         except Exception:
-            self.process.sub_message(colored(": could not find vignetting model", "red"), level=logging.ERROR)
+            self.process.sub_message(colored(": could not find vignetting model", "red"), level=logging.WARNING)
             res = None
         return res
 

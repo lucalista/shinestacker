@@ -18,14 +18,35 @@ class JobLogWorker(LogWorker):
 
     def run(self):
         job_error = False
-        ## try:
+        # try:
         converter = ProjectConverter()
         converter.run_job(self.job, self.id_str)
-        ## except Exception as e:
-        ##    job_error = True
-        ##    self.exception_signal.emit(f'Job {self.job.params["name"]} failed:\n{str(e)}')
+        # except Exception as e:
+        #    job_error = True
+        #    self.exception_signal.emit(f'Job {self.job.params["name"]} failed:\n{str(e)}')
         if job_error:
             self.html_signal.emit('<hr><p style="font-weight: bold; color="#8B0000" margin-left: 10px;">Run failed.</p>')
+        else:
+            self.html_signal.emit('<hr><p style="font-weight: bold; color="#008B00" margin-left: 10px;">Run completed.</p>')
+        self.end_signal.emit(1)
+
+
+class ProjectLogWorker(LogWorker):
+    def __init__(self, project, id_str):
+        LogWorker.__init__(self)
+        self.project = project
+        self.id_str = id_str
+
+    def run(self):
+        job_error = False
+        # try:
+        converter = ProjectConverter()
+        converter.run_project(self.project, self.id_str)
+        # except Exception as e:
+        #    job_error = True
+        #    self.exception_signal.emit(f'Project failed:\n{str(e)}')
+        if job_error:
+            self.html_signal.emit('<hr><p style="font-weight: bold; color="#8B0000" margin-left: 10px;">Project failed.</p>')
         else:
             self.html_signal.emit('<hr><p style="font-weight: bold; color="#008B00" margin-left: 10px;">Run completed.</p>')
         self.end_signal.emit(1)
@@ -147,8 +168,9 @@ class MainWindow(WindowMenu, LogManager):
             self.start_thread(worker)
 
     def run_all_jobs(self):
-        converter = ProjectConverter()
-        converter.run_project(self.project)
+        id_str = self.show_new_window("Run project")
+        worker = ProjectLogWorker(self.project, id_str)
+        self.start_thread(worker)
 
     def add_action(self):
         current_index = self.job_list.currentRow()

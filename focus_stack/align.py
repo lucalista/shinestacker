@@ -178,12 +178,16 @@ class AlignFrames:
             'align_message': lambda: self.process.sub_message_r(': align images'),
             'blur_message': lambda: self.process.sub_message_r(': blur borders')
         }
+        if self.plot_histograms:
+            plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + f"{self.process.name}-matches-{idx:04d}.pdf"
+        else:
+            plot_path = None
         n_good_matches, img = align_images(
             img_1, img_0,
             feature_config=self.feature_config,
             matching_config=self.matching_config,
             alignment_config=self.alignment_config,
-            plot_path=self.process.working_path + "/" + self.process.plot_path + "/" + f"{self.process.name}-matches-{idx:04d}.pdf" if self.plot_histograms else None,
+            plot_path=plot_path,
             callbacks=callbacks
         )
         self.n_matches[idx] = n_good_matches

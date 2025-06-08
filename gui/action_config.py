@@ -117,10 +117,16 @@ class FieldBuilder:
                         QMessageBox.warning(None, "Invalid Path",
                                             f"{field['label']} must be a subdirectory of working path")
                         return False
-                    if field.get('must_exist', False) and not os.path.exists(abs_path):
-                        QMessageBox.warning(None, "Invalid Path",
-                                            f"{field['label']} {abs_path} does not exist")
-                        return
+                    if field.get('must_exist', False):
+                        paths = [abs_path]
+                        if field.get('multiple_entries', False):
+                            paths = abs_path.split(";")
+                        for p in paths:
+                            p = p.strip()
+                            if not os.path.exists(p):
+                                QMessageBox.warning(None, "Invalid Path",
+                                                    f"{field['label']} {p} does not exist")
+                                return False
                 except Exception as e:
                     QMessageBox.warning(None, "Error", f"Invalid path: {str(e)}")
                     return False
@@ -226,7 +232,7 @@ class FieldBuilder:
                                 return
                             edit.setText(";".join(rel_paths))
                 else:
-                    raise ValueError("path_type must be 'directory' (default) or 'file'.")            
+                    raise ValueError("path_type must be 'directory' (default) or 'file'.")
         else:
             def browse():
                 working_path = self.get_working_path()
@@ -253,7 +259,7 @@ class FieldBuilder:
                         edit.setText(rel_path)
                     except ValueError:
                         QMessageBox.warning(None, "Error", "Could not compute relative path")
-    
+
         button.clicked.connect(browse)
         button.setAutoDefault(False)
         layout = QHBoxLayout()
@@ -385,8 +391,8 @@ class NoiseDetectionConfigurator(DefaultActionConfigurator):
         super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True,
                                placeholder='inherit from job')
-        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
-                               must_exist=True, placeholder='relative to working path')
+        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path (separate by ;)', required=False, multiple_entries=True,
+                               placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
         self.builder.add_field('plot_path', FIELD_REL_PATH, 'Plots path', required=False, default="plots",
@@ -406,7 +412,7 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
         super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
         self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
-                               must_exist=True, placeholder='relative to working path')
+                               placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
 
@@ -479,8 +485,8 @@ class MultiLayerConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
         super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
-        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False, multiple_entries=True,
-                               must_exist=True, placeholder='relative to working path')
+        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path (separate by ;)', required=False, multiple_entries=True,
+                               placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
         self.builder.add_field('exif_path', FIELD_REL_PATH, 'Exif data path', required=False,

@@ -1,5 +1,6 @@
 from focus_stack.stack_framework import FrameMultiDirectory, JobBase
 from focus_stack.utils import read_img, save_plot, make_tqdm_bar, get_img_metadata, validate_image
+from focus_stack.exceptions import ImageLoadError
 from termcolor import colored
 import cv2
 import numpy as np
@@ -41,13 +42,13 @@ def mean_image(file_paths, message_callback=None, progress_callback=None):
 
 class NoiseDetection(FrameMultiDirectory, JobBase):
     def __init__(self, name="noise-map", input_path='', output_path='', working_path='', plot_path='plots',
-                 channel_thresholds=(13, 13, 13), blur_size=5, file_name=_DEFAULT_NOISE_MAP_FILENAME,
+                 channel_thresholds=(13, 13, 13), blur_size=5, file_name='',
                  plot_range=(5, 30)):
         FrameMultiDirectory.__init__(self, name, input_path, output_path, working_path, plot_path, 1, False)
         JobBase.__init__(self, name)
         self.channel_thresholds = channel_thresholds
         self.blur_size = blur_size
-        self.file_name = file_name
+        self.file_name = file_name if file_name != '' else _DEFAULT_NOISE_MAP_FILENAME
         self.plot_range = plot_range
 
     def hot_map(self, ch, th):
@@ -73,6 +74,12 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         for ch, hot in zip(['rgb', 'r', 'g', 'b', ], [hot_rgb] + hot_px):
             msg.append("{}: {}".format(ch, np.count_nonzero(hot > 0)))
         self.print_message("hot pixels: " + ", ".join(msg))
+        print("file_name: ", self.file_name)
+        path = "/".join(self.file_name.split("/")[:-1])
+        if not os.path.exists(self.working_path + '/' + path):
+            self.print_message("create directory: " + path)
+            os.mkdir(self.working_path + '/' + path)
+        self.print_message("writing hot pixels map file: " + self.file_name)
         cv2.imwrite(self.working_path + '/' + self.file_name, hot)
         th_range = range(*self.plot_range)
         plt.figure(figsize=(10, 5))
@@ -101,7 +108,11 @@ class MaskNoise:
 
     def begin(self, process):
         self.process = process
-        self.noise_mask = cv2.imread(process.working_path + "/" + self.noise_mask, cv2.IMREAD_GRAYSCALE)
+        path = process.working_path + "/" + self.noise_mask
+        if os.path.exists(path):
+            self.noise_mask = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+        else:
+            raise ImageLoadError(path, "file not found.")
 
     def end(self):
         pass

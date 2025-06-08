@@ -6,27 +6,11 @@ import numpy as np
 import imagecodecs
 import cv2
 import os
-from psdtags import (
-    PsdBlendMode,
-    PsdChannel,
-    PsdChannelId,
-    PsdClippingType,
-    PsdColorSpaceType,
-    PsdCompressionType,
-    PsdEmpty,
-    PsdFilterMask,
-    PsdFormat,
-    PsdKey,
-    PsdLayer,
-    PsdLayerFlag,
-    PsdLayerMask,
-    PsdLayers,
-    PsdRectangle,
-    PsdString,
-    PsdUserMask,
-    TiffImageSourceData,
-    overlay,
-)
+import logging
+from psdtags import (PsdBlendMode, PsdChannel, PsdChannelId, PsdClippingType, PsdColorSpaceType,
+                     PsdCompressionType, PsdEmpty, PsdFilterMask, PsdFormat, PsdKey, PsdLayer,
+                     PsdLayerFlag, PsdLayerMask, PsdLayers, PsdRectangle, PsdString, PsdUserMask,
+                     TiffImageSourceData, overlay)
 
 EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
@@ -45,8 +29,22 @@ class MultiLayer(FrameMultiDirectory, JobBase):
             self.exif_path = self.working_path + "/" + self.exif_path
 
     def run_core(self):
-        self.print_message(colored("merging frames in " + self.folder_list_str(), "blue"))
+        if isinstance(self.input_dir, str):
+            paths = [self.input_path]
+        elif hasattr(self.input_dir, "__len__"):
+            paths = self.input_path
+        else:
+            raise Exception("input_dir option must contain a path or an array of paths")
+        if len(paths) == 0:
+            self.print_message(colored("no input paths specified", "red"), level=logging.WARNING)
+            return
         files = self.folder_filelist()
+        if len(files) == 0:
+            self.print_message(colored("no input in {} specified path{}: ".format(len(paths),
+                                                                                  's' if len(paths) > 1 else '') + ", ".join([f"'{p}'" for p in paths]),
+                                       "red"), level=logging.WARNING)
+            return
+        self.print_message(colored("merging frames in " + self.folder_list_str(), "blue"))
         in_paths = [self.working_path + "/" + f for f in files]
         self.print_message(colored("frames: " + ", ".join([i.split("/")[-1] for i in files]), "blue"))
         self.print_message(colored("reading files", "blue"))
