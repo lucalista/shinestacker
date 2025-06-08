@@ -5,7 +5,7 @@ from gui.project_converter import ProjectConverter
 from gui.action_config import ActionConfigDialog
 from gui.project_model import SUB_ACTION_TYPES, ACTION_TYPES, ACTION_COMBO
 from gui.menu import WindowMenu
-from gui.logging import LogManager, LogWorker, QTextEditLogger
+from gui.gui_logging import LogManager, LogWorker, QTextEditLogger
 import matplotlib
 matplotlib.use('agg')
 

@@ -161,27 +161,81 @@ class FieldBuilder:
         path_type = kwargs.get('path_type', 'directory')
         label = kwargs.get('label', tag).replace('_', ' ')
 
-        def browse():
-            working_path = self.get_working_path()
-            if not working_path:
-                QMessageBox.warning(None, "Error", "Please set working path first")
-                return
-            if path_type == 'directory':
-                path = QFileDialog.getExistingDirectory(None, f"Select {label}", working_path)
-            elif path_type == 'file':
-                path = QFileDialog.getOpenFileName(None, f"Select {label}", working_path)[0]
-            else:
-                raise ValueError("path_type must be 'directory' (default) or 'file'.")
-            if path:
-                try:
-                    rel_path = os.path.relpath(path, working_path)
-                    if rel_path.startswith('..'):
-                        QMessageBox.warning(None, "Invalid Path",
-                                            f"{label} must be a subdirectory of working path")
-                        return
-                    edit.setText(rel_path)
-                except ValueError:
-                    QMessageBox.warning(None, "Error", "Could not compute relative path")
+        if not kwargs.get('multiple_entries', False):
+            def browse():
+                working_path = self.get_working_path()
+                if not working_path:
+                    QMessageBox.warning(None, "Error", "Please set working path first")
+                    return
+                if path_type == 'directory':
+                    dialog = QFileDialog()
+                    dialog.setDirectory(working_path)
+                    path = dialog.getExistingDirectory(None, f"Select {label}", working_path)
+                elif path_type == 'file':
+                    dialog = QFileDialog()
+                    dialog.setDirectory(working_path)
+                    path = dialog.getOpenFileName(None, f"Select {label}", working_path)[0]
+                else:
+                    raise ValueError("path_type must be 'directory' (default) or 'file'.")
+                if path:
+                    try:
+                        rel_path = os.path.relpath(path, working_path)
+                        if rel_path.startswith('..'):
+                            QMessageBox.warning(None, "Invalid Path",
+                                                f"{label} must be a subdirectory of working path")
+                            return
+                        edit.setText(rel_path)
+                    except ValueError:
+                        QMessageBox.warning(None, "Error", "Could not compute relative path")
+        else:
+            def browse():
+                working_path = self.get_working_path()
+                if not working_path:
+                    QMessageBox.warning(None, "Error", "Please set working path first")
+                    return
+                if path_type == 'directory':
+                    dialog = QFileDialog()
+                    dialog.setFileMode(QFileDialog.Directory)
+                    dialog.setOption(QFileDialog.ShowDirsOnly, True)
+                    dialog.setOption(QFileDialog.DontUseNativeDialog, True)
+                    dialog.setWindowTitle(f"Select {label} (multiple selection allowed)")
+                    dialog.setDirectory(working_path)
+                    dialog.setFileMode(QFileDialog.Directory)
+                    if dialog.exec_():
+                        paths = dialog.selectedFiles()
+                        rel_paths = []
+                        for path in paths:
+                            try:
+                                rel_path = os.path.relpath(path, working_path)
+                                if rel_path.startswith('..'):
+                                    QMessageBox.warning(None, "Invalid Path",
+                                                        f"{label} must be a subdirectory of working path")
+                                    return
+                                rel_paths.append(rel_path)
+                            except ValueError:
+                                QMessageBox.warning(None, "Error", "Could not compute relative path")
+                                return
+                        if rel_paths:
+                            edit.setText(";".join(rel_paths))  # Separa i path con punto e virgola
+                elif path_type == 'file':
+                    paths, _ = QFileDialog.getOpenFileNames(None, f"Select {label}", working_path)
+                    if paths:
+                        rel_paths = []
+                        for path in paths:
+                            try:
+                                rel_path = os.path.relpath(path, working_path)
+                                if rel_path.startswith('..'):
+                                    QMessageBox.warning(None, "Invalid Path",
+                                                        f"{label} must be within working path")
+                                    return
+                                rel_paths.append(rel_path)
+                            except ValueError:
+                                QMessageBox.warning(None, "Error", "Could not compute relative path")
+                                return
+                            edit.setText(";".join(rel_paths))
+                else:
+                    raise ValueError("path_type must be 'directory' (default) or 'file'.")
+    
         button.clicked.connect(browse)
         button.setAutoDefault(False)
         layout = QHBoxLayout()
@@ -407,7 +461,7 @@ class MultiLayerConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
         super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
-        self.builder.add_field('input_path', FIELD_ABS_PATH, 'Input path', required=False,
+        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False, multiple_entries=True,
                                must_exist=True, placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
@@ -419,7 +473,7 @@ class CombinedActionsConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
-        self.builder.add_field('input_path', FIELD_ABS_PATH, 'Input path', required=False,
+        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
                                must_exist=True, placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
