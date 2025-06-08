@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import (QWidget, QPushButton, QHBoxLayout, QFileDialog, QLabel, QComboBox,
                                QMessageBox, QSizePolicy, QStackedWidget, QDialog, QFormLayout,
-                               QLineEdit, QSpinBox, QDoubleSpinBox, QCheckBox)
+                               QLineEdit, QSpinBox, QDoubleSpinBox, QCheckBox, QTreeView, QAbstractItemView, QListView)
 from PySide6.QtCore import Qt
 from gui.project_model import (ActionConfig,
                                ACTION_JOB, ACTION_COMBO, ACTION_NOISEDETECTION, ACTION_FOCUSSTACK,
@@ -161,7 +161,73 @@ class FieldBuilder:
         path_type = kwargs.get('path_type', 'directory')
         label = kwargs.get('label', tag).replace('_', ' ')
 
-        if not kwargs.get('multiple_entries', False):
+        if kwargs.get('multiple_entries', False):
+            def browse():
+                working_path = self.get_working_path()
+                if not working_path:
+                    QMessageBox.warning(None, "Error", "Please set working path first")
+                    return
+
+                if path_type == 'directory':
+                    dialog = QFileDialog()
+                    dialog.setWindowTitle(f"Select {label} (multiple selection allowed)")
+                    dialog.setDirectory(working_path)
+
+                    # Configurazione per la selezione di directory multiple
+                    dialog.setFileMode(QFileDialog.Directory)
+                    dialog.setOption(QFileDialog.DontUseNativeDialog, True)
+                    dialog.setOption(QFileDialog.ShowDirsOnly, True)
+
+                    # Abilita esplicitamente la selezione multipla
+                    if hasattr(dialog, 'setSupportedSchemes'):
+                        dialog.setSupportedSchemes(['file'])
+
+                    # Modifica la vista per permettere selezione multipla
+                    tree_view = dialog.findChild(QTreeView)
+                    if tree_view:
+                        tree_view.setSelectionMode(QAbstractItemView.ExtendedSelection)
+
+                    list_view = dialog.findChild(QListView)
+                    if list_view:
+                        list_view.setSelectionMode(QAbstractItemView.ExtendedSelection)
+
+                    if dialog.exec_():
+                        paths = dialog.selectedFiles()
+                        rel_paths = []
+                        for path in paths:
+                            try:
+                                rel_path = os.path.relpath(path, working_path)
+                                if rel_path.startswith('..'):
+                                    QMessageBox.warning(None, "Invalid Path",
+                                                        f"{label} must be a subdirectory of working path")
+                                    return
+                                rel_paths.append(rel_path)
+                            except ValueError:
+                                QMessageBox.warning(None, "Error", "Could not compute relative path")
+                                return
+
+                        if rel_paths:
+                            edit.setText(";".join(rel_paths))
+
+                elif path_type == 'file':
+                    paths, _ = QFileDialog.getOpenFileNames(None, f"Select {label}", working_path)
+                    if paths:
+                        rel_paths = []
+                        for path in paths:
+                            try:
+                                rel_path = os.path.relpath(path, working_path)
+                                if rel_path.startswith('..'):
+                                    QMessageBox.warning(None, "Invalid Path",
+                                                        f"{label} must be within working path")
+                                    return
+                                rel_paths.append(rel_path)
+                            except ValueError:
+                                QMessageBox.warning(None, "Error", "Could not compute relative path")
+                                return
+                            edit.setText(";".join(rel_paths))
+                else:
+                    raise ValueError("path_type must be 'directory' (default) or 'file'.")            
+        else:
             def browse():
                 working_path = self.get_working_path()
                 if not working_path:
@@ -187,54 +253,6 @@ class FieldBuilder:
                         edit.setText(rel_path)
                     except ValueError:
                         QMessageBox.warning(None, "Error", "Could not compute relative path")
-        else:
-            def browse():
-                working_path = self.get_working_path()
-                if not working_path:
-                    QMessageBox.warning(None, "Error", "Please set working path first")
-                    return
-                if path_type == 'directory':
-                    dialog = QFileDialog()
-                    dialog.setFileMode(QFileDialog.Directory)
-                    dialog.setOption(QFileDialog.ShowDirsOnly, True)
-                    dialog.setOption(QFileDialog.DontUseNativeDialog, True)
-                    dialog.setWindowTitle(f"Select {label} (multiple selection allowed)")
-                    dialog.setDirectory(working_path)
-                    dialog.setFileMode(QFileDialog.Directory)
-                    if dialog.exec_():
-                        paths = dialog.selectedFiles()
-                        rel_paths = []
-                        for path in paths:
-                            try:
-                                rel_path = os.path.relpath(path, working_path)
-                                if rel_path.startswith('..'):
-                                    QMessageBox.warning(None, "Invalid Path",
-                                                        f"{label} must be a subdirectory of working path")
-                                    return
-                                rel_paths.append(rel_path)
-                            except ValueError:
-                                QMessageBox.warning(None, "Error", "Could not compute relative path")
-                                return
-                        if rel_paths:
-                            edit.setText(";".join(rel_paths))  # Separa i path con punto e virgola
-                elif path_type == 'file':
-                    paths, _ = QFileDialog.getOpenFileNames(None, f"Select {label}", working_path)
-                    if paths:
-                        rel_paths = []
-                        for path in paths:
-                            try:
-                                rel_path = os.path.relpath(path, working_path)
-                                if rel_path.startswith('..'):
-                                    QMessageBox.warning(None, "Invalid Path",
-                                                        f"{label} must be within working path")
-                                    return
-                                rel_paths.append(rel_path)
-                            except ValueError:
-                                QMessageBox.warning(None, "Error", "Could not compute relative path")
-                                return
-                            edit.setText(";".join(rel_paths))
-                else:
-                    raise ValueError("path_type must be 'directory' (default) or 'file'.")
     
         button.clicked.connect(browse)
         button.setAutoDefault(False)
