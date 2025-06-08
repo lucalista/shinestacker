@@ -203,7 +203,7 @@ class CombinedActions(FramesRefActions):
         if img is None:
             raise Exception("Invalid file: " + self.input_dir + "/" + filename)
         if len(self.__actions) == 0:
-            self.print_message("No actions specified.", level=logging.WARNING)
+            self.sub_message(colored(": no actions specified.", "red"), level=logging.WARNING)
         for a in self.__actions:
             img = a.run_frame(idx, ref_idx, img)
         self.sub_message_r(': write output image')

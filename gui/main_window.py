@@ -2,7 +2,8 @@ from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QListWidget, Q
                                QLabel, QComboBox, QMessageBox, QDialog)
 from gui.project_model import Project, ActionConfig
 from gui.project_converter import ProjectConverter
-from gui.action_config import ActionConfigDialog, SUB_ACTION_TYPES, ACTION_TYPES, ACTION_COMBO
+from gui.action_config import ActionConfigDialog
+from gui.project_model import SUB_ACTION_TYPES, ACTION_TYPES, ACTION_COMBO
 from gui.menu import WindowMenu
 from gui.logging import LogManager, LogWorker, QTextEditLogger
 
