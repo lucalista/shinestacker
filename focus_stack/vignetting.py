@@ -84,7 +84,7 @@ class Vignetting:
         plt.legend()
         plt.xlim(radii[0], radii[-1])
         plt.ylim(0)
-        save_plot(self.process.plot_path + "/" + self.process.name + "-radial-intensity-{:04d}.pdf".format(idx),
+        save_plot(self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-radial-intensity-{:04d}.pdf".format(idx),
                   show=self.plot_histograms)
         for i, p in enumerate(self.percentiles):
             self.corrections[i][idx] = fsolve(lambda x: Vignetting.sigmoid(x, *pars) / self.v0 - p, r0_fit)[0]
@@ -123,4 +123,4 @@ class Vignetting:
         plt.legend(ncols=2)
         plt.xlim(xs[0], xs[-1])
         plt.ylim(0, self.r_max * 1.05)
-        save_plot(self.process.plot_path + "/" + self.process.name + "-r0.pdf")
+        save_plot(self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-r0.pdf")

@@ -183,7 +183,7 @@ class AlignFrames:
             feature_config=self.feature_config,
             matching_config=self.matching_config,
             alignment_config=self.alignment_config,
-            plot_path=f"{self.process.plot_path}/{self.process.name}-matches-{idx:04d}.pdf" if self.plot_histograms else None,
+            plot_path=self.process.working_path + "/" + self.process.plot_path + "/" + f"{self.process.name}-matches-{idx:04d}.pdf" if self.plot_histograms else None,
             callbacks=callbacks
         )
         self.n_matches[idx] = n_good_matches
@@ -212,4 +212,4 @@ class AlignFrames:
         plt.legend()
         plt.ylim(0)
         plt.xlim(x[0], x[-1])
-        save_plot(f"{self.process.plot_path}/{self.process.name}-matches.pdf")
+        save_plot(self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-matches.pdf")

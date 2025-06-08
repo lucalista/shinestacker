@@ -200,7 +200,7 @@ class LumiCorrection(Correction):
             hist_col = self.calc_hist_1ch(chan)
             self.histo_plot(axs[1], hist_col, "r,g,b luminosity", color, alpha=0.5)
         plt.xlim(0, self.two_n)
-        save_plot(self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx),
+        save_plot(self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx),
                   show=self.plot_histograms)
         return [hist]
 
@@ -216,7 +216,7 @@ class LumiCorrection(Correction):
         plt.legend()
         plt.xlim(x[0], x[-1])
         plt.ylim(0)
-        save_plot(self.process.plot_path + "/" + self.process.name + "-balance.pdf")
+        save_plot(self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-balance.pdf")
 
 
 class RGBCorrection(Correction):
@@ -230,7 +230,7 @@ class RGBCorrection(Correction):
         for c in [2, 1, 0]:
             self.histo_plot(axs[c], hist[c], colors[c] + " luminosity", colors[c])
         plt.xlim(0, self.two_n)
-        save_plot(self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx),
+        save_plot(self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx),
                   show=self.plot_histograms)
         return hist
 
@@ -248,7 +248,7 @@ class RGBCorrection(Correction):
         plt.legend()
         plt.xlim(x[0], x[-1])
         plt.ylim(0)
-        save_plot(self.process.plot_path + "/" + self.process.name + "-balance.pdf")
+        save_plot(self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-balance.pdf")
 
 
 class Ch2Correction(Correction):
@@ -267,7 +267,7 @@ class Ch2Correction(Correction):
         for c in range(3):
             self.histo_plot(axs[c], hist[c], self.labels[c], self.colors[c])
         plt.xlim(0, self.two_n)
-        save_plot(self.process.plot_path + "/" + self.process.name + "_hist_{:04d}.pdf".format(idx),
+        save_plot(self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "_hist_{:04d}.pdf".format(idx),
                   show=self.plot_histograms)
         return hist[1:]
 
@@ -284,7 +284,7 @@ class Ch2Correction(Correction):
         plt.legend()
         plt.xlim(x[0], x[-1])
         plt.ylim(0)
-        save_plot(self.process.plot_path + "/" + self.process.name + "-balance.pdf")
+        save_plot(self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-balance.pdf")
 
 
 class SVCorrection(Ch2Correction):

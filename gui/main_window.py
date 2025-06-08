@@ -6,6 +6,8 @@ from gui.action_config import ActionConfigDialog
 from gui.project_model import SUB_ACTION_TYPES, ACTION_TYPES, ACTION_COMBO
 from gui.menu import WindowMenu
 from gui.logging import LogManager, LogWorker, QTextEditLogger
+import matplotlib
+matplotlib.use('agg')
 
 
 class JobLogWorker(LogWorker):
@@ -15,12 +17,17 @@ class JobLogWorker(LogWorker):
         self.id_str = id_str
 
     def run(self):
-        try:
-            converter = ProjectConverter()
-            converter.run_job(self.job, self.id_str)
-        except Exception as e:
-            self.exception_signal.emit(f'Job {self.job.params["name"]} failed:\n{str(e)}')
-        self.html_signal.emit('<hr><p style="font-weight: bold; margin-left: 10px;">Run completed.</p>')
+        job_error = False
+        ## try:
+        converter = ProjectConverter()
+        converter.run_job(self.job, self.id_str)
+        ## except Exception as e:
+        ##    job_error = True
+        ##    self.exception_signal.emit(f'Job {self.job.params["name"]} failed:\n{str(e)}')
+        if job_error:
+            self.html_signal.emit('<hr><p style="font-weight: bold; color="#8B0000" margin-left: 10px;">Run failed.</p>')
+        else:
+            self.html_signal.emit('<hr><p style="font-weight: bold; color="#008B00" margin-left: 10px;">Run completed.</p>')
         self.end_signal.emit(1)
 
 

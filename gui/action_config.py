@@ -154,7 +154,7 @@ class FieldBuilder:
         return container
 
     def _create_rel_path_field(self, tag, **kwargs):
-        value = self.action.params.get(tag, '')
+        value = self.action.params.get(tag, kwargs.get('default', ''))
         edit = QLineEdit(value)
         edit.setPlaceholderText(kwargs.get('placeholder', ''))
         button = QPushButton("Browse...")
@@ -284,11 +284,7 @@ class ActionConfigDialog(QDialog):
             super().accept()
 
 
-class DefaultActionConfigurator(ActionConfigurator):
-    def create_form(self, layout, action, tag='Action'):
-        self.builder = FieldBuilder(layout, action)
-        self.builder.add_field('name', FIELD_TEXT, f'{tag} name', required=True)
-
+class NoNameActionConfigurator(ActionConfigurator):
     def update_params(self, params):
         return self.builder.update_params(params)
 
@@ -296,6 +292,12 @@ class DefaultActionConfigurator(ActionConfigurator):
         label = QLabel(label)
         label.setStyleSheet("font-weight: bold")
         self.builder.layout.addRow(label)
+
+
+class DefaultActionConfigurator(NoNameActionConfigurator):
+    def create_form(self, layout, action, tag='Action'):
+        self.builder = FieldBuilder(layout, action)
+        self.builder.add_field('name', FIELD_TEXT, f'{tag} name', required=True)
 
 
 class JobConfigurator(DefaultActionConfigurator):
@@ -315,7 +317,7 @@ class NoiseDetectionConfigurator(DefaultActionConfigurator):
                                must_exist=True, placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
-        self.builder.add_field('plot_path', FIELD_REL_PATH, 'Plots path', required=False,
+        self.builder.add_field('plot_path', FIELD_REL_PATH, 'Plots path', required=False, default="plots",
                                placeholder='relative to working path')
         self.builder.add_field('channel_thresholds', FIELD_INT_TUPLE, 'Noise threshold', required=False, size=3,
                                default=[13, 13, 13], labels=['r', 'g', 'b'], min=[1] * 3, max=[1000] * 3)
@@ -421,7 +423,7 @@ class CombinedActionsConfigurator(DefaultActionConfigurator):
                                must_exist=True, placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
-        self.builder.add_field('plot_path', FIELD_REL_PATH, 'Plots path', required=False,
+        self.builder.add_field('plot_path', FIELD_REL_PATH, 'Plots path', required=False, default="plots",
                                placeholder='relative to working path')
         self.builder.add_field('resample', FIELD_INT, 'Resample frame stack', required=False,
                                default=1, min=1, max=100)
@@ -430,7 +432,7 @@ class CombinedActionsConfigurator(DefaultActionConfigurator):
         self.builder.add_field('step_process', FIELD_BOOL, 'Step process', required=False, default=True)
 
 
-class MaskNoiseConfigurator(DefaultActionConfigurator):
+class MaskNoiseConfigurator(NoNameActionConfigurator):
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
         self.builder.add_field('noise_mask', FIELD_REL_PATH, 'Noise mask file', required=False,
@@ -442,7 +444,7 @@ class MaskNoiseConfigurator(DefaultActionConfigurator):
                                options=['Mean', 'Median'], default='Mean')
 
 
-class VignettingConfigurator(DefaultActionConfigurator):
+class VignettingConfigurator(NoNameActionConfigurator):
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
         self.builder.add_field('r_steps', FIELD_INT, 'Radial steps', required=False,
@@ -454,7 +456,7 @@ class VignettingConfigurator(DefaultActionConfigurator):
         self.builder.add_field('apply_correction', FIELD_BOOL, 'Apply correction', required=False, default=True)
 
 
-class AlignFramesConfigurator(DefaultActionConfigurator):
+class AlignFramesConfigurator(NoNameActionConfigurator):
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
         self.add_bold_label("Feature identification:")
@@ -489,7 +491,7 @@ class AlignFramesConfigurator(DefaultActionConfigurator):
         self.builder.add_field('plot_histograms', FIELD_BOOL, 'Plot histograms', required=False, default=True)
 
 
-class BalanceFramesConfigurator(DefaultActionConfigurator):
+class BalanceFramesConfigurator(NoNameActionConfigurator):
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
         self.builder.add_field('mask_size', FIELD_FLOAT, 'Mask size', required=False,

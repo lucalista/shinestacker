@@ -60,16 +60,19 @@ class QTextEditLogger(QTextEdit):
     def id_str(self):
         return __class__.__name__ + "_" + str(self.id)
 
-    def emit_html(self, html):
-        pattern = r'<span style="color: #00ff00; text-decoration-color: #00ff00; font-weight: bold">(\d{2}:\d{2}:\d{2})</span>'
-        replacement = r'<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">\1</span>'
-        html = re.sub(pattern, replacement, re.sub(r'\s+[\n]', '\n', html))
+    def insert_html_block(self, html):
         self.insertHtml(html)
         self.verticalScrollBar().setSliderPosition(self.verticalScrollBar().maximum())
         c = self.textCursor()
         c.movePosition(QTextCursor.MoveOperation.End)
         self.setTextCursor(c)
         QApplication.processEvents()
+
+    def emit_html(self, html):
+        pattern = r'<span style="color: #00ff00; text-decoration-color: #00ff00; font-weight: bold">(\d{2}:\d{2}:\d{2})</span>'
+        replacement = r'<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">\1</span>'
+        html = re.sub(pattern, replacement, re.sub(r'\s+[\n]', '\n', html))
+        self.insert_html_block(html)
 
     def handle_log_message(self, level, message):
         logger = logging.getLogger(self.id_str())
@@ -82,7 +85,7 @@ class QTextEditLogger(QTextEdit):
         }[level](message)
 
     def handle_html_message(self, html):
-        self.insertHtml(html)
+        self.insert_html_block(html)
 
     def handle_exception(self, message):
         QMessageBox.warning(None, "Error", message)
