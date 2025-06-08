@@ -4,9 +4,9 @@ from PySide6.QtWidgets import (QWidget, QPushButton, QHBoxLayout, QFileDialog, Q
 from PySide6.QtCore import Qt
 from gui.project_model import (ActionConfig,
                                ACTION_JOB, ACTION_COMBO, ACTION_NOISEDETECTION, ACTION_FOCUSSTACK,
-                               ACTION_FOCUSSTACKBUNCH, ACTION_MULTILAYER, ACTION_TYPES,
+                               ACTION_FOCUSSTACKBUNCH, ACTION_MULTILAYER,
                                ACTION_MASKNOISE, ACTION_VIGNETTING, ACTION_ALIGNFRAMES,
-                               ACTION_BALANCEFRAMES, SUB_ACTION_TYPES)
+                               ACTION_BALANCEFRAMES)
 
 from abc import ABC, abstractmethod
 from typing import Dict, Any

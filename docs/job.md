@@ -13,12 +13,12 @@ Arguments are:
 
 # Schedule multiple actions based on a reference image: align and/or balance images
 
-The class ```Actions``` runs multiple actions on each of the frames appearing in a path.
+The class ```CombinedActions``` runs multiple actions on each of the frames appearing in a path.
 
 ```python
-job.add_action(Actions(name, [...], *options))
+job.add_action(CombinedActions(name, [...], *options))
 ```
-Arguments for the constructor of ```Actions``` are for the :
+Arguments for the constructor of ```CombinedActions``` are for the :
 * ```name```: the name of the action, used for printout, and possibly for output path
 * ```actions```: array of action object to be applied in cascade
 * ```input_path``` (optional): the subdirectory within ```working_path``` that contains input images to be processed. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.

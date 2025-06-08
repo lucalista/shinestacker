@@ -3,7 +3,7 @@ import re
 import logging
 from rich.logging import RichHandler
 from rich.console import Console
-from PySide6.QtWidgets import (QTextEdit, QApplication, QVBoxLayout)
+from PySide6.QtWidgets import (QTextEdit, QApplication, QVBoxLayout, QMessageBox)
 from PySide6.QtGui import (QTextCursor, QTextOption, QFont)
 from PySide6.QtCore import (QThread, Signal)
 
@@ -26,7 +26,7 @@ class QtLogFormatter(logging.Formatter):
 
 class HtmlRichHandler(RichHandler):
     def __init__(self, text_edit):
-        self.console = Console(file=open(os.devnull, "wt"), record=True, width=100, height=20, highlight=False,
+        self.console = Console(file=open(os.devnull, "wt"), record=True, width=256, height=20, highlight=False,
                                soft_wrap=False, color_system="truecolor", tab_size=4)
         RichHandler.__init__(self, show_time=False, show_path=False, show_level=False, markup=True,
                              console=self.console)
@@ -84,11 +84,15 @@ class QTextEditLogger(QTextEdit):
     def handle_html_message(self, html):
         self.insertHtml(html)
 
+    def handle_exception(self, message):
+        QMessageBox.warning(None, "Error", message)
+
 
 class LogWorker(QThread):
     log_signal = Signal(str, str)
     html_signal = Signal(str)
     end_signal = Signal(int)
+    exception_signal = Signal(str)
 
     def run(self):
         pass
@@ -118,6 +122,7 @@ class LogManager:
         self.log_worker = worker
         self.log_worker.log_signal.connect(text_edit.handle_log_message)
         self.log_worker.html_signal.connect(text_edit.handle_html_message)
+        self.log_worker.exception_signal.connect(text_edit.handle_exception)
         self.log_worker.end_signal.connect(self.handle_end_message)
         self.log_worker.start()
 

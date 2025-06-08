@@ -36,7 +36,7 @@ class FramePaths(JobBase):
 
     def set_filelist(self):
         self.filenames = self.folder_filelist(self.input_dir)
-        self.print_message(colored(": {} files ".format(len(self.filenames)) + "in folder: " + self.input_dir, 'blue'))
+        self.print_message(colored(": {} files ".format(len(self.filenames)) + "in folder: " + self.input_dir.replace(self.working_path, '').lstrip('/'), 'blue'))
         self.print_message(colored("focus stacking", 'blue'))
 
     def init(self, job):
@@ -53,7 +53,8 @@ class FramePaths(JobBase):
             if not os.path.exists(self.plot_path):
                 os.makedirs(self.plot_path)
         if self.input_path == '':
-            assert len(job.paths) > 0, "No input path has been specified in " + job.name
+            if len(job.paths) == 0:
+                raise Exception(f"Job {job.name} does not have any configured path")
             self.input_path = job.paths[-1]
         job.paths.append(self.output_path)
 
@@ -97,7 +98,7 @@ class FrameMultiDirectory:
 
     def folder_list_str(self):
         if isinstance(self.input_dir, list):
-            return "folder{}: ".format('s' if len(self.input_dir) > 1 else '') + ", ".join([i for i in self.input_dir.replace(self.working_path, '')].lstrip('/'))
+            return "folder{}: ".format('s' if len(self.input_dir) > 1 else '') + ", ".join([d.replace(self.working_path, '').lstrip('/') for d in self.input_dir])
         else:
             return "folder: " + self.input_dir.replace(self.working_path, '').lstrip('/')
 
@@ -109,7 +110,7 @@ class FrameMultiDirectory:
             dirs = self.input_dir
             paths = self.input_path
         else:
-            raise Exception("input_dir option must containa path or an array of paths")
+            raise Exception("input_dir option must contain a path or an array of paths") 
         files = []
         for d, p in zip(dirs, paths):
             src_contents = os.walk(d)
@@ -172,12 +173,10 @@ class FramesRefActions(FrameDirectory, ActionList):
             self.__idx_step = -1
 
 
-class Actions(FramesRefActions):
-    def __init__(self, name, actions, input_path='', output_path='', working_path='', plot_path='plots', resample=1, ref_idx=-1, step_process=True):
+class CombinedActions(FramesRefActions):
+    def __init__(self, name, actions=[], input_path='', output_path='', working_path='', plot_path='plots', resample=1, ref_idx=-1, step_process=True):
         FramesRefActions.__init__(self, name, input_path, output_path, working_path, plot_path, resample, ref_idx, step_process)
-        self.__actions = []
-        for a in actions:
-            self.__actions.append(a)
+        self.__actions = actions
 
     def begin(self):
         FramesRefActions.begin(self)
@@ -203,6 +202,8 @@ class Actions(FramesRefActions):
             raise ShapeError(img.shape, self.shape)
         if img is None:
             raise Exception("Invalid file: " + self.input_dir + "/" + filename)
+        if len(self.__actions) == 0:
+            self.print_message("No actions specified.", level=logging.WARNING)
         for a in self.__actions:
             img = a.run_frame(idx, ref_idx, img)
         self.sub_message_r(': write output image')

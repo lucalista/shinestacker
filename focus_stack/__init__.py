@@ -1,5 +1,5 @@
 # flake8: noqa F401
-from focus_stack.stack_framework import StackJob, Actions
+from focus_stack.stack_framework import StackJob, CombinedActions
 from focus_stack.align import AlignFrames, ALIGN_HOMOGRAPHY, ALIGN_RIGID, BORDER_CONSTANT, BORDER_REPLICATE, BORDER_REPLICATE_BLUR, DETECTOR_SIFT, DETECTOR_ORB, DETECTOR_SURF, DETECTOR_AKAZE, DESCRIPTOR_SIFT, DESCRIPTOR_ORB, DESCRIPTOR_AKAZE, MATCHING_KNN, MATCHING_NORM_HAMMING
 from focus_stack.balance import BalanceFrames, BALANCE_LINEAR, BALANCE_GAMMA, BALANCE_MATCH_HIST, BALANCE_LUMI, BALANCE_RGB, BALANCE_HSV, BALANCE_HLS
 from focus_stack.stack import FocusStackBunch, FocusStack

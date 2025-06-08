@@ -11,6 +11,7 @@ ACTION_ALIGNFRAMES = "AlignFrames"
 ACTION_BALANCEFRAMES = "BalanceFrames"
 SUB_ACTION_TYPES = [ACTION_MASKNOISE, ACTION_VIGNETTING, ACTION_ALIGNFRAMES, ACTION_BALANCEFRAMES]
 
+
 class ActionConfig:
     def __init__(self, type_name: str, params: dict=None, parent=None): # noqa
         self.type_name = type_name
@@ -70,4 +71,3 @@ class Project:
             for s in j.sub_actions:
                 s.parent = j
         return p
-

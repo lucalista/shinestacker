@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../')
-from focus_stack import StackJob, NoiseDetection, Actions, MaskNoise
+from focus_stack import StackJob, NoiseDetection, CombinedActions, MaskNoise
 from focus_stack.noise_detection import mean_image
 from focus_stack.exceptions import ShapeError, BitDepthError
 from focus_stack.logging import setup_logging
@@ -47,7 +47,7 @@ def test_detect():
 def test_correct():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg")
-        job.add_action(Actions("noise", [MaskNoise()], output_path="output/img-noise-corr"))
+        job.add_action(CombinedActions("noise", [MaskNoise()], output_path="output/img-noise-corr"))
         job.run()
     except Exception:
         assert False

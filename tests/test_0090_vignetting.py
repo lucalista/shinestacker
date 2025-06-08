@@ -1,14 +1,14 @@
 import sys
 sys.path.append('../')
-from focus_stack import StackJob, Actions, Vignetting
+from focus_stack import StackJob, CombinedActions, Vignetting
 
 
 def test_vignetting():
     try:
         job = StackJob("job", "./", input_path="input/img-vignetted")
-        job.add_action(Actions("vignette",
-                               [Vignetting(plot_histograms=True)],
-                               output_path="output/img-vignetting"))
+        job.add_action(CombinedActions("vignette",
+                                       [Vignetting(plot_histograms=True)],
+                                       output_path="output/img-vignetting"))
         job.run()
     except Exception:
         assert False

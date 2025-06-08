@@ -6,6 +6,7 @@ from gui.action_config import ActionConfigDialog, SUB_ACTION_TYPES, ACTION_TYPES
 from gui.menu import WindowMenu
 from gui.logging import LogManager, LogWorker, QTextEditLogger
 
+
 class JobLogWorker(LogWorker):
     def __init__(self, job, id_str):
         LogWorker.__init__(self)
@@ -13,14 +14,18 @@ class JobLogWorker(LogWorker):
         self.id_str = id_str
 
     def run(self):
-        converter = ProjectConverter()
-        converter.run_job(self.job, self.id_str)
+        try:
+            converter = ProjectConverter()
+            converter.run_job(self.job, self.id_str)
+        except Exception as e:
+            self.exception_signal.emit(f'Job {self.job.params["name"]} failed:\n{str(e)}')
         self.end_signal.emit(1)
+
 
 class MainWindow(WindowMenu, LogManager):
     def __init__(self):
         WindowMenu.__init__(self)
-        LogManager.__init__(self)        
+        LogManager.__init__(self)
         self.setWindowTitle("Focus Stacking GUI")
         self.resize(800, 600)
         self.project = Project()
@@ -79,7 +84,6 @@ class MainWindow(WindowMenu, LogManager):
         hlayout.addLayout(vbox_left)
         hlayout.addLayout(vbox_right)
         layout.addLayout(hlayout)
-        
         self.central_widget.setLayout(layout)
 
     def add_job(self):
