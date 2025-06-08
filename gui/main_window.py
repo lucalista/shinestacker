@@ -20,6 +20,7 @@ class JobLogWorker(LogWorker):
             converter.run_job(self.job, self.id_str)
         except Exception as e:
             self.exception_signal.emit(f'Job {self.job.params["name"]} failed:\n{str(e)}')
+        self.html_signal.emit('<hr><p style="font-weight: bold; margin-left: 10px;">Run completed.</p>')
         self.end_signal.emit(1)
 
 
@@ -122,7 +123,7 @@ class MainWindow(WindowMenu, LogManager):
         text_edit = QTextEditLogger()
         if title is not None:
             text_edit.setWindowTitle(title)
-        text_edit.resize(800, 600)
+        text_edit.resize(1200, 600)
         text_edit.show()
         self.add_tex_edit(text_edit)
         return self.last_id_str()
