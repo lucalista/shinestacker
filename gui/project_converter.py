@@ -1,0 +1,93 @@
+from gui.project_model import (Project, ActionConfig,
+                               ACTION_COMBO, ACTION_NOISEDETECTION, ACTION_FOCUSSTACK,
+                               ACTION_FOCUSSTACKBUNCH, ACTION_MULTILAYER,
+                               ACTION_MASKNOISE, ACTION_VIGNETTING, ACTION_ALIGNFRAMES,
+                               ACTION_BALANCEFRAMES)
+from focus_stack.stack_framework import StackJob, CombinedActions
+from focus_stack.noise_detection import NoiseDetection, MaskNoise
+from focus_stack.vignetting import Vignetting
+from focus_stack.align import AlignFrames
+from focus_stack.balance import BalanceFrames
+from focus_stack.stack import FocusStack, FocusStackBunch
+from focus_stack.pyramid import PyramidStack
+from focus_stack.depth_map import DepthMapStack
+from focus_stack.multilayer import MultiLayer
+from focus_stack.exceptions import InvalidOptionError
+import logging
+
+
+class ProjectConverter:
+    def run_project(self, project: Project, logger_name=None):
+        logger = logging.getLogger(__name__ if logger_name is None else logger_name)
+        jobs = self.project(project, logger_name)
+        for job in jobs:
+            logger.info("run: " + job.name)
+            job.run()
+
+    def run_job(self, job: ActionConfig, logger_name=None):
+        logger = logging.getLogger(__name__ if logger_name is None else logger_name)
+        job = self.job(job, logger_name)
+        logger.info("run: " + job.name)
+        job.run()
+
+    def project(self, project: Project, logger_name=None):
+        return [self.job(j, logger_name) for j in project.jobs]
+
+    def filter_dict_keys(self, dict, prefix):
+        dict_with = {k.replace(prefix, ''): v for (k, v) in dict.items() if k.startswith(prefix)}
+        dict_without = {k: v for (k, v) in dict.items() if not k.startswith(prefix)}
+        return dict_with, dict_without
+
+    def action(self, action_config):
+        if action_config.type_name == ACTION_NOISEDETECTION:
+            return NoiseDetection(**action_config.params)
+        elif action_config.type_name == ACTION_COMBO:
+            sub_actions = []
+            for sa in action_config.sub_actions:
+                a = self.action(sa)
+                if a is not None:
+                    sub_actions.append(a)
+            return CombinedActions(**action_config.params, actions=sub_actions)
+        elif action_config.type_name == ACTION_MASKNOISE:
+            action_config.params.pop('name')
+            return MaskNoise(**action_config.params)
+        elif action_config.type_name == ACTION_VIGNETTING:
+            action_config.params.pop('name')
+            return Vignetting(**action_config.params)
+        elif action_config.type_name == ACTION_ALIGNFRAMES:
+            action_config.params.pop('name')
+            return AlignFrames(**action_config.params)
+        elif action_config.type_name == ACTION_BALANCEFRAMES:
+            action_config.params.pop('name')
+            return BalanceFrames(**action_config.params)
+        elif action_config.type_name == ACTION_FOCUSSTACK or action_config.type_name == ACTION_FOCUSSTACKBUNCH:
+            stacker = action_config.params.get('stacker', 'Pyramid')
+            if stacker == 'Pyramid':
+                algo_dict, module_dict = self.filter_dict_keys(action_config.params, 'pyramid_')
+                stack_algo = PyramidStack(**algo_dict)
+            elif stacker == 'Depth map':
+                algo_dict, module_dict = self.filter_dict_keys(action_config.params, 'depthmap_')
+                stack_algo = DepthMapStack(**algo_dict)
+            if action_config.type_name == ACTION_FOCUSSTACK:
+                return FocusStack(**module_dict, stack_algo=stack_algo)
+            elif action_config.type_name == ACTION_FOCUSSTACKBUNCH:
+                return FocusStackBunch(**module_dict, stack_algo=stack_algo)
+            else:
+                raise InvalidOptionError("stracker", stacker, details="valid values are: Pyramid, Depth map.")
+        elif action_config.type_name == ACTION_MULTILAYER:
+            input_path = list(filter(lambda p: p != '', action_config.params.get('input_path', '').split(";")))
+            action_config.params['input_path'] = [i.strip() for i in input_path]
+            return MultiLayer(**action_config.params)
+        else:
+            raise Exception(f"Cannot convert action of type {action_config.type_name}.")
+
+    def job(self, action_config: ActionConfig, logger_name=None):
+        name = action_config.params.get('name', '')
+        working_path = action_config.params.get('working_path', '')
+        input_path = action_config.params.get('input_path', '')
+        stack_job = StackJob(name, working_path, input_path, logger_name=logger_name)
+        for sub in action_config.sub_actions:
+            action = self.action(sub)
+            if action is not None:
+                stack_job.add_action(action)
+        return stack_job
