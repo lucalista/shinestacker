@@ -9,6 +9,7 @@ from gui.gui_logging import LogManager, LogWorker, QTextEditLogger
 import matplotlib
 matplotlib.use('agg')
 
+TRAP_RUN_EXCEPTIONS = False
 
 class JobLogWorker(LogWorker):
     def __init__(self, job, id_str):
@@ -16,15 +17,21 @@ class JobLogWorker(LogWorker):
         self.job = job
         self.id_str = id_str
 
-    def run(self):
-        job_error = False
-        # try:
+    def _do_run_job(self):
         converter = ProjectConverter()
         converter.run_job(self.job, self.id_str)
-        # except Exception as e:
-        #    job_error = True
-        #    self.exception_signal.emit(f'Job {self.job.params["name"]} failed:\n{str(e)}')
-        if job_error:
+
+    def run(self):
+        job_error = False
+        if TRAP_RUN_EXCEPTIONS:
+            try:
+                self._do_run_job()
+            except Exception as e:
+                job_error = True
+                self.exception_signal.emit(f'Job {self.job.params["name"]} failed:\n{str(e)}')
+        else:
+            self._do_run_job()
+        if job_error:            
             self.html_signal.emit('<hr><p style="font-weight: bold; color="#8B0000" margin-left: 10px;">Run failed.</p>')
         else:
             self.html_signal.emit('<hr><p style="font-weight: bold; color="#008B00" margin-left: 10px;">Run completed.</p>')
@@ -37,14 +44,20 @@ class ProjectLogWorker(LogWorker):
         self.project = project
         self.id_str = id_str
 
+    def _do_run_project(self):
+        converter = ProjectConverter()
+        converter.run_project(self.project, self.id_str)        
+
     def run(self):
         job_error = False
-        # try:
-        converter = ProjectConverter()
-        converter.run_project(self.project, self.id_str)
-        # except Exception as e:
-        #    job_error = True
-        #    self.exception_signal.emit(f'Project failed:\n{str(e)}')
+        if TRAP_RUN_EXCEPTIONS:
+            try:
+                self._do_run_project()
+            except Exception as e:
+                job_error = True
+                self.exception_signal.emit(f'Project failed:\n{str(e)}')
+        else:
+            self._do_run_project()
         if job_error:
             self.html_signal.emit('<hr><p style="font-weight: bold; color="#8B0000" margin-left: 10px;">Project failed.</p>')
         else:
