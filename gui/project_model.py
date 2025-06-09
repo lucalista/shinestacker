@@ -1,3 +1,4 @@
+from copy import deepcopy
 ACTION_JOB = "Job"
 ACTION_COMBO = "Combined Actions"
 ACTION_NOISEDETECTION = "NoiseDetection"
@@ -5,6 +6,7 @@ ACTION_FOCUSSTACK = "FocusStack"
 ACTION_FOCUSSTACKBUNCH = "FocusStackBunch"
 ACTION_MULTILAYER = "MultiLayer"
 ACTION_TYPES = [ACTION_COMBO, ACTION_FOCUSSTACKBUNCH, ACTION_FOCUSSTACK, ACTION_MULTILAYER, ACTION_NOISEDETECTION]
+COMPOSITE_TYPES = [ACTION_COMBO]
 ACTION_MASKNOISE = "MaskNoise"
 ACTION_VIGNETTING = "Vignetting"
 ACTION_ALIGNFRAMES = "AlignFrames"
@@ -29,8 +31,14 @@ class ActionConfig:
         else:
             raise Exception(f"can't pop sub-action {index}, lenght is {len(self.sub_actions)}")
 
-    def create_instance(self):
-        pass
+    def clone(self, name_postfix=''):
+        c = ActionConfig(self.type_name, deepcopy(self.params))
+        c.sub_actions = [s.clone() for s in self.sub_actions]
+        for s in c.sub_actions:
+            s.parent = c
+        if name_postfix != '':
+            c.params['name'] = c.params.get('name', '') + name_postfix
+        return c
 
     def to_dict(self):
         dict = {

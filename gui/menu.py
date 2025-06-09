@@ -6,6 +6,8 @@ import os
 import json
 import jsonpickle
 
+CLONE_POSTFIX = " (clone)"
+
 
 class WindowMenu(QMainWindow):
     def add_file_menu(self, menubar):
@@ -32,8 +34,8 @@ class WindowMenu(QMainWindow):
         exit_action.triggered.connect(self.close)
         menu.addAction(exit_action)
 
-    def add_project_menu(self, menubar):
-        menu = menubar.addMenu("Project")
+    def add_edit_menu(self, menubar):
+        menu = menubar.addMenu("Editt")
         up_action = QAction("Move Element &Up", self)
         up_action.setShortcut("Ctrl+U")
         up_action.triggered.connect(self._move_element_up)
@@ -42,13 +44,17 @@ class WindowMenu(QMainWindow):
         down_action.setShortcut("Ctrl+D")
         down_action.triggered.connect(self._move_element_down)
         menu.addAction(down_action)
+        clone_action = QAction("Clone", self)
+        clone_action.setShortcut("Alt+C")
+        clone_action.triggered.connect(self._clone_element)
+        menu.addAction(clone_action)
 
     def __init__(self):
         super().__init__()
         self._current_file = None
         menubar = self.menuBar()
         self.add_file_menu(menubar)
-        self.add_project_menu(menubar)
+        self.add_edit_menu(menubar)
 
     def _new_project(self):
         if self._check_unsaved_changes():
@@ -188,6 +194,64 @@ class WindowMenu(QMainWindow):
             self._shift_job(+1)
         elif self.action_list.hasFocus():
             self._shift_action(+1)
+
+    def _clone_element(self):
+        job_index = self.job_list.currentRow()
+        if self.job_list.hasFocus():
+            if 0 <= job_index < len(self.project.jobs):
+                job_clone = self.project.jobs[job_index].clone(CLONE_POSTFIX)
+                new_job_index = job_index + 1
+                self.project.jobs.insert(new_job_index, job_clone)
+                self.job_list.setCurrentRow(new_job_index)
+                self.action_list.setCurrentRow(new_job_index)
+                self._refresh_ui()
+                self.job_list.setCurrentRow(new_job_index)
+        elif self.action_list.hasFocus():
+            action_row = self.action_list.currentRow()
+            if action_row < 0:
+                return
+            job_row = self.job_list.currentRow()
+            if (0 <= job_row < len(self.project.jobs)) and (0 <= action_row < self.action_list.count()):
+                job = self.project.jobs[job_row]
+                action_counter = -1
+                sub_action_index = -1
+                actions = job.sub_actions
+                for action_index, action in enumerate(actions):
+                    action_counter += 1
+                    if action_counter == action_row:
+                        break
+                    if len(action.sub_actions) > 0:
+                        sub_actions = action.sub_actions
+                        for i, sub_action in enumerate(sub_actions):
+                            action_counter += 1
+                            if action_counter == action_row:
+                                sub_action_index = i
+                                break
+                        if sub_action_index != -1:
+                            break
+                if sub_action_index == -1:
+                    action_clone = action.clone(CLONE_POSTFIX)
+                    actions.insert(action_index + 1, action_clone)
+                else:
+                    sub_action = sub_actions[sub_action_index]
+                    sub_action_clone = sub_action.clone(CLONE_POSTFIX)
+                    sub_actions.insert(sub_action_index + 1, sub_action_clone)
+                new_row = action_row
+                if sub_action_index == -1:
+                    new_index = action_index + 1
+                    if 0 <= new_index < len(actions):
+                        new_row = 0
+                        for action in actions[:new_index]:
+                            new_row += 1 + len(action.sub_actions)
+                else:
+                    new_index = sub_action_index + 1
+                    if 0 <= new_index < len(sub_actions):
+                        new_row = 1 + new_index
+                        for action in actions[:action_index]:
+                            new_row += 1 + len(action.sub_actions)
+                self._refresh_ui()
+                self.job_list.setCurrentRow(job_index)
+                self.action_list.setCurrentRow(new_row)
 
     def _refresh_ui(self):
         self.job_list.clear()
