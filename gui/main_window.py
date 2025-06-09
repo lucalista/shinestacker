@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout,
+from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout,# QAbstractItemView,
                                QLabel, QComboBox, QMessageBox, QDialog)
 from gui.project_model import Project, ActionConfig
 from gui.project_converter import ProjectConverter
@@ -75,6 +75,7 @@ class MainWindow(WindowMenu, LogManager):
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         self.job_list = QListWidget()
+#        self.job_list.setDragDropMode(QAbstractItemView.InternalMove)
         self.job_list.currentRowChanged.connect(self.on_job_selected)
         self.job_list.itemDoubleClicked.connect(self.on_job_double_clicked)
         self.action_list = QListWidget()
