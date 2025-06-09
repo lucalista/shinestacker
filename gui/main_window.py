@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout,# QAbstractItemView,
+from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout,
                                QLabel, QComboBox, QMessageBox, QDialog)
 from gui.project_model import Project, ActionConfig
 from gui.project_converter import ProjectConverter
@@ -10,6 +10,7 @@ import matplotlib
 matplotlib.use('agg')
 
 TRAP_RUN_EXCEPTIONS = False
+
 
 class JobLogWorker(LogWorker):
     def __init__(self, job, id_str):
@@ -31,7 +32,7 @@ class JobLogWorker(LogWorker):
                 self.exception_signal.emit(f'Job {self.job.params["name"]} failed:\n{str(e)}')
         else:
             self._do_run_job()
-        if job_error:            
+        if job_error:
             self.html_signal.emit('<hr><p style="font-weight: bold; color="#8B0000" margin-left: 10px;">Run failed.</p>')
         else:
             self.html_signal.emit('<hr><p style="font-weight: bold; color="#008B00" margin-left: 10px;">Run completed.</p>')
@@ -46,7 +47,7 @@ class ProjectLogWorker(LogWorker):
 
     def _do_run_project(self):
         converter = ProjectConverter()
-        converter.run_project(self.project, self.id_str)        
+        converter.run_project(self.project, self.id_str)
 
     def run(self):
         job_error = False
@@ -75,7 +76,6 @@ class MainWindow(WindowMenu, LogManager):
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         self.job_list = QListWidget()
-#        self.job_list.setDragDropMode(QAbstractItemView.InternalMove)
         self.job_list.currentRowChanged.connect(self.on_job_selected)
         self.job_list.itemDoubleClicked.connect(self.on_job_double_clicked)
         self.action_list = QListWidget()

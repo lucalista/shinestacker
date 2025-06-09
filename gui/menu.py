@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import (QMessageBox, QFileDialog, QMainWindow, QMenu)
+from PySide6.QtWidgets import (QMessageBox, QFileDialog, QMainWindow)
 from PySide6.QtGui import QAction
 from gui.project_model import Project
 import os.path
@@ -10,55 +10,46 @@ import jsonpickle
 class WindowMenu(QMainWindow):
     def add_file_menu(self, menubar):
         menu = menubar.addMenu("&File")
-        
         new_action = QAction("&New", self)
         new_action.setShortcut("Ctrl+N")
         new_action.triggered.connect(self._new_project)
         menu.addAction(new_action)
-
         open_action = QAction("&Open...", self)
         open_action.setShortcut("Ctrl+O")
         open_action.triggered.connect(self._open_project)
         menu.addAction(open_action)
-
         save_action = QAction("&Save", self)
         save_action.setShortcut("Ctrl+S")
         save_action.triggered.connect(self._save_project)
         menu.addAction(save_action)
-
         save_as_action = QAction("Save &As...", self)
         save_as_action.setShortcut("Ctrl+Shift+S")
         save_as_action.triggered.connect(self._save_project_as)
         menu.addAction(save_as_action)
-
         menu.addSeparator()
-
         exit_action = QAction("Shut down ", self)
         exit_action.setShortcut("Ctrl+Q")
         exit_action.triggered.connect(self.close)
         menu.addAction(exit_action)
-        
 
     def add_project_menu(self, menubar):
         menu = menubar.addMenu("Project")
-
         up_action = QAction("Move Element &Up", self)
         up_action.setShortcut("Ctrl+U")
         up_action.triggered.connect(self._move_element_up)
         menu.addAction(up_action)
-        
         down_action = QAction("Move Element &Down", self)
         down_action.setShortcut("Ctrl+D")
         down_action.triggered.connect(self._move_element_down)
         menu.addAction(down_action)
-        
+
     def __init__(self):
         super().__init__()
         self._current_file = None
         menubar = self.menuBar()
         self.add_file_menu(menubar)
         self.add_project_menu(menubar)
-        
+
     def _new_project(self):
         if self._check_unsaved_changes():
             self.project = Project()
@@ -185,8 +176,7 @@ class WindowMenu(QMainWindow):
         self._refresh_ui()
         self.job_list.setCurrentRow(job_row)
         self.action_list.setCurrentRow(new_row)
-                
-            
+
     def _move_element_up(self):
         if self.job_list.hasFocus():
             self._shift_job(-1)

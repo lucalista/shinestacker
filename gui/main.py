@@ -10,6 +10,7 @@ import logging
 
 DONT_USE_NATIVE_MENU = False
 
+
 def main():
     setup_logging(
         console_level=logging.DEBUG,
@@ -18,7 +19,7 @@ def main():
     )
     app = QApplication(sys.argv)
     if DONT_USE_NATIVE_MENU:
-        app.setAttribute(Qt.AA_DontUseNativeMenuBar) 
+        app.setAttribute(Qt.AA_DontUseNativeMenuBar)
     app.setWindowIcon(QIcon('ico/focus_stack.ico'))
     window = MainWindow()
     window.show()
