@@ -36,11 +36,11 @@ class WindowMenu(QMainWindow):
 
     def add_edit_menu(self, menubar):
         menu = menubar.addMenu("Editt")
-        up_action = QAction("Move Element &Up", self)
+        up_action = QAction("Move &Up", self)
         up_action.setShortcut("Ctrl+U")
         up_action.triggered.connect(self._move_element_up)
         menu.addAction(up_action)
-        down_action = QAction("Move Element &Down", self)
+        down_action = QAction("Move &Down", self)
         down_action.setShortcut("Ctrl+D")
         down_action.triggered.connect(self._move_element_down)
         menu.addAction(down_action)
@@ -48,6 +48,10 @@ class WindowMenu(QMainWindow):
         clone_action.setShortcut("Alt+C")
         clone_action.triggered.connect(self._clone_element)
         menu.addAction(clone_action)
+        delete_action = QAction("Delete", self)
+        delete_action.setShortcut("Alt+D")
+        delete_action.triggered.connect(self._delete_element)
+        menu.addAction(delete_action)
 
     def __init__(self):
         super().__init__()
@@ -259,3 +263,74 @@ class WindowMenu(QMainWindow):
             self.job_list.addItem(job.params['name'])
         if self.project.jobs:
             self.job_list.setCurrentRow(0)
+
+    def _delete_element(self):
+        if self.job_list.hasFocus():
+            self.delete_job()
+        elif self.action_list.hasFocus():
+            self.delete_action()        
+            
+    def delete_job(self):
+        current_index = self.job_list.currentRow()
+        if 0 <= current_index < len(self.project.jobs):
+            reply = QMessageBox.question(
+                self, "Confirm Delete",
+                f"Are you sure you want to delete job '{self.project.jobs[current_index].params.get('name', '')}'?",
+                QMessageBox.Yes | QMessageBox.No
+            )
+            if reply == QMessageBox.Yes:
+                self.job_list.takeItem(current_index)
+                self.project.jobs.pop(current_index)
+                self.action_list.clear()
+                self._refresh_ui()
+
+    def delete_action(self):
+        job_index = self.job_list.currentRow()
+        action_row = self.action_list.currentRow()
+        if action_row < 0:
+            return
+        job_row = self.job_list.currentRow()
+        if (0 <= job_row < len(self.project.jobs)) and (0 <= action_row < self.action_list.count()):
+            job = self.project.jobs[job_row]
+            action_counter = -1
+            sub_action_index = -1
+            actions = job.sub_actions
+            sub_actions = None
+            for action_index, action in enumerate(actions):
+                action_counter += 1
+                if action_counter == action_row:
+                    break
+                if len(action.sub_actions) > 0:
+                    sub_actions = action.sub_actions
+                    for i, sub_action in enumerate(sub_actions):
+                        action_counter += 1
+                        if action_counter == action_row:
+                            sub_action_index = i
+                            break
+                    if sub_action_index != -1:
+                        break
+            current_action = action if sub_action_index == -1 else sub_action
+            reply = QMessageBox.question(
+                self,
+                "Confirm Delete",
+                f"Are you sure you want to delete action '{self.action_text(current_action, sub_action_index != -1, indent=False)}'?",
+                QMessageBox.Yes | QMessageBox.No
+            )
+            if reply == QMessageBox.Yes:
+                if sub_action_index != -1:
+                    action.pop_sub_action(sub_action_index)
+                    new_row = action_row if sub_action_index < len(sub_actions) else action_row - 1
+                else:
+                    job.pop_sub_action(action_index)
+                    if action_index == 0:
+                        new_row = 0 if len(actions) > 0 else -1
+                    elif action_index < len(actions):
+                        new_row = action_row
+                    elif action_index == len(actions):
+                        new_row = action_row - len(actions[action_index - 1].sub_actions) - 1
+                self._refresh_ui()
+                self.job_list.setCurrentRow(job_index)
+                if new_row >= 0:
+                    self.action_list.setCurrentRow(new_row)
+                    
+            

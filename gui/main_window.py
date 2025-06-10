@@ -243,22 +243,9 @@ class MainWindow(WindowMenu, LogManager):
             self.add_sub_action_button.setEnabled(False)
             self.delete_action_button.setText("Delete Action")
 
-    def delete_job(self):
-        current_index = self.job_list.currentRow()
-        if 0 <= current_index < len(self.project.jobs):
-            reply = QMessageBox.question(
-                self, "Confirm Delete",
-                f"Are you sure you want to delete job '{self.project.jobs[current_index].name}'?",
-                QMessageBox.Yes | QMessageBox.No
-            )
-            if reply == QMessageBox.Yes:
-                self.job_list.takeItem(current_index)
-                self.project.jobs.pop(current_index)
-                self.action_list.clear()
-
-    def action_text(self, action, is_sub_action=False):
-        txt = "    " if is_sub_action else ""
-        if "name" in action.params.keys() and action.params["name"] != '':
+    def action_text(self, action, is_sub_action=False, indent=True):
+        txt = "    " if is_sub_action and indent else ""
+        if action.params.get('name', '') != '':
             txt += action.params["name"]
         txt += f" [{action.type_name}]"
         return txt
@@ -331,42 +318,3 @@ class MainWindow(WindowMenu, LogManager):
                         self.add_sub_action_button.setEnabled(False)
                     self.show_action_config_dialog(current_action)
 
-    def delete_action(self):
-        job_index = self.job_list.currentRow()
-        action_index = self.action_list.currentRow()
-        if (0 <= job_index < len(self.project.jobs)) and (0 <= action_index < self.action_list.count()):
-            job = self.project.jobs[job_index]
-            action_counter = -1
-            current_action = None
-            is_sub_action = False
-            parent_action = None
-            sub_action_index = -1
-            for action in job.sub_actions:
-                action_counter += 1
-                if action_counter == action_index:
-                    current_action = action
-                    break
-                if len(action.sub_actions) > 0:
-                    for i, sub_action in enumerate(action.sub_actions):
-                        action_counter += 1
-                        if action_counter == action_index:
-                            current_action = sub_action
-                            is_sub_action = True
-                            parent_action = action
-                            sub_action_index = i
-                            break
-                    if current_action:
-                        break
-            if current_action:
-                reply = QMessageBox.question(
-                    self,
-                    "Confirm Delete",
-                    f"Are you sure you want to delete action '{self.action_text(current_action, is_sub_action)}'?",
-                    QMessageBox.Yes | QMessageBox.No
-                )
-                if reply == QMessageBox.Yes:
-                    if is_sub_action:
-                        parent_action.pop_sub_action(sub_action_index)
-                    else:
-                        job.pop_sub_action(action_counter)
-                    self.on_job_selected(job_index)
