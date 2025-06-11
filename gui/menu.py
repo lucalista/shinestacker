@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import (QMessageBox, QFileDialog, QMainWindow)
 from PySide6.QtGui import QAction
 from gui.project_model import Project
+from gui.project_model import (ACTION_JOB, ACTION_COMBO, ACTION_TYPES, SUB_ACTION_TYPES)
 import os.path
 import os
 import json
@@ -8,8 +9,10 @@ import jsonpickle
 
 CLONE_POSTFIX = " (clone)"
 
-
 class WindowMenu(QMainWindow):
+    _copy_buffer = None
+    _modified_project = False
+    
     def add_file_menu(self, menubar):
         menu = menubar.addMenu("&File")
         new_action = QAction("&New", self)
@@ -29,9 +32,9 @@ class WindowMenu(QMainWindow):
         save_as_action.triggered.connect(self.save_project_as)
         menu.addAction(save_as_action)
         menu.addSeparator()
-        exit_action = QAction("Shut down ", self)
-        exit_action.setShortcut("Ctrl+Q")
-        exit_action.triggered.connect(self.close)
+        exit_action = QAction("Shut do&wn ", self)
+        exit_action.setShortcut("Ctrl+W")
+        exit_action.triggered.connect(self.quit)
         menu.addAction(exit_action)
 
     def add_edit_menu(self, menubar):
@@ -44,6 +47,14 @@ class WindowMenu(QMainWindow):
         down_action.setShortcut("Ctrl+D")
         down_action.triggered.connect(self.move_element_down)
         menu.addAction(down_action)
+        copy_action = QAction("&Copy", self)
+        copy_action.setShortcut("Ctrl+C")
+        copy_action.triggered.connect(self.copy_element)
+        menu.addAction(copy_action)
+        paste_action = QAction("&Paste", self)
+        paste_action.setShortcut("Ctrl+V")
+        paste_action.triggered.connect(self.paste_element)
+        menu.addAction(paste_action)
         clone_action = QAction("Clone", self)
         clone_action.setShortcut("Alt+C")
         clone_action.triggered.connect(self.clone_element)
@@ -60,6 +71,10 @@ class WindowMenu(QMainWindow):
         self.add_file_menu(menubar)
         self.add_edit_menu(menubar)
 
+    def quit(self):
+        if self._check_unsaved_changes():
+            self.close()
+        
     def new_project(self):
         if self._check_unsaved_changes():
             self.project = Project()
@@ -67,6 +82,7 @@ class WindowMenu(QMainWindow):
             self._update_title()
             self.job_list.clear()
             self.action_list.clear()
+            self._modified_project = False
 
     def open_project(self):
         if not self._check_unsaved_changes():
@@ -84,12 +100,13 @@ class WindowMenu(QMainWindow):
                 self._refresh_ui()
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Cannot open file {file_path}:\n{str(e)}")
-
+        self._modified_project = False
+        
     def save_project(self):
         if self._current_file:
-            self._do_save(self._current_file)
+            self.do_save(self._current_file)
         else:
-            self._save_project_as()
+            self.save_project_as()
 
     def save_project_as(self):
         file_path, _ = QFileDialog.getSaveFileName(self, "Save Project As", "",
@@ -97,11 +114,11 @@ class WindowMenu(QMainWindow):
         if file_path:
             if not file_path.endswith('.fsp'):
                 file_path += '.fsp'
-            self._do_save(file_path)
+            self.do_save(file_path)
             self._current_file = file_path
             self._update_title()
 
-    def _do_save(self, file_path):
+    def do_save(self, file_path):
         try:
             json_obj = jsonpickle.encode({
                 'project': self.project.to_dict(),
@@ -109,24 +126,33 @@ class WindowMenu(QMainWindow):
             })
             f = open(file_path, 'w')
             f.write(json_obj)
+            self._modified_project = False
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Cannot save file:\n{str(e)}")
 
     def _check_unsaved_changes(self) -> bool:
-        return True
-        # ignore the following code
-        reply = QMessageBox.question(
-            self, "Unsaved Changes",
-            "The project has unsaved changes. Do you want to continue?",
-            QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel
-        )
-        if reply == QMessageBox.Save:
-            self._save_project()
-            return True
-        elif reply == QMessageBox.Discard:
-            return True
+        if self._modified_project:
+            reply = QMessageBox.question(
+                self, "Unsaved Changes",
+                "The project has unsaved changes. Do you want to continue?",
+                QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel
+            )
+            if reply == QMessageBox.Save:
+                self._save_project()
+                return True
+            elif reply == QMessageBox.Discard:
+                return True
+            else:
+                return False
         else:
-            return False
+            return True
+
+    def _refresh_ui(self):
+        self.job_list.clear()
+        for job in self.project.jobs:
+            self.job_list.addItem(job.params['name'])
+        if self.project.jobs:
+            self.job_list.setCurrentRow(0)
 
     def _update_title(self):
         title = "Focus Stacking GUI"
@@ -197,66 +223,62 @@ class WindowMenu(QMainWindow):
             self._shift_job(-1)
         elif self.action_list.hasFocus():
             self._shift_action(-1)
+        self._modified_project = True
 
     def move_element_down(self):
         if self.job_list.hasFocus():
             self._shift_job(+1)
         elif self.action_list.hasFocus():
             self._shift_action(+1)
+        self._modified_project = True
 
-    def clone_element(self):
+    def clone_job(self):
         job_index = self.job_list.currentRow()
-        if self.job_list.hasFocus():
-            if 0 <= job_index < len(self.project.jobs):
-                job_clone = self.project.jobs[job_index].clone(CLONE_POSTFIX)
-                new_job_index = job_index + 1
-                self.project.jobs.insert(new_job_index, job_clone)
-                self.job_list.setCurrentRow(new_job_index)
-                self.action_list.setCurrentRow(new_job_index)
-                self._refresh_ui()
-                self.job_list.setCurrentRow(new_job_index)
-        elif self.action_list.hasFocus():
-            job_row, action_row, actions, sub_actions, action_index, sub_action_index = self._get_current_action()
-            action = actions[action_index]
-            if actions is not None:
-                if sub_action_index == -1:
-                    action_clone = action.clone(CLONE_POSTFIX)
-                    actions.insert(action_index + 1, action_clone)
-                else:
-                    sub_action = sub_actions[sub_action_index]
-                    sub_action_clone = sub_action.clone(CLONE_POSTFIX)
-                    sub_actions.insert(sub_action_index + 1, sub_action_clone)
-                new_row = action_row
-                if sub_action_index == -1:
-                    new_index = action_index + 1
-                    if 0 <= new_index < len(actions):
-                        new_row = 0
-                        for action in actions[:new_index]:
-                            new_row += 1 + len(action.sub_actions)
-                else:
-                    new_index = sub_action_index + 1
-                    if 0 <= new_index < len(sub_actions):
-                        new_row = 1 + new_index
-                        for action in actions[:action_index]:
-                            new_row += 1 + len(action.sub_actions)
-                self._refresh_ui()
-                self.job_list.setCurrentRow(job_index)
-                self.action_list.setCurrentRow(new_row)
+        if 0 <= job_index < len(self.project.jobs):
+            job_clone = self.project.jobs[job_index].clone(CLONE_POSTFIX)
+            new_job_index = job_index + 1
+            self.project.jobs.insert(new_job_index, job_clone)
+            self.job_list.setCurrentRow(new_job_index)
+            self.action_list.setCurrentRow(new_job_index)
+            self._refresh_ui()
+            self.job_list.setCurrentRow(new_job_index)
+        self._modified_project = True
 
-    def _refresh_ui(self):
-        self.job_list.clear()
-        for job in self.project.jobs:
-            self.job_list.addItem(job.params['name'])
-        if self.project.jobs:
-            self.job_list.setCurrentRow(0)
-
-    def delete_element(self):
+    def clone_action(self):
+        job_row, action_row, actions, sub_actions, action_index, sub_action_index = self._get_current_action()
+        action = actions[action_index]
+        if actions is not None:
+            if sub_action_index == -1:
+                action_clone = action.clone(CLONE_POSTFIX)
+                actions.insert(action_index + 1, action_clone)
+            else:
+                sub_action = sub_actions[sub_action_index]
+                sub_action_clone = sub_action.clone(CLONE_POSTFIX)
+                sub_actions.insert(sub_action_index + 1, sub_action_clone)
+            new_row = action_row
+            if sub_action_index == -1:
+                new_index = action_index + 1
+                if 0 <= new_index < len(actions):
+                    new_row = 0
+                    for action in actions[:new_index]:
+                        new_row += 1 + len(action.sub_actions)
+            else:
+                new_index = sub_action_index + 1
+                if 0 <= new_index < len(sub_actions):
+                    new_row = 1 + new_index
+                    for action in actions[:action_index]:
+                        new_row += 1 + len(action.sub_actions)
+            self._refresh_ui()
+            self.job_list.setCurrentRow(job_row)
+            self.action_list.setCurrentRow(new_row)
+        self._modified_project = True
+        
+    def clone_element(self):
         if self.job_list.hasFocus():
-            element = self.delete_job()
+            self.clone_job()
         elif self.action_list.hasFocus():
-            element = self.delete_action()
-        return element
-            
+            self.clone_action()
+
     def delete_job(self):
         current_index = self.job_list.currentRow()
         if 0 <= current_index < len(self.project.jobs):
@@ -271,6 +293,7 @@ class WindowMenu(QMainWindow):
                 self.action_list.clear()
                 self._refresh_ui()
                 return current_job
+        self._modified_project = True
         return None
 
     def delete_action(self):
@@ -301,4 +324,85 @@ class WindowMenu(QMainWindow):
                 if new_row >= 0:
                     self.action_list.setCurrentRow(new_row)
             return current_action
+        self._modified_project = True
         return None
+
+    def delete_element(self):
+        if self.job_list.hasFocus():
+            element = self.delete_job()
+        elif self.action_list.hasFocus():
+            element = self.delete_action()
+        return element
+
+    def copy_job(self):
+        current_index = self.job_list.currentRow()
+        if 0 <= current_index < len(self.project.jobs):
+            self._copy_buffer = self.project.jobs[current_index].clone()
+
+    def copy_action(self):
+        job_row, action_row, actions, sub_actions, action_index, sub_action_index = self._get_current_action()
+        if actions is not None:
+            if sub_action_index == -1:
+                self._copy_buffer = actions[action_index].clone()
+            else:
+                self._copy_buffer = sub_actions[sub_action_index].clone()
+
+    def copy_element(self):
+        if self.job_list.hasFocus():
+            element = self.copy_job()
+        elif self.action_list.hasFocus():
+            element = self.copy_action()
+    
+    def paste_job(self):
+        if self._copy_buffer.type_name != ACTION_JOB:
+            return
+        job_index = self.job_list.currentRow()
+        if 0 <= job_index < len(self.project.jobs):
+            new_job_index = job_index
+            self.project.jobs.insert(new_job_index, self._copy_buffer)
+            self.job_list.setCurrentRow(new_job_index)
+            self.action_list.setCurrentRow(new_job_index)
+            self._refresh_ui()
+            self.job_list.setCurrentRow(new_job_index)
+        self._modified_project = True
+
+    def paste_action(self):
+        job_row, action_row, actions, sub_actions, action_index, sub_action_index = self._get_current_action()
+        action = actions[action_index]
+        if actions is not None:
+            if sub_action_index == -1:
+                if self._copy_buffer.type_name not in ACTION_TYPES:
+                    return
+                actions.insert(action_index, self._copy_buffer)
+            else:
+                if action.type_name != ACTION_COMBO or self._copy_buffer.type_name not in SUB_ACTION_TYPES:
+                    return
+                sub_action = sub_actions[sub_action_index]
+                sub_actions.insert(sub_action_index, self._copy_buffer)
+            new_row = action_row
+            if sub_action_index == -1:
+                new_index = action_index
+                if 0 <= new_index < len(actions):
+                    new_row = 0
+                    for action in actions[:new_index]:
+                        new_row += 1 + len(action.sub_actions)
+            else:
+                new_index = sub_action_index
+                if 0 <= new_index < len(sub_actions):
+                    new_row = 1 + new_index
+                    for action in actions[:action_index]:
+                        new_row += 1 + len(action.sub_actions)
+            self._refresh_ui()
+            self.job_list.setCurrentRow(job_row)
+            self.action_list.setCurrentRow(new_row)
+        self._modified_project = True
+
+    def paste_element(self):
+        if self._copy_buffer is None:
+            return
+        if self.job_list.hasFocus():
+            element = self.paste_job()
+        elif self.action_list.hasFocus():
+            element = self.paste_action()
+            
+    
