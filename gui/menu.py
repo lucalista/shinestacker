@@ -14,19 +14,19 @@ class WindowMenu(QMainWindow):
         menu = menubar.addMenu("&File")
         new_action = QAction("&New", self)
         new_action.setShortcut("Ctrl+N")
-        new_action.triggered.connect(self._new_project)
+        new_action.triggered.connect(self.new_project)
         menu.addAction(new_action)
         open_action = QAction("&Open...", self)
         open_action.setShortcut("Ctrl+O")
-        open_action.triggered.connect(self._open_project)
+        open_action.triggered.connect(self.open_project)
         menu.addAction(open_action)
         save_action = QAction("&Save", self)
         save_action.setShortcut("Ctrl+S")
-        save_action.triggered.connect(self._save_project)
+        save_action.triggered.connect(self.save_project)
         menu.addAction(save_action)
         save_as_action = QAction("Save &As...", self)
         save_as_action.setShortcut("Ctrl+Shift+S")
-        save_as_action.triggered.connect(self._save_project_as)
+        save_as_action.triggered.connect(self.save_project_as)
         menu.addAction(save_as_action)
         menu.addSeparator()
         exit_action = QAction("Shut down ", self)
@@ -38,19 +38,19 @@ class WindowMenu(QMainWindow):
         menu = menubar.addMenu("Editt")
         up_action = QAction("Move &Up", self)
         up_action.setShortcut("Ctrl+U")
-        up_action.triggered.connect(self._move_element_up)
+        up_action.triggered.connect(self.move_element_up)
         menu.addAction(up_action)
         down_action = QAction("Move &Down", self)
         down_action.setShortcut("Ctrl+D")
-        down_action.triggered.connect(self._move_element_down)
+        down_action.triggered.connect(self.move_element_down)
         menu.addAction(down_action)
         clone_action = QAction("Clone", self)
         clone_action.setShortcut("Alt+C")
-        clone_action.triggered.connect(self._clone_element)
+        clone_action.triggered.connect(self.clone_element)
         menu.addAction(clone_action)
         delete_action = QAction("Delete", self)
         delete_action.setShortcut("Alt+D")
-        delete_action.triggered.connect(self._delete_element)
+        delete_action.triggered.connect(self.delete_element)
         menu.addAction(delete_action)
 
     def __init__(self):
@@ -60,7 +60,7 @@ class WindowMenu(QMainWindow):
         self.add_file_menu(menubar)
         self.add_edit_menu(menubar)
 
-    def _new_project(self):
+    def new_project(self):
         if self._check_unsaved_changes():
             self.project = Project()
             self._current_file = None
@@ -68,7 +68,7 @@ class WindowMenu(QMainWindow):
             self.job_list.clear()
             self.action_list.clear()
 
-    def _open_project(self):
+    def open_project(self):
         if not self._check_unsaved_changes():
             return
         file_path, _ = QFileDialog.getOpenFileName(
@@ -85,13 +85,13 @@ class WindowMenu(QMainWindow):
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Cannot open file {file_path}:\n{str(e)}")
 
-    def _save_project(self):
+    def save_project(self):
         if self._current_file:
             self._do_save(self._current_file)
         else:
             self._save_project_as()
 
-    def _save_project_as(self):
+    def save_project_as(self):
         file_path, _ = QFileDialog.getSaveFileName(self, "Save Project As", "",
                                                    "Project Files (*.fsp);;All Files (*)")
         if file_path:
@@ -192,19 +192,19 @@ class WindowMenu(QMainWindow):
             self.job_list.setCurrentRow(job_row)
             self.action_list.setCurrentRow(new_row)
 
-    def _move_element_up(self):
+    def move_element_up(self):
         if self.job_list.hasFocus():
             self._shift_job(-1)
         elif self.action_list.hasFocus():
             self._shift_action(-1)
 
-    def _move_element_down(self):
+    def move_element_down(self):
         if self.job_list.hasFocus():
             self._shift_job(+1)
         elif self.action_list.hasFocus():
             self._shift_action(+1)
 
-    def _clone_element(self):
+    def clone_element(self):
         job_index = self.job_list.currentRow()
         if self.job_list.hasFocus():
             if 0 <= job_index < len(self.project.jobs):
@@ -250,7 +250,7 @@ class WindowMenu(QMainWindow):
         if self.project.jobs:
             self.job_list.setCurrentRow(0)
 
-    def _delete_element(self):
+    def delete_element(self):
         if self.job_list.hasFocus():
             element = self.delete_job()
         elif self.action_list.hasFocus():
