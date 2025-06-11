@@ -7,10 +7,9 @@ from PySide6.QtCore import QCoreApplication, QProcess
 from gui.main_window import MainWindow
 import sys
 from focus_stack.logging import setup_logging
+from gui.menu import DONT_USE_NATIVE_MENU
 import logging
 import os
-
-DONT_USE_NATIVE_MENU = True
 
 
 def disable_macos_special_menu_items():

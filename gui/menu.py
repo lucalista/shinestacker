@@ -8,6 +8,7 @@ import json
 import jsonpickle
 
 CLONE_POSTFIX = " (clone)"
+DONT_USE_NATIVE_MENU = True
 
 
 class WindowMenu(QMainWindow):
@@ -33,8 +34,12 @@ class WindowMenu(QMainWindow):
         save_as_action.triggered.connect(self.save_project_as)
         menu.addAction(save_as_action)
         menu.addSeparator()
-        exit_action = QAction("Shut do&wn ", self)
-        exit_action.setShortcut("Ctrl+W")
+        if DONT_USE_NATIVE_MENU:
+            quit_txt, quit_short = "&Quit", "Ctrl+Q"
+        else:
+            quit_txt. quit_short = "Shut dw&wn", "Ctrl+W"
+        exit_action = QAction(quit_txt, self)
+        exit_action.setShortcut(quit_short)
         exit_action.triggered.connect(self.quit)
         menu.addAction(exit_action)
 
