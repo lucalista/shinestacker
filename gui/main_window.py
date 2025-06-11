@@ -139,7 +139,7 @@ class MainWindow(WindowMenu, LogManager):
             self.job_list.setCurrentRow(self.job_list.count() - 1)
             self.job_list.item(self.job_list.count() - 1).setSelected(True)
         self._modified_project = True
-        
+
     def on_job_double_clicked(self, item):
         index = self.job_list.row(item)
         if 0 <= index < len(self.project.jobs):
@@ -200,7 +200,7 @@ class MainWindow(WindowMenu, LogManager):
             self.project.jobs[current_index].add_sub_action(action)
             self.action_list.addItem(self.action_text(action))
         self._modified_project = True
-        
+
     def show_action_config_dialog(self, action):
         dialog = ActionConfigDialog(action, self)
         if dialog.exec():
@@ -286,7 +286,7 @@ class MainWindow(WindowMenu, LogManager):
             self.on_job_selected(current_job_index)
             self.action_list.setCurrentRow(current_action_index)
         self._modified_project = True
-        
+
     def on_action_double_clicked(self, item):
         job_index = self.job_list.currentRow()
         if 0 <= job_index < len(self.project.jobs):
@@ -320,4 +320,3 @@ class MainWindow(WindowMenu, LogManager):
                         self.sub_action_selector.setEnabled(False)
                         self.add_sub_action_button.setEnabled(False)
                     self.show_action_config_dialog(current_action)
-

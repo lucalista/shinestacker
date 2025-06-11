@@ -9,10 +9,11 @@ import jsonpickle
 
 CLONE_POSTFIX = " (clone)"
 
+
 class WindowMenu(QMainWindow):
     _copy_buffer = None
     _modified_project = False
-    
+
     def add_file_menu(self, menubar):
         menu = menubar.addMenu("&File")
         new_action = QAction("&New", self)
@@ -74,7 +75,7 @@ class WindowMenu(QMainWindow):
     def quit(self):
         if self._check_unsaved_changes():
             self.close()
-        
+
     def new_project(self):
         if self._check_unsaved_changes():
             self.project = Project()
@@ -101,7 +102,7 @@ class WindowMenu(QMainWindow):
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Cannot open file {file_path}:\n{str(e)}")
         self._modified_project = False
-        
+
     def save_project(self):
         if self._current_file:
             self.do_save(self._current_file)
@@ -272,7 +273,7 @@ class WindowMenu(QMainWindow):
             self.job_list.setCurrentRow(job_row)
             self.action_list.setCurrentRow(new_row)
         self._modified_project = True
-        
+
     def clone_element(self):
         if self.job_list.hasFocus():
             self.clone_job()
@@ -349,10 +350,10 @@ class WindowMenu(QMainWindow):
 
     def copy_element(self):
         if self.job_list.hasFocus():
-            element = self.copy_job()
+            self.copy_job()
         elif self.action_list.hasFocus():
-            element = self.copy_action()
-    
+            self.copy_action()
+
     def paste_job(self):
         if self._copy_buffer.type_name != ACTION_JOB:
             return
@@ -377,7 +378,6 @@ class WindowMenu(QMainWindow):
             else:
                 if action.type_name != ACTION_COMBO or self._copy_buffer.type_name not in SUB_ACTION_TYPES:
                     return
-                sub_action = sub_actions[sub_action_index]
                 sub_actions.insert(sub_action_index, self._copy_buffer)
             new_row = action_row
             if sub_action_index == -1:
@@ -401,8 +401,6 @@ class WindowMenu(QMainWindow):
         if self._copy_buffer is None:
             return
         if self.job_list.hasFocus():
-            element = self.paste_job()
+            self.paste_job()
         elif self.action_list.hasFocus():
-            element = self.paste_action()
-            
-    
+            self.paste_action()
