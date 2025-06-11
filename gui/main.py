@@ -3,12 +3,37 @@ sys.path.append('../')
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt
+from PySide6.QtCore import QCoreApplication, QProcess
 from gui.main_window import MainWindow
 import sys
 from focus_stack.logging import setup_logging
 import logging
+import os
 
-DONT_USE_NATIVE_MENU = False
+DONT_USE_NATIVE_MENU = True
+
+
+def disable_macos_special_menu_items():
+    if QCoreApplication.instance().platformName() != "cocoa":
+        return
+    prefs = [
+        ("NSDisabledCharacterPaletteMenuItem", "YES"),
+        ("NSDisabledDictationMenuItem", "YES"),
+        ("NSDisabledInputMenu", "YES"),
+        ("NSDisabledServicesMenu", "YES"),
+        ("WebAutomaticTextReplacementEnabled", "NO"),
+        ("WebAutomaticSpellingCorrectionEnabled", "NO"),
+        ("WebContinuousSpellCheckingEnabled", "NO"),
+        ("NSTextReplacementEnabled", "NO"),
+        ("NSAllowCharacterPalette", "NO")
+    ]
+    for key, value in prefs:
+        QProcess.execute("defaults", ["write", "-g", key, "-bool", value])
+    QProcess.execute("defaults", ["write", "-g", "NSAutomaticTextCompletionEnabled", "-bool", "NO"])
+    user = os.getenv('USER')
+    if user:
+        QProcess.startDetached("pkill", ["-u", user, "-f", "cfprefsd"])
+        QProcess.startDetached("pkill", ["-u", user, "-f", "SystemUIServer"])
 
 
 def main():
@@ -20,6 +45,8 @@ def main():
     app = QApplication(sys.argv)
     if DONT_USE_NATIVE_MENU:
         app.setAttribute(Qt.AA_DontUseNativeMenuBar)
+    else:
+        disable_macos_special_menu_items()
     app.setWindowIcon(QIcon('ico/focus_stack.ico'))
     window = MainWindow()
     window.show()

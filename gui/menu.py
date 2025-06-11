@@ -39,15 +39,7 @@ class WindowMenu(QMainWindow):
         menu.addAction(exit_action)
 
     def add_edit_menu(self, menubar):
-        menu = menubar.addMenu("Editt")
-        up_action = QAction("Move &Up", self)
-        up_action.setShortcut("Ctrl+U")
-        up_action.triggered.connect(self.move_element_up)
-        menu.addAction(up_action)
-        down_action = QAction("Move &Down", self)
-        down_action.setShortcut("Ctrl+D")
-        down_action.triggered.connect(self.move_element_down)
-        menu.addAction(down_action)
+        menu = menubar.addMenu("Edit")
         copy_action = QAction("&Copy", self)
         copy_action.setShortcut("Ctrl+C")
         copy_action.triggered.connect(self.copy_element)
@@ -64,6 +56,15 @@ class WindowMenu(QMainWindow):
         delete_action.setShortcut("Alt+D")
         delete_action.triggered.connect(self.delete_element)
         menu.addAction(delete_action)
+        menu.addSeparator()
+        up_action = QAction("Move &Up", self)
+        up_action.setShortcut("Ctrl+U")
+        up_action.triggered.connect(self.move_element_up)
+        menu.addAction(up_action)
+        down_action = QAction("Move &Down", self)
+        down_action.setShortcut("Ctrl+D")
+        down_action.triggered.connect(self.move_element_down)
+        menu.addAction(down_action)
 
     def __init__(self):
         super().__init__()
