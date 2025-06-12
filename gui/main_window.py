@@ -168,7 +168,7 @@ class MainWindow(WindowMenu, LogManager):
             text_edit.setWindowTitle(title)
         text_edit.resize(1200, 600)
         text_edit.show()
-        self.add_tex_edit(text_edit)
+        self.add_text_edit(text_edit)
         return self.last_id_str()
 
     def run_job(self):

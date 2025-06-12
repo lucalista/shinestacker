@@ -4,8 +4,11 @@ import os
 import numpy as np
 import logging
 import matplotlib.pyplot as plt
-from tqdm import tqdm
-from tqdm.notebook import tqdm_notebook
+from focus_stack.config import DISABLE_TQDM
+
+if not DISABLE_TQDM:
+    from tqdm import tqdm
+    from tqdm.notebook import tqdm_notebook
 
 
 def check_path_exists(path):
@@ -14,12 +17,15 @@ def check_path_exists(path):
 
 
 def make_tqdm_bar(name, size, ncols=80):
-    try:
-        __IPYTHON__  # noqa
-        bar = tqdm_notebook(desc=name, total=size)
-    except Exception:
-        bar = tqdm(desc=name, total=size, ncols=ncols)
-    return bar
+    if not DISABLE_TQDM:
+        try:
+            __IPYTHON__  # noqa
+            bar = tqdm_notebook(desc=name, total=size)
+        except Exception:
+            bar = tqdm(desc=name, total=size, ncols=ncols)
+        return bar
+    else:
+        return None
 
 
 def read_img(file_path):

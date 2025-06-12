@@ -534,6 +534,7 @@ class VignettingConfigurator(NoNameActionConfigurator):
         self.builder.add_field('max_correction', FIELD_FLOAT, 'Max. correction', required=False,
                                default=1, min=0, max=1, step=0.05)
         self.add_bold_label("Miscellanea:")
+        self.builder.add_field('plot_histograms', FIELD_BOOL, 'Plot histograms', required=False, default=False)
         self.builder.add_field('apply_correction', FIELD_BOOL, 'Apply correction', required=False, default=True)
 
 

@@ -1,3 +1,4 @@
+from focus_stack.config import DISABLE_TQDM
 import time
 from termcolor import colored
 from focus_stack.logging import setup_logging
@@ -38,16 +39,22 @@ class JobBase:
             colored(self.name + ": ", "green", attrs=["bold"]) + colored("completed", "green") + trailing_spaces)
 
     def get_logger(self, tqdm=False):
+        if DISABLE_TQDM:
+            tqdm = False
         if self.logger is None:
             return logging.getLogger("tqdm" if tqdm else __name__)
         else:
             return self.logger
 
-    def set_terminator(self, tqdm=None, end='\n'):
+    def set_terminator(self, tqdm=False, end='\n'):
+        if DISABLE_TQDM:
+            tqdm = False
         if end is not None:
             logging.getLogger("tqdm" if tqdm else None).handlers[0].terminator = end
 
     def print_message(self, msg='', level=logging.INFO, end=None, begin='', tqdm=False):
+        if DISABLE_TQDM:
+            tqdm = False
         self.base_message = colored(self.name, "blue", attrs=["bold"])
         if msg != '':
             self.base_message += (': ' + msg)
@@ -56,6 +63,8 @@ class JobBase:
         self.set_terminator(tqdm)
 
     def sub_message(self, msg, level=logging.INFO, end=None, begin='', tqdm=False):
+        if DISABLE_TQDM:
+            tqdm = False
         self.set_terminator(tqdm, end)
         self.get_logger(tqdm).log(level, begin + self.base_message + msg + trailing_spaces)
         self.set_terminator(tqdm)
@@ -117,8 +126,11 @@ class ActionList(JobBase):
     def run_core(self):
         self.print_message('begin run', end='\n')
         self.begin()
-        bar = make_tqdm_bar(self.name, self.counts)
+        if not DISABLE_TQDM:
+            bar = make_tqdm_bar(self.name, self.counts)
         for x in iter(self):
-            bar.update(1)
-        bar.close()
+            if not DISABLE_TQDM:
+                bar.update(1)
+        if not DISABLE_TQDM:
+            bar.close()
         self.end()
