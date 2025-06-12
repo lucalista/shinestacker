@@ -53,6 +53,10 @@ class WindowMenu(QMainWindow):
         paste_action.setShortcut("Ctrl+V")
         paste_action.triggered.connect(self.paste_element)
         menu.addAction(paste_action)
+        cut_action = QAction("&Cut", self)
+        cut_action.setShortcut("Ctrl+X")
+        cut_action.triggered.connect(self.cut_element)
+        menu.addAction(cut_action)
         clone_action = QAction("Clone", self)
         clone_action.setShortcut("Alt+C")
         clone_action.triggered.connect(self.clone_element)
@@ -286,15 +290,16 @@ class WindowMenu(QMainWindow):
         elif self.action_list.hasFocus():
             self.clone_action()
 
-    def delete_job(self):
+    def delete_job(self, confirm=True):
         current_index = self.job_list.currentRow()
         if 0 <= current_index < len(self.project.jobs):
-            reply = QMessageBox.question(
-                self, "Confirm Delete",
-                f"Are you sure you want to delete job '{self.project.jobs[current_index].params.get('name', '')}'?",
-                QMessageBox.Yes | QMessageBox.No
-            )
-            if reply == QMessageBox.Yes:
+            if confirm:
+                reply = QMessageBox.question(
+                    self, "Confirm Delete",
+                    f"Are you sure you want to delete job '{self.project.jobs[current_index].params.get('name', '')}'?",
+                    QMessageBox.Yes | QMessageBox.No
+                )
+            if not confirm or reply == QMessageBox.Yes:
                 self.job_list.takeItem(current_index)
                 current_job = self.project.jobs.pop(current_index)
                 self.action_list.clear()
@@ -303,18 +308,19 @@ class WindowMenu(QMainWindow):
         self._modified_project = True
         return None
 
-    def delete_action(self):
+    def delete_action(self, configm=True):
         job_row, action_row, actions, sub_actions, action_index, sub_action_index = self._get_current_action()
         if actions is not None:
             action = actions[action_index]
             current_action = action if sub_action_index == -1 else sub_actions[sub_action_index]
-            reply = QMessageBox.question(
-                self,
-                "Confirm Delete",
-                f"Are you sure you want to delete action '{self.action_text(current_action, sub_action_index != -1, indent=False)}'?",
-                QMessageBox.Yes | QMessageBox.No
-            )
-            if reply == QMessageBox.Yes:
+            if confirm:
+                reply = QMessageBox.question(
+                    self,
+                    "Confirm Delete",
+                    f"Are you sure you want to delete action '{self.action_text(current_action, sub_action_index != -1, indent=False)}'?",
+                    QMessageBox.Yes | QMessageBox.No
+                )
+            if not confirm or reply == QMessageBox.Yes:
                 if sub_action_index != -1:
                     action.pop_sub_action(sub_action_index)
                     new_row = action_row if sub_action_index < len(sub_actions) else action_row - 1
@@ -334,11 +340,11 @@ class WindowMenu(QMainWindow):
         self._modified_project = True
         return None
 
-    def delete_element(self):
+    def delete_element(self, confirm=True):
         if self.job_list.hasFocus():
-            element = self.delete_job()
+            element = self.delete_job(confirm)
         elif self.action_list.hasFocus():
-            element = self.delete_action()
+            element = self.delete_action(confirm)
         return element
 
     def copy_job(self):
@@ -410,3 +416,6 @@ class WindowMenu(QMainWindow):
             self.paste_job()
         elif self.action_list.hasFocus():
             self.paste_action()
+
+    def cut_element(self):
+        self._copy_buffer = self.delete_element(False)
