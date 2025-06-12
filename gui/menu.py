@@ -15,6 +15,11 @@ DONT_USE_NATIVE_MENU = True
 class WindowMenu(QMainWindow):
     _copy_buffer = None
     _modified_project = False
+    _project_buffer = []
+
+    def touch_project(self):
+        self._modified_project =True
+        self._project_buffer.append(self.project.clone())
 
     def add_file_menu(self, menubar):
         menu = menubar.addMenu("&File")
@@ -46,6 +51,11 @@ class WindowMenu(QMainWindow):
 
     def add_edit_menu(self, menubar):
         menu = menubar.addMenu("Edit")
+        undo_action = QAction("&Undo", self)
+        undo_action.setShortcut("Ctrl+Z")
+        undo_action.triggered.connect(self.undo)
+        menu.addAction(undo_action)
+        menu.addSeparator()
         cut_action = QAction("&Cut", self)
         cut_action.setShortcut("Ctrl+X")
         cut_action.triggered.connect(self.cut_element)
@@ -89,12 +99,12 @@ class WindowMenu(QMainWindow):
 
     def new_project(self):
         if self._check_unsaved_changes():
+            self.touch_project()
             self.project = Project()
             self._current_file = None
             self._update_title()
             self.job_list.clear()
             self.action_list.clear()
-            self._modified_project = False
 
     def open_project(self):
         if not self._check_unsaved_changes():
@@ -179,6 +189,7 @@ class WindowMenu(QMainWindow):
         new_index = job_index + delta
         if 0 <= new_index < len(self.project.jobs):
             jobs = self.project.jobs
+            self.touch_project()            
             jobs.insert(new_index, jobs.pop(job_index))
             self._refresh_ui()
             self.job_list.setCurrentRow(new_index)
@@ -215,6 +226,7 @@ class WindowMenu(QMainWindow):
             if sub_action_index == -1:
                 new_index = action_index + delta
                 if 0 <= new_index < len(actions):
+                    self.touch_project()
                     actions.insert(new_index, actions.pop(action_index))
                     new_row = 0
                     for action in actions[:new_index]:
@@ -222,6 +234,7 @@ class WindowMenu(QMainWindow):
             else:
                 new_index = sub_action_index + delta
                 if 0 <= new_index < len(sub_actions):
+                    self.touch_project()
                     sub_actions.insert(new_index, sub_actions.pop(sub_action_index))
                     new_row = 1 + new_index
                     for action in actions[:action_index]:
@@ -235,26 +248,24 @@ class WindowMenu(QMainWindow):
             self._shift_job(-1)
         elif self.action_list.hasFocus():
             self._shift_action(-1)
-        self._modified_project = True
 
     def move_element_down(self):
         if self.job_list.hasFocus():
             self._shift_job(+1)
         elif self.action_list.hasFocus():
             self._shift_action(+1)
-        self._modified_project = True
 
     def clone_job(self):
         job_index = self.job_list.currentRow()
         if 0 <= job_index < len(self.project.jobs):
             job_clone = self.project.jobs[job_index].clone(CLONE_POSTFIX)
             new_job_index = job_index + 1
+            self.touch_project()            
             self.project.jobs.insert(new_job_index, job_clone)
             self.job_list.setCurrentRow(new_job_index)
             self.action_list.setCurrentRow(new_job_index)
             self._refresh_ui()
             self.job_list.setCurrentRow(new_job_index)
-        self._modified_project = True
 
     def clone_action(self):
         job_row, action_row, actions, sub_actions, action_index, sub_action_index = self._get_current_action()
@@ -262,10 +273,12 @@ class WindowMenu(QMainWindow):
         if actions is not None:
             if sub_action_index == -1:
                 action_clone = action.clone(CLONE_POSTFIX)
+                self.touch_project()                
                 actions.insert(action_index + 1, action_clone)
             else:
                 sub_action = sub_actions[sub_action_index]
                 sub_action_clone = sub_action.clone(CLONE_POSTFIX)
+                self.touch_project()
                 sub_actions.insert(sub_action_index + 1, sub_action_clone)
             new_row = action_row
             if sub_action_index == -1:
@@ -283,7 +296,6 @@ class WindowMenu(QMainWindow):
             self._refresh_ui()
             self.job_list.setCurrentRow(job_row)
             self.action_list.setCurrentRow(new_row)
-        self._modified_project = True
 
     def clone_element(self):
         if self.job_list.hasFocus():
@@ -302,11 +314,11 @@ class WindowMenu(QMainWindow):
                 )
             if not confirm or reply == QMessageBox.Yes:
                 self.job_list.takeItem(current_index)
+                self.touch_project()
                 current_job = self.project.jobs.pop(current_index)
                 self.action_list.clear()
                 self._refresh_ui()
                 return current_job
-        self._modified_project = True
         return None
 
     def delete_action(self, configm=True):
@@ -323,9 +335,11 @@ class WindowMenu(QMainWindow):
                 )
             if not confirm or reply == QMessageBox.Yes:
                 if sub_action_index != -1:
+                    self.touch_project()
                     action.pop_sub_action(sub_action_index)
                     new_row = action_row if sub_action_index < len(sub_actions) else action_row - 1
                 else:
+                    self.touch_project()
                     self.project.jobs[job_row].pop_sub_action(action_index)
                     if action_index == 0:
                         new_row = 0 if len(actions) > 0 else -1
@@ -338,7 +352,6 @@ class WindowMenu(QMainWindow):
                 if new_row >= 0:
                     self.action_list.setCurrentRow(new_row)
             return current_action
-        self._modified_project = True
         return None
 
     def delete_element(self, confirm=True):
@@ -373,12 +386,12 @@ class WindowMenu(QMainWindow):
         job_index = self.job_list.currentRow()
         if 0 <= job_index < len(self.project.jobs):
             new_job_index = job_index
+            self.touch_project()            
             self.project.jobs.insert(new_job_index, self._copy_buffer)
             self.job_list.setCurrentRow(new_job_index)
             self.action_list.setCurrentRow(new_job_index)
             self._refresh_ui()
             self.job_list.setCurrentRow(new_job_index)
-        self._modified_project = True
 
     def paste_action(self):
         job_row, action_row, actions, sub_actions, action_index, sub_action_index = self._get_current_action()
@@ -387,10 +400,12 @@ class WindowMenu(QMainWindow):
             if sub_action_index == -1:
                 if self._copy_buffer.type_name not in ACTION_TYPES:
                     return
+                self.touch_project()                
                 actions.insert(action_index, self._copy_buffer)
             else:
                 if action.type_name != ACTION_COMBO or self._copy_buffer.type_name not in SUB_ACTION_TYPES:
                     return
+                self.touch_project()
                 sub_actions.insert(sub_action_index, self._copy_buffer)
             new_row = action_row
             if sub_action_index == -1:
@@ -408,7 +423,6 @@ class WindowMenu(QMainWindow):
             self._refresh_ui()
             self.job_list.setCurrentRow(job_row)
             self.action_list.setCurrentRow(new_row)
-        self._modified_project = True
 
     def paste_element(self):
         if self._copy_buffer is None:
@@ -420,3 +434,24 @@ class WindowMenu(QMainWindow):
 
     def cut_element(self):
         self._copy_buffer = self.delete_element(False)
+
+    def undo(self):
+        job_row = self.job_list.currentRow()
+        action_row = self.action_list.currentRow()
+        if len(self._project_buffer) > 0:
+            if self.job_list.hasFocus():
+                focus_job = True
+            if self.action_list.hasFocus():
+                focus_action = True
+            self.project = self._project_buffer.pop()
+            self._refresh_ui()
+            if job_row < len(self.project.jobs):
+                self.job_list.setCurrentRow(job_row)
+            else:
+                self.job_list.setCurrentRow(len(self.project.jobs) - 1)
+            if len(self.project.jobs) > 0:
+                actions_len = len(self.project.jobs[job_row].sub_actions)
+                if action_row < actions_len:
+                    self.action_list.setCurrentRow(action_row)
+                else:
+                    self.action_list.setCurrentRow(actions_len - 1)
