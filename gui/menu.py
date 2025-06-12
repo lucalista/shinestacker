@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import (QMessageBox, QFileDialog, QMainWindow)
 from PySide6.QtGui import QAction
+from PySide6.QtCore import Qt
 from gui.project_model import Project
 from gui.project_model import (ACTION_JOB, ACTION_COMBO, ACTION_TYPES, SUB_ACTION_TYPES)
 import os.path
@@ -45,7 +46,11 @@ class WindowMenu(QMainWindow):
 
     def add_edit_menu(self, menubar):
         menu = menubar.addMenu("Edit")
-        copy_action = QAction("&Copy", self)
+        cut_action = QAction("&Cut", self)
+        cut_action.setShortcut("Ctrl+X")
+        cut_action.triggered.connect(self.cut_element)
+        menu.addAction(cut_action)
+        copy_action = QAction("Cop&y", self)
         copy_action.setShortcut("Ctrl+C")
         copy_action.triggered.connect(self.copy_element)
         menu.addAction(copy_action)
@@ -53,16 +58,12 @@ class WindowMenu(QMainWindow):
         paste_action.setShortcut("Ctrl+V")
         paste_action.triggered.connect(self.paste_element)
         menu.addAction(paste_action)
-        cut_action = QAction("&Cut", self)
-        cut_action.setShortcut("Ctrl+X")
-        cut_action.triggered.connect(self.cut_element)
-        menu.addAction(cut_action)
         clone_action = QAction("Clone", self)
         clone_action.setShortcut("Alt+C")
         clone_action.triggered.connect(self.clone_element)
         menu.addAction(clone_action)
         delete_action = QAction("Delete", self)
-        delete_action.setShortcut("Alt+D")
+        delete_action.setShortcut(Qt.Key_Backspace)
         delete_action.triggered.connect(self.delete_element)
         menu.addAction(delete_action)
         menu.addSeparator()
