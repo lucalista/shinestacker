@@ -49,16 +49,18 @@ class ProjectConverter:
                     sub_actions.append(a)
             return CombinedActions(**action_config.params, actions=sub_actions)
         elif action_config.type_name == ACTION_MASKNOISE:
-            action_config.params.pop('name')
             return MaskNoise(**action_config.params)
         elif action_config.type_name == ACTION_VIGNETTING:
-            action_config.params.pop('name')
+            if 'name' in action_config.params.keys():
+                action_config.params.pop('name')
             return Vignetting(**action_config.params)
         elif action_config.type_name == ACTION_ALIGNFRAMES:
-            action_config.params.pop('name')
+            if 'name' in action_config.params.keys():
+                action_config.params.pop('name')
             return AlignFrames(**action_config.params)
         elif action_config.type_name == ACTION_BALANCEFRAMES:
-            action_config.params.pop('name')
+            if 'name' in action_config.params.keys():
+                action_config.params.pop('name')
             return BalanceFrames(**action_config.params)
         elif action_config.type_name == ACTION_FOCUSSTACK or action_config.type_name == ACTION_FOCUSSTACKBUNCH:
             stacker = action_config.params.get('stacker', 'Pyramid')
