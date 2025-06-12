@@ -49,19 +49,17 @@ class ProjectConverter:
                     sub_actions.append(a)
             return CombinedActions(**action_config.params, actions=sub_actions)
         elif action_config.type_name == ACTION_MASKNOISE:
-            return MaskNoise(**action_config.params)
+            params = {k: v for k, v in action_config.params.items() if k != 'name'}
+            return MaskNoise(**params)
         elif action_config.type_name == ACTION_VIGNETTING:
-            if 'name' in action_config.params.keys():
-                action_config.params.pop('name')
-            return Vignetting(**action_config.params)
+            params = {k: v for k, v in action_config.params.items() if k != 'name'}
+            return Vignetting(**params)
         elif action_config.type_name == ACTION_ALIGNFRAMES:
-            if 'name' in action_config.params.keys():
-                action_config.params.pop('name')
-            return AlignFrames(**action_config.params)
+            params = {k: v for k, v in action_config.params.items() if k != 'name'}
+            return AlignFrames(**params)
         elif action_config.type_name == ACTION_BALANCEFRAMES:
-            if 'name' in action_config.params.keys():
-                action_config.params.pop('name')
-            return BalanceFrames(**action_config.params)
+            params = {k: v for k, v in action_config.params.items() if k != 'name'}
+            return BalanceFrames(**params)
         elif action_config.type_name == ACTION_FOCUSSTACK or action_config.type_name == ACTION_FOCUSSTACKBUNCH:
             stacker = action_config.params.get('stacker', 'Pyramid')
             if stacker == 'Pyramid':
@@ -78,8 +76,9 @@ class ProjectConverter:
                 raise InvalidOptionError("stracker", stacker, details="valid values are: Pyramid, Depth map.")
         elif action_config.type_name == ACTION_MULTILAYER:
             input_path = list(filter(lambda p: p != '', action_config.params.get('input_path', '').split(";")))
-            action_config.params['input_path'] = [i.strip() for i in input_path]
-            return MultiLayer(**action_config.params)
+            params = {k: v for k, v in action_config.params.items() if k != 'imput_path'}
+            params['input_path'] = [i.strip() for i in input_path]
+            return MultiLayer(**params)
         else:
             raise Exception(f"Cannot convert action of type {action_config.type_name}.")
 
