@@ -201,7 +201,7 @@ class AlignFrames:
         self.n_matches = np.zeros(process.counts)
 
     def end(self):
-        if self.plot_histograms:        
+        if self.plot_histograms:
             plt.figure(figsize=(10, 5))
             x = np.arange(1, len(self.n_matches) + 1, dtype=int)
             no_ref = (x != self.process.ref_idx + 1)

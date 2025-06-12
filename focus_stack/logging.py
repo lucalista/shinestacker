@@ -42,11 +42,8 @@ class TqdmLoggingHandler(logging.StreamHandler):
         else:
             logging.StreamHandler.emit(self, record)
 
-def setup_logging(
-    console_level=logging.INFO,
-    file_level=logging.DEBUG,
-    log_file=None
-):
+
+def setup_logging(console_level=logging.INFO, file_level=logging.DEBUG, log_file=None):
     if hasattr(setup_logging, '_called'):
         return
     setup_logging._called = True

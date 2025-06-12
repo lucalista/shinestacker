@@ -3,9 +3,10 @@ import re
 import logging
 from rich.logging import RichHandler
 from rich.console import Console
-from PySide6.QtWidgets import QTextEdit, QApplication, QVBoxLayout, QMessageBox
+from PySide6.QtWidgets import QTextEdit, QMessageBox
 from PySide6.QtGui import QTextCursor, QTextOption, QFont
 from PySide6.QtCore import QThread, QObject, Signal, Slot, Qt
+
 
 class QtLogFormatter(logging.Formatter):
     ANSI_ESCAPE = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
@@ -25,10 +26,11 @@ class QtLogFormatter(logging.Formatter):
 
 class HtmlRichHandler(RichHandler, QObject):
     html_ready = Signal(str)
+
     def __init__(self, text_edit):
-        QObject.__init__(self)    
-        RichHandler.__init__(self, show_time=False, show_path=False, show_level=False, 
-                        markup=True, console=self._create_console())
+        QObject.__init__(self)
+        RichHandler.__init__(self, show_time=False, show_path=False, show_level=False,
+                             markup=True, console=self._create_console())
         self.text_edit = text_edit
         self.setFormatter(QtLogFormatter())
         print(type(self.html_ready))
@@ -36,15 +38,14 @@ class HtmlRichHandler(RichHandler, QObject):
 
     def _create_console(self):
         return Console(file=open(os.devnull, "wt"), record=True,
-            width=256, height=20, highlight=False, soft_wrap=False,
-            color_system="truecolor", tab_size=4
-        )
+                       width=256, height=20, highlight=False, soft_wrap=False,
+                       color_system="truecolor", tab_size=4)
 
     def emit(self, record):
         try:
             super().emit(record)
             indent_width = 11 * self.text_edit.fontMetrics().averageCharWidth()
-            html_template = f'<p style="background-color: {{background}}; color: {{foreground}}; margin: 0; margin-left:{indent_width}px; text-indent:-{indent_width}px; white-space: pre-wrap"><code>{{code}}</code></p>'
+            html_template = f'<p style="background-color: {{background}}; color: {{foreground}}; margin: 0; margin-left:{indent_width}px; text-indent:-{indent_width}px; white-space: pre-wrap"><code>{{code}}</code></p>' # noqa
             html = self.console.export_html(clear=True, code_format=html_template, inline_styles=True)
             processed_html = self._process_html(html)
             # Emette il segnale dall'istanza
@@ -102,6 +103,7 @@ class QTextEditLogger(QTextEdit):
     def handle_exception(self, message):
         QMessageBox.warning(None, "Error", message)
 
+
 class LogWorker(QThread):
     log_signal = Signal(str, str)
     html_signal = Signal(str)
@@ -109,7 +111,8 @@ class LogWorker(QThread):
     exception_signal = Signal(str)
 
     def run(self):
-        pass  # Implement your thread logic here
+        pass
+
 
 class LogManager:
     def __init__(self):
@@ -131,16 +134,13 @@ class LogManager:
     def start_thread(self, worker: LogWorker):
         if not self.text_edit:
             raise RuntimeError("No text edit widgets registered")
-            
         self.before_thread_begins()
         logger = logging.getLogger(self.last_id_str())
         logger.setLevel(logging.DEBUG)
-        
         text_edit = self.text_edit[self.last_id()]
         self.handler = HtmlRichHandler(text_edit)
         self.handler.setLevel(logging.DEBUG)
         logger.addHandler(self.handler)
-        
         self.log_worker = worker
         self.log_worker.log_signal.connect(
             text_edit.handle_log_message,

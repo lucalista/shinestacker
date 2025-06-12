@@ -72,7 +72,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
             mean_img = mean_image(
                 file_paths=in_paths,
                 message_callback=lambda path: self.print_message_r(colored(f"reading frame: {path.split('/')[-1]}", "blue")),
-            )        
+            )
         blurred = cv2.GaussianBlur(mean_img, (self.blur_size, self.blur_size), 0)
         diff = cv2.absdiff(mean_img, blurred)
         channels = cv2.split(diff)

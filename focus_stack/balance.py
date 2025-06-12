@@ -205,8 +205,8 @@ class LumiCorrection(Correction):
                       show=self.plot_histograms)
         return [hist]
 
-    def end(self, ref_idx): 
-        if self.plot_histograms:       
+    def end(self, ref_idx):
+        if self.plot_histograms:
             plt.figure(figsize=(10, 5))
             x = np.arange(1, len(self.corrections) + 1, dtype=int)
             y = self.corrections
@@ -229,7 +229,7 @@ class RGBCorrection(Correction):
     def get_hist(self, image, idx):
         hist = [self.calc_hist_1ch(chan) for chan in cv2.split(image)]
         colors = ("r", "g", "b")
-        if self.plot_histograms:        
+        if self.plot_histograms:
             fig, axs = plt.subplots(1, 3, figsize=(10, 3), sharey=True)
             for c in [2, 1, 0]:
                 self.histo_plot(axs[c], hist[c], colors[c] + " luminosity", colors[c])
@@ -240,7 +240,7 @@ class RGBCorrection(Correction):
         return hist
 
     def end(self, ref_idx):
-        if self.plot_histograms:        
+        if self.plot_histograms:
             plt.figure(figsize=(10, 5))
             x = np.arange(1, len(self.corrections) + 1, dtype=int)
             y = self.corrections
@@ -270,7 +270,7 @@ class Ch2Correction(Correction):
 
     def get_hist(self, image, idx):
         hist = [self.calc_hist_1ch(chan) for chan in cv2.split(image)]
-        if self.plot_histograms:        
+        if self.plot_histograms:
             fig, axs = plt.subplots(1, 3, figsize=(10, 3), sharey=True)
             for c in range(3):
                 self.histo_plot(axs[c], hist[c], self.labels[c], self.colors[c])
@@ -280,7 +280,7 @@ class Ch2Correction(Correction):
         return hist[1:]
 
     def end(self, ref_idx):
-        if self.plot_histograms:        
+        if self.plot_histograms:
             plt.figure(figsize=(10, 5))
             x = np.arange(1, len(self.corrections) + 1, dtype=int)
             y = self.corrections
