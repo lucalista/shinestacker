@@ -1,62 +1,58 @@
-import os
 import re
 import logging
-from rich.logging import RichHandler
-from rich.console import Console
 from PySide6.QtWidgets import QTextEdit, QMessageBox
 from PySide6.QtGui import QTextCursor, QTextOption, QFont
 from PySide6.QtCore import QThread, QObject, Signal, Slot, Qt
+from ansi2html import Ansi2HTMLConverter
 
 
-class QtLogFormatter(logging.Formatter):
+class SimpleHtmlFormatter(logging.Formatter):
     ANSI_ESCAPE = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-    COLORS = {
-        'DEBUG': 'cyan',
-        'INFO': 'green',
-        'WARNING': 'yellow',
-        'ERROR': 'red',
-        'CRITICAL': 'red bold'
+    COLOR_MAP = {
+        'DEBUG': '#5c85d6',    # Blu chiaro
+        'INFO': '#50c878',     # Verde
+        'WARNING': '#ffcc00',  # Giallo
+        'ERROR': '#ff3333',    # Rosso
+        'CRITICAL': '#cc0066'  # Rosso scuro
     }
 
+    def __init__(self, fmt=None, datefmt=None, style='%'):
+        super().__init__()
+        self._fmt = fmt or "[%(levelname).3s] %(message)s"
+        self.datefmt = datefmt or "%H:%M:%S"
+
     def format(self, record):
-        color = self.COLORS.get(record.levelname, '')
-        fmt = f"[blue3][[{color}]%(levelname).3s[/] %(asctime)s] %(message)s[/]"  # noqa
-        return self.ANSI_ESCAPE.sub('', logging.Formatter(fmt).format(record).replace("\r", "").rstrip())
+        levelname = record.levelname
+        message = super().format(record)
+        converter = Ansi2HTMLConverter(inline=True, scheme="solarized")
+        message = message.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+        message = converter.convert(message, full=False)
+        message = self.ANSI_ESCAPE.sub('', message).replace("\r", "").rstrip()
+        color = self.COLOR_MAP.get(levelname, '#000000')
+        return f'''
+        <div style="margin: 2px 0; font-family: monospace;">
+            <span style="color: {color}; font-weight: bold;">[{levelname[:3]}]</span>
+            <span> {message}</span>
+        </div>
+        '''
 
 
-class HtmlRichHandler(RichHandler, QObject):
-    html_ready = Signal(str)
+class SimpleHtmlHandler(QObject, logging.Handler):
+    log_signal = Signal(str)
+    html_signal = Signal(str)
 
-    def __init__(self, text_edit):
+    def __init__(self):
         QObject.__init__(self)
-        RichHandler.__init__(self, show_time=False, show_path=False, show_level=False,
-                             markup=True, console=self._create_console())
-        self.text_edit = text_edit
-        self.setFormatter(QtLogFormatter())
-        print(type(self.html_ready))
-        self.html_ready.connect(self.text_edit.handle_html_message, Qt.ConnectionType.QueuedConnection)
-
-    def _create_console(self):
-        return Console(file=open(os.devnull, "wt"), record=True,
-                       width=256, height=20, highlight=False, soft_wrap=False,
-                       color_system="truecolor", tab_size=4)
+        logging.Handler.__init__(self)
+        self.setFormatter(SimpleHtmlFormatter())
 
     def emit(self, record):
         try:
-            super().emit(record)
-            indent_width = 11 * self.text_edit.fontMetrics().averageCharWidth()
-            html_template = f'<p style="background-color: {{background}}; color: {{foreground}}; margin: 0; margin-left:{indent_width}px; text-indent:-{indent_width}px; white-space: pre-wrap"><code>{{code}}</code></p>' # noqa
-            html = self.console.export_html(clear=True, code_format=html_template, inline_styles=True)
-            processed_html = self._process_html(html)
-            # Emette il segnale dall'istanza
-            self.html_ready.emit(processed_html)
+            msg = self.format(record)
+            # self.log_signal.emit(msg)
+            self.html_signal.emit(msg)
         except Exception as e:
-            logging.error(f"Error in HTML log handler: {str(e)}")
-
-    def _process_html(self, html):
-        pattern = r'<span style="color: #00ff00; text-decoration-color: #00ff00; font-weight: bold">(\d{2}:\d{2}:\d{2})</span>'
-        replacement = r'<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">\1</span>'
-        return re.sub(pattern, replacement, re.sub(r'\s+[\n]', '\n', html))
+            logging.error(f"Logging error: {e}")
 
 
 class QTextEditLogger(QTextEdit):
@@ -64,28 +60,35 @@ class QTextEditLogger(QTextEdit):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setup_ui()
+        self.id = self.__class__.__id_counter
+        self.__class__.__id_counter += 1
+
+    def setup_ui(self):
         self.setWordWrapMode(QTextOption.WrapMode.WordWrap)
         self.setAcceptRichText(True)
         self.setReadOnly(True)
-        font = QFont(['Menlo', 'DejaVu Sans Mono', 'consolas', 'Courier New', 'monospace'], 12)
-        font.setStyleHint(QFont.StyleHint.TypeWriter)
+        font = QFont(['Courier New', 'monospace'], 14)
+        font.setStyleHint(QFont.StyleHint.Monospace)
         self.setFont(font)
-        self.id = self.__class__.__id_counter
-        self.__class__.__id_counter += 1
 
     def id_str(self):
         return f"{self.__class__.__name__}_{self.id}"
 
     @Slot(str)
     def handle_html_message(self, html):
-        self.insertHtml(html)
-        self.ensureCursorVisible()
+        self.append_html(html)
 
-    def ensureCursorVisible(self):
+    @Slot(str)
+    def append_html(self, html):
+        self.append(html)
+        self.scroll_to_bottom()
+
+    def scroll_to_bottom(self):
         cursor = self.textCursor()
         cursor.movePosition(QTextCursor.End)
         self.setTextCursor(cursor)
-        self.verticalScrollBar().setValue(self.verticalScrollBar().maximum())
+        self.ensureCursorVisible()
 
     @Slot(str, str)
     def handle_log_message(self, level, message):
@@ -111,7 +114,7 @@ class LogWorker(QThread):
     exception_signal = Signal(str)
 
     def run(self):
-        pass
+        pass  # Implement your thread logic here
 
 
 class LogManager:
@@ -138,26 +141,16 @@ class LogManager:
         logger = logging.getLogger(self.last_id_str())
         logger.setLevel(logging.DEBUG)
         text_edit = self.text_edit[self.last_id()]
-        self.handler = HtmlRichHandler(text_edit)
+        self.handler = SimpleHtmlHandler()
         self.handler.setLevel(logging.DEBUG)
         logger.addHandler(self.handler)
+        self.handler.log_signal.connect(text_edit.append_html, Qt.QueuedConnection)
+        self.handler.html_signal.connect(text_edit.handle_html_message, Qt.QueuedConnection)
         self.log_worker = worker
-        self.log_worker.log_signal.connect(
-            text_edit.handle_log_message,
-            Qt.QueuedConnection
-        )
-        self.log_worker.html_signal.connect(
-            text_edit.handle_html_message,
-            Qt.QueuedConnection
-        )
-        self.log_worker.exception_signal.connect(
-            text_edit.handle_exception,
-            Qt.QueuedConnection
-        )
-        self.log_worker.end_signal.connect(
-            self.handle_end_message,
-            Qt.QueuedConnection
-        )
+        self.log_worker.log_signal.connect(text_edit.handle_log_message, Qt.QueuedConnection)
+        self.log_worker.html_signal.connect(text_edit.handle_html_message, Qt.QueuedConnection)
+        self.log_worker.exception_signal.connect(text_edit.handle_exception, Qt.QueuedConnection)
+        self.log_worker.end_signal.connect(self.handle_end_message, Qt.QueuedConnection)
         self.log_worker.start()
 
     def before_thread_begins(self):

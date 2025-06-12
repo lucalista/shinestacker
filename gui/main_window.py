@@ -33,9 +33,17 @@ class JobLogWorker(LogWorker):
         else:
             self._do_run_job()
         if job_error:
-            self.html_signal.emit('<hr><p style="font-weight: bold; color="#8B0000" margin-left: 10px;">Run failed.</p>')
+            self.html_signal.emit('''
+            <hr><div style="margin: 2px 0; font-family: monospace;">
+            <span style="color: #ff0000; font-weight: bold;">Job failed.</span>
+            </div>
+            ''')
         else:
-            self.html_signal.emit('<hr><p style="font-weight: bold; color="#008B00" margin-left: 10px;">Run completed.</p>')
+            self.html_signal.emit('''
+            <hr><div style="margin: 2px 0; font-family: monospace;">
+            <span style="color: #000080; font-weight: bold;">Job completed.</span>
+            </div>
+            ''')
         self.end_signal.emit(1)
 
 
@@ -60,9 +68,17 @@ class ProjectLogWorker(LogWorker):
         else:
             self._do_run_project()
         if job_error:
-            self.html_signal.emit('<hr><p style="font-weight: bold; color="#8B0000" margin-left: 10px;">Project failed.</p>')
+            self.html_signal.emit('''
+                <hr><div style="margin: 2px 0; font-family: monospace;">
+                <span style="color: #ff0000; font-weight: bold;">Run failed.</span>
+                </div>
+                ''')
         else:
-            self.html_signal.emit('<hr><p style="font-weight: bold; color="#008B00" margin-left: 10px;">Run completed.</p>')
+            self.html_signal.emit('''
+                <hr><div style="margin: 2px 0; font-family: monospace;">
+                <span style="color: #000080; font-weight: bold;">Run completed.</span>
+                </div>
+                ''')
         self.end_signal.emit(1)
 
 

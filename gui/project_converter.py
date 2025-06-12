@@ -21,13 +21,13 @@ class ProjectConverter:
         logger = logging.getLogger(__name__ if logger_name is None else logger_name)
         jobs = self.project(project, logger_name)
         for job in jobs:
-            logger.info("run: " + job.name)
+            logger.info("=== run: " + job.name + " ===")
             job.run()
 
     def run_job(self, job: ActionConfig, logger_name=None):
         logger = logging.getLogger(__name__ if logger_name is None else logger_name)
         job = self.job(job, logger_name)
-        logger.info("run: " + job.name)
+        logger.info("=== run: " + job.name + " ===")
         job.run()
 
     def project(self, project: Project, logger_name=None):
