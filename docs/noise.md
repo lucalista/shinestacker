@@ -14,6 +14,7 @@ Arguments for the constructor of ```NoiseDetection``` are:
 * ```output_path``` (optional): the subdirectory within ```working_path``` where aligned noise map is written. If not specified,  it is equal to  ```name```.
 * ```working_path```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_path```.
 * ```plot_path``` (optional, default: ```plots```): the directory within ```working_path``` that contains plots produced by the different actions
+* ```plot_histograms```  (optional, default: ```False```): if ```True```, plot a summary of the number of hot pixel by channel as a function of the applied threshold. It may be useful to set the optimal threshold values.
 * ```channel_thresholds``` (optional, default: ```(13, 13, 13)```): threshold values for noisy pixel detections in the color channels R, G, B, respectively.
 * ```blur_size``` (optional, default: 5): image blur amount for pixel detection.
 * ```file_name``` (optional, default: ```hot```): noise map filename. The noisy pixel map is stored bydefault in the file ```hot-rgb.png```. Noisy pixel maps individyally for the R, G and B channels are also stored in  ```hot-r.png```,  ```hot-g.png``` and  ```hot-b.png```, respectively.

@@ -42,7 +42,7 @@ def mean_image(file_paths, message_callback=None, progress_callback=None):
 
 class NoiseDetection(FrameMultiDirectory, JobBase):
     def __init__(self, name="noise-map", input_path='', output_path='', working_path='', plot_path='plots',
-                 channel_thresholds=(13, 13, 13), blur_size=5, file_name='',
+                 plot_histograms=False, channel_thresholds=(13, 13, 13), blur_size=5, file_name='',
                  plot_range=(5, 30)):
         FrameMultiDirectory.__init__(self, name, input_path, output_path, working_path, plot_path, 1, False)
         JobBase.__init__(self, name)
@@ -50,6 +50,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         self.blur_size = blur_size
         self.file_name = file_name if file_name != '' else _DEFAULT_NOISE_MAP_FILENAME
         self.plot_range = plot_range
+        self.plot_histograms = plot_histograms
 
     def hot_map(self, ch, th):
         return cv2.threshold(ch, th, 255, cv2.THRESH_BINARY)[1]
@@ -82,20 +83,21 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         self.print_message("writing hot pixels map file: " + self.file_name)
         cv2.imwrite(self.working_path + '/' + self.file_name, hot)
         th_range = range(*self.plot_range)
-        plt.figure(figsize=(10, 5))
-        x = np.array(list(th_range))
-        ys = [[np.count_nonzero(self.hot_map(ch, th) > 0) for th in th_range] for ch in channels]
-        for i, ch, y in zip(range(3), ['r', 'g', 'b'], ys):
-            plt.plot(x, y, c=ch, label=ch)
-            plt.plot([self.channel_thresholds[i], self.channel_thresholds[i]],
-                     [0, y[self.channel_thresholds[i] - int(x[0])]], c=ch, linestyle="--")
-        plt.xlabel('threshold')
-        plt.ylabel('# of hot pixels')
-        plt.legend()
-        plt.xlim(x[0], x[-1])
-        plt.ylim(0)
-        save_plot(self.working_path + "/" + self.plot_path + "/" + self.name + "-hot-pixels.pdf")
-        plt.close('all')
+        if self.plot_histograms:
+            plt.figure(figsize=(10, 5))
+            x = np.array(list(th_range))
+            ys = [[np.count_nonzero(self.hot_map(ch, th) > 0) for th in th_range] for ch in channels]
+            for i, ch, y in zip(range(3), ['r', 'g', 'b'], ys):
+                plt.plot(x, y, c=ch, label=ch)
+                plt.plot([self.channel_thresholds[i], self.channel_thresholds[i]],
+                         [0, y[self.channel_thresholds[i] - int(x[0])]], c=ch, linestyle="--")
+            plt.xlabel('threshold')
+            plt.ylabel('# of hot pixels')
+            plt.legend()
+            plt.xlim(x[0], x[-1])
+            plt.ylim(0)
+            save_plot(self.working_path + "/" + self.plot_path + "/" + self.name + "-hot-pixels.pdf")
+            plt.close('all')
 
 
 class MaskNoise:

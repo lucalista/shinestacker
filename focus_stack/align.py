@@ -201,20 +201,21 @@ class AlignFrames:
         self.n_matches = np.zeros(process.counts)
 
     def end(self):
-        plt.figure(figsize=(10, 5))
-        x = np.arange(1, len(self.n_matches) + 1, dtype=int)
-        no_ref = (x != self.process.ref_idx + 1)
-        x = x[no_ref]
-        y = self.n_matches[no_ref]
-        y_max = y[1] if self.process.ref_idx == 0 else y[-1] if self.process.ref_idx == len(y) - 1 else (y[self.process.ref_idx - 1] + y[self.process.ref_idx]) / 2 # noqa
+        if self.plot_histograms:        
+            plt.figure(figsize=(10, 5))
+            x = np.arange(1, len(self.n_matches) + 1, dtype=int)
+            no_ref = (x != self.process.ref_idx + 1)
+            x = x[no_ref]
+            y = self.n_matches[no_ref]
+            y_max = y[1] if self.process.ref_idx == 0 else y[-1] if self.process.ref_idx == len(y) - 1 else (y[self.process.ref_idx - 1] + y[self.process.ref_idx]) / 2 # noqa
 
-        plt.plot([self.process.ref_idx + 1, self.process.ref_idx + 1], [0, y_max], color='cornflowerblue', linestyle='--', label='reference frame')
-        plt.plot([x[0], x[-1]], [self.min_matches, self.min_matches], color='lightgray', linestyle='--', label='min. matches')
-        plt.plot(x, y, color='navy', label='matches')
-        plt.xlabel('frame')
-        plt.ylabel('# of matches')
-        plt.legend()
-        plt.ylim(0)
-        plt.xlim(x[0], x[-1])
-        save_plot(self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-matches.pdf")
-        plt.close('all')
+            plt.plot([self.process.ref_idx + 1, self.process.ref_idx + 1], [0, y_max], color='cornflowerblue', linestyle='--', label='reference frame')
+            plt.plot([x[0], x[-1]], [self.min_matches, self.min_matches], color='lightgray', linestyle='--', label='min. matches')
+            plt.plot(x, y, color='navy', label='matches')
+            plt.xlabel('frame')
+            plt.ylabel('# of matches')
+            plt.legend()
+            plt.ylim(0)
+            plt.xlim(x[0], x[-1])
+            save_plot(self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-matches.pdf")
+            plt.close('all')

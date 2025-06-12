@@ -395,14 +395,16 @@ class NoiseDetectionConfigurator(DefaultActionConfigurator):
                                placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
-        self.builder.add_field('plot_path', FIELD_REL_PATH, 'Plots path', required=False, default="plots",
-                               placeholder='relative to working path')
         self.builder.add_field('channel_thresholds', FIELD_INT_TUPLE, 'Noise threshold', required=False, size=3,
                                default=[13, 13, 13], labels=['r', 'g', 'b'], min=[1] * 3, max=[1000] * 3)
         self.builder.add_field('blur_size', FIELD_INT, 'Blur size (px)', required=False,
                                default=5, min=1, max=50)
         self.builder.add_field('file_name', FIELD_TEXT, 'File name', required=False,
                                default="hot", placeholder="hot")
+        self.add_bold_label("Miscellanea:")
+        self.builder.add_field('plot_histograms', FIELD_BOOL, 'Plot histograms', required=False, default=False)
+        self.builder.add_field('plot_path', FIELD_REL_PATH, 'Plots path', required=False, default="plots",
+                               placeholder='relative to working path')
         self.builder.add_field('plot_range', FIELD_INT_TUPLE, 'Plot range', required=False, size=2,
                                default=[5, 30], labels=['min', 'max'], min=[0] * 2, max=[1000] * 2)
 
@@ -531,6 +533,7 @@ class VignettingConfigurator(NoNameActionConfigurator):
                                default=1, min=0, max=1000)
         self.builder.add_field('max_correction', FIELD_FLOAT, 'Max. correction', required=False,
                                default=1, min=0, max=1, step=0.05)
+        self.add_bold_label("Miscellanea:")
         self.builder.add_field('apply_correction', FIELD_BOOL, 'Apply correction', required=False, default=True)
 
 
@@ -566,7 +569,7 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
         self.builder.add_field('border_blur', FIELD_FLOAT, 'Border blur', required=False,
                                default=50, min=0, max=1000, step=1)
         self.add_bold_label("Miscellanea:")
-        self.builder.add_field('plot_histograms', FIELD_BOOL, 'Plot histograms', required=False, default=True)
+        self.builder.add_field('plot_histograms', FIELD_BOOL, 'Plot histograms', required=False, default=False)
 
 
 class BalanceFramesConfigurator(NoNameActionConfigurator):
@@ -580,4 +583,5 @@ class BalanceFramesConfigurator(NoNameActionConfigurator):
                                default=8, min=1, max=256)
         self.builder.add_field('corr_map', FIELD_COMBO, 'Correction map', required=False,
                                options=['Linear', 'Gamma', 'Match histograms'], default='Linear')
-        self.builder.add_field('plot_histograms', FIELD_BOOL, 'Plot histograms', required=False, default=True)
+        self.add_bold_label("Miscellanea:")
+        self.builder.add_field('plot_histograms', FIELD_BOOL, 'Plot histograms', required=False, default=False)
