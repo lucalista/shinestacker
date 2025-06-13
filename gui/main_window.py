@@ -1,7 +1,6 @@
 from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout,
-                               QLabel, QComboBox, QMessageBox, QDialog, QPushButton)
-from PySide6.QtGui import QColor, QFontMetrics
-from PySide6.QtCore import Qt
+                               QLabel, QComboBox, QMessageBox, QDialog)
+from PySide6.QtGui import QColor
 from gui.project_model import (Project, ActionConfig)
 from gui.project_converter import ProjectConverter
 from gui.action_config import ActionConfigDialog
@@ -20,8 +19,6 @@ class ColorButton(QPushButton):
         self.setMinimumHeight(1)
         self.setMaximumHeight(70)
         self.set_color(QColor(200, 200, 255))
-#        fm = QFontMetrics(self.font())
-#        self.setFixedHeight(fm.height() + 8)
 
     def set_color(self, color):
         self.color = color
