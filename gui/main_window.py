@@ -20,9 +20,9 @@ class ColorButton(QPushButton):
         self.setMinimumHeight(1)
         self.setMaximumHeight(70)
         self.set_color(QColor(200, 200, 255))
-        fm = QFontMetrics(self.font())
-        self.setFixedHeight(fm.height() + 8)        
-    
+#        fm = QFontMetrics(self.font())
+#        self.setFixedHeight(fm.height() + 8)
+
     def set_color(self, color):
         self.color = color
         self.setStyleSheet(f"""
