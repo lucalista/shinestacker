@@ -126,24 +126,26 @@ class LogWorker(QThread):
 
 class LogManager:
     def __init__(self):
-        self.gui_loggers = []
+        self.gui_loggers = {}
+        self.last_gui_logger = None
         self.handler = None
         self.log_worker = None
         self.id = -1
 
     def last_id(self):
-        return self.gui_loggers[-1].id if self.gui_loggers else -1
+        return self.last_gui_logger.id if self.last_gui_logger else -1
 
     def last_id_str(self):
-        return self.gui_loggers[-1].id_str() if self.gui_loggers else ""
+        return self.last_gui_logger.id_str() if self.last_gui_logger else ""
 
     def add_gui_logger(self, gui_logger):
         if not isinstance(gui_logger, GuiLogger):
             raise ValueError("Only GuyLogger instances can be added")
-        self.gui_loggers.append(gui_logger)
+        self.gui_loggers[gui_logger.id] = gui_logger
+        self.last_gui_logger = gui_logger
 
     def start_thread(self, worker: LogWorker):
-        if not self.gui_loggers:
+        if len(self.gui_loggers) == 0:
             raise RuntimeError("No text edit widgets registered")
         self.before_thread_begins()
         self.id = self.last_id()
