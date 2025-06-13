@@ -34,7 +34,7 @@ class JobLogWorker(LogWorker):
 
     def run(self):
         job_error = False
-        self.status_signal.emit("Job processing...", 0)
+        self.status_signal.emit("Job running...", 0)
         if TRAP_RUN_EXCEPTIONS:
             try:
                 self._do_run_job()
@@ -72,7 +72,7 @@ class ProjectLogWorker(LogWorker):
 
     def run(self):
         job_error = False
-        self.status_signal.emit("Run processing...", 0)
+        self.status_signal.emit("Project running...", 0)
         if TRAP_RUN_EXCEPTIONS:
             try:
                 self._do_run_project()
@@ -87,7 +87,7 @@ class ProjectLogWorker(LogWorker):
             status = 1
             color = "#ff0000"
         else:
-            message = "Run ended successfully."
+            message = "Project ended successfully."
             status = 0
             color = "#000089"
         self.html_signal.emit(f'''
@@ -96,7 +96,7 @@ class ProjectLogWorker(LogWorker):
         </div>
         ''')
         self.end_signal.emit(status, message)
-        self.status_signal.emit("Run completed", 0)
+        self.status_signal.emit("Project completed", 0)
 
 
 class MainWindow(WindowMenu, LogManager):
