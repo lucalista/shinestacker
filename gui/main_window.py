@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout,
-                               QLabel, QComboBox, QMessageBox, QDialog)
+                               QLabel, QComboBox, QMessageBox, QDialog, QStatusBar)
 from gui.project_model import Project, ActionConfig
 from gui.project_converter import ProjectConverter
 from gui.action_config import ActionConfigDialog
@@ -12,6 +12,22 @@ matplotlib.use('agg')
 TRAP_RUN_EXCEPTIONS = False
 
 
+class RunWindow(QWidget):
+    __id_counter = 0
+    
+    def __init__(self):
+        QWidget.__init__(self, None)
+        self.id = self.__class__.__id_counter
+        self.__class__.__id_counter += 1
+        self.resize(1200, 600)        
+        layout = QVBoxLayout()
+        self.text_edit = QTextEditLogger(self)
+        self.status_bar = QStatusBar()
+        layout.addWidget(self.text_edit)
+        layout.addWidget(self.status_bar)
+        self.setLayout(layout)
+        self.status_bar.showMessage("Ready")
+        
 class JobLogWorker(LogWorker):
     def __init__(self, job, id_str):
         LogWorker.__init__(self)
@@ -33,18 +49,19 @@ class JobLogWorker(LogWorker):
         else:
             self._do_run_job()
         if job_error:
-            self.html_signal.emit('''
-            <hr><div style="margin: 2px 0; font-family: monospace;">
-            <span style="color: #ff0000; font-weight: bold;">Job failed.</span>
-            </div>
-            ''')
+            message = "Job failed."
+            status = 1
+            color = "#ff0000"
         else:
-            self.html_signal.emit('''
-            <hr><div style="margin: 2px 0; font-family: monospace;">
-            <span style="color: #000080; font-weight: bold;">Job completed.</span>
-            </div>
-            ''')
-        self.end_signal.emit(1)
+            message = "Job completed."
+            status = 0
+            color = "#000089"
+        self.html_signal.emit(f'''
+        <hr><div style="margin: 2px 0; font-family: monospace;">
+        <span style="color: {color}; font-weight: bold;">{message}</span>
+        </div>
+        ''')
+        self.end_signal.emit(status, message)
 
 
 class ProjectLogWorker(LogWorker):
@@ -67,22 +84,26 @@ class ProjectLogWorker(LogWorker):
                 self.exception_signal.emit(f'Project failed:\n{str(e)}')
         else:
             self._do_run_project()
+
         if job_error:
-            self.html_signal.emit('''
-                <hr><div style="margin: 2px 0; font-family: monospace;">
-                <span style="color: #ff0000; font-weight: bold;">Run failed.</span>
-                </div>
-                ''')
+            message = "Run failed."
+            status = 1
+            color = "#ff0000"
         else:
-            self.html_signal.emit('''
-                <hr><div style="margin: 2px 0; font-family: monospace;">
-                <span style="color: #000080; font-weight: bold;">Run completed.</span>
-                </div>
-                ''')
-        self.end_signal.emit(1)
+            message = "Run completed."
+            status = 0
+            color = "#000089"
+        self.html_signal.emit(f'''
+        <hr><div style="margin: 2px 0; font-family: monospace;">
+        <span style="color: {color}; font-weight: bold;">{message}</span>
+        </div>
+        ''')
+        self.end_signal.emit(status, message)
 
 
 class MainWindow(WindowMenu, LogManager):
+    _windows = {}
+    
     def __init__(self):
         WindowMenu.__init__(self)
         LogManager.__init__(self)
@@ -174,17 +195,17 @@ class MainWindow(WindowMenu, LogManager):
         self.run_job_button.setEnabled(False)
         self.run_all_jobs_button.setEnabled(False)
 
-    def _do_handle_end_message(self, int):
+    def _do_handle_end_message(self, status, message):
         self.run_job_button.setEnabled(True)
         self.run_all_jobs_button.setEnabled(True)
 
     def show_new_window(self, title=None):
-        text_edit = QTextEditLogger()
+        new_window = RunWindow()
         if title is not None:
-            text_edit.setWindowTitle(title)
-        text_edit.resize(1200, 600)
-        text_edit.show()
-        self.add_text_edit(text_edit)
+            new_window.setWindowTitle(title)
+        new_window.show()
+        self._windows[self.last_id()] = new_window
+        self.add_text_edit(new_window.text_edit)
         return self.last_id_str()
 
     def run_job(self):

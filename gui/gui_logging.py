@@ -110,7 +110,7 @@ class QTextEditLogger(QTextEdit):
 class LogWorker(QThread):
     log_signal = Signal(str, str)
     html_signal = Signal(str)
-    end_signal = Signal(int)
+    end_signal = Signal(int, str)
     exception_signal = Signal(str)
 
     def run(self):
@@ -122,6 +122,7 @@ class LogManager:
         self.text_edit = []
         self.handler = None
         self.log_worker = None
+        self.id = -1
 
     def last_id(self):
         return self.text_edit[-1].id if self.text_edit else -1
@@ -138,9 +139,10 @@ class LogManager:
         if not self.text_edit:
             raise RuntimeError("No text edit widgets registered")
         self.before_thread_begins()
+        self.id = self.last_id()
         logger = logging.getLogger(self.last_id_str())
         logger.setLevel(logging.DEBUG)
-        text_edit = self.text_edit[self.last_id()]
+        text_edit = self.text_edit[self.id]
         self.handler = SimpleHtmlHandler()
         self.handler.setLevel(logging.DEBUG)
         logger.addHandler(self.handler)
@@ -156,9 +158,9 @@ class LogManager:
     def before_thread_begins(self):
         pass
 
-    def _do_handle_end_message(self, status):
+    def _do_handle_end_message(self, id, message):
         pass
 
     @Slot(int)
-    def handle_end_message(self, status):
-        self._do_handle_end_message(status)
+    def handle_end_message(self, status, message):
+        self._do_handle_end_message(status, message)
