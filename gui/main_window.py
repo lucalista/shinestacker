@@ -1,5 +1,7 @@
 from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout,
-                               QLabel, QComboBox, QMessageBox, QDialog)
+                               QLabel, QComboBox, QMessageBox, QDialog, QPushButton)
+from PySide6.QtGui import QColor, QFontMetrics
+from PySide6.QtCore import Qt
 from gui.project_model import (Project, ActionConfig)
 from gui.project_converter import ProjectConverter
 from gui.action_config import ActionConfigDialog
@@ -12,11 +14,47 @@ matplotlib.use('agg')
 TRAP_RUN_EXCEPTIONS = False
 
 
+class ColorButton(QPushButton):
+    def __init__(self, text, parent=None):
+        super().__init__(text, parent)
+        self.setMinimumHeight(1)
+        self.setMaximumHeight(70)
+        self.set_color(QColor(200, 200, 255))
+        fm = QFontMetrics(self.font())
+        self.setFixedHeight(fm.height() + 8)        
+    
+    def set_color(self, color):
+        self.color = color
+        self.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {self.color.name()};
+                color: black;
+                font-weight: bold;
+                border: none;
+                min-height: 1px;
+                padding: 5px;
+                margin: 0px;
+            }}
+        """)
+
+
 class RunWindow(QTextEditLogger):
-    def __init__(self):
+    def __init__(self, labels):
         QTextEditLogger.__init__(self)
         self.resize(1200, 600)
         layout = QVBoxLayout()
+        color_widgets = []
+        if len(labels) > 0:
+            row = QWidget(self)
+            h_layout = QHBoxLayout(row)
+            h_layout.setContentsMargins(0, 0, 0, 0)
+            h_layout.setSpacing(2)
+            for label in labels:
+                widget = ColorButton(label)
+                widget.setMinimumHeight(80)
+                h_layout.addWidget(widget, stretch=1)
+                color_widgets.append(widget)
+            layout.addWidget(row)
         layout.addWidget(self.text_edit)
         layout.addWidget(self.status_bar)
         self.setLayout(layout)
@@ -197,8 +235,8 @@ class MainWindow(WindowMenu, LogManager):
         self.run_job_button.setEnabled(True)
         self.run_all_jobs_button.setEnabled(True)
 
-    def show_new_window(self, title=None):
-        new_window = RunWindow()
+    def show_new_window(self, title, labels=[]):
+        new_window = RunWindow(labels)
         if title is not None:
             new_window.setWindowTitle(title)
         new_window.show()
@@ -213,7 +251,8 @@ class MainWindow(WindowMenu, LogManager):
             return
         if current_index >= 0:
             job = self.project.jobs[current_index]
-            id_str = self.show_new_window("Run job: " + job.params["name"])
+            labels = [self.action_text(a) for a in job.sub_actions]
+            id_str = self.show_new_window("Run job: " + job.params["name"], labels)
             worker = JobLogWorker(job, id_str)
             self.start_thread(worker)
 
