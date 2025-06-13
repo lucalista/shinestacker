@@ -1,11 +1,11 @@
 from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout,
-                               QLabel, QComboBox, QMessageBox, QDialog, QStatusBar)
-from gui.project_model import Project, ActionConfig
+                               QLabel, QComboBox, QMessageBox, QDialog)
+from gui.project_model import (Project, ActionConfig)
 from gui.project_converter import ProjectConverter
 from gui.action_config import ActionConfigDialog
-from gui.project_model import SUB_ACTION_TYPES, ACTION_TYPES, ACTION_COMBO
+from gui.project_model import (SUB_ACTION_TYPES, ACTION_TYPES, ACTION_COMBO)
 from gui.menu import WindowMenu
-from gui.gui_logging import LogManager, LogWorker, QTextEditLogger
+from gui.gui_logging import (LogManager, LogWorker, QTextEditLogger)
 import matplotlib
 matplotlib.use('agg')
 
@@ -15,14 +15,13 @@ TRAP_RUN_EXCEPTIONS = False
 class RunWindow(QTextEditLogger):
     def __init__(self):
         QTextEditLogger.__init__(self)
-        self.resize(1200, 600)        
+        self.resize(1200, 600)
         layout = QVBoxLayout()
-        self.status_bar = QStatusBar()
         layout.addWidget(self.text_edit)
         layout.addWidget(self.status_bar)
         self.setLayout(layout)
-        self.status_bar.showMessage("Ready")
-        
+
+
 class JobLogWorker(LogWorker):
     def __init__(self, job, id_str):
         LogWorker.__init__(self)
@@ -35,6 +34,7 @@ class JobLogWorker(LogWorker):
 
     def run(self):
         job_error = False
+        self.status_signal.emit("Job processing...", 0)
         if TRAP_RUN_EXCEPTIONS:
             try:
                 self._do_run_job()
@@ -48,7 +48,7 @@ class JobLogWorker(LogWorker):
             status = 1
             color = "#ff0000"
         else:
-            message = "Job completed."
+            message = "Job ended successfully."
             status = 0
             color = "#000089"
         self.html_signal.emit(f'''
@@ -57,6 +57,7 @@ class JobLogWorker(LogWorker):
         </div>
         ''')
         self.end_signal.emit(status, message)
+        self.status_signal.emit("Job completed", 0)
 
 
 class ProjectLogWorker(LogWorker):
@@ -71,6 +72,7 @@ class ProjectLogWorker(LogWorker):
 
     def run(self):
         job_error = False
+        self.status_signal.emit("Run processing...", 0)
         if TRAP_RUN_EXCEPTIONS:
             try:
                 self._do_run_project()
@@ -85,7 +87,7 @@ class ProjectLogWorker(LogWorker):
             status = 1
             color = "#ff0000"
         else:
-            message = "Run completed."
+            message = "Run ended successfully."
             status = 0
             color = "#000089"
         self.html_signal.emit(f'''
@@ -94,11 +96,12 @@ class ProjectLogWorker(LogWorker):
         </div>
         ''')
         self.end_signal.emit(status, message)
+        self.status_signal.emit("Run completed", 0)
 
 
 class MainWindow(WindowMenu, LogManager):
     _windows = {}
-    
+
     def __init__(self):
         WindowMenu.__init__(self)
         LogManager.__init__(self)

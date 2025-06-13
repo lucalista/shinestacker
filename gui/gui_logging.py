@@ -1,6 +1,6 @@
 import re
 import logging
-from PySide6.QtWidgets import QWidget, QTextEdit, QMessageBox
+from PySide6.QtWidgets import QWidget, QTextEdit, QMessageBox, QStatusBar
 from PySide6.QtGui import QTextCursor, QTextOption, QFont
 from PySide6.QtCore import QThread, QObject, Signal, Slot, Qt
 from ansi2html import Ansi2HTMLConverter
@@ -62,7 +62,7 @@ class GuiLogger(QWidget):
         super().__init__(parent)
         self.id = self.__class__.__id_counter
         self.__class__.__id_counter += 1
-        
+
     def id_str(self):
         return f"{self.__class__.__name__}_{self.id}"
 
@@ -89,7 +89,8 @@ class QTextEditLogger(GuiLogger):
         font = QFont(['Courier New', 'monospace'], 14)
         font.setStyleHint(QFont.StyleHint.Monospace)
         text_edit.setFont(font)
-        self.text_edit = text_edit 
+        self.text_edit = text_edit
+        self.status_bar = QStatusBar()
 
     @Slot(str)
     def handle_html_message(self, html):
@@ -103,6 +104,10 @@ class QTextEditLogger(GuiLogger):
         self.text_edit.setTextCursor(cursor)
         self.text_edit.ensureCursorVisible()
 
+    @Slot(str, str)
+    def handle_status_message(self, message, timeout):
+        self.status_bar.showMessage(message, timeout)
+
     @Slot(str)
     def handle_exception(self, message):
         QMessageBox.warning(None, "Error", message)
@@ -112,6 +117,7 @@ class LogWorker(QThread):
     log_signal = Signal(str, str)
     html_signal = Signal(str)
     end_signal = Signal(int, str)
+    status_signal = Signal(str, int)
     exception_signal = Signal(str)
 
     def run(self):
@@ -152,6 +158,7 @@ class LogManager:
         self.log_worker = worker
         self.log_worker.log_signal.connect(gui_logger.handle_log_message, Qt.QueuedConnection)
         self.log_worker.html_signal.connect(gui_logger.handle_html_message, Qt.QueuedConnection)
+        self.log_worker.status_signal.connect(gui_logger.handle_status_message, Qt.QueuedConnection)
         self.log_worker.exception_signal.connect(gui_logger.handle_exception, Qt.QueuedConnection)
         self.log_worker.end_signal.connect(self.handle_end_message, Qt.QueuedConnection)
         self.log_worker.start()
@@ -159,7 +166,7 @@ class LogManager:
     def before_thread_begins(self):
         pass
 
-    def _do_handle_end_message(self, id, message):
+    def _do_handle_end_message(self, status, message):
         pass
 
     @Slot(int)
