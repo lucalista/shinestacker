@@ -12,16 +12,11 @@ matplotlib.use('agg')
 TRAP_RUN_EXCEPTIONS = False
 
 
-class RunWindow(QWidget):
-    __id_counter = 0
-    
+class RunWindow(QTextEditLogger):
     def __init__(self):
-        QWidget.__init__(self, None)
-        self.id = self.__class__.__id_counter
-        self.__class__.__id_counter += 1
+        QTextEditLogger.__init__(self)
         self.resize(1200, 600)        
         layout = QVBoxLayout()
-        self.text_edit = QTextEditLogger(self)
         self.status_bar = QStatusBar()
         layout.addWidget(self.text_edit)
         layout.addWidget(self.status_bar)
@@ -205,7 +200,7 @@ class MainWindow(WindowMenu, LogManager):
             new_window.setWindowTitle(title)
         new_window.show()
         self._windows[self.last_id()] = new_window
-        self.add_text_edit(new_window.text_edit)
+        self.add_gui_logger(new_window)
         return self.last_id_str()
 
     def run_job(self):

@@ -1,6 +1,6 @@
 import re
 import logging
-from PySide6.QtWidgets import QTextEdit, QMessageBox
+from PySide6.QtWidgets import QWidget, QTextEdit, QMessageBox
 from PySide6.QtGui import QTextCursor, QTextOption, QFont
 from PySide6.QtCore import QThread, QObject, Signal, Slot, Qt
 from ansi2html import Ansi2HTMLConverter
@@ -55,40 +55,16 @@ class SimpleHtmlHandler(QObject, logging.Handler):
             logging.error(f"Logging error: {e}")
 
 
-class QTextEditLogger(QTextEdit):
+class GuiLogger(QWidget):
     __id_counter = 0
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setup_ui()
         self.id = self.__class__.__id_counter
         self.__class__.__id_counter += 1
-
-    def setup_ui(self):
-        self.setWordWrapMode(QTextOption.WrapMode.WordWrap)
-        self.setAcceptRichText(True)
-        self.setReadOnly(True)
-        font = QFont(['Courier New', 'monospace'], 14)
-        font.setStyleHint(QFont.StyleHint.Monospace)
-        self.setFont(font)
-
+        
     def id_str(self):
         return f"{self.__class__.__name__}_{self.id}"
-
-    @Slot(str)
-    def handle_html_message(self, html):
-        self.append_html(html)
-
-    @Slot(str)
-    def append_html(self, html):
-        self.append(html)
-        self.scroll_to_bottom()
-
-    def scroll_to_bottom(self):
-        cursor = self.textCursor()
-        cursor.movePosition(QTextCursor.End)
-        self.setTextCursor(cursor)
-        self.ensureCursorVisible()
 
     @Slot(str, str)
     def handle_log_message(self, level, message):
@@ -101,6 +77,31 @@ class QTextEditLogger(QTextEdit):
             "CRITICAL": logger.critical,
         }.get(level, logger.info)
         log_func(message)
+
+
+class QTextEditLogger(GuiLogger):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        text_edit = QTextEdit(self)
+        text_edit.setWordWrapMode(QTextOption.WrapMode.WordWrap)
+        text_edit.setAcceptRichText(True)
+        text_edit.setReadOnly(True)
+        font = QFont(['Courier New', 'monospace'], 14)
+        font.setStyleHint(QFont.StyleHint.Monospace)
+        text_edit.setFont(font)
+        self.text_edit = text_edit 
+
+    @Slot(str)
+    def handle_html_message(self, html):
+        self.append_html(html)
+
+    @Slot(str)
+    def append_html(self, html):
+        self.text_edit.append(html)
+        cursor = self.text_edit.textCursor()
+        cursor.movePosition(QTextCursor.End)
+        self.text_edit.setTextCursor(cursor)
+        self.text_edit.ensureCursorVisible()
 
     @Slot(str)
     def handle_exception(self, message):
@@ -119,39 +120,39 @@ class LogWorker(QThread):
 
 class LogManager:
     def __init__(self):
-        self.text_edit = []
+        self.gui_loggers = []
         self.handler = None
         self.log_worker = None
         self.id = -1
 
     def last_id(self):
-        return self.text_edit[-1].id if self.text_edit else -1
+        return self.gui_loggers[-1].id if self.gui_loggers else -1
 
     def last_id_str(self):
-        return self.text_edit[-1].id_str() if self.text_edit else ""
+        return self.gui_loggers[-1].id_str() if self.gui_loggers else ""
 
-    def add_text_edit(self, text_edit):
-        if not isinstance(text_edit, QTextEditLogger):
-            raise ValueError("Only QTextEditLogger instances can be added")
-        self.text_edit.append(text_edit)
+    def add_gui_logger(self, gui_logger):
+        if not isinstance(gui_logger, GuiLogger):
+            raise ValueError("Only GuyLogger instances can be added")
+        self.gui_loggers.append(gui_logger)
 
     def start_thread(self, worker: LogWorker):
-        if not self.text_edit:
+        if not self.gui_loggers:
             raise RuntimeError("No text edit widgets registered")
         self.before_thread_begins()
         self.id = self.last_id()
         logger = logging.getLogger(self.last_id_str())
         logger.setLevel(logging.DEBUG)
-        text_edit = self.text_edit[self.id]
+        gui_logger = self.gui_loggers[self.id]
         self.handler = SimpleHtmlHandler()
         self.handler.setLevel(logging.DEBUG)
         logger.addHandler(self.handler)
-        self.handler.log_signal.connect(text_edit.append_html, Qt.QueuedConnection)
-        self.handler.html_signal.connect(text_edit.handle_html_message, Qt.QueuedConnection)
+        self.handler.log_signal.connect(gui_logger.append_html, Qt.QueuedConnection)
+        self.handler.html_signal.connect(gui_logger.handle_html_message, Qt.QueuedConnection)
         self.log_worker = worker
-        self.log_worker.log_signal.connect(text_edit.handle_log_message, Qt.QueuedConnection)
-        self.log_worker.html_signal.connect(text_edit.handle_html_message, Qt.QueuedConnection)
-        self.log_worker.exception_signal.connect(text_edit.handle_exception, Qt.QueuedConnection)
+        self.log_worker.log_signal.connect(gui_logger.handle_log_message, Qt.QueuedConnection)
+        self.log_worker.html_signal.connect(gui_logger.handle_html_message, Qt.QueuedConnection)
+        self.log_worker.exception_signal.connect(gui_logger.handle_exception, Qt.QueuedConnection)
         self.log_worker.end_signal.connect(self.handle_end_message, Qt.QueuedConnection)
         self.log_worker.start()
 
