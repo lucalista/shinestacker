@@ -106,14 +106,14 @@ class MainWindow(WindowMenu, LogManager):
         self.run_job_button.setEnabled(True)
         self.run_all_jobs_button.setEnabled(True)
 
-    def show_new_window(self, title, labels=[]):
+    def create_new_window(self, title, labels=[]):
         new_window = RunWindow(labels)
         if title is not None:
             new_window.setWindowTitle(title)
         new_window.show()
         self._windows[self.last_id()] = new_window
         self.add_gui_logger(new_window)
-        return self.last_id_str()
+        return new_window, self.last_id_str()
 
     def run_job(self):
         current_index = self.job_list.currentRow()
@@ -123,12 +123,14 @@ class MainWindow(WindowMenu, LogManager):
         if current_index >= 0:
             job = self.project.jobs[current_index]
             labels = [self.action_text(a) for a in job.sub_actions]
-            id_str = self.show_new_window("Run job: " + job.params["name"], labels)
+            new_window, id_str = self.create_new_window("Run job: " + job.params["name"], labels)
             worker = JobLogWorker(job, id_str)
+            worker.before_action_signal.connect(new_window.handle_before_action)
+            worker.after_action_signal.connect(new_window.handle_after_action)
             self.start_thread(worker)
 
     def run_all_jobs(self):
-        id_str = self.show_new_window("Run project")
+        new_window, id_str = self.create_new_window("Run project")
         worker = ProjectLogWorker(self.project, id_str)
         self.start_thread(worker)
 
