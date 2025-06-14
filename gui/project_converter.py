@@ -17,21 +17,21 @@ import logging
 
 
 class ProjectConverter:
-    def run_project(self, project: Project, logger_name=None):
+    def run_project(self, project: Project, logger_name=None, callbacks=None):
         logger = logging.getLogger(__name__ if logger_name is None else logger_name)
-        jobs = self.project(project, logger_name)
+        jobs = self.project(project, logger_name, callbacks)
         for job in jobs:
             logger.info("=== run: " + job.name + " ===")
             job.run()
 
-    def run_job(self, job: ActionConfig, logger_name=None):
+    def run_job(self, job: ActionConfig, logger_name=None, callbacks=None):
         logger = logging.getLogger(__name__ if logger_name is None else logger_name)
-        job = self.job(job, logger_name)
+        job = self.job(job, logger_name, callbacks)
         logger.info("=== run: " + job.name + " ===")
         job.run()
 
-    def project(self, project: Project, logger_name=None):
-        return [self.job(j, logger_name) for j in project.jobs]
+    def project(self, project: Project, logger_name=None, callbacks=None):
+        return [self.job(j, logger_name, callbacks) for j in project.jobs]
 
     def filter_dict_keys(self, dict, prefix):
         dict_with = {k.replace(prefix, ''): v for (k, v) in dict.items() if k.startswith(prefix)}
@@ -82,11 +82,11 @@ class ProjectConverter:
         else:
             raise Exception(f"Cannot convert action of type {action_config.type_name}.")
 
-    def job(self, action_config: ActionConfig, logger_name=None):
+    def job(self, action_config: ActionConfig, logger_name=None, callbacks=None):
         name = action_config.params.get('name', '')
         working_path = action_config.params.get('working_path', '')
         input_path = action_config.params.get('input_path', '')
-        stack_job = StackJob(name, working_path, input_path, logger_name=logger_name)
+        stack_job = StackJob(name, working_path, input_path, logger_name=logger_name, callbacks=callbacks)
         for sub in action_config.sub_actions:
             action = self.action(sub)
             if action is not None:

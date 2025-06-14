@@ -8,14 +8,14 @@ import os
 
 
 class StackJob(Job):
-    def __init__(self, name, working_path, input_path='', logger_name=None, log_file="logs/focusstack.log"):
+    def __init__(self, name, working_path, input_path='', logger_name=None, log_file="logs/focusstack.log", callbacks=None):
         check_path_exists(working_path)
         self.working_path = working_path
         if input_path == '':
             self.paths = []
         else:
             self.paths = [input_path]
-        Job.__init__(self, name, logger_name, log_file)
+        Job.__init__(self, name, logger_name, log_file, callbacks)
 
     def init(self, a):
         a.init(self)

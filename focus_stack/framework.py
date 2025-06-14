@@ -29,9 +29,18 @@ class JobBase:
         else:
             self.begin_r, self.end_r = LINE_UP, None
 
+    def callback(self, key, *args):
+        has_callbacks = hasattr(self, 'callbacks')
+        if has_callbacks and self.callbacks is not None:
+            callback = self.callbacks.get(key, None)
+            if callback:
+                callback(*args)
+
     def run(self):
         self.__t0 = time.time()
+        self.callback('before_run')
         self.run_core()
+        self.callback('after_run')
         self.get_logger().info(
             colored(self.name + ": ", "green",
                     attrs=["bold"]) + colored(
