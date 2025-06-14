@@ -55,9 +55,13 @@ class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
         self.overlap = overlap
 
     def begin(self):
+        ActionList.begin(self)
         fnames = self.folder_filelist(self.input_dir)
         self.__chunks = [fnames[x:x + self.frames] for x in range(0, len(fnames) - self.overlap, self.frames - self.overlap)]
-        self.counts = len(self.__chunks)
+        self.set_counts(len(self.__chunks))
+
+    def end(self):
+        ActionList.end(self)
 
     def run_step(self):
         self.print_message_r(colored("fusing bunch: {}".format(self.count), "blue"))

@@ -122,11 +122,15 @@ class ActionList(JobBase):
     def __init__(self, name):
         JobBase.__init__(self, name)
 
+    def set_counts(self, counts):
+        self.counts = counts
+        self.callback('step_counts', self.id, self.counts)
+
     def begin(self):
-        pass
+        self.callback('begin_steps', self.id)
 
     def end(self):
-        pass
+        self.callback('end_steps', self.id)
 
     def __iter__(self):
         self.count = 1
@@ -137,6 +141,7 @@ class ActionList(JobBase):
             self.run_step()
             x = self.count
             self.count += 1
+            self.callback('after_step', self.id, self.count)            
             return x
         else:
             raise StopIteration

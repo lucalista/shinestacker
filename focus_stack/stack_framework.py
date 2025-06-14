@@ -148,10 +148,14 @@ class FramesRefActions(FrameDirectory, ActionList):
         self.step_process = step_process
 
     def begin(self):
+        ActionList.begin(self)
         self.set_filelist()
-        self.counts = len(self.filenames)
+        self.set_counts(len(self.filenames))
         if self.ref_idx == -1:
             self.ref_idx = len(self.filenames) // 2
+
+    def end(self):
+        ActionList.end(self)
 
     def run_frame(self, idx, ref_idx):
         assert False, 'abstract method'
