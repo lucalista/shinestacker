@@ -127,6 +127,10 @@ class MainWindow(WindowMenu, LogManager):
             worker = JobLogWorker(job, id_str)
             worker.before_action_signal.connect(new_window.handle_before_action)
             worker.after_action_signal.connect(new_window.handle_after_action)
+            worker.step_count_signal.connect(new_window.handle_step_count)
+            worker.begin_steps_signal.connect(new_window.handle_begin_steps)
+            worker.end_steps_signal.connect(new_window.handle_end_steps)
+            worker.after_step_signal.connect(new_window.handle_after_step)
             self.start_thread(worker)
 
     def run_all_jobs(self):

@@ -1,5 +1,5 @@
 from config.config import config
-from PySide6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QHBoxLayout
+from PySide6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QProgressBar
 from PySide6.QtGui import QColor
 from PySide6.QtCore import Signal, Slot
 from gui.project_converter import ProjectConverter
@@ -41,27 +41,72 @@ class RunWindow(QTextEditLogger):
             h_layout.setSpacing(2)
             for label in labels:
                 widget = ColorButton(label)
-                widget.setMinimumHeight(80)
                 h_layout.addWidget(widget, stretch=1)
                 self.color_widgets.append(widget)
             layout.addWidget(row)
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setMinimum(0)
+        self.set_progress_bar_style()
+        self.progress_bar.setGeometry(200, 80, 250, 20)
+        self.progress_bar.setRange(0, 10)
+        self.progress_bar.setValue(0)
+        layout.addWidget(self.progress_bar)
         layout.addWidget(self.text_edit)
         layout.addWidget(self.status_bar)
         self.setLayout(layout)
+
+    def set_progress_bar_style(self):
+        self.progress_bar.setStyleSheet("""
+        QProgressBar {
+          border: 2px solid #808080;
+          border-radius: 5px;
+          text-align: center;
+          font-weight: bold;
+          font-size: 14px;
+          background-color: white;
+          color: #000040;
+          min-height: 1px;
+        }
+        QProgressBar::chunk {
+          background-color: #A0A0FF;
+        }
+        """)
 
     @Slot(int)
     def handle_before_action(self, id):
         if 0 <= id < len(self.color_widgets):
             self.color_widgets[id].set_color(160, 160, 200)
+            self.progress_bar.setValue(0)
     
     @Slot(int)
     def handle_after_action(self, id):
         if 0 <= id < len(self.color_widgets):
             self.color_widgets[id].set_color(160, 200, 160)
+            self.progress_bar.setValue(self.progress_bar.maximum())
+
+    @Slot(int, int)
+    def handle_step_count(self, id, steps):
+        self.progress_bar.setMaximum(steps)
+
+    @Slot(int, int)
+    def handle_begin_steps(self, id):
+        self.progress_bar.setValue(0)
+
+    @Slot(int, int)
+    def handle_end_steps(self, id):
+        self.progress_bar.setValue(self.progress_bar.maximum())
+
+    @Slot(int, int)
+    def handle_after_step(self, id, step):
+        self.progress_bar.setValue(step)
     
 class JobLogWorker(LogWorker):
     before_action_signal = Signal(int)
     after_action_signal = Signal(int)
+    step_count_signal = Signal(int, int)
+    begin_steps_signal = Signal(int)
+    end_steps_signal = Signal(int)
+    after_step_signal = Signal(int, int)
 
     def __init__(self, job, id_str):
         LogWorker.__init__(self)
@@ -74,9 +119,28 @@ class JobLogWorker(LogWorker):
     def after_run(self, id):
         self.after_action_signal.emit(id)
 
+    def step_count(self, id, steps):
+        self.step_count_signal.emit(id, steps)
+
+    def begin_steps(self, id):
+        self.begin_steps_signal.emit(id)
+
+    def end_steps(self, id):
+        self.end_steps_signal.emit(id)
+
+    def after_step(self, id, step):
+        self.after_step_signal.emit(id, step)
+        
     def _do_run_job(self):
         converter = ProjectConverter()
-        callbacks = {'before_run': self.before_run, 'after_run': self.after_run}
+        callbacks = {
+            'before_run': self.before_run,
+            'after_run': self.after_run,
+            'step_count': self.step_count,
+            'begin_steps': self.begin_steps,
+            'end_steps': self.end_steps,
+            'after_step': self.after_step
+        }
         converter.run_job(self.job, self.id_str, callbacks)
 
     def run(self):
