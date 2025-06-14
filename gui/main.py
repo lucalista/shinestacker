@@ -1,5 +1,7 @@
 import sys
 sys.path.append('../')
+from config.config import config
+config.init(TRAP_RUN_EXCEPTIONS=False)
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt

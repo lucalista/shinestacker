@@ -10,6 +10,7 @@ class _Config:
 
     def _init_defaults(self):
         self._DISABLE_TQDM = True
+        self._TRAP_RUN_EXCEPTIONS = True
 
     def init(self, **kwargs):
         if self._initialized:
@@ -24,6 +25,10 @@ class _Config:
     @property
     def DISABLE_TQDM(self):
         return self._DISABLE_TQDM
+
+    @property
+    def TRAP_RUN_EXCEPTIONS(self):
+        return self._TRAP_RUN_EXCEPTIONS
 
     def __setattr__(self, name, value):
         if self._initialized and name.startswith('_'):

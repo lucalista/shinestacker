@@ -1,3 +1,4 @@
+from config.config import config
 from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout,
                                QLabel, QComboBox, QMessageBox, QDialog)
 from PySide6.QtGui import QColor
@@ -9,8 +10,6 @@ from gui.menu import WindowMenu
 from gui.gui_logging import (LogManager, LogWorker, QTextEditLogger)
 import matplotlib
 matplotlib.use('agg')
-
-TRAP_RUN_EXCEPTIONS = False
 
 
 class ColorButton(QPushButton):
@@ -70,7 +69,7 @@ class JobLogWorker(LogWorker):
     def run(self):
         job_error = False
         self.status_signal.emit("Job running...", 0)
-        if TRAP_RUN_EXCEPTIONS:
+        if config.TRAP_RUN_EXCEPTIONS:
             try:
                 self._do_run_job()
             except Exception as e:
@@ -108,7 +107,7 @@ class ProjectLogWorker(LogWorker):
     def run(self):
         job_error = False
         self.status_signal.emit("Project running...", 0)
-        if TRAP_RUN_EXCEPTIONS:
+        if config.TRAP_RUN_EXCEPTIONS:
             try:
                 self._do_run_project()
             except Exception as e:
