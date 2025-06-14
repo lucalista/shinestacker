@@ -1,6 +1,5 @@
 import sys
 sys.path.append('../')
-from config.config import config
 from focus_stack import StackJob, CombinedActions, AlignFrames, BalanceFrames, BALANCE_GAMMA, BALANCE_HSV, BALANCE_HLS, BALANCE_LUMI, BALANCE_RGB
 
 

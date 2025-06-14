@@ -12,6 +12,8 @@ from focus_stack.logging import setup_logging
 from gui.menu import DONT_USE_NATIVE_MENU
 import logging
 import os
+import matplotlib
+matplotlib.use('agg')
 
 
 def disable_macos_special_menu_items():

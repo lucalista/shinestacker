@@ -21,6 +21,8 @@ def elapsed_time_str(start):
 
 
 class JobBase:
+    id = -1
+
     def __init__(self, name):
         self.name = name
         self.base_message = ''
@@ -38,9 +40,9 @@ class JobBase:
 
     def run(self):
         self.__t0 = time.time()
-        self.callback('before_run', self.name)
+        self.callback('before_run', self.id)
         self.run_core()
-        self.callback('after_run', self.name)
+        self.callback('after_run', self.id)
         self.get_logger().info(
             colored(self.name + ": ", "green",
                     attrs=["bold"]) + colored(
@@ -87,6 +89,8 @@ class JobBase:
 
 
 class Job(JobBase):
+    action_counter = 0
+
     def __init__(self, name, logger_name=None, log_file="logs/focusstack.log", callbacks=None):
         JobBase.__init__(self, name)
         self.__actions = []
@@ -102,6 +106,8 @@ class Job(JobBase):
         pass
 
     def add_action(self, a: JobBase):
+        a.id = self.action_counter
+        self.action_counter += 1
         a.logger = self.logger
         a.callbacks = self.callbacks
         self.init(a)

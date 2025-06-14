@@ -1,6 +1,5 @@
 import sys
 sys.path.append('../')
-from config.config import config
 from focus_stack import StackJob, NoiseDetection, CombinedActions, MaskNoise
 from focus_stack.noise_detection import mean_image
 from focus_stack.exceptions import ShapeError, BitDepthError

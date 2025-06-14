@@ -1,6 +1,5 @@
 import sys
 sys.path.append('../')
-from config.config import config
 from focus_stack import StackJob, MultiLayer
 
 

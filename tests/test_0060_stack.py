@@ -1,6 +1,5 @@
 import sys
 sys.path.append('../')
-from config.config import config
 from focus_stack.stack_framework import StackJob
 from focus_stack.stack import FocusStack, FocusStackBunch
 from focus_stack.pyramid import PyramidStack
