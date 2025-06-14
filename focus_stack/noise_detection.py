@@ -1,4 +1,4 @@
-from focus_stack.config import DISABLE_TQDM
+from config.config import config
 from focus_stack.stack_framework import FrameMultiDirectory, JobBase
 from focus_stack.utils import read_img, save_plot, make_tqdm_bar, get_img_metadata, validate_image
 from focus_stack.exceptions import ImageLoadError
@@ -60,7 +60,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         self.print_message(colored("map noisy pixels from frames in " + self.folder_list_str(), "blue"))
         files = self.folder_filelist()
         in_paths = [self.working_path + "/" + f for f in files]
-        if not DISABLE_TQDM:
+        if not config.DISABLE_TQDM:
             bar = make_tqdm_bar(self.name, len(in_paths))
             mean_img = mean_image(
                 file_paths=in_paths,

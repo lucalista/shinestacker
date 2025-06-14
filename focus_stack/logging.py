@@ -1,9 +1,9 @@
-from focus_stack.config import DISABLE_TQDM
+from config.config import config
 import logging
 import sys
 from pathlib import Path
 import re
-if not DISABLE_TQDM:
+if not config.DISABLE_TQDM:
     from tqdm import tqdm
 
 
@@ -32,7 +32,7 @@ class FileFormatter(logging.Formatter):
 
 class TqdmLoggingHandler(logging.StreamHandler):
     def emit(self, record):
-        if not DISABLE_TQDM:
+        if not config.DISABLE_TQDM:
             try:
                 tqdm.write(self.format(record), end=self.terminator)
             except RecursionError:

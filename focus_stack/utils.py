@@ -4,9 +4,9 @@ import os
 import numpy as np
 import logging
 import matplotlib.pyplot as plt
-from focus_stack.config import DISABLE_TQDM
+from config.config import config
 
-if not DISABLE_TQDM:
+if not config.DISABLE_TQDM:
     from tqdm import tqdm
     from tqdm.notebook import tqdm_notebook
 
@@ -17,7 +17,7 @@ def check_path_exists(path):
 
 
 def make_tqdm_bar(name, size, ncols=80):
-    if not DISABLE_TQDM:
+    if not config.DISABLE_TQDM:
         try:
             __IPYTHON__  # noqa
             bar = tqdm_notebook(desc=name, total=size)
