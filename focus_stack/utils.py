@@ -18,10 +18,9 @@ def check_path_exists(path):
 
 def make_tqdm_bar(name, size, ncols=80):
     if not config.DISABLE_TQDM:
-        try:
-            __IPYTHON__  # noqa
+        if config.JUPYTER_NOTEBOOK:
             bar = tqdm_notebook(desc=name, total=size)
-        except Exception:
+        else:
             bar = tqdm(desc=name, total=size, ncols=ncols)
         return bar
     else:
@@ -77,10 +76,6 @@ def save_plot(filename, show=True):
     if not os.path.isdir(dir_path):
         os.makedirs(dir_path)
     plt.savefig(filename, dpi=150)
-    if show:
-        try:
-            __IPYTHON__  # noqa
-            plt.show()
-        except Exception:
-            pass
+    if show and config.JUPYTER_NOTEBOOK:
+        plt.show()
     plt.close('all')

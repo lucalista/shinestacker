@@ -11,6 +11,11 @@ class _Config:
     def _init_defaults(self):
         self._DISABLE_TQDM = False
         self._TRAP_RUN_EXCEPTIONS = True
+        try:
+            __IPYTHON__ # noqa
+            self._JUPYTER_NOTEBOOK = True
+        except Exception:
+            self._JUPYTER_NOTEBOOK = False
 
     def init(self, **kwargs):
         if self._initialized:
@@ -29,6 +34,10 @@ class _Config:
     @property
     def TRAP_RUN_EXCEPTIONS(self):
         return self._TRAP_RUN_EXCEPTIONS
+
+    @property
+    def JUPYTER_NOTEBOOK(self):
+        return self._JUPYTER_NOTEBOOK
 
     def __setattr__(self, name, value):
         if self._initialized and name.startswith('_'):

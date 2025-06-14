@@ -24,10 +24,9 @@ class JobBase:
     def __init__(self, name):
         self.name = name
         self.base_message = ''
-        try:
-            __IPYTHON__ # noqa
+        if config.JUPYTER_NOTEBOOK:
             self.begin_r, self.end_r = "", "\r",
-        except Exception:
+        else:
             self.begin_r, self.end_r = LINE_UP, None
 
     def run(self):
