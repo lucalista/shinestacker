@@ -1,7 +1,6 @@
 import sys
 sys.path.append('../')
 from config.config import config
-config.init(DISABLE_TQDM=False)
 from focus_stack import StackJob, MultiLayer
 
 

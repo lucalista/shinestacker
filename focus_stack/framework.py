@@ -78,12 +78,13 @@ class JobBase:
 
 
 class Job(JobBase):
-    def __init__(self, name, logger_name=None, log_file="logs/focusstack.log"):
+    def __init__(self, name, logger_name=None, log_file="logs/focusstack.log", callbacks=None):
         JobBase.__init__(self, name)
         self.__actions = []
         if logger_name is None:
             setup_logging(log_file=log_file)
         self.logger = None if logger_name is None else logging.getLogger(logger_name)
+        self.callbacks = callbacks
 
     def time(self):
         return time.time() - self.__t0
@@ -91,8 +92,9 @@ class Job(JobBase):
     def init(self, a):
         pass
 
-    def add_action(self, a):
+    def add_action(self, a: JobBase):
         a.logger = self.logger
+        a.callbacks = self.callbacks
         self.init(a)
         self.__actions.append(a)
 

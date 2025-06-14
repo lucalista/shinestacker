@@ -1,14 +1,11 @@
 import sys
 sys.path.append('../')
 from config.config import config
-config.init(DISABLE_TQDM=False)
 from focus_stack.logging import setup_logging, console_logging_overwrite, console_logging_newline
 import logging
 import time
-
-if not config.DISABLE_TQDM:
-    from tqdm import tqdm
-    from tqdm.notebook import tqdm_notebook
+from tqdm import tqdm
+from tqdm.notebook import tqdm_notebook
 
 
 def test_log():

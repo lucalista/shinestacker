@@ -1,7 +1,6 @@
 import sys
 sys.path.append('../')
 from config.config import config
-config.init(DISABLE_TQDM=False)
 from focus_stack.utils import read_img
 from focus_stack.align import align_images
 from focus_stack import StackJob, CombinedActions, AlignFrames

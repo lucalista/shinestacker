@@ -1,7 +1,6 @@
 import sys
 sys.path.append('../')
 from config.config import config
-config.init(DISABLE_TQDM=False)
 from focus_stack import (StackJob, CombinedActions, BalanceFrames, BALANCE_RGB, BALANCE_MATCH_HIST, BALANCE_LUMI,
                          BALANCE_LINEAR, BALANCE_GAMMA, BALANCE_HSV, BALANCE_HLS)
 
