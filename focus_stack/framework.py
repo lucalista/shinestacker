@@ -38,9 +38,9 @@ class JobBase:
 
     def run(self):
         self.__t0 = time.time()
-        self.callback('before_run')
+        self.callback('before_run', self.name)
         self.run_core()
-        self.callback('after_run')
+        self.callback('after_run', self.name)
         self.get_logger().info(
             colored(self.name + ": ", "green",
                     attrs=["bold"]) + colored(

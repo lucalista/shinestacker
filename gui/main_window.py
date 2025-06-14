@@ -64,7 +64,9 @@ class JobLogWorker(LogWorker):
 
     def _do_run_job(self):
         converter = ProjectConverter()
-        converter.run_job(self.job, self.id_str)
+        callbacks = {'before_run': lambda *args: print('*** before run ', *args, ' ***'),
+                     'after_run': lambda *args: print('*** after run ', *args, ' ***') }
+        converter.run_job(self.job, self.id_str, callbacks)
 
     def run(self):
         job_error = False
