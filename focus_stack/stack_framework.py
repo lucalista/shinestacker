@@ -116,14 +116,16 @@ class FrameMultiDirectory:
             raise Exception("input_dir option must contain a path or an array of paths")
         files = []
         for d, p in zip(dirs, paths):
-            src_contents = os.walk(d)
-            dirpath, _, filenames = next(src_contents)
-            filelist = [p + "/" + name for name in filenames if os.path.splitext(name)[-1][1:].lower() in FrameDirectory.EXTENSIONS]
-            if self.reverse_order:
-                filelist.reverse()
-            if self.resample > 1:
-                filelist = filelist[0::self.resample]
-            files += filelist
+            filelist = []
+            for dirpath, _, filenames in os.walk(d):
+                filelist = [p + "/" + name for name in filenames if os.path.splitext(name)[-1][1:].lower() in FrameDirectory.EXTENSIONS]
+                if self.reverse_order:
+                    filelist.reverse()
+                if self.resample > 1:
+                    filelist = filelist[0::self.resample]
+                files += filelist
+            if len(filelist) == 0:
+                self.print_message(colored("input folder {} does not contain any image".format(p), "red"), level=logging.WARNING)
         return files
 
     def init(self, job):
@@ -135,7 +137,6 @@ class FrameMultiDirectory:
             self.input_dir = []
             for path in self.input_path:
                 self.input_dir.append(self.working_path + ('' if self.working_path[-1] == '/' else '/') + path)
-                check_path_exists(self.input_dir[-1])
         job.paths.append(self.output_path)
 
 

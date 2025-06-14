@@ -9,7 +9,7 @@ class _Config:
         return cls._instance
 
     def _init_defaults(self):
-        self._DISABLE_TQDM = True
+        self._DISABLE_TQDM = False
         self._TRAP_RUN_EXCEPTIONS = True
 
     def init(self, **kwargs):
