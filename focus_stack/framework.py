@@ -47,6 +47,7 @@ class TqdmCallbacks:
         self.bar = None
 
     def after_step(self, name):
+        self.bar.write("")
         self.bar.update(1)
 
         
