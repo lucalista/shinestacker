@@ -5,7 +5,7 @@ from PySide6.QtGui import QTextCursor, QTextOption, QFont
 from PySide6.QtCore import QThread, QObject, Signal, Slot, Qt
 from ansi2html import Ansi2HTMLConverter
 
-LOG_FONTS = ['Monaco', 'Menlo', 'Courier New', 'Courier', 'monospace']
+LOG_FONTS = ['Monaco', 'Menlo', ' Lucida Console', 'Courier New', 'Courier', 'monospace']
 LOG_FONTS_STR = ", ".join(LOG_FONTS)
 
 class SimpleHtmlFormatter(logging.Formatter):
