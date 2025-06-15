@@ -139,7 +139,7 @@ class ActionList(JobBase):
             self.run_step()
             x = self.count
             self.count += 1
-            self.callback('after_step', self.id, self.count)            
+            self.callback('after_step', self.id, self.count)
             return x
         else:
             raise StopIteration

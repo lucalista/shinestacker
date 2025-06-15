@@ -30,6 +30,7 @@ class ColorPalette:
     MEDIUM_BLUE = ColorEntry(160, 160, 200)
     MEDIUM_GREEN = ColorEntry(160, 200, 160)
 
+
 class ColorButton(QPushButton):
     def __init__(self, text, parent=None):
         super().__init__(text, parent)
@@ -59,7 +60,7 @@ class RunWindow(QTextEditLogger):
     bar_color = ColorPalette.MEDIUM_BLUE
     action_running_color = ColorPalette.MEDIUM_BLUE
     action_done_color = ColorPalette.MEDIUM_GREEN
-    
+
     def __init__(self, labels):
         QTextEditLogger.__init__(self)
         self.row_widget_id = 0
@@ -114,7 +115,7 @@ class RunWindow(QTextEditLogger):
             self.progress_bar.setValue(0)
         if id == -1:
             self.set_progress_bar_style(self.action_running_color)
-    
+
     @Slot(int)
     def handle_after_action(self, id):
         if 0 <= id < len(self.color_widgets[self.row_widget_id]):
@@ -122,7 +123,7 @@ class RunWindow(QTextEditLogger):
             self.progress_bar.setValue(self.progress_bar.maximum())
         if id == -1:
             self.set_progress_bar_style(self.action_done_color)
-            self.row_widget_id += 1 
+            self.row_widget_id += 1
 
     @Slot(int, int)
     def handle_step_count(self, id, steps):
@@ -152,7 +153,7 @@ class RunWorker(LogWorker):
     def __init__(self, id_str):
         LogWorker.__init__(self)
         self.id_str = id_str
-    
+
     def before_run(self, id):
         self.before_action_signal.emit(id)
 
@@ -231,7 +232,7 @@ class ProjectLogWorker(RunWorker):
             'begin_steps': self.begin_steps,
             'end_steps': self.end_steps,
             'after_step': self.after_step
-        }        
+        }
         converter.run_project(self.project, self.id_str, callbacks)
 
     def run(self):
@@ -243,7 +244,7 @@ class ProjectLogWorker(RunWorker):
             except Exception as e:
                 job_error = True
                 self.exception_signal.emit(f'Project failed:\n{str(e)}')
-                self.exception_signal.emit(f'Project {self.job.params["name"]} failed:\n{str(e)}')                
+                self.exception_signal.emit(f'Project {self.job.params["name"]} failed:\n{str(e)}')
         else:
             self._do_run_project()
         if job_error:
