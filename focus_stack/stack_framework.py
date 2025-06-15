@@ -63,8 +63,8 @@ class FramePaths(JobBase):
 class FrameDirectory(FramePaths):
     EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
-    def __init__(self, name, input_path='', output_path='', working_path='', plot_path='plots', resample=1, reverse_order=False):
-        FramePaths.__init__(self, name, input_path, output_path, working_path, plot_path, resample, reverse_order)
+    def __init__(self, name, **kwargs):
+        FramePaths.__init__(self, name, **kwargs)
 
     def folder_list_str(self):
         if isinstance(self.input_dir, list):
@@ -141,8 +141,8 @@ class FrameMultiDirectory:
 
 
 class FramesRefActions(FrameDirectory, ActionList):
-    def __init__(self, name, input_path='', output_path='', working_path='', plot_path='plots', resample=1, ref_idx=-1, step_process=False):
-        FrameDirectory.__init__(self, name, input_path, output_path, working_path, plot_path, resample)
+    def __init__(self, name, ref_idx=-1, step_process=False, **kwargs):
+        FrameDirectory.__init__(self, name, **kwargs)
         ActionList.__init__(self, name)
         self.ref_idx = ref_idx
         self.step_process = step_process
@@ -182,8 +182,8 @@ class FramesRefActions(FrameDirectory, ActionList):
 
 
 class CombinedActions(FramesRefActions):
-    def __init__(self, name, actions=[], input_path='', output_path='', working_path='', plot_path='plots', resample=1, ref_idx=-1, step_process=True):
-        FramesRefActions.__init__(self, name, input_path, output_path, working_path, plot_path, resample, ref_idx, step_process)
+    def __init__(self, name, actions=[], **kwargs):
+        FramesRefActions.__init__(self, name, **kwargs)
         self.__actions = actions
 
     def begin(self):

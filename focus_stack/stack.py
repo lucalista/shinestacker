@@ -44,9 +44,8 @@ class FocusStackBase:
 
 
 class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
-    def __init__(self, name, stack_algo, input_path='', output_path='', working_path='',
-                 resample=1, exif_path='', postfix='', frames=10, overlap=0, denoise=0):
-        FrameDirectory.__init__(self, name, input_path, output_path, working_path, '', resample)
+    def __init__(self, name, stack_algo, frames=10, overlap=0, denoise=0, postfix='', exif_path='', **kwargs):
+        FrameDirectory.__init__(self, name, **kwargs)
         ActionList.__init__(self, name)
         FocusStackBase.__init__(self, stack_algo, exif_path, postfix, denoise)
         if overlap >= frames:
@@ -73,9 +72,9 @@ class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
 
 
 class FocusStack(FrameDirectory, JobBase, FocusStackBase):
-    def __init__(self, name, stack_algo, input_path='', output_path='', working_path='', resample=1, exif_path='', postfix='', denoise=0):
+    def __init__(self, name, stack_algo, denoise=0, postfix='', exif_path='', **kwargs):
         self.name = name
-        FrameDirectory.__init__(self, name, input_path, output_path, working_path, '', resample)
+        FrameDirectory.__init__(self, name, **kwargs)
         JobBase.__init__(self, name)
         FocusStackBase.__init__(self, stack_algo, exif_path, postfix, denoise)
 
