@@ -138,7 +138,7 @@ class Job(JobBase):
         if logger_name is None:
             setup_logging(log_file=log_file)
         self.logger = None if logger_name is None else logging.getLogger(logger_name)
-        self.callbacks = callbacks
+        self.callbacks = TqdmCallbacks.callbacks if callbacks == 'tqdm' else callbacks 
 
     def time(self):
         return time.time() - self.__t0

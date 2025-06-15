@@ -2,7 +2,6 @@ import sys
 sys.path.append('../')
 from focus_stack.utils import read_img
 from focus_stack.stack_framework import StackJob, CombinedActions
-from focus_stack.framework import TqdmCallbacks
 from focus_stack.align import align_images, AlignFrames
 
 
@@ -15,7 +14,7 @@ def test_align():
 
 def test_jpg():
     try:
-        job = StackJob("job", "./", input_path="input/img-jpg", callbacks=TqdmCallbacks.callbacks)
+        job = StackJob("job", "./", input_path="input/img-jpg", callbacks='tqdm')
         job.add_action(CombinedActions("align-jpg", [AlignFrames(plot_histograms=True)],
                                        output_path="output/img-jpg-align"))
         job.run()
@@ -25,7 +24,7 @@ def test_jpg():
 
 def test_tif():
     try:
-        job = StackJob("job", "./", input_path="input/img-tif", callbacks=TqdmCallbacks.callbacks)
+        job = StackJob("job", "./", input_path="input/img-tif", callbacks='tqdm')
         job.add_action(CombinedActions("align-tif", [AlignFrames(plot_histograms=True)],
                                        output_path="output/img-tif-align"))
         job.run()
