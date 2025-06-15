@@ -98,7 +98,6 @@ class WindowMenu(QMainWindow):
 
     def new_project(self):
         if self._check_unsaved_changes():
-            self.touch_project()
             self.project = Project()
             self._current_file = None
             self._update_title()
