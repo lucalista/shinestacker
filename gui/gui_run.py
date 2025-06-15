@@ -59,16 +59,16 @@ class RunWindow(QTextEditLogger):
     bar_color = ColorPalette.MEDIUM_BLUE
     action_running_color = ColorPalette.MEDIUM_BLUE
     action_done_color = ColorPalette.MEDIUM_GREEN
-    row_widget_id = 0
     
     def __init__(self, labels):
         QTextEditLogger.__init__(self)
+        self.row_widget_id = 0
         self.resize(1200, 600)
         layout = QVBoxLayout()
         self.color_widgets = []
         if len(labels) > 0:
-            row_widgets = []
             for label_row in labels:
+                self.color_widgets.append([])
                 row = QWidget(self)
                 h_layout = QHBoxLayout(row)
                 h_layout.setContentsMargins(0, 0, 0, 0)
@@ -76,9 +76,8 @@ class RunWindow(QTextEditLogger):
                 for label in label_row:
                     widget = ColorButton(label)
                     h_layout.addWidget(widget, stretch=1)
-                    row_widgets.append(widget)
+                    self.color_widgets[-1].append(widget)
                 layout.addWidget(row)
-                self.color_widgets.append(row_widgets)
         self.progress_bar = QProgressBar()
         self.progress_bar.setMinimum(0)
         self.set_progress_bar_style()
@@ -248,7 +247,7 @@ class ProjectLogWorker(RunWorker):
         else:
             self._do_run_project()
         if job_error:
-            message = "Run failed."
+            message = "Project failed."
             status = 1
             color = "#ff0000"
         else:

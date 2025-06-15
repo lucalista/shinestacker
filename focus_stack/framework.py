@@ -21,9 +21,8 @@ def elapsed_time_str(start):
 
 
 class JobBase:
-    id = -1
-
     def __init__(self, name):
+        self.id = -1
         self.name = name
         self.base_message = ''
         if config.JUPYTER_NOTEBOOK:
@@ -89,10 +88,9 @@ class JobBase:
 
 
 class Job(JobBase):
-    action_counter = 0
-
     def __init__(self, name, logger_name=None, log_file="logs/focusstack.log", callbacks=None):
         JobBase.__init__(self, name)
+        self.action_counter = 0
         self.__actions = []
         if logger_name is None:
             setup_logging(log_file=log_file)
