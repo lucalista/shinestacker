@@ -51,11 +51,11 @@ def setup_logging(console_level=logging.INFO, file_level=logging.DEBUG, log_file
     setup_logging._called = True
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
-    out = open(os.devnull, 'w') if disable_console else sys.stdout
-    console_handler = logging.StreamHandler(out)
-    console_handler.setLevel(console_level)
-    console_handler.setFormatter(ConsoleFormatter())
-    root_logger.addHandler(console_handler)
+    if not disable_console:
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(console_level)
+        console_handler.setFormatter(ConsoleFormatter())
+        root_logger.addHandler(console_handler)
     tqdm_logger = logging.getLogger("tqdm")
     tqdm_handler = TqdmLoggingHandler()
     tqdm_handler.setFormatter(ConsoleFormatter())
