@@ -187,8 +187,8 @@ class Correction:
 
 
 class LumiCorrection(Correction):
-    def __init__(self, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=_DEFAULT_CORR_MAP, plot_histograms=False):
-        Correction.__init__(self, 1, mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
+    def __init__(self, **kwargs):
+        Correction.__init__(self, 1, **kwargs)
 
     def get_hist(self, image, idx):
         hist = self.calc_hist_1ch(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY))
@@ -223,8 +223,8 @@ class LumiCorrection(Correction):
 
 
 class RGBCorrection(Correction):
-    def __init__(self, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=_DEFAULT_CORR_MAP, plot_histograms=False):
-        Correction.__init__(self, 3, mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
+    def __init__(self, **kwargs):
+        Correction.__init__(self, 3, **kwargs)
 
     def get_hist(self, image, idx):
         hist = [self.calc_hist_1ch(chan) for chan in cv2.split(image)]
@@ -259,8 +259,8 @@ class RGBCorrection(Correction):
 
 
 class Ch2Correction(Correction):
-    def __init__(self, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=_DEFAULT_CORR_MAP, plot_histograms=False):
-        Correction.__init__(self, 2, mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
+    def __init__(self, **kwargs):
+        Correction.__init__(self, 2, **kwargs)
 
     def preprocess(self, image):
         assert False, 'abstract method'
@@ -298,8 +298,8 @@ class Ch2Correction(Correction):
 
 
 class SVCorrection(Ch2Correction):
-    def __init__(self, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=_DEFAULT_CORR_MAP, plot_histograms=False):
-        Ch2Correction.__init__(self, mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
+    def __init__(self, **kwargs):
+        Ch2Correction.__init__(self, **kwargs)
         self.labels = ("H", "S", "V")
         self.colors = ("hotpink", "orange", "navy")
 
@@ -311,8 +311,8 @@ class SVCorrection(Ch2Correction):
 
 
 class LSCorrection(Ch2Correction):
-    def __init__(self, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=_DEFAULT_CORR_MAP, plot_histograms=False):
-        Ch2Correction.__init__(self, mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
+    def __init__(self, **kwargs):
+        Ch2Correction.__init__(self, **kwargs)
         self.labels = ("H", "L", "S")
         self.colors = ("hotpink", "navy", "orange")
 
@@ -324,16 +324,16 @@ class LSCorrection(Ch2Correction):
 
 
 class BalanceFrames:
-    def __init__(self, channel=_DEFAULT_CHANNEL, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=_DEFAULT_CORR_MAP, plot_histograms=False):
+    def __init__(self, channel=_DEFAULT_CHANNEL, img_scale=-1, corr_map=_DEFAULT_CORR_MAP, **kwargs):
         img_scale = (1 if corr_map == BALANCE_MATCH_HIST else _DEFAULT_IMG_SCALE) if img_scale == -1 else img_scale
         if channel == BALANCE_LUMI:
-            self.correction = LumiCorrection(mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
+            self.correction = LumiCorrection(img_scale=img_scale, corr_map=corr_map, **kwargs)
         elif channel == BALANCE_RGB:
-            self.correction = RGBCorrection(mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
+            self.correction = RGBCorrection(img_scale=img_scale, corr_map=corr_map, **kwargs)
         elif channel == BALANCE_HSV:
-            self.correction = SVCorrection(mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
+            self.correction = SVCorrection(img_scale=img_scale, corr_map=corr_map, **kwargs)
         elif channel == BALANCE_HLS:
-            self.correction = LSCorrection(mask_size, intensity_interval, img_scale, corr_map, plot_histograms)
+            self.correction = LSCorrection(img_scale=img_scale, corr_map=corr_map, **kwargs)
         else:
             raise InvalidOptionError("channel", channel)
 
