@@ -139,7 +139,6 @@ class ActionList(JobBase):
             self.run_step()
             x = self.count
             self.count += 1
-            self.callback('after_step', self.id, self.count)
             return x
         else:
             raise StopIteration
@@ -152,6 +151,7 @@ class ActionList(JobBase):
         for x in iter(self):
             if not config.DISABLE_TQDM:
                 bar.update(1)
+            self.callback('after_step', self.id, self.count)
         if not config.DISABLE_TQDM:
             bar.close()
         self.end()

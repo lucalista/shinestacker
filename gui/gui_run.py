@@ -153,6 +153,15 @@ class RunWorker(LogWorker):
     def __init__(self, id_str):
         LogWorker.__init__(self)
         self.id_str = id_str
+        self.callbacks = {
+            'before_run': self.before_run,
+            'after_run': self.after_run,
+            'step_count': self.step_count,
+            'begin_steps': self.begin_steps,
+            'end_steps': self.end_steps,
+            'after_step': self.after_step
+        }
+        self.tag = ""
 
     def before_run(self, id):
         self.before_action_signal.emit(id)
@@ -172,41 +181,24 @@ class RunWorker(LogWorker):
     def after_step(self, id, step):
         self.after_step_signal.emit(id, step)
 
-
-class JobLogWorker(RunWorker):
-    def __init__(self, job, id_str):
-        super().__init__(id_str)
-        self.job = job
-
-    def _do_run_job(self):
-        converter = ProjectConverter()
-        callbacks = {
-            'before_run': self.before_run,
-            'after_run': self.after_run,
-            'step_count': self.step_count,
-            'begin_steps': self.begin_steps,
-            'end_steps': self.end_steps,
-            'after_step': self.after_step
-        }
-        converter.run_job(self.job, self.id_str, callbacks)
-
     def run(self):
-        job_error = False
-        self.status_signal.emit("Job running...", 0)
+        run_error = False
+        self.status_signal.emit("{self.tag} running...", 0)
         if config.TRAP_RUN_EXCEPTIONS:
             try:
-                self._do_run_job()
+                self._do_run()
             except Exception as e:
-                job_error = True
-                self.exception_signal.emit(f'Job {self.job.params["name"]} failed:\n{str(e)}')
+                run_error = True
+                self.exception_signal.emit(f'{self.tag} failed:\n{str(e)}')
+                self.exception_signal.emit(f'{self.tag} failed:\n{str(e)}')
         else:
-            self._do_run_job()
-        if job_error:
-            message = "Job failed."
+            self._do_run()
+        if run_error:
+            message = "{self.tag} failed."
             status = 1
             color = "#ff0000"
         else:
-            message = "Job ended successfully."
+            message = "{self.tag} ended successfully."
             status = 0
             color = "#000089"
         self.html_signal.emit(f'''
@@ -215,50 +207,26 @@ class JobLogWorker(RunWorker):
         </div>
         ''')
         self.end_signal.emit(status, message)
-        self.status_signal.emit("Job completed", 0)
+        self.status_signal.emit("{self.tag} completed", 0)
+
+
+class JobLogWorker(RunWorker):
+    def __init__(self, job, id_str):
+        super().__init__(id_str)
+        self.job = job
+        self.tag = "Job"
+
+    def _do_run(self):
+        converter = ProjectConverter()
+        converter.run_job(self.job, self.id_str, self.callbacks)
 
 
 class ProjectLogWorker(RunWorker):
     def __init__(self, project, id_str):
         super().__init__(id_str)
         self.project = project
+        self.tag = "Project"
 
-    def _do_run_project(self):
+    def _do_run(self):
         converter = ProjectConverter()
-        callbacks = {
-            'before_run': self.before_run,
-            'after_run': self.after_run,
-            'step_count': self.step_count,
-            'begin_steps': self.begin_steps,
-            'end_steps': self.end_steps,
-            'after_step': self.after_step
-        }
-        converter.run_project(self.project, self.id_str, callbacks)
-
-    def run(self):
-        job_error = False
-        self.status_signal.emit("Project running...", 0)
-        if config.TRAP_RUN_EXCEPTIONS:
-            try:
-                self._do_run_project()
-            except Exception as e:
-                job_error = True
-                self.exception_signal.emit(f'Project failed:\n{str(e)}')
-                self.exception_signal.emit(f'Project {self.job.params["name"]} failed:\n{str(e)}')
-        else:
-            self._do_run_project()
-        if job_error:
-            message = "Project failed."
-            status = 1
-            color = "#ff0000"
-        else:
-            message = "Project ended successfully."
-            status = 0
-            color = "#000089"
-        self.html_signal.emit(f'''
-        <hr><div style="margin: 2px 0; font-family: monospace;">
-        <span style="color: {color}; font-weight: bold;">{message}</span>
-        </div>
-        ''')
-        self.end_signal.emit(status, message)
-        self.status_signal.emit("Project completed", 0)
+        converter.run_project(self.project, self.id_str, self.callbacks)
