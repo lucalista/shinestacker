@@ -40,11 +40,8 @@ def disable_macos_special_menu_items():
 
 
 def main():
-    setup_logging(
-        console_level=logging.DEBUG,
-        file_level=logging.DEBUG,
-        log_file="logs/focusstack.log"
-    )
+    setup_logging(console_level=logging.DEBUG, file_level=logging.DEBUG,
+        log_file="logs/focusstack.log", disable_console=True)
     app = QApplication(sys.argv)
     if DONT_USE_NATIVE_MENU:
         app.setAttribute(Qt.AA_DontUseNativeMenuBar)

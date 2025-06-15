@@ -82,7 +82,6 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         for ch, hot in zip(['rgb', 'r', 'g', 'b', ], [hot_rgb] + hot_px):
             msg.append("{}: {}".format(ch, np.count_nonzero(hot > 0)))
         self.print_message("hot pixels: " + ", ".join(msg))
-        print("file_name: ", self.file_name)
         path = "/".join(self.file_name.split("/")[:-1])
         if not os.path.exists(self.working_path + '/' + path):
             self.print_message("create directory: " + path)

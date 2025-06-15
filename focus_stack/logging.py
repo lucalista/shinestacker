@@ -1,6 +1,7 @@
 from config.config import config
 import logging
 import sys
+import os
 from pathlib import Path
 import re
 if not config.DISABLE_TQDM:
@@ -43,13 +44,15 @@ class TqdmLoggingHandler(logging.StreamHandler):
             logging.StreamHandler.emit(self, record)
 
 
-def setup_logging(console_level=logging.INFO, file_level=logging.DEBUG, log_file=None):
+def setup_logging(console_level=logging.INFO, file_level=logging.DEBUG, log_file=None,
+                  disable_console=False):
     if hasattr(setup_logging, '_called'):
         return
     setup_logging._called = True
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
-    console_handler = logging.StreamHandler(sys.stdout)
+    out = open(os.devnull, 'w') if disable_console else sys.stdout
+    console_handler = logging.StreamHandler(out)
     console_handler.setLevel(console_level)
     console_handler.setFormatter(ConsoleFormatter())
     root_logger.addHandler(console_handler)
