@@ -59,6 +59,7 @@ class RunWindow(QTextEditLogger):
     bar_color = ColorPalette.MEDIUM_BLUE
     action_running_color = ColorPalette.MEDIUM_BLUE
     action_done_color = ColorPalette.MEDIUM_GREEN
+    row_widget_id = 0
     
     def __init__(self, labels):
         QTextEditLogger.__init__(self)
@@ -66,6 +67,7 @@ class RunWindow(QTextEditLogger):
         layout = QVBoxLayout()
         self.color_widgets = []
         if len(labels) > 0:
+            row_widgets = []
             for label_row in labels:
                 row = QWidget(self)
                 h_layout = QHBoxLayout(row)
@@ -74,8 +76,9 @@ class RunWindow(QTextEditLogger):
                 for label in label_row:
                     widget = ColorButton(label)
                     h_layout.addWidget(widget, stretch=1)
-                    self.color_widgets.append(widget)
+                    row_widgets.append(widget)
                 layout.addWidget(row)
+                self.color_widgets.append(row_widgets)
         self.progress_bar = QProgressBar()
         self.progress_bar.setMinimum(0)
         self.set_progress_bar_style()
@@ -107,19 +110,20 @@ class RunWindow(QTextEditLogger):
 
     @Slot(int)
     def handle_before_action(self, id):
-        if 0 <= id < len(self.color_widgets):
-            self.color_widgets[id].set_color(*self.action_running_color.tuple())
+        if 0 <= id < len(self.color_widgets[self.row_widget_id]):
+            self.color_widgets[self.row_widget_id][id].set_color(*self.action_running_color.tuple())
             self.progress_bar.setValue(0)
         if id == -1:
             self.set_progress_bar_style(self.action_running_color)
     
     @Slot(int)
     def handle_after_action(self, id):
-        if 0 <= id < len(self.color_widgets):
-            self.color_widgets[id].set_color(*self.action_done_color.tuple())
+        if 0 <= id < len(self.color_widgets[self.row_widget_id]):
+            self.color_widgets[self.row_widget_id][id].set_color(*self.action_done_color.tuple())
             self.progress_bar.setValue(self.progress_bar.maximum())
         if id == -1:
             self.set_progress_bar_style(self.action_done_color)
+            self.row_widget_id += 1 
 
     @Slot(int, int)
     def handle_step_count(self, id, steps):
@@ -136,8 +140,9 @@ class RunWindow(QTextEditLogger):
     @Slot(int, int)
     def handle_after_step(self, id, step):
         self.progress_bar.setValue(step)
-    
-class JobLogWorker(LogWorker):
+
+
+class RunWorker(LogWorker):
     before_action_signal = Signal(int)
     after_action_signal = Signal(int)
     step_count_signal = Signal(int, int)
@@ -145,11 +150,10 @@ class JobLogWorker(LogWorker):
     end_steps_signal = Signal(int)
     after_step_signal = Signal(int, int)
 
-    def __init__(self, job, id_str):
+    def __init__(self, id_str):
         LogWorker.__init__(self)
-        self.job = job
         self.id_str = id_str
-
+    
     def before_run(self, id):
         self.before_action_signal.emit(id)
 
@@ -167,7 +171,13 @@ class JobLogWorker(LogWorker):
 
     def after_step(self, id, step):
         self.after_step_signal.emit(id, step)
-        
+
+
+class JobLogWorker(RunWorker):
+    def __init__(self, job, id_str):
+        super().__init__(id_str)
+        self.job = job
+
     def _do_run_job(self):
         converter = ProjectConverter()
         callbacks = {
@@ -208,15 +218,22 @@ class JobLogWorker(LogWorker):
         self.status_signal.emit("Job completed", 0)
 
 
-class ProjectLogWorker(LogWorker):
+class ProjectLogWorker(RunWorker):
     def __init__(self, project, id_str):
-        LogWorker.__init__(self)
+        super().__init__(id_str)
         self.project = project
-        self.id_str = id_str
 
     def _do_run_project(self):
         converter = ProjectConverter()
-        converter.run_project(self.project, self.id_str)
+        callbacks = {
+            'before_run': self.before_run,
+            'after_run': self.after_run,
+            'step_count': self.step_count,
+            'begin_steps': self.begin_steps,
+            'end_steps': self.end_steps,
+            'after_step': self.after_step
+        }        
+        converter.run_project(self.project, self.id_str, callbacks)
 
     def run(self):
         job_error = False
@@ -227,9 +244,9 @@ class ProjectLogWorker(LogWorker):
             except Exception as e:
                 job_error = True
                 self.exception_signal.emit(f'Project failed:\n{str(e)}')
+                self.exception_signal.emit(f'Project {self.job.params["name"]} failed:\n{str(e)}')                
         else:
             self._do_run_project()
-
         if job_error:
             message = "Run failed."
             status = 1

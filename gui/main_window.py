@@ -115,6 +115,14 @@ class MainWindow(WindowMenu, LogManager):
         self.add_gui_logger(new_window)
         return new_window, self.last_id_str()
 
+    def connect_signals(self, worker, window):
+        worker.before_action_signal.connect(window.handle_before_action)
+        worker.after_action_signal.connect(window.handle_after_action)
+        worker.step_count_signal.connect(window.handle_step_count)
+        worker.begin_steps_signal.connect(window.handle_begin_steps)
+        worker.end_steps_signal.connect(window.handle_end_steps)
+        worker.after_step_signal.connect(window.handle_after_step)
+
     def run_job(self):
         current_index = self.job_list.currentRow()
         if current_index < 0:
@@ -125,18 +133,14 @@ class MainWindow(WindowMenu, LogManager):
             labels = [[self.action_text(a) for a in job.sub_actions]]
             new_window, id_str = self.create_new_window("Run job: " + job.params["name"], labels)
             worker = JobLogWorker(job, id_str)
-            worker.before_action_signal.connect(new_window.handle_before_action)
-            worker.after_action_signal.connect(new_window.handle_after_action)
-            worker.step_count_signal.connect(new_window.handle_step_count)
-            worker.begin_steps_signal.connect(new_window.handle_begin_steps)
-            worker.end_steps_signal.connect(new_window.handle_end_steps)
-            worker.after_step_signal.connect(new_window.handle_after_step)
+            self.connect_signals(worker, new_window)
             self.start_thread(worker)
 
     def run_all_jobs(self):
         labels = [[self.action_text(a) for a in job.sub_actions] for job in self.project.jobs]
         new_window, id_str = self.create_new_window("Run project", labels)
         worker = ProjectLogWorker(self.project, id_str)
+        self.connect_signals(worker, new_window)
         self.start_thread(worker)
 
     def add_action(self):
