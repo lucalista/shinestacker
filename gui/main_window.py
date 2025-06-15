@@ -122,7 +122,7 @@ class MainWindow(WindowMenu, LogManager):
             return
         if current_index >= 0:
             job = self.project.jobs[current_index]
-            labels = [self.action_text(a) for a in job.sub_actions]
+            labels = [[self.action_text(a) for a in job.sub_actions]]
             new_window, id_str = self.create_new_window("Run job: " + job.params["name"], labels)
             worker = JobLogWorker(job, id_str)
             worker.before_action_signal.connect(new_window.handle_before_action)
@@ -134,7 +134,8 @@ class MainWindow(WindowMenu, LogManager):
             self.start_thread(worker)
 
     def run_all_jobs(self):
-        new_window, id_str = self.create_new_window("Run project")
+        labels = [[self.action_text(a) for a in job.sub_actions] for job in self.project.jobs]
+        new_window, id_str = self.create_new_window("Run project", labels)
         worker = ProjectLogWorker(self.project, id_str)
         self.start_thread(worker)
 

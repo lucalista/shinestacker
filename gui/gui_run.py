@@ -66,15 +66,16 @@ class RunWindow(QTextEditLogger):
         layout = QVBoxLayout()
         self.color_widgets = []
         if len(labels) > 0:
-            row = QWidget(self)
-            h_layout = QHBoxLayout(row)
-            h_layout.setContentsMargins(0, 0, 0, 0)
-            h_layout.setSpacing(2)
-            for label in labels:
-                widget = ColorButton(label)
-                h_layout.addWidget(widget, stretch=1)
-                self.color_widgets.append(widget)
-            layout.addWidget(row)
+            for label_row in labels:
+                row = QWidget(self)
+                h_layout = QHBoxLayout(row)
+                h_layout.setContentsMargins(0, 0, 0, 0)
+                h_layout.setSpacing(2)
+                for label in label_row:
+                    widget = ColorButton(label)
+                    h_layout.addWidget(widget, stretch=1)
+                    self.color_widgets.append(widget)
+                layout.addWidget(row)
         self.progress_bar = QProgressBar()
         self.progress_bar.setMinimum(0)
         self.set_progress_bar_style()
