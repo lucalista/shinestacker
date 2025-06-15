@@ -27,6 +27,7 @@ class ColorPalette:
     WHITE = ColorEntry(255, 255, 255)
     LIGHT_BLUE = ColorEntry(210, 210, 240)
     DARK_BLUE = ColorEntry(0, 0, 160)
+    DARK_RED = ColorEntry(160, 0, 0)
     MEDIUM_BLUE = ColorEntry(160, 160, 200)
     MEDIUM_GREEN = ColorEntry(160, 200, 160)
 
@@ -95,7 +96,7 @@ class RunWindow(QTextEditLogger):
         self.progress_bar.setStyleSheet(f"""
         QProgressBar {{
           border: 2px solid #{self.border_color.hex()};
-          border-radius: 5px;
+          border-radius: 10px;
           text-align: center;
           font-weight: bold;
           font-size: 14px;
@@ -104,6 +105,7 @@ class RunWindow(QTextEditLogger):
           min-height: 1px;
         }}
         QProgressBar::chunk {{
+          border-radius: 8px;
           background-color: #{bar_color.hex()};
         }}
         """)
@@ -183,7 +185,12 @@ class RunWorker(LogWorker):
 
     def run(self):
         run_error = False
-        self.status_signal.emit("{self.tag} running...", 0)
+        self.status_signal.emit(f"{self.tag} running...", 0)
+        self.html_signal.emit(f'''
+        <div style="margin: 2px 0; font-family: monospace;">
+        <span style="color: #{ColorPalette.DARK_BLUE.hex()}; font-weight: bold;">{self.tag} begins</span>
+        </div>
+        ''')
         if config.TRAP_RUN_EXCEPTIONS:
             try:
                 self._do_run()
@@ -194,20 +201,20 @@ class RunWorker(LogWorker):
         else:
             self._do_run()
         if run_error:
-            message = "{self.tag} failed."
+            message = f"{self.tag} failed"
             status = 1
-            color = "#ff0000"
+            color = "#" + ColorPalette.DARK_RED.hex()
         else:
-            message = "{self.tag} ended successfully."
+            message = f"{self.tag} ended successfully"
             status = 0
-            color = "#000089"
+            color = "#" + ColorPalette.DARK_BLUE.hex()
         self.html_signal.emit(f'''
-        <hr><div style="margin: 2px 0; font-family: monospace;">
+        <div style="margin: 2px 0; font-family: monospace;">
         <span style="color: {color}; font-weight: bold;">{message}</span>
         </div>
         ''')
         self.end_signal.emit(status, message)
-        self.status_signal.emit("{self.tag} completed", 0)
+        self.status_signal.emit(f"{self.tag} completed", 0)
 
 
 class JobLogWorker(RunWorker):
