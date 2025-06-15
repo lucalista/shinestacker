@@ -6,29 +6,60 @@ from gui.project_converter import ProjectConverter
 from gui.gui_logging import LogWorker, QTextEditLogger
 
 
+class ColorEntry:
+    def __init__(self, r, g, b):
+        self.r = r
+        self.g = g
+        self.b = b
+
+    def tuple(self):
+        return self.r, self.g, self.b
+
+    def hex(self):
+        return f"{self.r:02x}{self.g:02x}{self.b:02x}"
+
+    def q_color(self):
+        return QColor(self.r, self.g, self.b)
+
+
+class ColorPalette:
+    BLACK = ColorEntry(0, 0, 0)
+    WHITE = ColorEntry(255, 255, 255)
+    LIGHT_BLUE = ColorEntry(210, 210, 240)
+    DARK_BLUE = ColorEntry(0, 0, 160)
+    MEDIUM_BLUE = ColorEntry(160, 160, 200)
+    MEDIUM_GREEN = ColorEntry(160, 200, 160)
+
 class ColorButton(QPushButton):
     def __init__(self, text, parent=None):
         super().__init__(text, parent)
         self.setMinimumHeight(1)
         self.setMaximumHeight(70)
-        self.set_color(210, 210, 240)
+        self.set_color(*ColorPalette.LIGHT_BLUE.tuple())
 
     def set_color(self, r, g, b):
         self.color = QColor(r, g, b)
         self.setStyleSheet(f"""
             QPushButton {{
                 background-color: {self.color.name()};
-                color: black;
+                color: #{ColorPalette.DARK_BLUE.hex()};
                 font-weight: bold;
                 border: none;
                 min-height: 1px;
                 padding: 5px;
                 margin: 0px;
             }}
-        """)        
+        """)
 
 
-class RunWindow(QTextEditLogger):    
+class RunWindow(QTextEditLogger):
+    light_background_color = ColorPalette.LIGHT_BLUE
+    border_color = ColorPalette.DARK_BLUE
+    text_color = ColorPalette.DARK_BLUE
+    bar_color = ColorPalette.MEDIUM_BLUE
+    action_running_color = ColorPalette.MEDIUM_BLUE
+    action_done_color = ColorPalette.MEDIUM_GREEN
+    
     def __init__(self, labels):
         QTextEditLogger.__init__(self)
         self.resize(1200, 600)
@@ -47,7 +78,6 @@ class RunWindow(QTextEditLogger):
         self.progress_bar = QProgressBar()
         self.progress_bar.setMinimum(0)
         self.set_progress_bar_style()
-        self.progress_bar.setGeometry(200, 80, 250, 20)
         self.progress_bar.setRange(0, 10)
         self.progress_bar.setValue(0)
         layout.addWidget(self.progress_bar)
@@ -55,34 +85,38 @@ class RunWindow(QTextEditLogger):
         layout.addWidget(self.status_bar)
         self.setLayout(layout)
 
-    def set_progress_bar_style(self):
-        self.progress_bar.setStyleSheet("""
-        QProgressBar {
-          border: 2px solid #808080;
+    def set_progress_bar_style(self, bar_color=None):
+        if bar_color is None:
+            bar_color = self.bar_color
+        self.progress_bar.setStyleSheet(f"""
+        QProgressBar {{
+          border: 2px solid #{self.border_color.hex()};
           border-radius: 5px;
           text-align: center;
           font-weight: bold;
           font-size: 14px;
-          background-color: white;
-          color: #000040;
+          background-color: #{self.light_background_color.hex()};
+          color: #{self.text_color.hex()};
           min-height: 1px;
-        }
-        QProgressBar::chunk {
-          background-color: #A0A0FF;
-        }
+        }}
+        QProgressBar::chunk {{
+          background-color: #{bar_color.hex()};
+        }}
         """)
 
     @Slot(int)
     def handle_before_action(self, id):
         if 0 <= id < len(self.color_widgets):
-            self.color_widgets[id].set_color(160, 160, 200)
+            self.color_widgets[id].set_color(*self.action_running_color.tuple())
             self.progress_bar.setValue(0)
     
     @Slot(int)
     def handle_after_action(self, id):
         if 0 <= id < len(self.color_widgets):
-            self.color_widgets[id].set_color(160, 200, 160)
+            self.color_widgets[id].set_color(*self.action_done_color.tuple())
             self.progress_bar.setValue(self.progress_bar.maximum())
+        if id == -1:
+            self.set_progress_bar_style(self.action_done_color)
 
     @Slot(int, int)
     def handle_step_count(self, id, steps):
