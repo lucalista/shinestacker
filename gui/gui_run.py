@@ -109,6 +109,8 @@ class RunWindow(QTextEditLogger):
         if 0 <= id < len(self.color_widgets):
             self.color_widgets[id].set_color(*self.action_running_color.tuple())
             self.progress_bar.setValue(0)
+        if id == -1:
+            self.set_progress_bar_style(self.action_running_color)
     
     @Slot(int)
     def handle_after_action(self, id):
