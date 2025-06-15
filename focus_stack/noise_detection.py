@@ -42,10 +42,9 @@ def mean_image(file_paths, message_callback=None, progress_callback=None):
 
 
 class NoiseDetection(FrameMultiDirectory, JobBase):
-    def __init__(self, name="noise-map", input_path='', output_path='', working_path='', plot_path='plots',
-                 plot_histograms=False, channel_thresholds=(13, 13, 13), blur_size=5, file_name='',
-                 plot_range=(5, 30)):
-        FrameMultiDirectory.__init__(self, name, input_path, output_path, working_path, plot_path, 1, False)
+    def __init__(self, name="noise-map", plot_histograms=False, channel_thresholds=(13, 13, 13), blur_size=5, file_name='',
+                 plot_range=(5, 30), **kwargs):
+        FrameMultiDirectory.__init__(self, name, **kwargs)
         JobBase.__init__(self, name)
         self.channel_thresholds = channel_thresholds
         self.blur_size = blur_size

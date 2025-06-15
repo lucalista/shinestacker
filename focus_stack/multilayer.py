@@ -16,8 +16,8 @@ EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
 
 class MultiLayer(FrameMultiDirectory, JobBase):
-    def __init__(self, name, input_path=[], output_path='', working_path='', exif_path='', reverse_order=False):
-        FrameMultiDirectory.__init__(self, name, input_path, output_path, working_path, '', 1, reverse_order)
+    def __init__(self, name, exif_path='', **kwargs):
+        FrameMultiDirectory.__init__(self, name, **kwargs)
         JobBase.__init__(self, name)
         self.exif_path = exif_path
 
