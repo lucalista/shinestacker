@@ -10,6 +10,48 @@ import logging
 LINE_UP = "\r\033[A"
 trailing_spaces = " " * 30
 
+class TqdmCallbacks:
+    _instance = None
+
+    callbacks = {
+        'step_counts': lambda id, name, counts: TqdmCallbacks.instance().step_counts(name, counts),
+        'begin_steps': lambda id, name: TqdmCallbacks.instance().begin_steps(name),
+        'end_steps': lambda id, name: TqdmCallbacks.instance().end_steps(name),
+        'after_step': lambda id, name, steps: TqdmCallbacks.instance().after_step(name)
+    }
+
+    def __init__(self):
+        self.bar = None
+
+    @classmethod
+    def instance(cls):
+        if cls._instance is None:
+            cls._instance = TqdmCallbacks()
+        return cls._instance
+    
+    def __init__(self):
+        self.bar = None
+        self.counts = -1
+
+    def step_counts(self, name, counts):
+        self.counts = counts
+        self.bar = make_tqdm_bar(name, self.counts)
+    
+    def begin_steps(self, name):
+        pass
+    
+    def end_steps(self, name):
+        if self.bar is None:
+            raise RuntimeError("tqdm bar not initialized")
+        self.bar.close()
+        self.bar = None
+
+    def after_step(self, name):
+        self.bar.update(1)
+
+        
+tqdm_callbacks = TqdmCallbacks()
+
 
 def elapsed_time_str(start):
     dt = time.time() - start
@@ -39,9 +81,9 @@ class JobBase:
 
     def run(self):
         self.__t0 = time.time()
-        self.callback('before_run', self.id)
+        self.callback('before_run', self.id, self.name)
         self.run_core()
-        self.callback('after_run', self.id)
+        self.callback('after_run', self.id, self.name)
         self.get_logger().info(
             colored(self.name + ": ", "green",
                     attrs=["bold"]) + colored(
@@ -122,13 +164,13 @@ class ActionList(JobBase):
 
     def set_counts(self, counts):
         self.counts = counts
-        self.callback('step_counts', self.id, self.counts)
+        self.callback('step_counts', self.id, self.name, self.counts)
 
     def begin(self):
-        self.callback('begin_steps', self.id)
+        self.callback('begin_steps', self.id, self.name)
 
     def end(self):
-        self.callback('end_steps', self.id)
+        self.callback('end_steps', self.id, self.name)
 
     def __iter__(self):
         self.count = 1
@@ -146,12 +188,6 @@ class ActionList(JobBase):
     def run_core(self):
         self.print_message('begin run', end='\n')
         self.begin()
-        if not config.DISABLE_TQDM:
-            bar = make_tqdm_bar(self.name, self.counts)
         for x in iter(self):
-            if not config.DISABLE_TQDM:
-                bar.update(1)
-            self.callback('after_step', self.id, self.count)
-        if not config.DISABLE_TQDM:
-            bar.close()
+            self.callback('after_step', self.id, self.name, self.count)
         self.end()

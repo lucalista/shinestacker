@@ -111,7 +111,7 @@ class RunWindow(QTextEditLogger):
         """)
 
     @Slot(int)
-    def handle_before_action(self, id):
+    def handle_before_action(self, id, name):
         if 0 <= id < len(self.color_widgets[self.row_widget_id]):
             self.color_widgets[self.row_widget_id][id].set_color(*self.action_running_color.tuple())
             self.progress_bar.setValue(0)
@@ -119,7 +119,7 @@ class RunWindow(QTextEditLogger):
             self.set_progress_bar_style(self.action_running_color)
 
     @Slot(int)
-    def handle_after_action(self, id):
+    def handle_after_action(self, id, name):
         if 0 <= id < len(self.color_widgets[self.row_widget_id]):
             self.color_widgets[self.row_widget_id][id].set_color(*self.action_done_color.tuple())
             self.progress_bar.setValue(self.progress_bar.maximum())
@@ -128,29 +128,29 @@ class RunWindow(QTextEditLogger):
             self.row_widget_id += 1
 
     @Slot(int, int)
-    def handle_step_count(self, id, steps):
+    def handle_step_count(self, id, name, steps):
         self.progress_bar.setMaximum(steps)
 
     @Slot(int, int)
-    def handle_begin_steps(self, id):
+    def handle_begin_steps(self, id, name):
         self.progress_bar.setValue(0)
 
     @Slot(int, int)
-    def handle_end_steps(self, id):
+    def handle_end_steps(self, id, name):
         self.progress_bar.setValue(self.progress_bar.maximum())
 
     @Slot(int, int)
-    def handle_after_step(self, id, step):
+    def handle_after_step(self, id, name, step):
         self.progress_bar.setValue(step)
 
 
 class RunWorker(LogWorker):
-    before_action_signal = Signal(int)
-    after_action_signal = Signal(int)
-    step_count_signal = Signal(int, int)
-    begin_steps_signal = Signal(int)
-    end_steps_signal = Signal(int)
-    after_step_signal = Signal(int, int)
+    before_action_signal = Signal(int, str)
+    after_action_signal = Signal(int, str)
+    step_count_signal = Signal(int, str, int)
+    begin_steps_signal = Signal(int, str)
+    end_steps_signal = Signal(int, str)
+    after_step_signal = Signal(int, str, int)
 
     def __init__(self, id_str):
         LogWorker.__init__(self)
@@ -165,22 +165,22 @@ class RunWorker(LogWorker):
         }
         self.tag = ""
 
-    def before_run(self, id):
-        self.before_action_signal.emit(id)
+    def before_run(self, id, name):
+        self.before_action_signal.emit(id, name)
 
-    def after_run(self, id):
-        self.after_action_signal.emit(id)
+    def after_run(self, id, name):
+        self.after_action_signal.emit(id, name)
 
-    def step_count(self, id, steps):
+    def step_count(self, id, name, steps):
         self.step_count_signal.emit(id, steps)
 
-    def begin_steps(self, id):
+    def begin_steps(self, id, name):
         self.begin_steps_signal.emit(id)
 
-    def end_steps(self, id):
+    def end_steps(self, id, name):
         self.end_steps_signal.emit(id)
 
-    def after_step(self, id, step):
+    def after_step(self, id, name, step):
         self.after_step_signal.emit(id, step)
 
     def run(self):

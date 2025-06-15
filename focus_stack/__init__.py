@@ -1,4 +1,5 @@
 # flake8: noqa F401
+from focus_stack.framework import TqdmCallbacks
 from focus_stack.stack_framework import StackJob, CombinedActions
 from focus_stack.align import (AlignFrames, ALIGN_HOMOGRAPHY, ALIGN_RIGID, BORDER_CONSTANT, BORDER_REPLICATE,
                                BORDER_REPLICATE_BLUR, DETECTOR_SIFT, DETECTOR_ORB, DETECTOR_SURF, DETECTOR_AKAZE,

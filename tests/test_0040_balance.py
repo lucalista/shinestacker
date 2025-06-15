@@ -1,12 +1,14 @@
 import sys
 sys.path.append('../')
-from focus_stack import (StackJob, CombinedActions, BalanceFrames, BALANCE_RGB, BALANCE_MATCH_HIST, BALANCE_LUMI,
+from focus_stack.framework import TqdmCallbacks
+from focus_stack.stack_framework import StackJob, CombinedActions 
+from focus_stack import (BalanceFrames, BALANCE_RGB, BALANCE_MATCH_HIST, BALANCE_LUMI,
                          BALANCE_LINEAR, BALANCE_GAMMA, BALANCE_HSV, BALANCE_HLS)
 
 
 def test_tif_rgb_match():
     try:
-        job = StackJob("job", "./", input_path="input/img-tif")
+        job = StackJob("job", "./", input_path="input/img-tif", callbacks=TqdmCallbacks.callbacks)
         job.add_action(CombinedActions("balance",
                                        [BalanceFrames(channel=BALANCE_RGB,
                                                       corr_map=BALANCE_MATCH_HIST, plot_histograms=True)],
@@ -18,7 +20,7 @@ def test_tif_rgb_match():
 
 def test_jpg_lumi():
     try:
-        job = StackJob("job", "./", input_path="input/img-jpg")
+        job = StackJob("job", "./", input_path="input/img-jpg", callbacks=TqdmCallbacks.callbacks)
         job.add_action(CombinedActions("balance",
                                        [BalanceFrames(channel=BALANCE_LUMI,
                                                       corr_map=BALANCE_LINEAR,
@@ -31,7 +33,7 @@ def test_jpg_lumi():
 
 def test_tif_lumi():
     try:
-        job = StackJob("job", "./", input_path="input/img-tif")
+        job = StackJob("job", "./", input_path="input/img-tif", callbacks=TqdmCallbacks.callbacks)
         job.add_action(CombinedActions("balance",
                                        [BalanceFrames(channel=BALANCE_LUMI,
                                                       corr_map=BALANCE_GAMMA,
@@ -44,7 +46,7 @@ def test_tif_lumi():
 
 def test_jpg_rgb():
     try:
-        job = StackJob("job", "./", input_path="input/img-jpg")
+        job = StackJob("job", "./", input_path="input/img-jpg", callbacks=TqdmCallbacks.callbacks)
         job.add_action(CombinedActions("balance",
                                        [BalanceFrames(channel=BALANCE_RGB,
                                                       corr_map=BALANCE_LINEAR,
@@ -57,7 +59,7 @@ def test_jpg_rgb():
 
 def test_jpg_hsv():
     try:
-        job = StackJob("job", "./", input_path="input/img-jpg")
+        job = StackJob("job", "./", input_path="input/img-jpg", callbacks=TqdmCallbacks.callbacks)
         job.add_action(CombinedActions("balance",
                                        [BalanceFrames(channel=BALANCE_HSV,
                                                       corr_map=BALANCE_LINEAR,
@@ -70,7 +72,7 @@ def test_jpg_hsv():
 
 def test_jpg_hls():
     try:
-        job = StackJob("job", "./", input_path="input/img-jpg")
+        job = StackJob("job", "./", input_path="input/img-jpg", callbacks=TqdmCallbacks.callbacks)
         job.add_action(CombinedActions("balance",
                                        [BalanceFrames(channel=BALANCE_HLS,
                                                       corr_map=BALANCE_GAMMA,

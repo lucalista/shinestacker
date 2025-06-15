@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../')
-from focus_stack.framework import Job, JobBase, ActionList
+from focus_stack.framework import Job, JobBase, ActionList, TqdmCallbacks
 from termcolor import colored
 import time
 
@@ -28,7 +28,8 @@ class MyActionList(ActionList):
         ActionList.__init__(self, name)
 
     def begin(self):
-        self.counts = 10
+        super().begin()
+        self.set_counts(10)
 
     def run_step(self):
         self.print_message_r(colored("action: {}".format(self.count), "blue"))
@@ -37,7 +38,7 @@ class MyActionList(ActionList):
 
 def test_run():
     try:
-        job = Job("job")
+        job = Job("job", callbacks=TqdmCallbacks.callbacks)
         job.add_action(Action1())
         job.add_action(Action2())
         job.add_action(MyActionList("my actions"))

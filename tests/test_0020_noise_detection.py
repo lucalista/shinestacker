@@ -1,7 +1,8 @@
 import sys
 sys.path.append('../')
-from focus_stack import StackJob, NoiseDetection, CombinedActions, MaskNoise
-from focus_stack.noise_detection import mean_image
+from focus_stack.framework import TqdmCallbacks
+from focus_stack.stack_framework import StackJob, CombinedActions
+from focus_stack.noise_detection import mean_image, NoiseDetection, MaskNoise
 from focus_stack.exceptions import ShapeError, BitDepthError
 from focus_stack.logging import setup_logging
 import logging
@@ -37,7 +38,7 @@ def test_detect_fail_3():
 
 def test_detect():
     try:
-        job = StackJob("job", "./", input_path="input/img-noise")
+        job = StackJob("job", "./", input_path="input/img-noise", callbacks=TqdmCallbacks.callbacks)
         job.add_action(NoiseDetection())
         job.run()
     except Exception:
@@ -46,7 +47,7 @@ def test_detect():
 
 def test_correct():
     try:
-        job = StackJob("job", "./", input_path="input/img-jpg")
+        job = StackJob("job", "./", input_path="input/img-jpg", callbacks=TqdmCallbacks.callbacks)
         job.add_action(CombinedActions("noise", [MaskNoise()], output_path="output/img-noise-corr"))
         job.run()
     except Exception:
