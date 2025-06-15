@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QP
 from PySide6.QtGui import QColor
 from PySide6.QtCore import Signal, Slot
 from gui.project_converter import ProjectConverter
-from gui.gui_logging import LogWorker, QTextEditLogger
+from gui.gui_logging import LogWorker, QTextEditLogger, LOG_FONTS_STR
 
 
 class ColorEntry:
@@ -187,7 +187,7 @@ class RunWorker(LogWorker):
         run_error = False
         self.status_signal.emit(f"{self.tag} running...", 0)
         self.html_signal.emit(f'''
-        <div style="margin: 2px 0; font-family: monospace;">
+        <div style="margin: 2px 0; font-family: {LOG_FONTS_STR};">
         <span style="color: #{ColorPalette.DARK_BLUE.hex()}; font-weight: bold;">{self.tag} begins</span>
         </div>
         ''')
@@ -208,8 +208,8 @@ class RunWorker(LogWorker):
             message = f"{self.tag} ended successfully"
             status = 0
             color = "#" + ColorPalette.DARK_BLUE.hex()
-        self.html_signal.emit(f'''
-        <div style="margin: 2px 0; font-family: monospace;">
+            self.html_signal.emit(f'''
+        <div style="margin: 2px 0; font-family: {LOG_FONTS_STR};">
         <span style="color: {color}; font-weight: bold;">{message}</span>
         </div>
         ''')

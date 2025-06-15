@@ -5,6 +5,8 @@ from PySide6.QtGui import QTextCursor, QTextOption, QFont
 from PySide6.QtCore import QThread, QObject, Signal, Slot, Qt
 from ansi2html import Ansi2HTMLConverter
 
+LOG_FONTS = ['Monaco', 'Menlo', 'Courier New', 'Courier', 'monospace']
+LOG_FONTS_STR = ", ".join(LOG_FONTS)
 
 class SimpleHtmlFormatter(logging.Formatter):
     ANSI_ESCAPE = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
@@ -30,7 +32,7 @@ class SimpleHtmlFormatter(logging.Formatter):
         message = self.ANSI_ESCAPE.sub('', message).replace("\r", "").rstrip()
         color = self.COLOR_MAP.get(levelname, '#000000')
         return f'''
-        <div style="margin: 2px 0; font-family: monospace;">
+        <div style="margin: 2px 0; font-family: {LOG_FONTS_STR};">
             <span style="color: {color}; font-weight: bold;">[{levelname[:3]}]</span>
             <span> {message}</span>
         </div>
@@ -86,8 +88,7 @@ class QTextEditLogger(GuiLogger):
         text_edit.setWordWrapMode(QTextOption.WrapMode.WordWrap)
         text_edit.setAcceptRichText(True)
         text_edit.setReadOnly(True)
-        font = QFont(['Courier New', 'monospace'], 14)
-        font.setStyleHint(QFont.StyleHint.Monospace)
+        font = QFont(LOG_FONTS, 14)
         text_edit.setFont(font)
         self.text_edit = text_edit
         self.status_bar = QStatusBar()
