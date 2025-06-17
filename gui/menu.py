@@ -1,5 +1,5 @@
-from PySide6.QtWidgets import (QMessageBox, QFileDialog, QMainWindow)
-from PySide6.QtGui import QAction
+from PySide6.QtWidgets import (QMessageBox, QFileDialog, QMainWindow, QListWidgetItem)
+from PySide6.QtGui import QAction, QColor
 from gui.project_model import Project
 from gui.project_model import (ACTION_JOB, ACTION_COMBO, ACTION_TYPES, SUB_ACTION_TYPES)
 import os.path
@@ -9,6 +9,18 @@ import jsonpickle
 
 CLONE_POSTFIX = " (clone)"
 DONT_USE_NATIVE_MENU = True
+ENABLED_LIST_ITEM_COLOR = (0, 0, 160)
+DISABLED_LIST_ITEM_COLOR = (160, 0, 0)
+
+
+def list_item(text, enabled):
+    item = QListWidgetItem(text)
+    if enabled:
+        color = QColor(*ENABLED_LIST_ITEM_COLOR)
+    else:
+        color = QColor(*DISABLED_LIST_ITEM_COLOR)
+    item.setForeground(color)
+    return item
 
 
 class WindowMenu(QMainWindow):
@@ -87,8 +99,16 @@ class WindowMenu(QMainWindow):
         menu.addSeparator()
         enable_action = QAction("&Enable/Disable", self)
         enable_action.setShortcut("Ctrl+E")
-        enable_action.triggered.connect(self.toggle_enable)
+        enable_action.triggered.connect(self.toggle_enabled)
         menu.addAction(enable_action)
+        enable_all_action = QAction("Enable all", self)
+        enable_all_action.setShortcut("Ctrl+Shift+E")
+        enable_all_action.triggered.connect(self.enable_all)
+        menu.addAction(enable_all_action)
+        disable_all_action = QAction("Disable all", self)
+        disable_all_action.setShortcut("Ctrl+Shift+D")
+        disable_all_action.triggered.connect(self.disable_all)
+        menu.addAction(disable_all_action)
         
     def __init__(self):
         super().__init__()
@@ -96,6 +116,23 @@ class WindowMenu(QMainWindow):
         menubar = self.menuBar()
         self.add_file_menu(menubar)
         self.add_edit_menu(menubar)
+
+    def _refresh_ui(self, job_row=-1, action_row=-1):
+        self.job_list.clear()
+        for job in self.project.jobs:
+            self.job_list.addItem(list_item(self.job_text(job), job.params.get('enabled', True)))
+        if self.project.jobs:
+            self.job_list.setCurrentRow(0)
+        if job_row >= 0:
+            self.job_list.setCurrentRow(job_row)
+        if action_row >= 0:
+            self.action_list.setCurrentRow(action_row)
+
+    def _update_title(self):
+        title = "Focus Stacking GUI"
+        if self._current_file:
+            title += f" - {os.path.basename(self._current_file)}"
+        self.setWindowTitle(title)
 
     def quit(self):
         if self._check_unsaved_changes():
@@ -171,23 +208,6 @@ class WindowMenu(QMainWindow):
                 return False
         else:
             return True
-
-    def _refresh_ui(self, job_row=-1, action_row=-1):
-        self.job_list.clear()
-        for job in self.project.jobs:
-            self.job_list.addItem(self.job_text(job))
-        if self.project.jobs:
-            self.job_list.setCurrentRow(0)
-        if job_row >= 0:
-            self.job_list.setCurrentRow(job_row)
-        if action_row >= 0:
-            self.action_list.setCurrentRow(action_row)
-
-    def _update_title(self):
-        title = "Focus Stacking GUI"
-        if self._current_file:
-            title += f" - {os.path.basename(self._current_file)}"
-        self.setWindowTitle(title)
 
     def _shift_job(self, delta):
         job_index = self.job_list.currentRow()
@@ -447,7 +467,7 @@ class WindowMenu(QMainWindow):
                 else:
                     self.action_list.setCurrentRow(actions_len - 1)
 
-    def toggle_enable(self):
+    def toggle_enabled(self):
         current_action = None
         if self.job_list.hasFocus():
             job_row = self.job_list.currentRow()
@@ -460,6 +480,20 @@ class WindowMenu(QMainWindow):
                 action = actions[action_index]
                 current_action = action if sub_action_index == -1 else sub_actions[sub_action_index]
         if current_action:
-            current_action.toggle_enable()
+            current_action.toggle_enabled()
             self.touch_project()
             self._refresh_ui(job_row, action_row)
+
+    def set_enabled_all(self, enable=True):
+        job_row = self.job_list.currentRow()
+        action_row = self.action_list.currentRow()        
+        for j in self.project.jobs:
+            j.set_enabled_all(enable)
+        self.touch_project()
+        self._refresh_ui(job_row, action_row)
+            
+    def enable_all(self):
+        self.set_enabled_all(True)
+
+    def disable_all(self):
+        self.set_enabled_all(False)

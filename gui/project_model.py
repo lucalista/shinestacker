@@ -25,6 +25,14 @@ class ActionConfig:
     def enabled(self):
         return self.params.get('enabled', True)
 
+    def toggle_enabled(self):
+        self.params['enabled'] = not self.params['enabled']
+
+    def set_enabled_all(self, enabled=True):
+        self.params['enabled'] = enabled
+        for a in self.sub_actions:
+            a.set_enabled_all(enabled)
+
     def add_sub_action(self, action):
         self.sub_actions.append(action)
         action.parent = self
@@ -43,9 +51,6 @@ class ActionConfig:
         if name_postfix != '':
             c.params['name'] = c.params.get('name', '') + name_postfix
         return c
-
-    def toggle_enable(self):
-        self.params['enabled'] = not self.params['enabled']
 
     def to_dict(self):
         dict = {

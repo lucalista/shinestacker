@@ -1,9 +1,10 @@
 from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout,
                                QLabel, QComboBox, QMessageBox, QDialog)
+from PySide6.QtGui import QAction
 from gui.project_model import Project, ActionConfig
 from gui.action_config import ActionConfigDialog
 from gui.project_model import SUB_ACTION_TYPES, ACTION_TYPES, ACTION_COMBO
-from gui.menu import WindowMenu
+from gui.menu import WindowMenu, list_item
 from gui.gui_logging import LogManager
 from gui.gui_run import RunWindow, JobLogWorker, ProjectLogWorker
 
@@ -80,7 +81,8 @@ class MainWindow(WindowMenu, LogManager):
         if dialog.exec() == QDialog.Accepted:
             self.touch_project()
             self.project.jobs.append(job_action)
-            self.job_list.addItem(self.job_text(job_action))
+            self.job_list.addItem(list_item(self.job_text(job_action),
+                                            job_action.params.get('enabled', True)))
             self.job_list.setCurrentRow(self.job_list.count() - 1)
             self.job_list.item(self.job_list.count() - 1).setSelected(True)
 
@@ -160,7 +162,7 @@ class MainWindow(WindowMenu, LogManager):
         if dialog.exec() == QDialog.Accepted:
             self.touch_project()
             self.project.jobs[current_index].add_sub_action(action)
-            self.action_list.addItem(self.action_text(action))
+            self.action_list.addItem(list_item(self.action_text(action), action.params.get("enabled", True)))
 
     def show_action_config_dialog(self, action):
         dialog = ActionConfigDialog(action, self)
@@ -226,10 +228,12 @@ class MainWindow(WindowMenu, LogManager):
         if 0 <= index < len(self.project.jobs):
             job = self.project.jobs[index]
             for action in job.sub_actions:
-                self.action_list.addItem(self.action_text(action))
+                self.action_list.addItem(list_item(self.action_text(action),
+                                                   action.params.get('enabled', True)))
                 if len(action.sub_actions) > 0:
                     for sub_action in action.sub_actions:
-                        self.action_list.addItem(self.action_text(sub_action, is_sub_action=True))
+                        self.action_list.addItem(list_item(self.action_text(sub_action, is_sub_action=True),
+                                                           sub_action.params.get('enabled', True)))
 
     def add_sub_action(self):
         current_job_index = self.job_list.currentRow()
