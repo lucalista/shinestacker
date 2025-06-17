@@ -1,4 +1,4 @@
-from .framework import Job, ActionList, JobBase
+from .framework import Job, ActionList
 from .utils import check_path_exists
 from focus_stack.utils import read_img, write_img
 from focus_stack.exceptions import ShapeError, BitDepthError
@@ -141,7 +141,7 @@ class FrameMultiDirectory:
 
 class FramesRefActions(FrameDirectory, ActionList):
     def __init__(self, name, enabled=True, ref_idx=-1, step_process=False, **kwargs):
-        FrameDirectory.__init__(self, name, **kwargs)        
+        FrameDirectory.__init__(self, name, **kwargs)
         ActionList.__init__(self, name, enabled)
         self.ref_idx = ref_idx
         self.step_process = step_process
@@ -193,7 +193,7 @@ class CombinedActions(FramesRefActions):
     def begin(self):
         FramesRefActions.begin(self)
         for a in self.__actions:
-            if a.enabled:           
+            if a.enabled:
                 a.begin(self)
 
     def img_ref(self, idx):

@@ -10,6 +10,7 @@ import logging
 LINE_UP = "\r\033[A"
 trailing_spaces = " " * 30
 
+
 class TqdmCallbacks:
     _instance = None
 
@@ -22,24 +23,21 @@ class TqdmCallbacks:
 
     def __init__(self):
         self.bar = None
+        self.counts = -1
 
     @classmethod
     def instance(cls):
         if cls._instance is None:
             cls._instance = TqdmCallbacks()
         return cls._instance
-    
-    def __init__(self):
-        self.bar = None
-        self.counts = -1
 
     def step_counts(self, name, counts):
         self.counts = counts
         self.bar = make_tqdm_bar(name, self.counts)
-    
+
     def begin_steps(self, name):
         pass
-    
+
     def end_steps(self, name):
         if self.bar is None:
             raise RuntimeError("tqdm bar not initialized")
@@ -50,7 +48,7 @@ class TqdmCallbacks:
         self.bar.write("")
         self.bar.update(1)
 
-        
+
 tqdm_callbacks = TqdmCallbacks()
 
 
@@ -84,11 +82,10 @@ class JobBase:
     def run(self):
         self.__t0 = time.time()
         if not self.enabled:
-            self.get_logger().warning(colored(self.base_message + ": disabled", 'red'))
-            return
-        self.callback('before_run', self.id, self.name)
+            self.get_logger().warning(colored(self.name + ": entire job disabled", 'red'))
+        self.callback('before_action', self.id, self.name)
         self.run_core()
-        self.callback('after_run', self.id, self.name)
+        self.callback('after_action', self.id, self.name)
         self.get_logger().info(
             colored(self.name + ": ", "green",
                     attrs=["bold"]) + colored(
@@ -136,13 +133,13 @@ class JobBase:
 
 class Job(JobBase):
     def __init__(self, name, logger_name=None, log_file="logs/focusstack.log", callbacks=None, **kwargs):
-        JobBase.__init__(self, name, **kwargs)        
+        JobBase.__init__(self, name, **kwargs)
         self.action_counter = 0
         self.__actions = []
         if logger_name is None:
             setup_logging(log_file=log_file)
         self.logger = None if logger_name is None else logging.getLogger(logger_name)
-        self.callbacks = TqdmCallbacks.callbacks if callbacks == 'tqdm' else callbacks 
+        self.callbacks = TqdmCallbacks.callbacks if callbacks == 'tqdm' else callbacks
 
     def time(self):
         return time.time() - self.__t0
@@ -161,10 +158,18 @@ class Job(JobBase):
     def run_core(self):
         for a in self.__actions:
             if not (a.enabled and self.enabled):
-                self.get_logger().warning(colored(a.base_message + ": disabled", 'red'))
+                # a.callback('before_action', a.id, a.name)
+                z = []
+                if not a.enabled:
+                    z.append("action")
+                if not self.enabled:
+                    z.append("job")
+                msg = " and ".join(z)
+                self.get_logger().warning(colored(a.name + f": {msg} disabled", 'red'))
+                # a.callback('after_action', a.id, a.name)
             else:
                 a.run()
-                
+
 
 class ActionList(JobBase):
     def __init__(self, name, enabled=True, **kwargs):

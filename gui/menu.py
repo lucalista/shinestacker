@@ -110,7 +110,7 @@ class WindowMenu(QMainWindow):
         disable_all_action.setShortcut("Ctrl+Shift+D")
         disable_all_action.triggered.connect(self.disable_all)
         menu.addAction(disable_all_action)
-        
+
     def __init__(self):
         super().__init__()
         self._current_file = None
@@ -167,7 +167,6 @@ class WindowMenu(QMainWindow):
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Cannot open file {file_path}:\n{str(e)}")
         self._modified_project = False
-        
 
     def save_project(self):
         if self._current_file:
@@ -477,7 +476,7 @@ class WindowMenu(QMainWindow):
         if self.job_list.hasFocus():
             job_row = self.job_list.currentRow()
             if 0 <= job_row < len(self.project.jobs):
-                current_action =  self.project.jobs[job_row]
+                current_action = self.project.jobs[job_row]
                 action_row = -1
         elif self.action_list.hasFocus():
             job_row, action_row, actions, sub_actions, action_index, sub_action_index = self._get_current_action()
@@ -491,12 +490,12 @@ class WindowMenu(QMainWindow):
 
     def set_enabled_all(self, enable=True):
         job_row = self.job_list.currentRow()
-        action_row = self.action_list.currentRow()        
+        action_row = self.action_list.currentRow()
         for j in self.project.jobs:
             j.set_enabled_all(enable)
         self.touch_project()
         self._refresh_ui(job_row, action_row)
-            
+
     def enable_all(self):
         self.set_enabled_all(True)
 

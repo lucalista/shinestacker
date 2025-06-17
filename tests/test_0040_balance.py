@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../')
-from focus_stack.stack_framework import StackJob, CombinedActions 
+from focus_stack.stack_framework import StackJob, CombinedActions
 from focus_stack import (BalanceFrames, BALANCE_RGB, BALANCE_MATCH_HIST, BALANCE_LUMI,
                          BALANCE_LINEAR, BALANCE_GAMMA, BALANCE_HSV, BALANCE_HLS)
 

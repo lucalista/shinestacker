@@ -5,6 +5,8 @@ from PySide6.QtCore import Signal, Slot
 from gui.project_converter import ProjectConverter
 from gui.gui_logging import LogWorker, QTextEditLogger, LOG_FONTS_STR
 
+DISABLED_TAG = " <disabled>"
+
 
 class ColorEntry:
     def __init__(self, r, g, b):
@@ -31,11 +33,12 @@ class ColorPalette:
     DARK_RED = ColorEntry(160, 0, 0)
     MEDIUM_BLUE = ColorEntry(160, 160, 200)
     MEDIUM_GREEN = ColorEntry(160, 200, 160)
+    MEDIUM_RED = ColorEntry(200, 160, 160)
 
 
 class ColorButton(QPushButton):
     def __init__(self, text, enabled, parent=None):
-        super().__init__(text, parent)
+        super().__init__(text.replace(DISABLED_TAG, ''), parent)
         self.setMinimumHeight(1)
         self.setMaximumHeight(70)
         color = ColorPalette.LIGHT_BLUE if enabled else ColorPalette.LIGHT_RED
@@ -158,8 +161,8 @@ class RunWorker(LogWorker):
         LogWorker.__init__(self)
         self.id_str = id_str
         self.callbacks = {
-            'before_run': self.before_run,
-            'after_run': self.after_run,
+            'before_action': self.before_action,
+            'after_action': self.after_action,
             'step_count': self.step_count,
             'begin_steps': self.begin_steps,
             'end_steps': self.end_steps,
@@ -167,10 +170,10 @@ class RunWorker(LogWorker):
         }
         self.tag = ""
 
-    def before_run(self, id, name):
+    def before_action(self, id, name):
         self.before_action_signal.emit(id, name)
 
-    def after_run(self, id, name):
+    def after_action(self, id, name):
         self.after_action_signal.emit(id, name)
 
     def step_count(self, id, name, steps):

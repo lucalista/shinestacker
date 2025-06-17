@@ -1,4 +1,5 @@
-from focus_stack.stack_framework import FrameMultiDirectory, JobBase
+from focus_stack.stack_framework import FrameMultiDirectory
+from focus_stack.framework import JobBase
 from focus_stack.exif import exif_extra_tags, get_exif
 from termcolor import colored
 import tifffile

@@ -1,7 +1,6 @@
 from config.config import config
 import logging
 import sys
-import os
 from pathlib import Path
 import re
 if not config.DISABLE_TQDM:

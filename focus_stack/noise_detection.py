@@ -1,5 +1,6 @@
 from config.config import config
-from focus_stack.stack_framework import FrameMultiDirectory, JobBase, SubAction
+from focus_stack.framework import JobBase
+from focus_stack.stack_framework import FrameMultiDirectory, SubAction
 from focus_stack.utils import read_img, save_plot, make_tqdm_bar, get_img_metadata, validate_image
 from focus_stack.exceptions import ImageLoadError
 from termcolor import colored
@@ -42,8 +43,8 @@ def mean_image(file_paths, message_callback=None, progress_callback=None):
 
 
 class NoiseDetection(FrameMultiDirectory, JobBase):
-    def __init__(self, name="noise-map", enabled=True, plot_histograms=False, channel_thresholds=(13, 13, 13), blur_size=5, file_name='',
-                 plot_range=(5, 30), **kwargs):        
+    def __init__(self, name="noise-map", enabled=True, plot_histograms=False, channel_thresholds=(13, 13, 13),
+                 blur_size=5, file_name='', plot_range=(5, 30), **kwargs):
         FrameMultiDirectory.__init__(self, name, **kwargs)
         JobBase.__init__(self, name, enabled)
         self.channel_thresholds = channel_thresholds

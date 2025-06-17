@@ -8,6 +8,7 @@ from ansi2html import Ansi2HTMLConverter
 LOG_FONTS = ['Monaco', 'Menlo', ' Lucida Console', 'Courier New', 'Courier', 'monospace']
 LOG_FONTS_STR = ", ".join(LOG_FONTS)
 
+
 class SimpleHtmlFormatter(logging.Formatter):
     ANSI_ESCAPE = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
     COLOR_MAP = {

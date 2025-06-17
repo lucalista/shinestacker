@@ -1,12 +1,11 @@
 from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout,
                                QLabel, QComboBox, QMessageBox, QDialog)
-from PySide6.QtGui import QAction
 from gui.project_model import Project, ActionConfig
 from gui.action_config import ActionConfigDialog
 from gui.project_model import SUB_ACTION_TYPES, ACTION_TYPES, ACTION_COMBO
 from gui.menu import WindowMenu, list_item
 from gui.gui_logging import LogManager
-from gui.gui_run import RunWindow, JobLogWorker, ProjectLogWorker
+from gui.gui_run import RunWindow, JobLogWorker, ProjectLogWorker, DISABLED_TAG
 
 
 class MainWindow(WindowMenu, LogManager):
@@ -141,7 +140,6 @@ class MainWindow(WindowMenu, LogManager):
             else:
                 QMessageBox.warning(self, "Can't run Job", "Job " + job.params["name"] + " is disabled.")
                 return
-                
 
     def run_all_jobs(self):
         labels = [[(self.action_text(a), a.enabled() and job.enabled()) for a in job.sub_actions] for job in self.project.jobs]
@@ -211,7 +209,7 @@ class MainWindow(WindowMenu, LogManager):
     def job_text(self, job):
         txt = job.params.get('name', '(job)')
         if not job.params.get('enabled', ''):
-            txt += ' <disabled>'
+            txt += DISABLED_TAG
         return txt
 
     def action_text(self, action, is_sub_action=False, indent=True):
@@ -220,7 +218,7 @@ class MainWindow(WindowMenu, LogManager):
             txt += action.params["name"]
         txt += f" [{action.type_name}]"
         if not action.params.get('enabled', True):
-            txt += ' <disabled>'
+            txt += DISABLED_TAG
         return txt
 
     def on_job_selected(self, index):

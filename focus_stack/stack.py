@@ -4,7 +4,8 @@ import os
 from termcolor import colored
 from .exif import copy_exif
 from focus_stack.utils import write_img
-from focus_stack.stack_framework import FrameDirectory, JobBase, ActionList
+from focus_stack.framework import JobBase
+from focus_stack.stack_framework import FrameDirectory, ActionList
 from focus_stack.exceptions import InvalidOptionError
 
 EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
