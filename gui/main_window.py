@@ -80,7 +80,7 @@ class MainWindow(WindowMenu, LogManager):
         if dialog.exec() == QDialog.Accepted:
             self.touch_project()
             self.project.jobs.append(job_action)
-            self.job_list.addItem(job_action.params['name'])
+            self.job_list.addItem(self.job_text(job_action))
             self.job_list.setCurrentRow(self.job_list.count() - 1)
             self.job_list.item(self.job_list.count() - 1).setSelected(True)
 
@@ -201,11 +201,19 @@ class MainWindow(WindowMenu, LogManager):
             self.add_sub_action_button.setEnabled(False)
             self.delete_action_button.setText("Delete Action")
 
+    def job_text(self, job):
+        txt = job.params.get('name', '(job)')
+        if not job.params.get('enabled', ''):
+            txt += ' <disabled>'
+        return txt
+
     def action_text(self, action, is_sub_action=False, indent=True):
         txt = "    " if is_sub_action and indent else ""
         if action.params.get('name', '') != '':
             txt += action.params["name"]
         txt += f" [{action.type_name}]"
+        if not action.params.get('enabled', True):
+            txt += ' <disabled>'
         return txt
 
     def on_job_selected(self, index):

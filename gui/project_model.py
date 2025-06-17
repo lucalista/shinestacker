@@ -18,6 +18,7 @@ class ActionConfig:
     def __init__(self, type_name: str, params: dict=None, parent=None): # noqa
         self.type_name = type_name
         self.params = params or {}
+        self.params['enabled'] = True
         self.parent = parent
         self.sub_actions: list[ActionConfig] = []
 
@@ -39,6 +40,9 @@ class ActionConfig:
         if name_postfix != '':
             c.params['name'] = c.params.get('name', '') + name_postfix
         return c
+
+    def toggle_enable(self):
+        self.params['enabled'] = not self.params['enabled']
 
     def to_dict(self):
         dict = {

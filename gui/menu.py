@@ -84,7 +84,12 @@ class WindowMenu(QMainWindow):
         down_action.setShortcut("Ctrl+Down")
         down_action.triggered.connect(self.move_element_down)
         menu.addAction(down_action)
-
+        menu.addSeparator()
+        enable_action = QAction("&Enable/Disable", self)
+        enable_action.setShortcut("Ctrl+E")
+        enable_action.triggered.connect(self.toggle_enable)
+        menu.addAction(enable_action)
+        
     def __init__(self):
         super().__init__()
         self._current_file = None
@@ -167,12 +172,16 @@ class WindowMenu(QMainWindow):
         else:
             return True
 
-    def _refresh_ui(self):
+    def _refresh_ui(self, job_row=-1, action_row=-1):
         self.job_list.clear()
         for job in self.project.jobs:
-            self.job_list.addItem(job.params['name'])
+            self.job_list.addItem(self.job_text(job))
         if self.project.jobs:
             self.job_list.setCurrentRow(0)
+        if job_row >= 0:
+            self.job_list.setCurrentRow(job_row)
+        if action_row >= 0:
+            self.action_list.setCurrentRow(action_row)
 
     def _update_title(self):
         title = "Focus Stacking GUI"
@@ -189,8 +198,7 @@ class WindowMenu(QMainWindow):
             jobs = self.project.jobs
             self.touch_project()
             jobs.insert(new_index, jobs.pop(job_index))
-            self._refresh_ui()
-            self.job_list.setCurrentRow(new_index)
+            self._refresh_ui(new_index, -1)
 
     def _get_current_action(self):
         action_row = self.action_list.currentRow()
@@ -237,9 +245,7 @@ class WindowMenu(QMainWindow):
                     new_row = 1 + new_index
                     for action in actions[:action_index]:
                         new_row += 1 + len(action.sub_actions)
-            self._refresh_ui()
-            self.job_list.setCurrentRow(job_row)
-            self.action_list.setCurrentRow(new_row)
+            self._refresh_ui(job_row, new_row)
 
     def move_element_up(self):
         if self.job_list.hasFocus():
@@ -262,8 +268,7 @@ class WindowMenu(QMainWindow):
             self.project.jobs.insert(new_job_index, job_clone)
             self.job_list.setCurrentRow(new_job_index)
             self.action_list.setCurrentRow(new_job_index)
-            self._refresh_ui()
-            self.job_list.setCurrentRow(new_job_index)
+            self._refresh_ui(new_job_index, -1)
 
     def clone_action(self):
         job_row, action_row, actions, sub_actions, action_index, sub_action_index = self._get_current_action()
@@ -291,9 +296,7 @@ class WindowMenu(QMainWindow):
                     new_row = 1 + new_index
                     for action in actions[:action_index]:
                         new_row += 1 + len(action.sub_actions)
-            self._refresh_ui()
-            self.job_list.setCurrentRow(job_row)
-            self.action_list.setCurrentRow(new_row)
+            self._refresh_ui(job_row, new_row)
 
     def clone_element(self):
         if self.job_list.hasFocus():
@@ -345,10 +348,7 @@ class WindowMenu(QMainWindow):
                         new_row = action_row
                     elif action_index == len(actions):
                         new_row = action_row - len(actions[action_index - 1].sub_actions) - 1
-                self._refresh_ui()
-                self.job_list.setCurrentRow(job_row)
-                if new_row >= 0:
-                    self.action_list.setCurrentRow(new_row)
+                self._refresh_ui(job_row, new_row)
             return current_action
         return None
 
@@ -388,8 +388,7 @@ class WindowMenu(QMainWindow):
             self.project.jobs.insert(new_job_index, self._copy_buffer)
             self.job_list.setCurrentRow(new_job_index)
             self.action_list.setCurrentRow(new_job_index)
-            self._refresh_ui()
-            self.job_list.setCurrentRow(new_job_index)
+            self._refresh_ui(new_job_index, -1)
 
     def paste_action(self):
         job_row, action_row, actions, sub_actions, action_index, sub_action_index = self._get_current_action()
@@ -418,9 +417,7 @@ class WindowMenu(QMainWindow):
                     new_row = 1 + new_index
                     for action in actions[:action_index]:
                         new_row += 1 + len(action.sub_actions)
-            self._refresh_ui()
-            self.job_list.setCurrentRow(job_row)
-            self.action_list.setCurrentRow(new_row)
+            self._refresh_ui(job_row, new_row)
 
     def paste_element(self):
         if self._copy_buffer is None:
@@ -449,3 +446,20 @@ class WindowMenu(QMainWindow):
                     self.action_list.setCurrentRow(action_row)
                 else:
                     self.action_list.setCurrentRow(actions_len - 1)
+
+    def toggle_enable(self):
+        current_action = None
+        if self.job_list.hasFocus():
+            job_row = self.job_list.currentRow()
+            if 0 <= job_row < len(self.project.jobs):
+                current_action =  self.project.jobs[job_row]
+                action_row = -1
+        elif self.action_list.hasFocus():
+            job_row, action_row, actions, sub_actions, action_index, sub_action_index = self._get_current_action()
+            if actions is not None:
+                action = actions[action_index]
+                current_action = action if sub_action_index == -1 else sub_actions[sub_action_index]
+        if current_action:
+            current_action.toggle_enable()
+            self.touch_project()
+            self._refresh_ui(job_row, action_row)
