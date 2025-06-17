@@ -26,6 +26,7 @@ class ColorPalette:
     BLACK = ColorEntry(0, 0, 0)
     WHITE = ColorEntry(255, 255, 255)
     LIGHT_BLUE = ColorEntry(210, 210, 240)
+    LIGHT_RED = ColorEntry(240, 210, 210)
     DARK_BLUE = ColorEntry(0, 0, 160)
     DARK_RED = ColorEntry(160, 0, 0)
     MEDIUM_BLUE = ColorEntry(160, 160, 200)
@@ -33,11 +34,12 @@ class ColorPalette:
 
 
 class ColorButton(QPushButton):
-    def __init__(self, text, parent=None):
+    def __init__(self, text, enabled, parent=None):
         super().__init__(text, parent)
         self.setMinimumHeight(1)
         self.setMaximumHeight(70)
-        self.set_color(*ColorPalette.LIGHT_BLUE.tuple())
+        color = ColorPalette.LIGHT_BLUE if enabled else ColorPalette.LIGHT_RED
+        self.set_color(*color.tuple())
 
     def set_color(self, r, g, b):
         self.color = QColor(r, g, b)
@@ -75,8 +77,8 @@ class RunWindow(QTextEditLogger):
                 h_layout = QHBoxLayout(row)
                 h_layout.setContentsMargins(0, 0, 0, 0)
                 h_layout.setSpacing(2)
-                for label in label_row:
-                    widget = ColorButton(label)
+                for label, enabled in label_row:
+                    widget = ColorButton(label, enabled)
                     h_layout.addWidget(widget, stretch=1)
                     self.color_widgets[-1].append(widget)
                 layout.addWidget(row)

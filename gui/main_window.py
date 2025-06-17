@@ -133,7 +133,7 @@ class MainWindow(WindowMenu, LogManager):
         if current_index >= 0:
             job = self.project.jobs[current_index]
             if job.enabled():
-                labels = [[self.action_text(a) for a in filter(lambda a: a.enabled(), job.sub_actions)]]
+                labels = [[(self.action_text(a), a.enabled()) for a in job.sub_actions]]
                 new_window, id_str = self.create_new_window("Run job: " + job.params["name"], labels)
                 worker = JobLogWorker(job, id_str)
                 self.connect_signals(worker, new_window)
@@ -144,7 +144,7 @@ class MainWindow(WindowMenu, LogManager):
                 
 
     def run_all_jobs(self):
-        labels = [[self.action_text(a) for a in filter(lambda a: a.enabled(), job.sub_actions)] for job in filter(lambda j: j.enabled(), self.project.jobs)]
+        labels = [[(self.action_text(a), a.enabled() and job.enabled()) for a in job.sub_actions] for job in self.project.jobs]
         new_window, id_str = self.create_new_window("Run project", labels)
         worker = ProjectLogWorker(self.project, id_str)
         self.connect_signals(worker, new_window)
@@ -196,7 +196,7 @@ class MainWindow(WindowMenu, LogManager):
                             break
                     if current_action:
                         break
-            enable_sub_actions = (current_action and not is_sub_action and current_action.type_name == ACTION_COMBO)
+            enable_sub_actions = (current_action is not None and not is_sub_action and current_action.type_name == ACTION_COMBO)
             self.sub_action_selector.setEnabled(enable_sub_actions)
             self.add_sub_action_button.setEnabled(enable_sub_actions)
             if is_sub_action:

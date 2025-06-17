@@ -23,18 +23,18 @@ class ProjectConverter:
         for job in jobs:
             if job.enabled:
                 logger.info("=== run job: " + job.name + " ===")
-                job.run()
             else:
                 logger.warning("=== job: " + job.name + " disabled ===")
+            job.run()
 
     def run_job(self, job: ActionConfig, logger_name=None, callbacks=None):
         logger = logging.getLogger(__name__ if logger_name is None else logger_name)
         job = self.job(job, logger_name, callbacks)
         if job.enabled:
             logger.info("=== run job: " + job.name + " ===")
-            job.run()
         else:
             logger.warning("=== job: " + job.name + " disabled ===")
+        job.run()
 
     def project(self, project: Project, logger_name=None, callbacks=None):
         return [self.job(j, logger_name, callbacks) for j in project.jobs]

@@ -84,7 +84,7 @@ class JobBase:
     def run(self):
         self.__t0 = time.time()
         if not self.enabled:
-            self.get_logger().log(colored(self.base_message + ": disabled", 'red'))
+            self.get_logger().warning(colored(self.base_message + ": disabled", 'red'))
             return
         self.callback('before_run', self.id, self.name)
         self.run_core()
@@ -160,7 +160,7 @@ class Job(JobBase):
 
     def run_core(self):
         for a in self.__actions:
-            if not a.enabled:
+            if not (a.enabled and self.enabled):
                 self.get_logger().warning(colored(a.base_message + ": disabled", 'red'))
             else:
                 a.run()

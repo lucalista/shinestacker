@@ -2,6 +2,7 @@ from PySide6.QtWidgets import (QMessageBox, QFileDialog, QMainWindow, QListWidge
 from PySide6.QtGui import QAction, QColor
 from gui.project_model import Project
 from gui.project_model import (ACTION_JOB, ACTION_COMBO, ACTION_TYPES, SUB_ACTION_TYPES)
+from gui.gui_run import ColorPalette
 import os.path
 import os
 import json
@@ -9,8 +10,8 @@ import jsonpickle
 
 CLONE_POSTFIX = " (clone)"
 DONT_USE_NATIVE_MENU = True
-ENABLED_LIST_ITEM_COLOR = (0, 0, 160)
-DISABLED_LIST_ITEM_COLOR = (160, 0, 0)
+ENABLED_LIST_ITEM_COLOR = ColorPalette.DARK_BLUE.tuple()
+DISABLED_LIST_ITEM_COLOR = ColorPalette.DARK_RED.tuple()
 
 
 def list_item(text, enabled):
@@ -145,6 +146,7 @@ class WindowMenu(QMainWindow):
             self._update_title()
             self.job_list.clear()
             self.action_list.clear()
+            self._modified_project = False
 
     def open_project(self):
         if not self._check_unsaved_changes():
@@ -159,10 +161,13 @@ class WindowMenu(QMainWindow):
                 self.project = Project.from_dict(json_obj['project'])
                 self._current_file = file_path
                 self._update_title()
-                self._refresh_ui()
+                self._refresh_ui(0, -1)
+                if self.job_list.count() > 0:
+                    self.job_list.setCurrentRow(0)
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Cannot open file {file_path}:\n{str(e)}")
         self._modified_project = False
+        
 
     def save_project(self):
         if self._current_file:
