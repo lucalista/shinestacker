@@ -29,7 +29,7 @@ Arguments for the constructor of ```FocusStackBunch``` are:
 * ```frames``` (optional, default: 10): the number of frames that are fused together. 
 * ```overlap``` (optional, default: 0): the number of overlapping frames between a bunch and the following one. 
 * ```denoise``` (optoinal): if specified, a denois algorithm is applied. A value of 0.75 to 1.00 does not reduce details in an appreciable way, and is suitable for modest noise reduction. See [Image Denoising](https://docs.opencv.org/3.4/d5/d69/tutorial_py_non_local_means.html) for more details
-* ```enabled``` (optional, default: ``True```): allows to switch on and off this module.
+* ```enabled``` (optional, default: ```True```): allows to switch on and off this module.
 
 ## Stack algorithms
 

@@ -19,7 +19,7 @@ Arguments for the constructor of ```NoiseDetection``` are:
 * ```blur_size``` (optional, default: 5): image blur amount for pixel detection.
 * ```file_name``` (optional, default: ```hot```): noise map filename. The noisy pixel map is stored bydefault in the file ```hot-rgb.png```. Noisy pixel maps individyally for the R, G and B channels are also stored in  ```hot-r.png```,  ```hot-g.png``` and  ```hot-b.png```, respectively.
 * ```plot_range``` (optiona, default: (5, 30)): range of the horizontal axis of the plot showing the number of hot pixel as a function of the intensity threshold.
-* ```enabled``` (optional, default: ``True```): allows to switch on and off this module. 
+* ```enabled``` (optional, default: ```True```): allows to switch on and off this module. 
 
 After the noisy pixel mask has been determined, noisy pixels are then masked adding the action ```MaskNoise``` to the ```Actions``` module:
 
@@ -39,4 +39,4 @@ Arguments for the constructor of ```NoiseDetection``` are:
 * ```noise_mask``` (optional, default: ```noise-map/hot-rgb.png```): filename of the noise mask
 *  ```kernel_size``` (optional, default: 3): blur size use to extract noisy pixels
 *  ```method``` (optional, default: ```INTERPOLATE_MEAN```): possible values: ```INTERPOLATE_MEAN```, ```INTERPOLATE_MEDIAN```. Interpolate using mean or median of neighborhood pixels to replace a noisy pixel.
-* ```enabled``` (optional, default: ``True```): allows to switch on and off this module. 
+* ```enabled``` (optional, default: ```True```): allows to switch on and off this module. 

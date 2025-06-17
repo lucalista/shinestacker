@@ -11,7 +11,7 @@ Arguments are:
 * ```name```: the name of the job, used for printout
 * ```input_path``` (optional): the subdirectory within ```working_path``` that contains input images for subsequent action. If not specified, at least the first action must specify an ```input_path```.
 * ```callbacks``` (optional, default: ```None```): dictionary of callback functions for internal use. If equal to ```'tqdm'```, a progress bar is shown in either text mode or jupyter notebook.
-* ```enabled``` (optional, default: ``True```): allows to switch on and off all actions within a job.
+* ```enabled``` (optional, default: ```True```): allows to switch on and off all actions within a job.
 
 # Schedule multiple actions based on a reference image: align and/or balance images
 
@@ -30,4 +30,4 @@ Arguments for the constructor of ```CombinedActions``` are for the :
 * ```resample``` (optional, default: 1): take every *n*<sup>th</sup> frame in the selected directory. Default: take all frames.
 * ```ref_idx``` (optional): the index of the image used as reference. Images are numbered starting from zero. If not specified, it is the index of the middle image.
 * ```step_process``` (optional): if equal to ```True``` (default), each image is processed with respect to the previous or next image, depending if its file is placed in alphabetic order after or befor the reference image.
-* ```enabled``` (optional, default: ``True```): allows to switch on and off this module. 
+* ```enabled``` (optional, default: ```True```): allows to switch on and off this module. 
