@@ -21,11 +21,10 @@ class StackJob(Job):
         a.init(self)
 
 
-class FramePaths(JobBase):
+class FramePaths:
     EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
-    def __init__(self, name, input_path='', output_path='', working_path='', plot_path='plots', resample=1, reverse_order=False):
-        JobBase.__init__(self, name)
+    def __init__(self, name, input_path='', output_path='', working_path='', plot_path='plots', resample=1, reverse_order=False, **kwargs):
         self.name = name
         self.working_path = working_path
         self.plot_path = plot_path
@@ -95,8 +94,8 @@ class FrameMultiDirectory:
     EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
     def __init__(self, name, input_path='', output_path='', working_path='', plot_path='plots',
-                 resample=1, reverse_order=False):
-        FramePaths.__init__(self, name, input_path, output_path, working_path, plot_path, resample, reverse_order)
+                 resample=1, reverse_order=False, **kwargs):
+        FramePaths.__init__(self, name, input_path, output_path, working_path, plot_path, resample, reverse_order, **kwargs)
 
     def folder_list_str(self):
         if isinstance(self.input_dir, list):
@@ -141,9 +140,9 @@ class FrameMultiDirectory:
 
 
 class FramesRefActions(FrameDirectory, ActionList):
-    def __init__(self, name, ref_idx=-1, step_process=False, **kwargs):
-        FrameDirectory.__init__(self, name, **kwargs)
-        ActionList.__init__(self, name)
+    def __init__(self, name, enabled=True, ref_idx=-1, step_process=False, **kwargs):
+        FrameDirectory.__init__(self, name, **kwargs)        
+        ActionList.__init__(self, name, enabled)
         self.ref_idx = ref_idx
         self.step_process = step_process
 
@@ -181,15 +180,21 @@ class FramesRefActions(FrameDirectory, ActionList):
             self.__idx_step = -1
 
 
+class SubAction:
+    def __init__(self, enabled=True):
+        self.enabled = enabled
+
+
 class CombinedActions(FramesRefActions):
-    def __init__(self, name, actions=[], **kwargs):
-        FramesRefActions.__init__(self, name, **kwargs)
+    def __init__(self, name, actions=[], enabled=True, **kwargs):
+        FramesRefActions.__init__(self, name, enabled, **kwargs)
         self.__actions = actions
 
     def begin(self):
         FramesRefActions.begin(self)
         for a in self.__actions:
-            a.begin(self)
+            if a.enabled:           
+                a.begin(self)
 
     def img_ref(self, idx):
         filename = self.filenames[idx]
@@ -213,7 +218,10 @@ class CombinedActions(FramesRefActions):
         if len(self.__actions) == 0:
             self.sub_message(colored(": no actions specified.", "red"), level=logging.WARNING)
         for a in self.__actions:
-            img = a.run_frame(idx, ref_idx, img)
+            if not a.enabled:
+                self.get_logger().warning(colored(self.base_message + ": sub-action disabled", 'red'))
+            else:
+                img = a.run_frame(idx, ref_idx, img)
         self.sub_message_r(': write output image')
         if img is not None:
             write_img(self.output_dir + "/" + filename, img)
@@ -222,4 +230,5 @@ class CombinedActions(FramesRefActions):
 
     def end(self):
         for a in self.__actions:
-            a.end()
+            if a.enabled:
+                a.end()

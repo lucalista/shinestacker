@@ -44,9 +44,9 @@ class FocusStackBase:
 
 
 class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
-    def __init__(self, name, stack_algo, frames=10, overlap=0, denoise=0, postfix='', exif_path='', **kwargs):
+    def __init__(self, name, stack_algo, enabled=True, frames=10, overlap=0, denoise=0, postfix='', exif_path='', **kwargs):
         FrameDirectory.__init__(self, name, **kwargs)
-        ActionList.__init__(self, name)
+        ActionList.__init__(self, name, enabled)
         FocusStackBase.__init__(self, stack_algo, exif_path, postfix, denoise)
         if overlap >= frames:
             raise InvalidOptionError("overlap", overlap, "overlap must be smaller than batch size")
@@ -72,10 +72,10 @@ class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
 
 
 class FocusStack(FrameDirectory, JobBase, FocusStackBase):
-    def __init__(self, name, stack_algo, denoise=0, postfix='', exif_path='', **kwargs):
+    def __init__(self, name, stack_algo, enabled=True, denoise=0, postfix='', exif_path='', **kwargs):
         self.name = name
         FrameDirectory.__init__(self, name, **kwargs)
-        JobBase.__init__(self, name)
+        JobBase.__init__(self, name, enabled)
         FocusStackBase.__init__(self, stack_algo, exif_path, postfix, denoise)
 
     def run_core(self):

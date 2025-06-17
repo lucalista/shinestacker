@@ -21,14 +21,20 @@ class ProjectConverter:
         logger = logging.getLogger(__name__ if logger_name is None else logger_name)
         jobs = self.project(project, logger_name, callbacks)
         for job in jobs:
-            logger.info("=== run job: " + job.name + " ===")
-            job.run()
+            if job.enabled:
+                logger.info("=== run job: " + job.name + " ===")
+                job.run()
+            else:
+                logger.warning("=== job: " + job.name + " disabled ===")
 
     def run_job(self, job: ActionConfig, logger_name=None, callbacks=None):
         logger = logging.getLogger(__name__ if logger_name is None else logger_name)
         job = self.job(job, logger_name, callbacks)
-        logger.info("=== run job: " + job.name + " ===")
-        job.run()
+        if job.enabled:
+            logger.info("=== run job: " + job.name + " ===")
+            job.run()
+        else:
+            logger.warning("=== job: " + job.name + " disabled ===")
 
     def project(self, project: Project, logger_name=None, callbacks=None):
         return [self.job(j, logger_name, callbacks) for j in project.jobs]
@@ -47,7 +53,8 @@ class ProjectConverter:
                 a = self.action(sa)
                 if a is not None:
                     sub_actions.append(a)
-            return CombinedActions(**action_config.params, actions=sub_actions)
+            a = CombinedActions(**action_config.params, actions=sub_actions)
+            return a
         elif action_config.type_name == ACTION_MASKNOISE:
             params = {k: v for k, v in action_config.params.items() if k != 'name'}
             return MaskNoise(**params)
@@ -84,9 +91,10 @@ class ProjectConverter:
 
     def job(self, action_config: ActionConfig, logger_name=None, callbacks=None):
         name = action_config.params.get('name', '')
+        enabled = action_config.params.get('enabled', '')
         working_path = action_config.params.get('working_path', '')
         input_path = action_config.params.get('input_path', '')
-        stack_job = StackJob(name, working_path, input_path, logger_name=logger_name, callbacks=callbacks)
+        stack_job = StackJob(name, working_path, enabled=enabled, input_path=input_path, logger_name=logger_name, callbacks=callbacks)
         for sub in action_config.sub_actions:
             action = self.action(sub)
             if action is not None:

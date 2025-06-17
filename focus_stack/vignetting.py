@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import cv2
 import numpy as np
 from focus_stack.utils import img_8bit, save_plot
+from focus_stack.stack_framework import SubAction
 from scipy.optimize import curve_fit, fsolve
 from termcolor import colored
 import logging
@@ -9,9 +10,10 @@ import logging
 CLIP_EXP = 10
 
 
-class Vignetting:
+class Vignetting(SubAction):
     def __init__(self, r_steps=100, black_threshold=1, percentiles=(0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95), max_correction=1,
-                 apply_correction=True, plot_histograms=False):
+                 apply_correction=True, plot_histograms=False, **kwargs):
+        super().__init__(**kwargs)
         self.r_steps = r_steps
         self.black_threshold = black_threshold
         self.apply_correction = apply_correction

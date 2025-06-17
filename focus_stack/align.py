@@ -4,6 +4,7 @@ import numpy as np
 from focus_stack.utils import img_8bit, img_bw_8bit, save_plot
 from focus_stack.exceptions import AlignmentError, InvalidOptionError
 from focus_stack.utils import get_img_metadata, validate_image
+from focus_stack.stack_framework import SubAction
 import logging
 
 ALIGN_HOMOGRAPHY = "ALIGN_HOMOGRAPHY"
@@ -157,8 +158,9 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
     return n_good_matches, img_warp
 
 
-class AlignFrames:
-    def __init__(self, feature_config=None, matching_config=None, alignment_config=None, plot_histograms=False):
+class AlignFrames(SubAction):
+    def __init__(self, feature_config=None, matching_config=None, alignment_config=None, plot_histograms=False, **kwargs):
+        super().__init__(**kwargs)
         self.feature_config = {**_DEFAULT_FEATURE_CONFIG, **(feature_config or {})}
         self.matching_config = {**_DEFAULT_MATCHING_CONFIG, **(matching_config or {})}
         self.alignment_config = {**_DEFAULT_ALIGNMENT_CONFIG, **(alignment_config or {})}

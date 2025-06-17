@@ -1,5 +1,5 @@
 from config.config import config
-from focus_stack.stack_framework import FrameMultiDirectory, JobBase
+from focus_stack.stack_framework import FrameMultiDirectory, JobBase, SubAction
 from focus_stack.utils import read_img, save_plot, make_tqdm_bar, get_img_metadata, validate_image
 from focus_stack.exceptions import ImageLoadError
 from termcolor import colored
@@ -42,10 +42,10 @@ def mean_image(file_paths, message_callback=None, progress_callback=None):
 
 
 class NoiseDetection(FrameMultiDirectory, JobBase):
-    def __init__(self, name="noise-map", plot_histograms=False, channel_thresholds=(13, 13, 13), blur_size=5, file_name='',
-                 plot_range=(5, 30), **kwargs):
+    def __init__(self, name="noise-map", enabled=True, plot_histograms=False, channel_thresholds=(13, 13, 13), blur_size=5, file_name='',
+                 plot_range=(5, 30), **kwargs):        
         FrameMultiDirectory.__init__(self, name, **kwargs)
-        JobBase.__init__(self, name)
+        JobBase.__init__(self, name, enabled)
         self.channel_thresholds = channel_thresholds
         self.blur_size = blur_size
         self.file_name = file_name if file_name != '' else _DEFAULT_NOISE_MAP_FILENAME
@@ -105,8 +105,9 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
             plt.close('all')
 
 
-class MaskNoise:
-    def __init__(self, noise_mask=_DEFAULT_NOISE_MAP_FILENAME, kernel_size=3, method=INTERPOLATE_MEAN):
+class MaskNoise(SubAction):
+    def __init__(self, noise_mask=_DEFAULT_NOISE_MAP_FILENAME, kernel_size=3, method=INTERPOLATE_MEAN, **kwargs):
+        super().__init__(**kwargs)
         self.noise_mask = noise_mask
         self.kernel_size = kernel_size
         self.ks2 = self.kernel_size // 2

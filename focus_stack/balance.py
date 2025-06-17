@@ -5,6 +5,7 @@ from scipy.optimize import bisect
 from scipy.interpolate import interp1d
 from focus_stack.utils import read_img, save_plot
 from focus_stack.exceptions import InvalidOptionError
+from focus_stack.stack_framework import SubAction
 
 BALANCE_LINEAR = "LINEAR"
 BALANCE_GAMMA = "GAMMA"
@@ -323,8 +324,9 @@ class LSCorrection(Ch2Correction):
         return cv2.cvtColor(image, cv2.COLOR_HLS2BGR)
 
 
-class BalanceFrames:
-    def __init__(self, channel=_DEFAULT_CHANNEL, img_scale=-1, corr_map=_DEFAULT_CORR_MAP, **kwargs):
+class BalanceFrames(SubAction):
+    def __init__(self, channel=_DEFAULT_CHANNEL, img_scale=-1, corr_map=_DEFAULT_CORR_MAP, enabled=True, **kwargs):
+        super().__init__(enabled=enabled)
         img_scale = (1 if corr_map == BALANCE_MATCH_HIST else _DEFAULT_IMG_SCALE) if img_scale == -1 else img_scale
         if channel == BALANCE_LUMI:
             self.correction = LumiCorrection(img_scale=img_scale, corr_map=corr_map, **kwargs)

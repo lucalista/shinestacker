@@ -64,9 +64,10 @@ def elapsed_time_str(start):
 
 
 class JobBase:
-    def __init__(self, name):
+    def __init__(self, name, enabled=True):
         self.id = -1
         self.name = name
+        self.enabled = enabled
         self.base_message = ''
         if config.JUPYTER_NOTEBOOK:
             self.begin_r, self.end_r = "", "\r",
@@ -82,6 +83,9 @@ class JobBase:
 
     def run(self):
         self.__t0 = time.time()
+        if not self.enabled:
+            self.get_logger().log(colored(self.base_message + ": disabled", 'red'))
+            return
         self.callback('before_run', self.id, self.name)
         self.run_core()
         self.callback('after_run', self.id, self.name)
@@ -131,8 +135,8 @@ class JobBase:
 
 
 class Job(JobBase):
-    def __init__(self, name, logger_name=None, log_file="logs/focusstack.log", callbacks=None):
-        JobBase.__init__(self, name)
+    def __init__(self, name, logger_name=None, log_file="logs/focusstack.log", callbacks=None, **kwargs):
+        JobBase.__init__(self, name, **kwargs)        
         self.action_counter = 0
         self.__actions = []
         if logger_name is None:
@@ -156,12 +160,15 @@ class Job(JobBase):
 
     def run_core(self):
         for a in self.__actions:
-            a.run()
-
+            if not a.enabled:
+                self.get_logger().warning(colored(a.base_message + ": disabled", 'red'))
+            else:
+                a.run()
+                
 
 class ActionList(JobBase):
-    def __init__(self, name):
-        JobBase.__init__(self, name)
+    def __init__(self, name, enabled=True, **kwargs):
+        JobBase.__init__(self, name, enabled, **kwargs)
 
     def set_counts(self, counts):
         self.counts = counts

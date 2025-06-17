@@ -172,16 +172,16 @@ class RunWorker(LogWorker):
         self.after_action_signal.emit(id, name)
 
     def step_count(self, id, name, steps):
-        self.step_count_signal.emit(id, steps)
+        self.step_count_signal.emit(id, name, steps)
 
     def begin_steps(self, id, name):
-        self.begin_steps_signal.emit(id)
+        self.begin_steps_signal.emit(id, name)
 
     def end_steps(self, id, name):
-        self.end_steps_signal.emit(id)
+        self.end_steps_signal.emit(id, name)
 
     def after_step(self, id, name, step):
-        self.after_step_signal.emit(id, step)
+        self.after_step_signal.emit(id, name, step)
 
     def run(self):
         run_error = False

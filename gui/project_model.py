@@ -22,6 +22,9 @@ class ActionConfig:
         self.parent = parent
         self.sub_actions: list[ActionConfig] = []
 
+    def enabled(self):
+        return self.params.get('enabled', True)
+
     def add_sub_action(self, action):
         self.sub_actions.append(action)
         action.parent = self
