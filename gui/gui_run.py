@@ -5,7 +5,7 @@ from PySide6.QtCore import Signal, Slot
 from gui.project_converter import ProjectConverter
 from gui.gui_logging import LogWorker, QTextEditLogger, LOG_FONTS_STR
 
-DISABLED_TAG = " <disabled>"
+DISABLED_TAG = "" # " <disabled>"
 
 
 class ColorEntry:

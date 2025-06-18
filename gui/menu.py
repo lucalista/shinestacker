@@ -21,12 +21,13 @@ class WindowMenu(QMainWindow):
     _project_buffer = []
 
     def list_item(self, text, enabled):
+        script_dir = os.path.dirname(__file__)
         if enabled:
             color = QColor(*ENABLED_LIST_ITEM_COLOR)
-            icon = QIcon.fromTheme('list-add')
+            icon = QIcon(os.path.join(script_dir, "img/on.png"))
         else:
             color = QColor(*DISABLED_LIST_ITEM_COLOR)
-            icon = QIcon.fromTheme('list-remove')
+            icon = QIcon(os.path.join(script_dir, "img/off.png"))
         item = QListWidgetItem(icon, text)
         item.setForeground(color)
         return item
