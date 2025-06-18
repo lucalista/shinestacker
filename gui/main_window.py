@@ -101,10 +101,14 @@ class MainWindow(WindowMenu, LogManager):
     def before_thread_begins(self):
         self.run_job_button.setEnabled(False)
         self.run_all_jobs_button.setEnabled(False)
+        self.run_job_action.setEnabled(False)
+        self.run_all_jobs_action.setEnabled(False)
 
     def _do_handle_end_message(self, status, message):
         self.run_job_button.setEnabled(True)
         self.run_all_jobs_button.setEnabled(True)
+        self.run_job_action.setEnabled(True)
+        self.run_all_jobs_action.setEnabled(True)
 
     def create_new_window(self, title, labels=[]):
         new_window = RunWindow(labels)

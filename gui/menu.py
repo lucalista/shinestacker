@@ -65,7 +65,7 @@ class WindowMenu(QMainWindow):
         menu.addAction(exit_action)
 
     def add_edit_menu(self, menubar):
-        menu = menubar.addMenu("Edit")
+        menu = menubar.addMenu("&Edit")
         undo_action = QAction("&Undo", self)
         undo_action.setShortcut("Ctrl+Z")
         undo_action.triggered.connect(self.undo)
@@ -101,7 +101,7 @@ class WindowMenu(QMainWindow):
         down_action.triggered.connect(self.move_element_down)
         menu.addAction(down_action)
         menu.addSeparator()
-        enable_action = QAction("&Enable", self)
+        enable_action = QAction("E&nable", self)
         enable_action.setShortcut("Ctrl+E")
         enable_action.triggered.connect(self.enable)
         menu.addAction(enable_action)
@@ -118,12 +118,25 @@ class WindowMenu(QMainWindow):
         disable_all_action.triggered.connect(self.disable_all)
         menu.addAction(disable_all_action)
 
+    def add_job_menu(self, menubar):
+        menu = menubar.addMenu("Job")
+        self.run_job_action = QAction("Run Job", self)
+        self.run_job_action.setShortcut("Ctrl+J")
+        self.run_job_action.triggered.connect(self.run_job)
+        menu.addAction(self.run_job_action)
+        self.run_all_jobs_action = QAction("Run Job", self)
+        self.run_all_jobs_action.setShortcut("Ctrl+J")
+        self.run_all_jobs_action.triggered.connect(self.run_all_jobs)
+        menu.addAction(self.run_all_jobs_action)
+        self.run_all_jobs_action.setShortcut("Ctrl+Shift+J")
+        
     def __init__(self):
         super().__init__()
         self._current_file = None
         menubar = self.menuBar()
         self.add_file_menu(menubar)
         self.add_edit_menu(menubar)
+        self.add_job_menu(menubar)
 
     def _refresh_ui(self, job_row=-1, action_row=-1):
         self.job_list.clear()
