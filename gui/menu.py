@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (QMessageBox, QFileDialog, QMainWindow, QListWidgetItem)
-from PySide6.QtGui import QAction, QColor
+from PySide6.QtGui import QAction, QColor, QIcon
 from gui.project_model import Project
 from gui.project_model import (ACTION_JOB, ACTION_COMBO, ACTION_TYPES, SUB_ACTION_TYPES)
 from gui.gui_run import ColorPalette
@@ -14,20 +14,22 @@ ENABLED_LIST_ITEM_COLOR = ColorPalette.DARK_BLUE.tuple()
 DISABLED_LIST_ITEM_COLOR = ColorPalette.DARK_RED.tuple()
 
 
-def list_item(text, enabled):
-    item = QListWidgetItem(text)
-    if enabled:
-        color = QColor(*ENABLED_LIST_ITEM_COLOR)
-    else:
-        color = QColor(*DISABLED_LIST_ITEM_COLOR)
-    item.setForeground(color)
-    return item
-
 
 class WindowMenu(QMainWindow):
     _copy_buffer = None
     _modified_project = False
     _project_buffer = []
+
+    def list_item(self, text, enabled):
+        if enabled:
+            color = QColor(*ENABLED_LIST_ITEM_COLOR)
+            icon = QIcon.fromTheme('list-add')
+        else:
+            color = QColor(*DISABLED_LIST_ITEM_COLOR)
+            icon = QIcon.fromTheme('list-remove')
+        item = QListWidgetItem(icon, text)
+        item.setForeground(color)
+        return item
 
     def touch_project(self):
         self._modified_project = True
@@ -125,7 +127,7 @@ class WindowMenu(QMainWindow):
     def _refresh_ui(self, job_row=-1, action_row=-1):
         self.job_list.clear()
         for job in self.project.jobs:
-            self.job_list.addItem(list_item(self.job_text(job), job.enabled()))
+            self.job_list.addItem(self.list_item(self.job_text(job), job.enabled()))
         if self.project.jobs:
             self.job_list.setCurrentRow(0)
         if job_row >= 0:
