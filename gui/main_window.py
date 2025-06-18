@@ -80,8 +80,7 @@ class MainWindow(WindowMenu, LogManager):
         if dialog.exec() == QDialog.Accepted:
             self.touch_project()
             self.project.jobs.append(job_action)
-            self.job_list.addItem(list_item(self.job_text(job_action),
-                                            job_action.params.get('enabled', True)))
+            self.job_list.addItem(list_item(self.job_text(job_action), job_action.enabled()))
             self.job_list.setCurrentRow(self.job_list.count() - 1)
             self.job_list.item(self.job_list.count() - 1).setSelected(True)
 
@@ -160,7 +159,7 @@ class MainWindow(WindowMenu, LogManager):
         if dialog.exec() == QDialog.Accepted:
             self.touch_project()
             self.project.jobs[current_index].add_sub_action(action)
-            self.action_list.addItem(list_item(self.action_text(action), action.params.get("enabled", True)))
+            self.action_list.addItem(list_item(self.action_text(action), action.enabled()))
 
     def show_action_config_dialog(self, action):
         dialog = ActionConfigDialog(action, self)
@@ -175,6 +174,8 @@ class MainWindow(WindowMenu, LogManager):
         self.delete_action_button.setEnabled(has_action_selected)
         if has_action_selected and has_job_selected:
             job_index = self.job_list.currentRow()
+            if job_index >= len(self.project.jobs):
+                job_index = len(self.project.jobs) - 1
             action_index = self.action_list.currentRow()
             job = self.project.jobs[job_index]
             action_counter = -1
@@ -208,7 +209,7 @@ class MainWindow(WindowMenu, LogManager):
 
     def job_text(self, job):
         txt = job.params.get('name', '(job)')
-        if not job.params.get('enabled', ''):
+        if not job.enabled():
             txt += DISABLED_TAG
         return txt
 
@@ -217,7 +218,7 @@ class MainWindow(WindowMenu, LogManager):
         if action.params.get('name', '') != '':
             txt += action.params["name"]
         txt += f" [{action.type_name}]"
-        if not action.params.get('enabled', True):
+        if not action.enabled():
             txt += DISABLED_TAG
         return txt
 
@@ -227,11 +228,11 @@ class MainWindow(WindowMenu, LogManager):
             job = self.project.jobs[index]
             for action in job.sub_actions:
                 self.action_list.addItem(list_item(self.action_text(action),
-                                                   action.params.get('enabled', True)))
+                                                   action.enabled()))
                 if len(action.sub_actions) > 0:
                     for sub_action in action.sub_actions:
                         self.action_list.addItem(list_item(self.action_text(sub_action, is_sub_action=True),
-                                                           sub_action.params.get('enabled', True)))
+                                                           sub_action.enabled()))
 
     def add_sub_action(self):
         current_job_index = self.job_list.currentRow()

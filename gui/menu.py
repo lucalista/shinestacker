@@ -98,16 +98,20 @@ class WindowMenu(QMainWindow):
         down_action.triggered.connect(self.move_element_down)
         menu.addAction(down_action)
         menu.addSeparator()
-        enable_action = QAction("&Enable/Disable", self)
+        enable_action = QAction("&Enable", self)
         enable_action.setShortcut("Ctrl+E")
-        enable_action.triggered.connect(self.toggle_enabled)
+        enable_action.triggered.connect(self.enable)
         menu.addAction(enable_action)
+        disable_action = QAction("Di&sable", self)
+        disable_action.setShortcut("Ctrl+B")
+        disable_action.triggered.connect(self.disable)
+        menu.addAction(disable_action)
         enable_all_action = QAction("Enable all", self)
         enable_all_action.setShortcut("Ctrl+Shift+E")
         enable_all_action.triggered.connect(self.enable_all)
         menu.addAction(enable_all_action)
         disable_all_action = QAction("Disable all", self)
-        disable_all_action.setShortcut("Ctrl+Shift+D")
+        disable_all_action.setShortcut("Ctrl+Shift+B")
         disable_all_action.triggered.connect(self.disable_all)
         menu.addAction(disable_all_action)
 
@@ -121,7 +125,7 @@ class WindowMenu(QMainWindow):
     def _refresh_ui(self, job_row=-1, action_row=-1):
         self.job_list.clear()
         for job in self.project.jobs:
-            self.job_list.addItem(list_item(self.job_text(job), job.params.get('enabled', True)))
+            self.job_list.addItem(list_item(self.job_text(job), job.enabled()))
         if self.project.jobs:
             self.job_list.setCurrentRow(0)
         if job_row >= 0:
@@ -460,18 +464,19 @@ class WindowMenu(QMainWindow):
         if len(self._project_buffer) > 0:
             self.project = self._project_buffer.pop()
             self._refresh_ui()
-            if job_row < len(self.project.jobs):
+            len_jobs = len(self.project.jobs)
+            if len_jobs > 0:
+                if job_row >= len_jobs:
+                    job_row = len_jobs - 1
                 self.job_list.setCurrentRow(job_row)
-            else:
-                self.job_list.setCurrentRow(len(self.project.jobs) - 1)
-            if len(self.project.jobs) > 0:
-                actions_len = len(self.project.jobs[job_row].sub_actions)
-                if action_row < actions_len:
+                actions = self.project.jobs[job_row].sub_actions
+                len_actions = len(actions)
+                if len_actions > 0:
+                    if action_row  >= len_actions:
+                        action_row = len_actions
                     self.action_list.setCurrentRow(action_row)
-                else:
-                    self.action_list.setCurrentRow(actions_len - 1)
 
-    def toggle_enabled(self):
+    def set_enabled(self, enabled):
         current_action = None
         if self.job_list.hasFocus():
             job_row = self.job_list.currentRow()
@@ -484,9 +489,16 @@ class WindowMenu(QMainWindow):
                 action = actions[action_index]
                 current_action = action if sub_action_index == -1 else sub_actions[sub_action_index]
         if current_action:
-            current_action.toggle_enabled()
-            self.touch_project()
-            self._refresh_ui(job_row, action_row)
+            if current_action.enabled() != enabled:
+                current_action.set_enabled(enabled)
+                self.touch_project()
+                self._refresh_ui(job_row, action_row)
+
+    def enable(self):
+        self.set_enabled(True)
+
+    def disable(self):
+        self.set_enabled(False)
 
     def set_enabled_all(self, enable=True):
         job_row = self.job_list.currentRow()

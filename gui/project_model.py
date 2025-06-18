@@ -18,17 +18,16 @@ class ActionConfig:
     def __init__(self, type_name: str, params: dict=None, parent=None): # noqa
         self.type_name = type_name
         self.params = params or {}
-        self.params['enabled'] = True
         self.parent = parent
         self.sub_actions: list[ActionConfig] = []
 
     def enabled(self):
         return self.params.get('enabled', True)
 
-    def toggle_enabled(self):
-        self.params['enabled'] = not self.params['enabled']
+    def set_enabled(self, enabled):
+        self.params['enabled'] = enabled
 
-    def set_enabled_all(self, enabled=True):
+    def set_enabled_all(self, enabled):
         self.params['enabled'] = enabled
         for a in self.sub_actions:
             a.set_enabled_all(enabled)
