@@ -5,7 +5,7 @@ from gui.action_config import ActionConfigDialog
 from gui.project_model import SUB_ACTION_TYPES, ACTION_TYPES, ACTION_COMBO
 from gui.menu import WindowMenu
 from gui.gui_logging import LogManager
-from gui.gui_run import RunWindow, JobLogWorker, ProjectLogWorker, DISABLED_TAG
+from gui.gui_run import RunWindow, JobLogWorker, ProjectLogWorker, DISABLED_TAG, INDENT_SPACE
 
 
 class MainWindow(WindowMenu, LogManager):
@@ -218,7 +218,7 @@ class MainWindow(WindowMenu, LogManager):
         return txt
 
     def action_text(self, action, is_sub_action=False, indent=True):
-        txt = "    " if is_sub_action and indent else ""
+        txt = INDENT_SPACE if is_sub_action and indent else ""
         if action.params.get('name', '') != '':
             txt += action.params["name"]
         txt += f" [{action.type_name}]"

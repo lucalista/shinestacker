@@ -6,6 +6,7 @@ from gui.project_converter import ProjectConverter
 from gui.gui_logging import LogWorker, QTextEditLogger, LOG_FONTS_STR
 
 DISABLED_TAG = "" # " <disabled>"
+INDENT_SPACE = "     "
 
 
 class ColorEntry:
