@@ -91,7 +91,7 @@ class ProjectConverter:
 
     def job(self, action_config: ActionConfig, logger_name=None, callbacks=None):
         name = action_config.params.get('name', '')
-        enabled = action_config.params.get('enabled', '')
+        enabled = action_config.params.get('enabled', True)
         working_path = action_config.params.get('working_path', '')
         input_path = action_config.params.get('input_path', '')
         stack_job = StackJob(name, working_path, enabled=enabled, input_path=input_path, logger_name=logger_name, callbacks=callbacks)
