@@ -490,8 +490,8 @@ class WindowMenu(QMainWindow):
                 current_action = action if sub_action_index == -1 else sub_actions[sub_action_index]
         if current_action:
             if current_action.enabled() != enabled:
-                current_action.set_enabled(enabled)
                 self.touch_project()
+                current_action.set_enabled(enabled)
                 self._refresh_ui(job_row, action_row)
 
     def enable(self):
@@ -501,11 +501,11 @@ class WindowMenu(QMainWindow):
         self.set_enabled(False)
 
     def set_enabled_all(self, enable=True):
+        self.touch_project()
         job_row = self.job_list.currentRow()
         action_row = self.action_list.currentRow()
         for j in self.project.jobs:
             j.set_enabled_all(enable)
-        self.touch_project()
         self._refresh_ui(job_row, action_row)
 
     def enable_all(self):
