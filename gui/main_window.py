@@ -29,6 +29,7 @@ class MainWindow(WindowMenu, LogManager):
         h_splitter.addWidget(top)
         h_splitter.addWidget(self.tab_widget)
         h_layout = QHBoxLayout()
+        h_layout.setContentsMargins(10, 0, 8, 10)
         top.setLayout(h_layout)
         self.job_list = QListWidget()
         self.job_list.currentRowChanged.connect(self.on_job_selected)
