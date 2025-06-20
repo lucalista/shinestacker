@@ -1,5 +1,6 @@
-from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout,
-                               QLabel, QComboBox, QMessageBox, QDialog)
+from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout, QTabWidget,
+                               QLabel, QComboBox, QMessageBox, QDialog, QSplitter)
+from PySide6.QtCore import Qt
 from gui.project_model import Project, ActionConfig
 from gui.action_config import ActionConfigDialog
 from gui.project_model import SUB_ACTION_TYPES, ACTION_TYPES, ACTION_COMBO
@@ -15,10 +16,19 @@ class MainWindow(WindowMenu, LogManager):
         WindowMenu.__init__(self)
         LogManager.__init__(self)
         self.setWindowTitle("Focus Stacking GUI")
-        self.resize(800, 600)
+        self.resize(1200, 800)
         self.project = Project()
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
+        layout = QVBoxLayout()
+        h_splitter = QSplitter(Qt.Orientation.Vertical)
+        top = QWidget()
+        self.tab_widget = QTabWidget()
+        self.tab_widget.resize(1000, 600)
+        h_splitter.addWidget(top)
+        h_splitter.addWidget(self.tab_widget)
+        h_layout = QHBoxLayout()
+        top.setLayout(h_layout)
         self.job_list = QListWidget()
         self.job_list.currentRowChanged.connect(self.on_job_selected)
         self.job_list.itemDoubleClicked.connect(self.on_job_double_clicked)
@@ -34,8 +44,6 @@ class MainWindow(WindowMenu, LogManager):
         self.add_action_button.clicked.connect(self.add_action)
         self.action_selector = QComboBox()
         self.action_selector.addItems(ACTION_TYPES)
-        layout = QVBoxLayout()
-        hlayout = QHBoxLayout()
         vbox_left = QVBoxLayout()
         vbox_left.addWidget(QLabel("Jobs"))
         vbox_left.addWidget(self.job_list)
@@ -69,9 +77,10 @@ class MainWindow(WindowMenu, LogManager):
         self.delete_action_button.setEnabled(False)
         self.delete_action_button.clicked.connect(self.delete_action)
         vbox_right.addWidget(self.delete_action_button)
-        hlayout.addLayout(vbox_left)
-        hlayout.addLayout(vbox_right)
-        layout.addLayout(hlayout)
+        
+        h_layout.addLayout(vbox_left)
+        h_layout.addLayout(vbox_right)
+        layout.addWidget(h_splitter)
         self.central_widget.setLayout(layout)
 
     def add_job(self):
@@ -112,6 +121,8 @@ class MainWindow(WindowMenu, LogManager):
 
     def create_new_window(self, title, labels=[]):
         new_window = RunWindow(labels)
+        self.tab_widget.addTab(new_window, title)
+        self.tab_widget.setCurrentIndex(self.tab_widget.count() - 1)
         if title is not None:
             new_window.setWindowTitle(title)
         new_window.show()

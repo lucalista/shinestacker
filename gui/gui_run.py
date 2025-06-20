@@ -68,10 +68,10 @@ class RunWindow(QTextEditLogger):
     action_running_color = ColorPalette.MEDIUM_BLUE
     action_done_color = ColorPalette.MEDIUM_GREEN
 
-    def __init__(self, labels):
-        QTextEditLogger.__init__(self)
+    def __init__(self, labels, parent=None):
+        QTextEditLogger.__init__(self, parent)
         self.row_widget_id = 0
-        self.resize(1200, 600)
+        # self.resize(1200, 600)
         layout = QVBoxLayout()
         self.color_widgets = []
         if len(labels) > 0:
