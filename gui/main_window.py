@@ -21,6 +21,7 @@ class MainWindow(WindowMenu, LogManager):
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
         h_splitter = QSplitter(Qt.Orientation.Vertical)
         top = QWidget()
         self.tab_widget = QTabWidget()
@@ -147,7 +148,7 @@ class MainWindow(WindowMenu, LogManager):
             job = self.project.jobs[current_index]
             if job.enabled():
                 labels = [[(self.action_text(a), a.enabled()) for a in job.sub_actions]]
-                new_window, id_str = self.create_new_window("Run job: " + job.params["name"], labels)
+                new_window, id_str = self.create_new_window("Job: " + job.params["name"], labels)
                 worker = JobLogWorker(job, id_str)
                 self.connect_signals(worker, new_window)
                 self.start_thread(worker)
@@ -157,7 +158,7 @@ class MainWindow(WindowMenu, LogManager):
 
     def run_all_jobs(self):
         labels = [[(self.action_text(a), a.enabled() and job.enabled()) for a in job.sub_actions] for job in self.project.jobs]
-        new_window, id_str = self.create_new_window("Run project", labels)
+        new_window, id_str = self.create_new_window("Project", labels)
         worker = ProjectLogWorker(self.project, id_str)
         self.connect_signals(worker, new_window)
         self.start_thread(worker)

@@ -89,7 +89,7 @@ class QTextEditLogger(GuiLogger):
         text_edit.setWordWrapMode(QTextOption.WrapMode.WordWrap)
         text_edit.setAcceptRichText(True)
         text_edit.setReadOnly(True)
-        font = QFont(LOG_FONTS, 14)
+        font = QFont(LOG_FONTS, 12)
         text_edit.setFont(font)
         self.text_edit = text_edit
         self.status_bar = QStatusBar()

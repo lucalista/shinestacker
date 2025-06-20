@@ -54,7 +54,7 @@ class ColorButton(QPushButton):
                 font-weight: bold;
                 border: none;
                 min-height: 1px;
-                padding: 5px;
+                padding: 4px;
                 margin: 0px;
             }}
         """)
@@ -71,7 +71,6 @@ class RunWindow(QTextEditLogger):
     def __init__(self, labels, parent=None):
         QTextEditLogger.__init__(self, parent)
         self.row_widget_id = 0
-        # self.resize(1200, 600)
         layout = QVBoxLayout()
         self.color_widgets = []
         if len(labels) > 0:
@@ -102,16 +101,16 @@ class RunWindow(QTextEditLogger):
         self.progress_bar.setStyleSheet(f"""
         QProgressBar {{
           border: 2px solid #{self.border_color.hex()};
-          border-radius: 10px;
+          border-radius: 8px;
           text-align: center;
           font-weight: bold;
-          font-size: 14px;
+          font-size: 12px;
           background-color: #{self.light_background_color.hex()};
           color: #{self.text_color.hex()};
           min-height: 1px;
         }}
         QProgressBar::chunk {{
-          border-radius: 8px;
+          border-radius: 6px;
           background-color: #{bar_color.hex()};
         }}
         """)
