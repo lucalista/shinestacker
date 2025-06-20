@@ -66,6 +66,9 @@ class ProjectConverter:
             return AlignFrames(**params)
         elif action_config.type_name == ACTION_BALANCEFRAMES:
             params = {k: v for k, v in action_config.params.items() if k != 'name'}
+            if 'intensity_interval' in params.keys():
+                i = params['intensity_interval']
+                params['intensity_interval'] = {'min': i[0], 'max': i[1]}
             return BalanceFrames(**params)
         elif action_config.type_name == ACTION_FOCUSSTACK or action_config.type_name == ACTION_FOCUSSTACKBUNCH:
             stacker = action_config.params.get('stacker', 'Pyramid')

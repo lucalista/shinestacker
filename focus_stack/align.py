@@ -49,11 +49,11 @@ _cv2_border_mode_map = {
     BORDER_REPLICATE_BLUR: cv2.BORDER_REPLICATE
 }
 
-_VALID_DETECTORS = {DETECTOR_SIFT, DETECTOR_ORB, DETECTOR_SURF, DETECTOR_AKAZE}
-_VALID_DESCRIPTORS = {DESCRIPTOR_SIFT, DESCRIPTOR_ORB, DESCRIPTOR_AKAZE}
-_VALID_MATCHING_METHODS = {MATCHING_KNN, MATCHING_NORM_HAMMING}
-_VALID_TRANSFORMS = {ALIGN_HOMOGRAPHY, ALIGN_RIGID}
-_VALID_BORDER_MODES = {BORDER_CONSTANT, BORDER_REPLICATE, BORDER_REPLICATE_BLUR}
+VALID_DETECTORS = {DETECTOR_SIFT, DETECTOR_ORB, DETECTOR_SURF, DETECTOR_AKAZE}
+VALID_DESCRIPTORS = {DESCRIPTOR_SIFT, DESCRIPTOR_ORB, DESCRIPTOR_AKAZE}
+VALID_MATCHING_METHODS = {MATCHING_KNN, MATCHING_NORM_HAMMING}
+VALID_TRANSFORMS = {ALIGN_HOMOGRAPHY, ALIGN_RIGID}
+VALID_BORDER_MODES = {BORDER_CONSTANT, BORDER_REPLICATE, BORDER_REPLICATE_BLUR}
 
 
 def get_good_matches(des_0, des_1, matching_config=None):
@@ -159,13 +159,22 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
 
 
 class AlignFrames(SubAction):
-    def __init__(self, feature_config=None, matching_config=None, alignment_config=None, plot_histograms=False, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, enabled=True, feature_config=None, matching_config=None, alignment_config=None, plot_histograms=False, **kwargs):
+        super().__init__(enabled)
         self.feature_config = {**_DEFAULT_FEATURE_CONFIG, **(feature_config or {})}
         self.matching_config = {**_DEFAULT_MATCHING_CONFIG, **(matching_config or {})}
         self.alignment_config = {**_DEFAULT_ALIGNMENT_CONFIG, **(alignment_config or {})}
         self.min_matches = 4 if self.alignment_config['transform'] == ALIGN_HOMOGRAPHY else 3
         self.plot_histograms = plot_histograms
+        for k in self.feature_config.keys():
+            if k in kwargs.keys():
+                self.feature_config[k] = kwargs[k]
+        for k in self.matching_config.keys():
+            if k in kwargs.keys():
+                self.matching_config[k] = kwargs[k]
+        for k in self.alignment_config.keys():
+            if k in kwargs.keys():
+                self.alignment_config[k] = kwargs[k]        
 
     def run_frame(self, idx, ref_idx, img_0):
         if idx == self.process.ref_idx:

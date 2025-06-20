@@ -12,11 +12,11 @@ import os
 import errno
 
 
-_DEFAULT_NOISE_MAP_FILENAME = "noise-map/hot_pixels.png"
+DEFAULT_NOISE_MAP_FILENAME = "noise-map/hot_pixels.png"
 INTERPOLATE_MEAN = 'MEAN'
 INTERPOLATE_MEDIAN = 'MEDIAN'
 
-_VALID_INTERPOLATE = {INTERPOLATE_MEAN, INTERPOLATE_MEDIAN}
+VALID_INTERPOLATE = {INTERPOLATE_MEAN, INTERPOLATE_MEDIAN}
 
 
 def mean_image(file_paths, message_callback=None, progress_callback=None):
@@ -49,7 +49,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         JobBase.__init__(self, name, enabled)
         self.channel_thresholds = channel_thresholds
         self.blur_size = blur_size
-        self.file_name = file_name if file_name != '' else _DEFAULT_NOISE_MAP_FILENAME
+        self.file_name = file_name if file_name != '' else DEFAULT_NOISE_MAP_FILENAME
         self.plot_range = plot_range
         self.plot_histograms = plot_histograms
 
@@ -107,7 +107,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
 
 
 class MaskNoise(SubAction):
-    def __init__(self, noise_mask=_DEFAULT_NOISE_MAP_FILENAME, kernel_size=3, method=INTERPOLATE_MEAN, **kwargs):
+    def __init__(self, noise_mask=DEFAULT_NOISE_MAP_FILENAME, kernel_size=3, method=INTERPOLATE_MEAN, **kwargs):
         super().__init__(**kwargs)
         self.noise_mask = noise_mask
         self.kernel_size = kernel_size

@@ -11,6 +11,9 @@ from gui.project_model import (ActionConfig,
 from abc import ABC, abstractmethod
 from typing import Dict, Any
 import os.path
+from focus_stack.align import VALID_BORDER_MODES, VALID_TRANSFORMS
+from focus_stack.noise_detection import DEFAULT_NOISE_MAP_FILENAME
+from focus_stack.balance import VALID_BALANCE
 
 FIELD_TEXT = 'text'
 FIELD_ABS_PATH = 'abs_path'
@@ -32,6 +35,9 @@ class ActionConfigurator(ABC):
     @abstractmethod
     def update_params(self, params: Dict[str, Any]):
         pass
+
+    def make_convertion_map(self, ks, vs):
+        return {k: v for k, v in zip(ks, vs)}
 
 
 class FieldBuilder:
@@ -101,7 +107,11 @@ class FieldBuilder:
             elif field['type'] == FIELD_INT_TUPLE:
                 params[tag] = [field['widget'].layout().itemAt(1 + i * 2).widget().value() for i in range(field['size'])]
             elif field['type'] == FIELD_COMBO:
-                params[tag] = field['widget'].currentText()
+                text = field['widget'].currentText()
+                convertion_map = field.get('convertion_map', None)
+                if convertion_map:
+                    text = convertion_map[text]
+                params[tag] = text
             if field['required'] and not params[tag]:
                 required = True
                 if tag == 'working_path' and self.get_working_path() != '':
@@ -517,7 +527,7 @@ class MaskNoiseConfigurator(NoNameActionConfigurator):
         DefaultActionConfigurator.create_form(self, layout, action)
         self.builder.add_field('noise_mask', FIELD_REL_PATH, 'Noise mask file', required=False,
                                path_type='file', must_exist=True,
-                               default='noise-map/hot-rgb.png', placeholder='noise-map/hot-rgb.png')
+                               default=DEFAULT_NOISE_MAP_FILENAME, placeholder=DEFAULT_NOISE_MAP_FILENAME)
         self.builder.add_field('kernel_size', FIELD_INT, 'Kernel size', required=False,
                                default=3, min=1, max=10)
         self.builder.add_field('method', FIELD_COMBO, 'Interpolation method', required=False,
@@ -539,6 +549,8 @@ class VignettingConfigurator(NoNameActionConfigurator):
 
 
 class AlignFramesConfigurator(NoNameActionConfigurator):
+    BORDER_MODE_OPTIONS = ['Constant', 'Replicate', 'Replicate and blur']
+    TRANSFORM_OPTIONS = ['Rigid', 'Homography']
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
         self.add_bold_label("Feature identification:")
@@ -558,13 +570,17 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
         self.builder.add_field('threshold', FIELD_FLOAT, 'Threshold', required=False,
                                default=0.75, min=0, max=1, step=0.05)
         self.add_bold_label("Transform:")
+        transform_convertion_map = self.make_convertion_map(self.TRANSFORM_OPTIONS, VALID_TRANSFORMS)
         self.builder.add_field('transform', FIELD_COMBO, 'Transform', required=False,
-                               options=['Rigid', 'Homography'], default='Rigid')
+                               options=self.TRANSFORM_OPTIONS, default='Rigid',
+                               convertion_map=transform_convertion_map)
         self.builder.add_field('rans_threshold', FIELD_FLOAT, 'Homography RANS threshold', required=False,
                                default=5.0, min=0, max=20, step=0.1)
         self.add_bold_label("Border:")
+        border_mode_convertion_map = self.make_convertion_map(self.BORDER_MODE_OPTIONS, VALID_BORDER_MODES)
         self.builder.add_field('border_mode', FIELD_COMBO, 'Border mode', required=False,
-                               options=['Constant', 'Replicate', 'Replicate and blur'], default='Replicate and blur')
+                               options=self.BORDER_MODE_OPTIONS, default='Replicate and blur',
+                               convertion_map=border_mode_convertion_map)
         self.builder.add_field('border_value', FIELD_INT_TUPLE, 'Border value (if constant)', required=False, size=4,
                                default=[0] * 4, labels=['r', 'g', 'b', 'a'], min=[0] * 4, max=[255] * 4)
         self.builder.add_field('border_blur', FIELD_FLOAT, 'Border blur', required=False,
@@ -574,6 +590,7 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
 
 
 class BalanceFramesConfigurator(NoNameActionConfigurator):
+    CORRECTION_MAP_OPTIONS = ['Linear', 'Gamma', 'Match histograms']
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
         self.builder.add_field('mask_size', FIELD_FLOAT, 'Mask size', required=False,
@@ -582,7 +599,9 @@ class BalanceFramesConfigurator(NoNameActionConfigurator):
                                default=[0, -1], labels=['min', 'max'], min=[-1] * 2, max=[65536] * 2)
         self.builder.add_field('img_scale', FIELD_INT, 'Image resample', required=False,
                                default=8, min=1, max=256)
+        correction_map_convertion_map = self.make_convertion_map(self.CORRECTION_MAP_OPTIONS, VALID_BALANCE)
         self.builder.add_field('corr_map', FIELD_COMBO, 'Correction map', required=False,
-                               options=['Linear', 'Gamma', 'Match histograms'], default='Linear')
+                               options=self.CORRECTION_MAP_OPTIONS, default='Linear',
+                               convertion_map=correction_map_convertion_map)
         self.add_bold_label("Miscellanea:")
         self.builder.add_field('plot_histograms', FIELD_BOOL, 'Plot histograms', required=False, default=False)

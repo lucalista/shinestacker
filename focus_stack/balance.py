@@ -10,15 +10,17 @@ from focus_stack.stack_framework import SubAction
 BALANCE_LINEAR = "LINEAR"
 BALANCE_GAMMA = "GAMMA"
 BALANCE_MATCH_HIST = "MATCH_HIST"
+VALID_BALANCE = [BALANCE_LINEAR, BALANCE_GAMMA, BALANCE_MATCH_HIST]
+
 BALANCE_LUMI = "LUMI"
 BALANCE_RGB = "RGB"
 BALANCE_HSV = "HSV"
 BALANCE_HLS = "HLS"
 
-_DEFAULT_IMG_SCALE = 8
-_DEFAULT_CORR_MAP = BALANCE_LINEAR
-_DEFAULT_CHANNEL = BALANCE_LUMI
-_DEFAULT_INTENSITY_INTERVAL = {
+DEFAULT_IMG_SCALE = 8
+DEFAULT_CORR_MAP = BALANCE_LINEAR
+DEFAULT_CHANNEL = BALANCE_LUMI
+DEFAULT_INTENSITY_INTERVAL = {
     'min': 0,
     'max': -1
 }
@@ -26,7 +28,7 @@ _DEFAULT_INTENSITY_INTERVAL = {
 
 class CorrectionMapBase:
     def __init__(self, dtype, ref_hist, intensity_interval=None):
-        intensity_interval = {**_DEFAULT_INTENSITY_INTERVAL, **(intensity_interval or {})}
+        intensity_interval = {**DEFAULT_INTENSITY_INTERVAL, **(intensity_interval or {})}
         self.dtype = dtype
         self.two_n = 256 if dtype == np.uint8 else 65536
         self.two_n_1 = self.two_n - 1
@@ -122,11 +124,11 @@ class LinearMap(CorrectionMap):
 
 
 class Correction:
-    def __init__(self, channels, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=_DEFAULT_CORR_MAP, plot_histograms=False):
+    def __init__(self, channels, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=DEFAULT_CORR_MAP, plot_histograms=False):
         self.mask_size = mask_size
         self.intensity_interval = intensity_interval
         self.plot_histograms = plot_histograms
-        self.img_scale = _DEFAULT_IMG_SCALE if img_scale == -1 else img_scale
+        self.img_scale = DEFAULT_IMG_SCALE if img_scale == -1 else img_scale
         self.corr_map = corr_map
         self.channels = channels
 
@@ -325,9 +327,9 @@ class LSCorrection(Ch2Correction):
 
 
 class BalanceFrames(SubAction):
-    def __init__(self, channel=_DEFAULT_CHANNEL, img_scale=-1, corr_map=_DEFAULT_CORR_MAP, enabled=True, **kwargs):
+    def __init__(self, channel=DEFAULT_CHANNEL, img_scale=-1, corr_map=DEFAULT_CORR_MAP, enabled=True, **kwargs):
         super().__init__(enabled=enabled)
-        img_scale = (1 if corr_map == BALANCE_MATCH_HIST else _DEFAULT_IMG_SCALE) if img_scale == -1 else img_scale
+        img_scale = (1 if corr_map == BALANCE_MATCH_HIST else DEFAULT_IMG_SCALE) if img_scale == -1 else img_scale
         if channel == BALANCE_LUMI:
             self.correction = LumiCorrection(img_scale=img_scale, corr_map=corr_map, **kwargs)
         elif channel == BALANCE_RGB:
