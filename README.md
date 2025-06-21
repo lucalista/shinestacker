@@ -2,37 +2,6 @@
 
 <img src='img/flies.gif' width="400">  <img src='img/flies_stack.jpg' width="400">
 
-## Quick Start
-```python
-from focus_stack import *
-
-job = StackJob("demo", "/path/to/images", input_path="src")
-job.add_action(CombinedActions("align", [AlignFrames()]))
-job.add_action(FocusStack("result", PyramidStack()))
-job.run()
-```
-
-## Usage example
-
-```python
-from focus_stack import *
-
-job = StackJob("job", "E:/Focus stacking/My image directory/", input_path="src")
-job.add_action(NoiseDetection())
-job.run()
-
-job = StackJob("job", "E:/Focus stacking/My image directory/", input_path="src")
-job.add_action(CombinedActions("align",
-			       [MaskNoise(),Vignetting(), AlignFrames(),
-                                BalanceFrames(mask_size=0.9,
-                                              intensity_interval={'min': 150, 'max': 65385})]))
-job.add_action(FocusStackBunch("batches", PyramidStack(), frames=10, overlap=2, denoise=0.8))
-job.add_action(FocusStack("stack", PyramidStack(), postfix='_pyramid', denoise=0.8))
-job.add_action(FocusStack("stack", DepthMapStack(), input_path='batches', postfix='_depthmap', denoise=0.8))
-job.add_action(MultiLayer("multilayer", input_path=['batches', 'stack']))
-job.run()
-```
-
 ## Documentation
 - [Quick start and introduction](docs/main.md)
 - [Job creation and processing pipeline](docs/job.md)
