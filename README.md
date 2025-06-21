@@ -23,12 +23,6 @@ Pyramid methods in image processing
 * [A Multi-focus Image Fusion Method Based on Laplacian Pyramid](http://www.jcomputers.us/vol6/jcp0612-07.pdf), Wencheng Wang, Faliang Chang, Journal of Computers 6 (12), 2559, December 2011
 * Another [original implementation on GitHub](https://github.com/bznick98/Focus_Stacking) by Zongnan Bao
 
-## Issues
-
-* ```BALANCE_HSV``` and ```BALANCE_HLS``` are only supported for 8-bit images
-* Focus stacking modules crashes for TIFF files if  ```denoise``` is set different from zero due to an assertion failure in the Open CV library. This is similar to a [known issue on stackoverflow](https://stackoverflow.com/questions/76647895/opencv-fastnlmeansdenoisingmulti-should-support-16-bit-images-but-does-it).
-* PNG files have not been tested so far.
-
 ## License
 
 The software is provided as is under the [GNU Lesser General Public License v3.0](https://choosealicense.com/licenses/lgpl-3.0/).
