@@ -4,6 +4,7 @@ from PySide6.QtGui import QColor
 from PySide6.QtCore import Signal, Slot
 from gui.project_converter import ProjectConverter
 from gui.gui_logging import LogWorker, QTextEditLogger, LOG_FONTS_STR
+from gui.gui_images import new_pdf_view
 
 DISABLED_TAG = ""  # " <disabled>"
 INDENT_SPACE = "     "
@@ -75,6 +76,7 @@ class RunWindow(QTextEditLogger):
         self.row_widget_id = 0
         layout = QVBoxLayout()
         self.color_widgets = []
+        self.pdf_views = []
         if len(labels) > 0:
             for label_row in labels:
                 self.color_widgets.append([])
@@ -174,7 +176,9 @@ class RunWindow(QTextEditLogger):
 
     @Slot(int, str, str)
     def handle_save_plot(self, id, name, path):
-        print("save plot: ", id, name, path)
+        pdf_document, pdf_view = new_pdf_view(path)
+        pdf_view.setWindowTitle(name)
+        self.pdf_views.append((pdf_document, pdf_view))
 
 
 class RunWorker(LogWorker):
