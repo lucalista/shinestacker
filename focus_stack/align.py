@@ -119,11 +119,11 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
         raise InvalidOptionError("border_mode", alignment_config['border_mode'])
     min_matches = 4 if alignment_config['transform'] == ALIGN_HOMOGRAPHY else 3
     validate_image(img_0, *get_img_metadata(img_1))
-    if callbacks and 'message' in callbacks:
+    if callbacks and 'message' in callbacks.keys():
         callbacks['message']()
     kp_0, kp_1, good_matches = detect_and_compute(img_0, img_1, feature_config, matching_config)
     n_good_matches = len(good_matches)
-    if callbacks and 'matches_message' in callbacks:
+    if callbacks and 'matches_message' in callbacks.keys():
         callbacks['matches_message'](n_good_matches)
     img_warp = None
     if n_good_matches >= min_matches:
@@ -131,7 +131,7 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
         dst_pts = np.float32([kp_1[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
         M, msk = find_transform(src_pts, dst_pts, alignment_config['transform'], alignment_config['rans_threshold'])
         h, w = img_0.shape[:2]
-        if callbacks and 'align_message' in callbacks:
+        if callbacks and 'align_message' in callbacks.keys():
             callbacks['align_message']()
         if alignment_config['transform'] == ALIGN_HOMOGRAPHY:
             img_warp = cv2.warpPerspective(img_0, M, (w, h),
@@ -146,7 +146,7 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
                 mask = cv2.warpAffine(np.ones_like(img_0, dtype=np.uint8), M, (w, h),
                                       borderMode=cv2.BORDER_CONSTANT, borderValue=0)
         if alignment_config['border_mode'] == BORDER_REPLICATE_BLUR:
-            if callbacks and 'blur_message' in callbacks:
+            if callbacks and 'blur_message' in callbacks.keys():
                 callbacks['blur_message']()
             mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
             blurred_warp = cv2.GaussianBlur(img_warp, (21, 21), sigmaX=alignment_config['border_blur'])
@@ -159,18 +159,20 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
                                                      flags=2), cv2.COLOR_BGR2RGB)
             plt.figure(figsize=(10, 5))
             plt.imshow(img_match, 'gray')
+            if callbacks and 'save_plot' in callbacks.keys():
+                callbacks['save_plot'](plot_path)
             plt.savefig(plot_path)
     return n_good_matches, img_warp
 
 
 class AlignFrames(SubAction):
-    def __init__(self, enabled=True, feature_config=None, matching_config=None, alignment_config=None, plot_histograms=False, **kwargs):
+    def __init__(self, enabled=True, feature_config=None, matching_config=None, alignment_config=None, **kwargs):
         super().__init__(enabled)
         self.feature_config = {**_DEFAULT_FEATURE_CONFIG, **(feature_config or {})}
         self.matching_config = {**_DEFAULT_MATCHING_CONFIG, **(matching_config or {})}
         self.alignment_config = {**_DEFAULT_ALIGNMENT_CONFIG, **(alignment_config or {})}
         self.min_matches = 4 if self.alignment_config['transform'] == ALIGN_HOMOGRAPHY else 3
-        self.plot_histograms = plot_histograms
+        self.plot_histograms = kwargs.get('plot_histograms', False)
         for k in self.feature_config.keys():
             if k in kwargs.keys():
                 self.feature_config[k] = kwargs[k]
@@ -192,7 +194,8 @@ class AlignFrames(SubAction):
             'message': lambda: self.process.sub_message_r(': find matches'),
             'matches_message': lambda n: self.process.sub_message_r(f": matches: {n}"),
             'align_message': lambda: self.process.sub_message_r(': align images'),
-            'blur_message': lambda: self.process.sub_message_r(': blur borders')
+            'blur_message': lambda: self.process.sub_message_r(': blur borders'),
+            'save_plot': lambda plot_path: self.process.callback('save_plot', self.process.id, self.process.name, plot_path)
         }
         if self.plot_histograms:
             plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + f"{self.process.name}-matches-{idx:04d}.pdf"
@@ -233,5 +236,7 @@ class AlignFrames(SubAction):
             plt.legend()
             plt.ylim(0)
             plt.xlim(x[0], x[-1])
-            save_plot(self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-matches.pdf")
+            plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-matches.pdf"
+            self.process.callback('save_plot', self.process.id, self.process.name, plot_path)            
+            save_plot(plot_path)
             plt.close('all')

@@ -102,6 +102,8 @@ class FieldBuilder:
                 params[tag] = self.get_path_widget(field['widget']).text()
             elif field['type'] == FIELD_FLOAT:
                 params[tag] = field['widget'].value()
+            elif field['type'] == FIELD_BOOL:
+                params[tag] = field['widget'].isChecked()
             elif field['type'] == FIELD_INT:
                 params[tag] = field['widget'].value()
             elif field['type'] == FIELD_INT_TUPLE:
@@ -576,7 +578,7 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
         self.add_bold_label("Feature matching:")
         matching_method_map = self.make_convertion_map(self.MATCHING_METHOD_OPTIONS, VALID_MATCHING_METHODS)
         self.builder.add_field('method', FIELD_COMBO, 'Method', required=False,
-                               options=MATCHING_METHOD_OPTIONS, default='KNN',
+                               options=self.MATCHING_METHOD_OPTIONS, default='KNN',
                                convertion_map=matching_method_map)
         self.builder.add_field('flann_idx_kdtree', FIELD_INT, 'Flann idx kdtree', required=False,
                                default=2, min=0, max=10)

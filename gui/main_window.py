@@ -136,6 +136,7 @@ class MainWindow(WindowMenu, LogManager):
         worker.begin_steps_signal.connect(window.handle_begin_steps)
         worker.end_steps_signal.connect(window.handle_end_steps)
         worker.after_step_signal.connect(window.handle_after_step)
+        worker.save_plot_signal.connect(window.handle_save_plot)
 
     def run_job(self):
         current_index = self.job_list.currentRow()

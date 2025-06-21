@@ -139,7 +139,7 @@ class RunWindow(QTextEditLogger):
         }}
         """)
 
-    @Slot(int)
+    @Slot(int, str)
     def handle_before_action(self, id, name):
         if 0 <= id < len(self.color_widgets[self.row_widget_id]):
             self.color_widgets[self.row_widget_id][id].set_color(*self.action_running_color.tuple())
@@ -147,7 +147,7 @@ class RunWindow(QTextEditLogger):
         if id == -1:
             self.set_progress_bar_style(self.action_running_color)
 
-    @Slot(int)
+    @Slot(int, str)
     def handle_after_action(self, id, name):
         if 0 <= id < len(self.color_widgets[self.row_widget_id]):
             self.color_widgets[self.row_widget_id][id].set_color(*self.action_done_color.tuple())
@@ -156,21 +156,26 @@ class RunWindow(QTextEditLogger):
             self.set_progress_bar_style(self.action_done_color)
             self.row_widget_id += 1
 
-    @Slot(int, int)
+    @Slot(int, str, str)
     def handle_step_count(self, id, name, steps):
         self.progress_bar.setMaximum(steps)
 
-    @Slot(int, int)
+    @Slot(int, str)
     def handle_begin_steps(self, id, name):
         self.progress_bar.setValue(0)
 
-    @Slot(int, int)
+    @Slot(int, str)
     def handle_end_steps(self, id, name):
         self.progress_bar.setValue(self.progress_bar.maximum())
 
-    @Slot(int, int)
+    @Slot(int, str, str)
     def handle_after_step(self, id, name, step):
         self.progress_bar.setValue(step)
+
+    @Slot(int, str, str)
+    def handle_save_plot(self, id, name, path):
+        pass
+        # print("save plot: ", id, name, path)        
 
 
 class RunWorker(LogWorker):
@@ -180,6 +185,7 @@ class RunWorker(LogWorker):
     begin_steps_signal = Signal(int, str)
     end_steps_signal = Signal(int, str)
     after_step_signal = Signal(int, str, int)
+    save_plot_signal = Signal(int, str, str)
 
     def __init__(self, id_str):
         LogWorker.__init__(self)
@@ -190,7 +196,8 @@ class RunWorker(LogWorker):
             'step_count': self.step_count,
             'begin_steps': self.begin_steps,
             'end_steps': self.end_steps,
-            'after_step': self.after_step
+            'after_step': self.after_step,
+            'save_plot': self.save_plot
         }
         self.tag = ""
 
@@ -211,6 +218,9 @@ class RunWorker(LogWorker):
 
     def after_step(self, id, name, step):
         self.after_step_signal.emit(id, name, step)
+
+    def save_plot(self, id, name, path):
+        self.save_plot_signal.emit(id, name, path)
 
     def run(self):
         run_error = False
