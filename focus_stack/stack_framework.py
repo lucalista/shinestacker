@@ -48,6 +48,8 @@ class FramePaths:
         self.output_dir = self.working_path + ('' if self.working_path[-1] == '/' else '/') + self.output_path
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
+        elif len(os.listdir(self.output_dir)) > 0:
+            self.print_message(colored(f": output directory {self.output_path} not empty, files may be overwritten or merged with existing ones.", 'yellow'), level=logging.WARNING)
         if self.plot_path == '':
             self.plot_path = self.working_path + ('' if self.working_path[-1] == '/' else '/') + self.plot_path
             if not os.path.exists(self.plot_path):

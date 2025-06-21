@@ -199,7 +199,7 @@ class LumiCorrection(Correction):
         chans = cv2.split(image)
         colors = ("r", "g", "b")
         if self.plot_histograms:
-            fig, axs = plt.subplots(1, 2, figsize=(10, 3), sharey=True)
+            fig, axs = plt.subplots(1, 2, figsize=(10, 5), sharey=True)
             self.histo_plot(axs[0], hist, "pixel luminosity", 'black')
             for (chan, color) in zip(chans, colors):
                 hist_col = self.calc_hist_1ch(chan)
@@ -237,7 +237,7 @@ class RGBCorrection(Correction):
         hist = [self.calc_hist_1ch(chan) for chan in cv2.split(image)]
         colors = ("r", "g", "b")
         if self.plot_histograms:
-            fig, axs = plt.subplots(1, 3, figsize=(10, 3), sharey=True)
+            fig, axs = plt.subplots(1, 3, figsize=(10, 5), sharey=True)
             for c in [2, 1, 0]:
                 self.histo_plot(axs[c], hist[c], colors[c] + " luminosity", colors[c])
             plt.xlim(0, self.two_n)
@@ -280,7 +280,7 @@ class Ch2Correction(Correction):
     def get_hist(self, image, idx):
         hist = [self.calc_hist_1ch(chan) for chan in cv2.split(image)]
         if self.plot_histograms:
-            fig, axs = plt.subplots(1, 3, figsize=(10, 3), sharey=True)
+            fig, axs = plt.subplots(1, 3, figsize=(10, 5), sharey=True)
             for c in range(3):
                 self.histo_plot(axs[c], hist[c], self.labels[c], self.colors[c])
             plt.xlim(0, self.two_n)
