@@ -57,7 +57,6 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         self.plot_range = kwargs.get('plot_range', (5, 30))
         self.plot_histograms = kwargs.get('plot_histograms', False)
 
-
     def hot_map(self, ch, th):
         return cv2.threshold(ch, th, 255, cv2.THRESH_BINARY)[1]
 
@@ -108,7 +107,9 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
             plt.legend()
             plt.xlim(x[0], x[-1])
             plt.ylim(0)
-            save_plot(self.working_path + "/" + self.plot_path + "/" + self.name + "-hot-pixels.pdf")
+            plot_path = self.working_path + "/" + self.plot_path + "/" + self.name + "-hot-pixels.pdf"
+            self.callback('save_plot', self.id, self.name, plot_path)            
+            save_plot(plot_path)
             plt.close('all')
 
 

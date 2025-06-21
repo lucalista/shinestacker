@@ -174,8 +174,7 @@ class RunWindow(QTextEditLogger):
 
     @Slot(int, str, str)
     def handle_save_plot(self, id, name, path):
-        pass
-        # print("save plot: ", id, name, path)
+        print("save plot: ", id, name, path)
 
 
 class RunWorker(LogWorker):
