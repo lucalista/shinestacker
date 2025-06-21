@@ -10,7 +10,8 @@ class MyPdfView(QPdfView):
     def __init__(self, file_path, parent=None):
         super().__init__(parent)
         self.file_path = file_path
-        self.resize(200, 100)
+        self.resize(200, 120)
+        self.setMinimumHeight(120)
         self.pdf_document = QPdfDocument()
         err = self.pdf_document.load(file_path)
         if err == QPdfDocument.Error.None_:

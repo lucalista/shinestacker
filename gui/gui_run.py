@@ -1,5 +1,5 @@
 from config.config import config
-from PySide6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QProgressBar, QMessageBox
+from PySide6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QProgressBar, QMessageBox, QScrollArea, QSizePolicy
 from PySide6.QtGui import QColor
 from PySide6.QtCore import Signal, Slot
 from gui.project_converter import ProjectConverter
@@ -95,7 +95,24 @@ class RunWindow(QTextEditLogger):
         self.progress_bar.setRange(0, 10)
         self.progress_bar.setValue(0)
         layout.addWidget(self.progress_bar)
-        layout.addWidget(self.text_edit)
+        
+        output_layout = QHBoxLayout()
+        left_layout, right_layout = QVBoxLayout(), QVBoxLayout()
+        output_layout.addLayout(left_layout, stretch=3)
+        output_layout.addLayout(right_layout, stretch=1)
+        left_layout.addWidget(self.text_edit)
+        right_area = QScrollArea()
+        image_area_widget = QWidget()
+        image_area_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
+        right_area.setWidget(image_area_widget)
+        right_area.setWidgetResizable(True)
+        self.image_layout = QVBoxLayout()
+        image_area_widget.setLayout(self.image_layout)
+        right_layout.addWidget(right_area)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        self.image_layout.setContentsMargins(0, 0, 0, 0)
+        layout.addLayout(output_layout)
+        
         self.close_button = QPushButton("Close")
         self.setStyleSheet(f"""
             QPushButton {{
@@ -114,8 +131,8 @@ class RunWindow(QTextEditLogger):
     def close_window(self):
         confirm = QMessageBox()
         confirm.setIcon(QMessageBox.Question)
-        confirm.setWindowTitle('Close Window')
-        confirm.setInformativeText("Really close window?")
+        confirm.setWindowTitle('Close Tab')
+        confirm.setInformativeText("Really close tab?")
         confirm.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
         confirm.setDefaultButton(QMessageBox.Cancel)
         if confirm.exec() == QMessageBox.Ok:
@@ -176,9 +193,10 @@ class RunWindow(QTextEditLogger):
 
     @Slot(int, str, str)
     def handle_save_plot(self, id, name, path):
-        pdf_view = new_pdf_view(path)
+        pdf_view = new_pdf_view(path, self)
         pdf_view.setWindowTitle(name)
         self.pdf_views.append(pdf_view)
+        self.image_layout.addWidget(pdf_view)
 
 
 class RunWorker(LogWorker):
