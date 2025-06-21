@@ -160,9 +160,9 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
                                                      flags=2), cv2.COLOR_BGR2RGB)
             plt.figure(figsize=(10, 5))
             plt.imshow(img_match, 'gray')
+            plt.savefig(plot_path)
             if callbacks and 'save_plot' in callbacks.keys():
                 callbacks['save_plot'](plot_path)
-            plt.savefig(plot_path)
     return n_good_matches, img_warp
 
 
@@ -238,6 +238,6 @@ class AlignFrames(SubAction):
             plt.ylim(0)
             plt.xlim(x[0], x[-1])
             plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-matches.pdf"
-            self.process.callback('save_plot', self.process.id, self.process.name, plot_path)
             save_plot(plot_path)
             plt.close('all')
+            self.process.callback('save_plot', self.process.id, self.process.name, plot_path)
