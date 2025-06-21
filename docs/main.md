@@ -33,6 +33,15 @@ job.add_action(MultiLayer("multilayer", input_path=['batches', 'stack']))
 job.run()
 ```
 
+## Graphical User Interface
+
+A GUI is also available, still experimental and with no documentetion.
+To run the GUI, from the main package directory run:
+
+```console
+$ python -m gui.main
+```
+
 ## Documentation
 - [Job creation and processing pipeline](../docs/job.md)
 - [Image alignment](../docs/alignment.md)
