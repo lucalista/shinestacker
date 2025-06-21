@@ -87,14 +87,17 @@ def detect_and_compute(img_0, img_1, feature_config=None, matching_config=None):
     }
     detector = detector_map[feature_config['detector']]()
     descriptor = descriptor_map[feature_config['descriptor']]()
-    if feature_config['detector'] == feature_config['descriptor'] and feature_config['detector'] in {DETECTOR_SIFT, DETECTOR_AKAZE}:
+    feature_config_detector = feature_config['detector']
+    feature_config_descriptor = feature_config['descriptor']
+    if feature_config_detector == DETECTOR_ORB and feature_config_descriptor == DESCRIPTOR_ORB:
+        raise RuntimeError("align: detector ORB and descriptor ORB are not supporte together")
+    if feature_config_detector == feature_config_descriptor and feature_config_detector in {DETECTOR_SIFT, DETECTOR_AKAZE}:
         kp_0, des_0 = detector.detectAndCompute(img_bw_0, None)
         kp_1, des_1 = detector.detectAndCompute(img_bw_1, None)
     else:
         kp_0, des_0 = descriptor.compute(img_bw_0, detector.detect(img_bw_0, None))
         kp_1, des_1 = descriptor.compute(img_bw_1, detector.detect(img_bw_1, None))
     return kp_0, kp_1, get_good_matches(des_0, des_1, matching_config)
-
 
 def find_transform(src_pts, dst_pts, transform=ALIGN_RIGID, rans_threshold=5.0):
     if transform == ALIGN_HOMOGRAPHY:

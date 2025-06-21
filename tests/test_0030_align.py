@@ -2,14 +2,45 @@ import sys
 sys.path.append('../')
 from focus_stack.utils import read_img
 from focus_stack.stack_framework import StackJob, CombinedActions
-from focus_stack.align import align_images, AlignFrames
+from focus_stack.align import (align_images, AlignFrames,
+                               DETECTOR_SIFT, DETECTOR_ORB, DETECTOR_SURF, DETECTOR_AKAZE,
+                               DESCRIPTOR_SIFT, DESCRIPTOR_ORB, DESCRIPTOR_AKAZE)
 
 
 def test_align():
-    img_1, img_2 = [read_img(f"input/img-jpg/000{i}.jpg") for i in (2, 3)]
-    n_good_matches, img_warp = align_images(img_1, img_2)
-    assert img_warp is not None
-    assert n_good_matches > 100
+    try:
+        img_1, img_2 = [read_img(f"input/img-jpg/000{i}.jpg") for i in (2, 3)]
+        n_good_matches, img_warp = align_images(img_1, img_2)
+        assert img_warp is not None
+        assert n_good_matches > 100
+    except Exception:
+        assert False
+
+
+def test_align_2():
+    try:
+        img_1, img_2 = [read_img(f"input/img-jpg/000{i}.jpg") for i in (2, 3)]
+        n_good_matches, img_warp = align_images(img_1, img_2,
+                                                feature_config={ 'detector': DETECTOR_ORB,
+                                                                 'descriptor': DESCRIPTOR_SIFT})
+        assert img_warp is not None
+        assert n_good_matches > 100
+    except Exception:
+        assert False
+
+
+def test_align_3():
+    try:
+        img_1, img_2 = [read_img(f"input/img-jpg/000{i}.jpg") for i in (2, 3)]
+        n_good_matches, img_warp = align_images(img_1, img_2,
+                                                feature_config={'detector': DETECTOR_ORB,
+                                                                'descriptor': DESCRIPTOR_ORB})
+        assert img_warp is not None
+        assert n_good_matches > 100
+    except RuntimeError as e:
+        assert str(e) == "align: detector ORB and descriptor ORB are not supporte together"
+    except Exception:
+        assert False
 
 
 def test_jpg():
@@ -34,5 +65,7 @@ def test_tif():
 
 if __name__ == '__main__':
     test_align()
+    test_align_2()
+    test_align_3()
     test_jpg()
     test_tif()
