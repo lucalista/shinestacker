@@ -8,18 +8,20 @@ from termcolor import colored
 import logging
 
 CLIP_EXP = 10
+DEFAULT_R_STEPS = 100
+DEFALUT_BLACK_THRESHOLD = 1
+DEFAULT_MAX_CORRECTION = 1
 
 
 class Vignetting(SubAction):
-    def __init__(self, r_steps=100, black_threshold=1, percentiles=(0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95), max_correction=1,
-                 apply_correction=True, plot_histograms=False, **kwargs):
-        super().__init__(**kwargs)
-        self.r_steps = r_steps
-        self.black_threshold = black_threshold
-        self.apply_correction = apply_correction
-        self.plot_histograms = plot_histograms
+    def __init__(self, enabled=True, percentiles=(0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95), **kwargs):
+        super().__init__(enabled)
+        self.r_steps = kwargs.get('r_steps', DEFAULT_R_STEPS)
+        self.black_threshold = kwargs.get('black_threshold', DEFALUT_BLACK_THRESHOLD)
+        self.apply_correction = kwargs.get('apply_correction', True)
+        self.plot_histograms = kwargs.get('plot_histograms', False)
+        self.max_correction = kwargs.get('max_correction', DEFAULT_MAX_CORRECTION)
         self.percentiles = np.sort(percentiles)
-        self.max_correction = max_correction
 
     def radial_mean_intensity(self, image):
         if len(image.shape) > 2:
@@ -86,9 +88,10 @@ class Vignetting(SubAction):
         plt.legend()
         plt.xlim(radii[0], radii[-1])
         plt.ylim(0)
-        save_plot(self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-radial-intensity-{:04d}.pdf".format(idx),
-                  show=self.plot_histograms)
+        plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-radial-intensity-{:04d}.pdf".format(idx) 
+        save_plot(plot_path, show=self.plot_histograms)
         plt.close('all')
+        self.process.callback('save_plot', self.process.id, self.process.name, plot_path)
         for i, p in enumerate(self.percentiles):
             self.corrections[i][idx] = fsolve(lambda x: Vignetting.sigmoid(x, *pars) / self.v0 - p, r0_fit)[0]
         if self.apply_correction:
@@ -126,5 +129,7 @@ class Vignetting(SubAction):
         plt.legend(ncols=2)
         plt.xlim(xs[0], xs[-1])
         plt.ylim(0, self.r_max * 1.05)
-        save_plot(self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-r0.pdf")
+        plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-r0.pdf" 
+        save_plot(plot_path)
         plt.close('all')
+        self.process.callback('save_plot', self.process.id, self.process.name, plot_path)

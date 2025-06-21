@@ -14,6 +14,7 @@ from focus_stack.align import VALID_BORDER_MODES, VALID_TRANSFORMS, VALID_MATCHI
 from focus_stack.noise_detection import DEFAULT_NOISE_MAP_FILENAME, DEFAULT_CHANNEL_THRESHOLDS, RGB_LABELS, DEFAULT_BLUR_SIZE
 from focus_stack.balance import VALID_BALANCE
 from focus_stack.depth_map import VALID_MAP, VALID_ENERGY
+from focus_stack.vignetting import DEFAULT_R_STEPS, DEFALUT_BLACK_THRESHOLD, DEFAULT_MAX_CORRECTION
 
 FIELD_TEXT = 'text'
 FIELD_ABS_PATH = 'abs_path'
@@ -555,11 +556,11 @@ class VignettingConfigurator(NoNameActionConfigurator):
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
         self.builder.add_field('r_steps', FIELD_INT, 'Radial steps', required=False,
-                               default=100, min=1, max=1000)
+                               default=DEFAULT_R_STEPS,  min=1, max=1000)
         self.builder.add_field('black_threshold', FIELD_INT, 'Black intensity threshold', required=False,
-                               default=1, min=0, max=1000)
+                               default= DEFALUT_BLACK_THRESHOLD, min=0, max=1000)
         self.builder.add_field('max_correction', FIELD_FLOAT, 'Max. correction', required=False,
-                               default=1, min=0, max=1, step=0.05)
+                               default=DEFAULT_MAX_CORRECTION, min=0, max=1, step=0.05)
         self.add_bold_label("Miscellanea:")
         self.builder.add_field('plot_histograms', FIELD_BOOL, 'Plot histograms', required=False, default=False)
         self.builder.add_field('apply_correction', FIELD_BOOL, 'Apply correction', required=False, default=True)
