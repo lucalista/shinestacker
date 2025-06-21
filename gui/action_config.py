@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any
 import os.path
 from focus_stack.align import VALID_BORDER_MODES, VALID_TRANSFORMS, VALID_MATCHING_METHODS
-from focus_stack.noise_detection import DEFAULT_NOISE_MAP_FILENAME
+from focus_stack.noise_detection import DEFAULT_NOISE_MAP_FILENAME, DEFAULT_CHANNEL_THRESHOLDS, RGB_LABELS, DEFAULT_BLUR_SIZE
 from focus_stack.balance import VALID_BALANCE
 from focus_stack.depth_map import VALID_MAP, VALID_ENERGY
 
@@ -403,14 +403,14 @@ class NoiseDetectionConfigurator(DefaultActionConfigurator):
         super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True,
                                placeholder='inherit from job')
-        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path (separate by ;)', required=False, multiple_entries=True,
-                               placeholder='relative to working path')
+        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path (separate by ;)', required=False,
+                               multiple_entries=True, placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
         self.builder.add_field('channel_thresholds', FIELD_INT_TUPLE, 'Noise threshold', required=False, size=3,
-                               default=[13, 13, 13], labels=['r', 'g', 'b'], min=[1] * 3, max=[1000] * 3)
+                               default=DEFAULT_CHANNEL_THRESHOLDS, labels=RGB_LABELS, min=[1] * 3, max=[1000] * 3)
         self.builder.add_field('blur_size', FIELD_INT, 'Blur size (px)', required=False,
-                               default=5, min=1, max=50)
+                               default=DEFAULT_BLUR_SIZE, min=1, max=50)
         self.builder.add_field('file_name', FIELD_TEXT, 'File name', required=False,
                                default="hot", placeholder="hot")
         self.add_bold_label("Miscellanea:")

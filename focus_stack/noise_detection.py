@@ -15,6 +15,9 @@ import errno
 DEFAULT_NOISE_MAP_FILENAME = "noise-map/hot_pixels.png"
 INTERPOLATE_MEAN = 'MEAN'
 INTERPOLATE_MEDIAN = 'MEDIAN'
+RGB_LABELS = ['r', 'g', 'b']
+DEFAULT_CHANNEL_THRESHOLDS = [13, 13, 13]
+DEFAULT_BLUR_SIZE = 5
 
 VALID_INTERPOLATE = {INTERPOLATE_MEAN, INTERPOLATE_MEDIAN}
 
@@ -43,15 +46,14 @@ def mean_image(file_paths, message_callback=None, progress_callback=None):
 
 
 class NoiseDetection(FrameMultiDirectory, JobBase):
-    def __init__(self, name="noise-map", enabled=True, channel_thresholds=(13, 13, 13),
-                 blur_size=5, **kwargs):
+    def __init__(self, name="noise-map", enabled=True, **kwargs):
         FrameMultiDirectory.__init__(self, name, **kwargs)
         JobBase.__init__(self, name, enabled)
-        self.channel_thresholds = channel_thresholds
-        self.blur_size = blur_size
+        self.blur_size = kwargs.get('blur_size', DEFAULT_BLUR_SIZE)
         self.file_name = kwargs.get('file_name', DEFAULT_NOISE_MAP_FILENAME)
         if self.file_name == '':
             self.file_name = DEFAULT_NOISE_MAP_FILENAME
+        self.channel_thresholds = kwargs.get('channel_thresholds', DEFAULT_CHANNEL_THRESHOLDS)
         self.plot_range = kwargs.get('plot_range', (5, 30))
         self.plot_histograms = kwargs.get('plot_histograms', False)
 
@@ -82,7 +84,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         hot_px = [self.hot_map(ch, self.channel_thresholds[i]) for i, ch in enumerate(channels)]
         hot_rgb = cv2.bitwise_or(hot_px[0], cv2.bitwise_or(hot_px[1], hot_px[2]))
         msg = []
-        for ch, hot in zip(['rgb', 'r', 'g', 'b', ], [hot_rgb] + hot_px):
+        for ch, hot in zip(['rgb', *RGB_LABELS], [hot_rgb] + hot_px):
             msg.append("{}: {}".format(ch, np.count_nonzero(hot > 0)))
         self.print_message("hot pixels: " + ", ".join(msg))
         path = "/".join(self.file_name.split("/")[:-1])
@@ -97,7 +99,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
             plt.figure(figsize=(10, 5))
             x = np.array(list(th_range))
             ys = [[np.count_nonzero(self.hot_map(ch, th) > 0) for th in th_range] for ch in channels]
-            for i, ch, y in zip(range(3), ['r', 'g', 'b'], ys):
+            for i, ch, y in zip(range(3), RGB_LABELS, ys):
                 plt.plot(x, y, c=ch, label=ch)
                 plt.plot([self.channel_thresholds[i], self.channel_thresholds[i]],
                          [0, y[self.channel_thresholds[i] - int(x[0])]], c=ch, linestyle="--")
