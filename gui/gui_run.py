@@ -176,9 +176,9 @@ class RunWindow(QTextEditLogger):
 
     @Slot(int, str, str)
     def handle_save_plot(self, id, name, path):
-        pdf_document, pdf_view = new_pdf_view(path)
+        pdf_view = new_pdf_view(path)
         pdf_view.setWindowTitle(name)
-        self.pdf_views.append((pdf_document, pdf_view))
+        self.pdf_views.append(pdf_view)
 
 
 class RunWorker(LogWorker):

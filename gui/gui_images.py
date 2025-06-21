@@ -10,6 +10,12 @@ class MyPdfView(QPdfView):
     def __init__(self, file_path, parent=None):
         super().__init__(parent)
         self.file_path = file_path
+        self.document = QPdfDocument()
+        self.document.load(file_path)
+        self.setDocument(self.document)
+        self.setZoomFactor(0.25)
+        self.resize(200, 150)
+
 
     def mouseReleaseEvent(self, event):
         try:
@@ -24,10 +30,6 @@ class MyPdfView(QPdfView):
 
 
 def new_pdf_view(file_path, parent=None):
-    document = QPdfDocument()
-    document.load(file_path)
     view = MyPdfView(file_path, parent)
-    view.setDocument(document)
-    view.setZoomFactor(0.25)
     view.show()
-    return document, view
+    return view
