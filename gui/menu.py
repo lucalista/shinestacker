@@ -1,12 +1,14 @@
-from PySide6.QtWidgets import (QMessageBox, QFileDialog, QMainWindow, QListWidgetItem)
+from PySide6.QtWidgets import (QMessageBox, QFileDialog, QMainWindow, QListWidgetItem, QDialog)
 from PySide6.QtGui import QAction, QColor, QIcon
-from gui.project_model import Project
+from gui.project_model import Project, ActionConfig
 from gui.project_model import (ACTION_JOB, ACTION_COMBO, ACTION_TYPES, SUB_ACTION_TYPES)
 from gui.gui_run import ColorPalette
+from gui.action_config import ActionConfigDialog
 import os.path
 import os
 import json
 import jsonpickle
+import webbrowser
 
 CLONE_POSTFIX = " (clone)"
 DONT_USE_NATIVE_MENU = True
@@ -119,7 +121,12 @@ class WindowMenu(QMainWindow):
         menu.addAction(disable_all_action)
 
     def add_job_menu(self, menubar):
-        menu = menubar.addMenu("Jobs")
+        menu = menubar.addMenu("&Jobs")
+        add_job_action = QAction("Add Job", self)
+        add_job_action.setShortcut("Ctrl+P")
+        add_job_action.triggered.connect(self.add_job)
+        menu.addAction(add_job_action)
+        menu.addSeparator()        
         self.run_job_action = QAction("Run Job", self)
         self.run_job_action.setShortcut("Ctrl+J")
         self.run_job_action.triggered.connect(self.run_job)
@@ -127,8 +134,15 @@ class WindowMenu(QMainWindow):
         self.run_all_jobs_action = QAction("Run All Jobs", self)
         self.run_all_jobs_action.setShortcut("Ctrl+J")
         self.run_all_jobs_action.triggered.connect(self.run_all_jobs)
-        menu.addAction(self.run_all_jobs_action)
         self.run_all_jobs_action.setShortcut("Ctrl+Shift+J")
+        menu.addAction(self.run_all_jobs_action)
+
+
+    def add_help_menu(self, menubar):
+        menu = menubar.addMenu("&Help")
+        help_action = QAction("Online Help", self)
+        help_action.triggered.connect(self.website)
+        menu.addAction(help_action)
         
     def __init__(self):
         super().__init__()
@@ -137,6 +151,10 @@ class WindowMenu(QMainWindow):
         self.add_file_menu(menubar)
         self.add_edit_menu(menubar)
         self.add_job_menu(menubar)
+        self.add_help_menu(menubar)
+
+    def website(self):
+        webbrowser.open("https://github.com/lucalista/focusstack/")
 
     def _refresh_ui(self, job_row=-1, action_row=-1):
         self.job_list.clear()
@@ -403,6 +421,16 @@ class WindowMenu(QMainWindow):
             element = self.delete_action(confirm)
         return element
 
+    def add_job(self):
+        job_action = ActionConfig("Job")
+        dialog = ActionConfigDialog(job_action, self)
+        if dialog.exec() == QDialog.Accepted:
+            self.touch_project()
+            self.project.jobs.append(job_action)
+            self.job_list.addItem(self.list_item(self.job_text(job_action), job_action.enabled()))
+            self.job_list.setCurrentRow(self.job_list.count() - 1)
+            self.job_list.item(self.job_list.count() - 1).setSelected(True)
+    
     def copy_job(self):
         current_index = self.job_list.currentRow()
         if 0 <= current_index < len(self.project.jobs):

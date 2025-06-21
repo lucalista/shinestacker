@@ -88,16 +88,6 @@ class MainWindow(WindowMenu, LogManager):
         layout.addWidget(h_splitter)
         self.central_widget.setLayout(layout)
 
-    def add_job(self):
-        job_action = ActionConfig("Job")
-        dialog = ActionConfigDialog(job_action, self)
-        if dialog.exec() == QDialog.Accepted:
-            self.touch_project()
-            self.project.jobs.append(job_action)
-            self.job_list.addItem(self.list_item(self.job_text(job_action), job_action.enabled()))
-            self.job_list.setCurrentRow(self.job_list.count() - 1)
-            self.job_list.item(self.job_list.count() - 1).setSelected(True)
-
     def on_job_double_clicked(self, item):
         index = self.job_list.row(item)
         if 0 <= index < len(self.project.jobs):
