@@ -11,7 +11,7 @@ from gui.project_model import (ActionConfig,
 from abc import ABC, abstractmethod
 from typing import Dict, Any
 import os.path
-from focus_stack.align import VALID_BORDER_MODES, VALID_TRANSFORMS
+from focus_stack.align import VALID_BORDER_MODES, VALID_TRANSFORMS, VALID_MATCHING_METHODS
 from focus_stack.noise_detection import DEFAULT_NOISE_MAP_FILENAME
 from focus_stack.balance import VALID_BALANCE
 
@@ -551,6 +551,7 @@ class VignettingConfigurator(NoNameActionConfigurator):
 class AlignFramesConfigurator(NoNameActionConfigurator):
     BORDER_MODE_OPTIONS = ['Constant', 'Replicate', 'Replicate and blur']
     TRANSFORM_OPTIONS = ['Rigid', 'Homography']
+    MATCHING_METHOD_OPTIONS = ['K-nearest neighbors', 'Hamming distance']
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
         self.add_bold_label("Feature identification:")
@@ -559,8 +560,10 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
         self.builder.add_field('descriptor', FIELD_COMBO, 'Descriptor', required=False,
                                options=['SIFT', 'ORB', 'AKAZE'], default='SIFT')
         self.add_bold_label("Feature matching:")
+        matching_method_map = self.make_convertion_map(self.MATCHING_METHOD_OPTIONS, VALID_MATCHING_METHODS)
         self.builder.add_field('method', FIELD_COMBO, 'Method', required=False,
-                               options=['KNN', 'NORM_HAMMING'], default='KNN')
+                               options=MATCHING_METHOD_OPTIONS, default='KNN',
+                               convertion_map=matching_method_map)
         self.builder.add_field('flann_idx_kdtree', FIELD_INT, 'Flann idx kdtree', required=False,
                                default=2, min=0, max=10)
         self.builder.add_field('flann_trees', FIELD_INT, 'Flann trees', required=False,

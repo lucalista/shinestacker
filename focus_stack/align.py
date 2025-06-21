@@ -49,22 +49,24 @@ _cv2_border_mode_map = {
     BORDER_REPLICATE_BLUR: cv2.BORDER_REPLICATE
 }
 
-VALID_DETECTORS = {DETECTOR_SIFT, DETECTOR_ORB, DETECTOR_SURF, DETECTOR_AKAZE}
-VALID_DESCRIPTORS = {DESCRIPTOR_SIFT, DESCRIPTOR_ORB, DESCRIPTOR_AKAZE}
-VALID_MATCHING_METHODS = {MATCHING_KNN, MATCHING_NORM_HAMMING}
-VALID_TRANSFORMS = {ALIGN_HOMOGRAPHY, ALIGN_RIGID}
-VALID_BORDER_MODES = {BORDER_CONSTANT, BORDER_REPLICATE, BORDER_REPLICATE_BLUR}
+VALID_DETECTORS = [DETECTOR_SIFT, DETECTOR_ORB, DETECTOR_SURF, DETECTOR_AKAZE]
+VALID_DESCRIPTORS = [DESCRIPTOR_SIFT, DESCRIPTOR_ORB, DESCRIPTOR_AKAZE]
+VALID_MATCHING_METHODS = [MATCHING_KNN, MATCHING_NORM_HAMMING]
+VALID_TRANSFORMS = [ALIGN_HOMOGRAPHY, ALIGN_RIGID]
+VALID_BORDER_MODES = [BORDER_CONSTANT, BORDER_REPLICATE, BORDER_REPLICATE_BLUR]
+RAISE_ORB_ORB_HAMMING = "align: detector ORB and descriptor ORB require match method NORM_HAMMING"
 
 
 def get_good_matches(des_0, des_1, matching_config=None):
     matching_config = {**_DEFAULT_MATCHING_CONFIG, **(matching_config or {})}
-    if matching_config['method'] == MATCHING_KNN:
+    matching_config_method = matching_config['method']
+    if matching_config_method == MATCHING_KNN:
         flann = cv2.FlannBasedMatcher(
             dict(algorithm=matching_config['flann_idx_kdtree'], trees=matching_config['flann_trees']),
             dict(checks=matching_config['flann_checks']))
         matches = flann.knnMatch(des_0, des_1, k=2)
         good_matches = [m for m, n in matches if m.distance < matching_config['threshold'] * n.distance]
-    elif matching_config['method'] == MATCHING_NORM_HAMMING:
+    elif matching_config_method == MATCHING_NORM_HAMMING:
         bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
         good_matches = sorted(bf.match(des_0, des_1), key=lambda x: x.distance)
     return good_matches
@@ -89,8 +91,8 @@ def detect_and_compute(img_0, img_1, feature_config=None, matching_config=None):
     descriptor = descriptor_map[feature_config['descriptor']]()
     feature_config_detector = feature_config['detector']
     feature_config_descriptor = feature_config['descriptor']
-    if feature_config_detector == DETECTOR_ORB and feature_config_descriptor == DESCRIPTOR_ORB:
-        raise RuntimeError("align: detector ORB and descriptor ORB are not supporte together")
+    if feature_config_detector == DETECTOR_ORB and feature_config_descriptor == DESCRIPTOR_ORB and matching_config['method'] != MATCHING_NORM_HAMMING:
+        raise RuntimeError(RAISE_ORB_ORB_HAMMING)
     if feature_config_detector == feature_config_descriptor and feature_config_detector in {DETECTOR_SIFT, DETECTOR_AKAZE}:
         kp_0, des_0 = detector.detectAndCompute(img_bw_0, None)
         kp_1, des_1 = detector.detectAndCompute(img_bw_1, None)
