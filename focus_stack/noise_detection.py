@@ -43,15 +43,18 @@ def mean_image(file_paths, message_callback=None, progress_callback=None):
 
 
 class NoiseDetection(FrameMultiDirectory, JobBase):
-    def __init__(self, name="noise-map", enabled=True, plot_histograms=False, channel_thresholds=(13, 13, 13),
-                 blur_size=5, file_name='', plot_range=(5, 30), **kwargs):
+    def __init__(self, name="noise-map", enabled=True, channel_thresholds=(13, 13, 13),
+                 blur_size=5, **kwargs):
         FrameMultiDirectory.__init__(self, name, **kwargs)
         JobBase.__init__(self, name, enabled)
         self.channel_thresholds = channel_thresholds
         self.blur_size = blur_size
-        self.file_name = file_name if file_name != '' else DEFAULT_NOISE_MAP_FILENAME
-        self.plot_range = plot_range
-        self.plot_histograms = plot_histograms
+        self.file_name = kwargs.get('file_name', DEFAULT_NOISE_MAP_FILENAME)
+        if self.file_name == '':
+            self.file_name = DEFAULT_NOISE_MAP_FILENAME
+        self.plot_range = kwargs.get('plot_range', (5, 30))
+        self.plot_histograms = kwargs.get('plot_histograms', False)
+
 
     def hot_map(self, ch, th):
         return cv2.threshold(ch, th, 255, cv2.THRESH_BINARY)[1]
@@ -86,6 +89,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         if not os.path.exists(self.working_path + '/' + path):
             self.print_message("create directory: " + path)
             os.mkdir(self.working_path + '/' + path)
+        
         self.print_message("writing hot pixels map file: " + self.file_name)
         cv2.imwrite(self.working_path + '/' + self.file_name, hot)
         th_range = range(*self.plot_range)
