@@ -97,15 +97,11 @@ class RunWindow(QTextEditLogger):
         self.progress_bar.setRange(0, 10)
         self.progress_bar.setValue(0)
         layout.addWidget(self.progress_bar)
-
         output_layout = QHBoxLayout()
         left_layout, right_layout = QVBoxLayout(), QVBoxLayout()
-        
         output_layout.addLayout(left_layout, stretch=1)
         output_layout.addLayout(right_layout, stretch=0)
-        
         left_layout.addWidget(self.text_edit)
-        
         self.right_area = QScrollArea()
         self.right_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.right_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
@@ -119,21 +115,17 @@ class RunWindow(QTextEditLogger):
         self.image_area_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
         self.image_area_widget.setContentsMargins(0, 0, 0, 0)
         self.right_area.setWidget(self.image_area_widget)
-        
         self.image_layout = QVBoxLayout()
         self.image_layout.setSpacing(5)
         self.image_layout.setContentsMargins(0, 0, 0, 0)
         self.image_layout.setAlignment(Qt.AlignTop)        
         self.image_area_widget.setLayout(self.image_layout)
-        
         right_layout.addWidget(self.right_area)
         right_layout.setContentsMargins(0, 0, 0, 0)
         self.right_area.setMinimumWidth(0)
         self.right_area.setMaximumWidth(0)
         self.image_area_widget.setFixedWidth(0)
-        
         layout.addLayout(output_layout)        
-
         self.close_button = QPushButton("Close")
         self.setStyleSheet(f"""
             QPushButton {{
