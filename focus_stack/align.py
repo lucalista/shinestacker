@@ -101,6 +101,7 @@ def detect_and_compute(img_0, img_1, feature_config=None, matching_config=None):
         kp_1, des_1 = descriptor.compute(img_bw_1, detector.detect(img_bw_1, None))
     return kp_0, kp_1, get_good_matches(des_0, des_1, matching_config)
 
+
 def find_transform(src_pts, dst_pts, transform=ALIGN_RIGID, rans_threshold=5.0):
     if transform == ALIGN_HOMOGRAPHY:
         return cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, rans_threshold)
@@ -181,7 +182,7 @@ class AlignFrames(SubAction):
                 self.matching_config[k] = kwargs[k]
         for k in self.alignment_config.keys():
             if k in kwargs.keys():
-                self.alignment_config[k] = kwargs[k]        
+                self.alignment_config[k] = kwargs[k]
 
     def run_frame(self, idx, ref_idx, img_0):
         if idx == self.process.ref_idx:
@@ -237,6 +238,6 @@ class AlignFrames(SubAction):
             plt.ylim(0)
             plt.xlim(x[0], x[-1])
             plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-matches.pdf"
-            self.process.callback('save_plot', self.process.id, self.process.name, plot_path)            
+            self.process.callback('save_plot', self.process.id, self.process.name, plot_path)
             save_plot(plot_path)
             plt.close('all')

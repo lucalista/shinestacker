@@ -2,7 +2,7 @@ from PySide6.QtWidgets import (QMessageBox, QFileDialog, QMainWindow, QListWidge
 from PySide6.QtGui import QAction, QColor, QIcon
 from gui.project_model import Project, ActionConfig
 from gui.project_model import (ACTION_JOB, ACTION_COMBO, ACTION_TYPES, SUB_ACTION_TYPES,
-                               ACTION_COMBO, ACTION_NOISEDETECTION, ACTION_FOCUSSTACK, ACTION_FOCUSSTACKBUNCH, ACTION_MULTILAYER,
+                               ACTION_NOISEDETECTION, ACTION_FOCUSSTACK, ACTION_FOCUSSTACKBUNCH, ACTION_MULTILAYER,
                                ACTION_MASKNOISE, ACTION_VIGNETTING, ACTION_ALIGNFRAMES, ACTION_BALANCEFRAMES)
 
 from gui.gui_run import ColorPalette
@@ -17,7 +17,6 @@ CLONE_POSTFIX = " (clone)"
 DONT_USE_NATIVE_MENU = True
 ENABLED_LIST_ITEM_COLOR = ColorPalette.DARK_BLUE.tuple()
 DISABLED_LIST_ITEM_COLOR = ColorPalette.DARK_RED.tuple()
-
 
 
 class WindowMenu(QMainWindow):
@@ -129,7 +128,7 @@ class WindowMenu(QMainWindow):
         add_job_action.setShortcut("Ctrl+P")
         add_job_action.triggered.connect(self.add_job)
         menu.addAction(add_job_action)
-        menu.addSeparator()        
+        menu.addSeparator()
         self.run_job_action = QAction("Run Job", self)
         self.run_job_action.setShortcut("Ctrl+J")
         self.run_job_action.triggered.connect(self.run_job)
@@ -174,7 +173,7 @@ class WindowMenu(QMainWindow):
         help_action = QAction("Online Help", self)
         help_action.triggered.connect(self.website)
         menu.addAction(help_action)
-        
+
     def __init__(self):
         super().__init__()
         self._current_file = None
@@ -465,7 +464,7 @@ class WindowMenu(QMainWindow):
             self.job_list.addItem(self.list_item(self.job_text(job_action), job_action.enabled()))
             self.job_list.setCurrentRow(self.job_list.count() - 1)
             self.job_list.item(self.job_list.count() - 1).setSelected(True)
-    
+
     def add_action(self, type_name=''):
         current_index = self.job_list.currentRow()
         if current_index < 0:
@@ -495,7 +494,7 @@ class WindowMenu(QMainWindow):
 
     def add_action_MultiLayer(self):
         self.add_action(ACTION_MULTILAYER)
-    
+
     def add_sub_action(self, type_name=''):
         current_job_index = self.job_list.currentRow()
         current_action_index = self.action_list.currentRow()
@@ -533,7 +532,7 @@ class WindowMenu(QMainWindow):
 
     def add_sub_action_BalanceFrames(self):
         self.add_sub_action(ACTION_BALANCEFRAMES)
-    
+
     def copy_job(self):
         current_index = self.job_list.currentRow()
         if 0 <= current_index < len(self.project.jobs):
@@ -619,7 +618,7 @@ class WindowMenu(QMainWindow):
                 actions = self.project.jobs[job_row].sub_actions
                 len_actions = len(actions)
                 if len_actions > 0:
-                    if action_row  >= len_actions:
+                    if action_row >= len_actions:
                         action_row = len_actions
                     self.action_list.setCurrentRow(action_row)
 

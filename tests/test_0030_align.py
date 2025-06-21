@@ -3,8 +3,8 @@ sys.path.append('../')
 from focus_stack.utils import read_img
 from focus_stack.stack_framework import StackJob, CombinedActions
 from focus_stack.align import (align_images, AlignFrames,
-                               DETECTOR_SIFT, DETECTOR_ORB, DETECTOR_SURF, DETECTOR_AKAZE,
-                               DESCRIPTOR_SIFT, DESCRIPTOR_ORB, DESCRIPTOR_AKAZE,
+                               DETECTOR_ORB,
+                               DESCRIPTOR_SIFT, DESCRIPTOR_ORB,
                                MATCHING_KNN, MATCHING_NORM_HAMMING,
                                RAISE_ORB_ORB_HAMMING)
 
@@ -23,8 +23,8 @@ def test_align_2():
     try:
         img_1, img_2 = [read_img(f"input/img-jpg/000{i}.jpg") for i in (2, 3)]
         n_good_matches, img_warp = align_images(img_1, img_2,
-                                                feature_config={ 'detector': DETECTOR_ORB,
-                                                                 'descriptor': DESCRIPTOR_SIFT})
+                                                feature_config={'detector': DETECTOR_ORB,
+                                                                'descriptor': DESCRIPTOR_SIFT})
         assert img_warp is not None
         assert n_good_matches > 100
     except Exception:

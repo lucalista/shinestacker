@@ -1,11 +1,11 @@
 from config.config import config
-from PySide6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QProgressBar, QGridLayout, QMessageBox
+from PySide6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QProgressBar, QMessageBox
 from PySide6.QtGui import QColor
-from PySide6.QtCore import Qt, Signal, Slot
+from PySide6.QtCore import Signal, Slot
 from gui.project_converter import ProjectConverter
 from gui.gui_logging import LogWorker, QTextEditLogger, LOG_FONTS_STR
 
-DISABLED_TAG = "" # " <disabled>"
+DISABLED_TAG = ""  # " <disabled>"
 INDENT_SPACE = "     "
 
 
@@ -110,14 +110,14 @@ class RunWindow(QTextEditLogger):
         self.setLayout(layout)
 
     def close_window(self):
-            confirm = QMessageBox()
-            confirm.setIcon(QMessageBox.Question)
-            confirm.setWindowTitle('Close Window')
-            confirm.setInformativeText("Really close window?")
-            confirm.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
-            confirm.setDefaultButton(QMessageBox.Cancel)
-            if confirm.exec() == QMessageBox.Ok:
-                self.main_window.close_window(self.tab_position)
+        confirm = QMessageBox()
+        confirm.setIcon(QMessageBox.Question)
+        confirm.setWindowTitle('Close Window')
+        confirm.setInformativeText("Really close window?")
+        confirm.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        confirm.setDefaultButton(QMessageBox.Cancel)
+        if confirm.exec() == QMessageBox.Ok:
+            self.main_window.close_window(self.tab_position)
 
     def set_progress_bar_style(self, bar_color=None):
         if bar_color is None:
@@ -175,7 +175,7 @@ class RunWindow(QTextEditLogger):
     @Slot(int, str, str)
     def handle_save_plot(self, id, name, path):
         pass
-        # print("save plot: ", id, name, path)        
+        # print("save plot: ", id, name, path)
 
 
 class RunWorker(LogWorker):

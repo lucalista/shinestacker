@@ -2,7 +2,7 @@ from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QListWidget, Q
                                QLabel, QComboBox, QMessageBox, QDialog, QSplitter)
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication
-from gui.project_model import Project, ActionConfig
+from gui.project_model import Project
 from gui.action_config import ActionConfigDialog
 from gui.project_model import SUB_ACTION_TYPES, ACTION_TYPES, ACTION_COMBO
 from gui.menu import WindowMenu
@@ -19,7 +19,7 @@ class MainWindow(WindowMenu, LogManager):
         self.setWindowTitle("Focus Stacking GUI")
         self.resize(1200, 900)
         center = QGuiApplication.primaryScreen().geometry().center()
-        self.move(center - self.rect().center())        
+        self.move(center - self.rect().center())
         self.project = Project()
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -82,7 +82,6 @@ class MainWindow(WindowMenu, LogManager):
         self.delete_action_button.setEnabled(False)
         self.delete_action_button.clicked.connect(self.delete_action)
         vbox_right.addWidget(self.delete_action_button)
-        
         h_layout.addLayout(vbox_left)
         h_layout.addLayout(vbox_right)
         layout.addWidget(h_splitter)
@@ -176,7 +175,6 @@ class MainWindow(WindowMenu, LogManager):
         self.add_sub_action_button.setEnabled(enabled)
         for a in self.sub_action_menu_entries:
             a.setEnabled(enabled)
-        
 
     def update_delete_buttons_state(self):
         has_job_selected = len(self.job_list.selectedItems()) > 0

@@ -424,6 +424,7 @@ class NoiseDetectionConfigurator(DefaultActionConfigurator):
 class FocusStackBaseConfigurator(DefaultActionConfigurator):
     ENERGY_OPTIONS = ['Laplacian', 'Sobel']
     MAP_TYPE_OPTIONS = ['Average', 'Maximum']
+
     def create_form(self, layout, action):
         super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
@@ -568,6 +569,7 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
     BORDER_MODE_OPTIONS = ['Constant', 'Replicate', 'Replicate and blur']
     TRANSFORM_OPTIONS = ['Rigid', 'Homography']
     MATCHING_METHOD_OPTIONS = ['K-nearest neighbors', 'Hamming distance']
+
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
         self.add_bold_label("Feature identification:")
@@ -610,6 +612,7 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
 
 class BalanceFramesConfigurator(NoNameActionConfigurator):
     CORRECTION_MAP_OPTIONS = ['Linear', 'Gamma', 'Match histograms']
+
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
         self.builder.add_field('mask_size', FIELD_FLOAT, 'Mask size', required=False,
