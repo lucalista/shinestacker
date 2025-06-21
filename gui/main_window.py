@@ -157,25 +157,18 @@ class MainWindow(WindowMenu, LogManager):
         self.connect_signals(worker, new_window)
         self.start_thread(worker)
 
-    def add_action(self):
-        current_index = self.job_list.currentRow()
-        if current_index < 0:
-            QMessageBox.warning(self, "No Job Selected", "Please select a job first.")
-            return
-        type_name = self.action_selector.currentText()
-        action = ActionConfig(type_name)
-        action.parent = self.get_current_job()
-        dialog = ActionConfigDialog(action, self)
-        if dialog.exec() == QDialog.Accepted:
-            self.touch_project()
-            self.project.jobs[current_index].add_sub_action(action)
-            self.action_list.addItem(self.list_item(self.action_text(action), action.enabled()))
-
     def show_action_config_dialog(self, action):
         dialog = ActionConfigDialog(action, self)
         if dialog.exec():
             current_job_index = self.job_list.currentRow()
             self.on_job_selected(current_job_index)
+
+    def set_enabled_sub_actions_gui(self, enabled):
+        self.sub_action_selector.setEnabled(enabled)
+        self.add_sub_action_button.setEnabled(enabled)
+        for a in self.sub_action_menu_entries:
+            a.setEnabled(enabled)
+        
 
     def update_delete_buttons_state(self):
         has_job_selected = len(self.job_list.selectedItems()) > 0
@@ -207,14 +200,13 @@ class MainWindow(WindowMenu, LogManager):
                         break
             enable_sub_actions = (current_action is not None and not is_sub_action and current_action.type_name == ACTION_COMBO)
             self.sub_action_selector.setEnabled(enable_sub_actions)
-            self.add_sub_action_button.setEnabled(enable_sub_actions)
+            self.set_enabled_sub_actions_gui(enable_sub_actions)
             if is_sub_action:
                 self.delete_action_button.setText("Delete Sub-action")
             else:
                 self.delete_action_button.setText("Delete Action")
         else:
-            self.sub_action_selector.setEnabled(False)
-            self.add_sub_action_button.setEnabled(False)
+            self.set_enabled_sub_actions_gui(False)
             self.delete_action_button.setText("Delete Action")
 
     def job_text(self, job):
@@ -244,31 +236,6 @@ class MainWindow(WindowMenu, LogManager):
                         self.action_list.addItem(self.list_item(self.action_text(sub_action, is_sub_action=True),
                                                                 sub_action.enabled()))
 
-    def add_sub_action(self):
-        current_job_index = self.job_list.currentRow()
-        current_action_index = self.action_list.currentRow()
-        if (current_job_index < 0 or current_action_index < 0 or current_job_index >= len(self.project.jobs)):
-            return
-        job = self.project.jobs[current_job_index]
-        action = None
-        action_counter = -1
-        for i, act in enumerate(job.sub_actions):
-            action_counter += 1
-            if action_counter == current_action_index:
-                action = act
-                break
-            action_counter += len(act.sub_actions)
-        if not action or action.type_name != ACTION_COMBO:
-            return
-        type_name = self.sub_action_selector.currentText()
-        sub_action = ActionConfig(type_name)
-        dialog = ActionConfigDialog(sub_action, self)
-        if dialog.exec() == QDialog.Accepted:
-            self.touch_project()
-            action.add_sub_action(sub_action)
-            self.on_job_selected(current_job_index)
-            self.action_list.setCurrentRow(current_action_index)
-
     def on_action_double_clicked(self, item):
         job_index = self.job_list.currentRow()
         if 0 <= job_index < len(self.project.jobs):
@@ -295,10 +262,5 @@ class MainWindow(WindowMenu, LogManager):
                 if is_sub_action:
                     self.show_action_config_dialog(current_action)
                 else:
-                    if current_action.type_name == ACTION_COMBO:
-                        self.sub_action_selector.setEnabled(True)
-                        self.add_sub_action_button.setEnabled(True)
-                    else:
-                        self.sub_action_selector.setEnabled(False)
-                        self.add_sub_action_button.setEnabled(False)
+                    self.set_enabled_sub_actions_gui(current_action.type_name == ACTION_COMBO)
                     self.show_action_config_dialog(current_action)

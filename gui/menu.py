@@ -1,7 +1,10 @@
-from PySide6.QtWidgets import (QMessageBox, QFileDialog, QMainWindow, QListWidgetItem, QDialog)
+from PySide6.QtWidgets import (QMessageBox, QFileDialog, QMainWindow, QListWidgetItem, QDialog, QMenu)
 from PySide6.QtGui import QAction, QColor, QIcon
 from gui.project_model import Project, ActionConfig
-from gui.project_model import (ACTION_JOB, ACTION_COMBO, ACTION_TYPES, SUB_ACTION_TYPES)
+from gui.project_model import (ACTION_JOB, ACTION_COMBO, ACTION_TYPES, SUB_ACTION_TYPES,
+                               ACTION_COMBO, ACTION_NOISEDETECTION, ACTION_FOCUSSTACK, ACTION_FOCUSSTACKBUNCH, ACTION_MULTILAYER,
+                               ACTION_MASKNOISE, ACTION_VIGNETTING, ACTION_ALIGNFRAMES, ACTION_BALANCEFRAMES)
+
 from gui.gui_run import ColorPalette
 from gui.action_config import ActionConfigDialog
 import os.path
@@ -137,6 +140,34 @@ class WindowMenu(QMainWindow):
         self.run_all_jobs_action.setShortcut("Ctrl+Shift+J")
         menu.addAction(self.run_all_jobs_action)
 
+    def add_actions_menu(self, menubar):
+        menu = menubar.addMenu("&Actions")
+        add_action_menu = QMenu("Add Action", self)
+        for action in ACTION_TYPES:
+            entry_action = QAction(action, self)
+            entry_action.triggered.connect({
+                ACTION_COMBO: self.add_action_CombinedActions,
+                ACTION_NOISEDETECTION: self.add_action_NoiseDetection,
+                ACTION_FOCUSSTACK: self.add_action_FocusStack,
+                ACTION_FOCUSSTACKBUNCH: self.add_action_FocusStackBunch,
+                ACTION_MULTILAYER: self.add_action_MultiLayer
+            }[action])
+            add_action_menu.addAction(entry_action)
+        menu.addMenu(add_action_menu)
+        add_sub_action_menu = QMenu("Add Sub Action", self)
+        self.sub_action_menu_entries = []
+        for action in SUB_ACTION_TYPES:
+            entry_action = QAction(action, self)
+            entry_action.triggered.connect({
+                ACTION_MASKNOISE: self.add_sub_action_MakeNoise,
+                ACTION_VIGNETTING: self.add_sub_action_Vignetting,
+                ACTION_ALIGNFRAMES: self.add_sub_action_AlignFrames,
+                ACTION_BALANCEFRAMES: self.add_sub_action_BalanceFrames
+            }[action])
+            entry_action.setEnabled(False)
+            self.sub_action_menu_entries.append(entry_action)
+            add_sub_action_menu.addAction(entry_action)
+        menu.addMenu(add_sub_action_menu)
 
     def add_help_menu(self, menubar):
         menu = menubar.addMenu("&Help")
@@ -151,6 +182,7 @@ class WindowMenu(QMainWindow):
         self.add_file_menu(menubar)
         self.add_edit_menu(menubar)
         self.add_job_menu(menubar)
+        self.add_actions_menu(menubar)
         self.add_help_menu(menubar)
 
     def website(self):
@@ -430,6 +462,74 @@ class WindowMenu(QMainWindow):
             self.job_list.addItem(self.list_item(self.job_text(job_action), job_action.enabled()))
             self.job_list.setCurrentRow(self.job_list.count() - 1)
             self.job_list.item(self.job_list.count() - 1).setSelected(True)
+    
+    def add_action(self, type_name=''):
+        current_index = self.job_list.currentRow()
+        if current_index < 0:
+            QMessageBox.warning(self, "No Job Selected", "Please select a job first.")
+            return
+        if type_name == '':
+            type_name = self.action_selector.currentText()
+        action = ActionConfig(type_name)
+        action.parent = self.get_current_job()
+        dialog = ActionConfigDialog(action, self)
+        if dialog.exec() == QDialog.Accepted:
+            self.touch_project()
+            self.project.jobs[current_index].add_sub_action(action)
+            self.action_list.addItem(self.list_item(self.action_text(action), action.enabled()))
+
+    def add_action_CombinedActions(self):
+        self.add_action(ACTION_COMBO)
+
+    def add_action_NoiseDetection(self):
+        self.add_action(ACTION_NOISEDETECTION)
+
+    def add_action_FocusStack(self):
+        self.add_action(ACTION_FOCUSSTACK)
+
+    def add_action_FocusStackBunch(self):
+        self.add_action(ACTION_FOCUSSTACKBUNCH)
+
+    def add_action_MultiLayer(self):
+        self.add_action(ACTION_MULTILAYER)
+    
+    def add_sub_action(self, type_name=''):
+        current_job_index = self.job_list.currentRow()
+        current_action_index = self.action_list.currentRow()
+        if (current_job_index < 0 or current_action_index < 0 or current_job_index >= len(self.project.jobs)):
+            return
+        job = self.project.jobs[current_job_index]
+        action = None
+        action_counter = -1
+        for i, act in enumerate(job.sub_actions):
+            action_counter += 1
+            if action_counter == current_action_index:
+                action = act
+                break
+            action_counter += len(act.sub_actions)
+        if not action or action.type_name != ACTION_COMBO:
+            return
+        if type_name == '':
+            type_name = self.sub_action_selector.currentText()
+        sub_action = ActionConfig(type_name)
+        dialog = ActionConfigDialog(sub_action, self)
+        if dialog.exec() == QDialog.Accepted:
+            self.touch_project()
+            action.add_sub_action(sub_action)
+            self.on_job_selected(current_job_index)
+            self.action_list.setCurrentRow(current_action_index)
+
+    def add_sub_action_MakeNoise(self):
+        self.add_sub_action(ACTION_MASKNOISE)
+
+    def add_sub_action_Vignetting(self):
+        self.add_sub_action(ACTION_VIGNETTING)
+
+    def add_sub_action_AlignFrames(self):
+        self.add_sub_action(ACTION_ALIGNFRAMES)
+
+    def add_sub_action_BalanceFrames(self):
+        self.add_sub_action(ACTION_BALANCEFRAMES)
     
     def copy_job(self):
         current_index = self.job_list.currentRow()

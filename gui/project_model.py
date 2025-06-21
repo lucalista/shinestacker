@@ -1,6 +1,6 @@
 from copy import deepcopy
 ACTION_JOB = "Job"
-ACTION_COMBO = "Combined Actions"
+ACTION_COMBO = "CombinedActions"
 ACTION_NOISEDETECTION = "NoiseDetection"
 ACTION_FOCUSSTACK = "FocusStack"
 ACTION_FOCUSSTACKBUNCH = "FocusStackBunch"
