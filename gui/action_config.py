@@ -12,7 +12,7 @@ from typing import Dict, Any
 import os.path
 from focus_stack.align import VALID_BORDER_MODES, VALID_TRANSFORMS, VALID_MATCHING_METHODS
 from focus_stack.noise_detection import DEFAULT_NOISE_MAP_FILENAME, DEFAULT_CHANNEL_THRESHOLDS, RGB_LABELS, DEFAULT_BLUR_SIZE
-from focus_stack.balance import VALID_BALANCE
+from focus_stack.balance import VALID_BALANCE, DEFAULT_IMG_SCALE, VALID_CHANNELS
 from focus_stack.depth_map import VALID_MAP, VALID_ENERGY
 from focus_stack.vignetting import DEFAULT_R_STEPS, DEFALUT_BLACK_THRESHOLD, DEFAULT_MAX_CORRECTION
 
@@ -613,6 +613,7 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
 
 class BalanceFramesConfigurator(NoNameActionConfigurator):
     CORRECTION_MAP_OPTIONS = ['Linear', 'Gamma', 'Match histograms']
+    CHANNEL_OPTIONS = ['Luminosity', 'RGB', 'HSV', 'HLS']
 
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
@@ -621,10 +622,14 @@ class BalanceFramesConfigurator(NoNameActionConfigurator):
         self.builder.add_field('intensity_interval', FIELD_INT_TUPLE, 'Intensity range', required=False, size=2,
                                default=[0, -1], labels=['min', 'max'], min=[-1] * 2, max=[65536] * 2)
         self.builder.add_field('img_scale', FIELD_INT, 'Image resample', required=False,
-                               default=8, min=1, max=256)
+                               default=DEFAULT_IMG_SCALE, min=1, max=256)
         correction_map_convertion_map = self.make_convertion_map(self.CORRECTION_MAP_OPTIONS, VALID_BALANCE)
         self.builder.add_field('corr_map', FIELD_COMBO, 'Correction map', required=False,
                                options=self.CORRECTION_MAP_OPTIONS, default='Linear',
                                convertion_map=correction_map_convertion_map)
+        channel_convertion_map = self.make_convertion_map(self.CHANNEL_OPTIONS, VALID_CHANNELS)
+        self.builder.add_field('channel', FIELD_COMBO, 'Channel', required=False,
+                               options=self.CHANNEL_OPTIONS, default='Luminosity',
+                               convertion_map=channel_convertion_map)
         self.add_bold_label("Miscellanea:")
         self.builder.add_field('plot_histograms', FIELD_BOOL, 'Plot histograms', required=False, default=False)

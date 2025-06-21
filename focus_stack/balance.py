@@ -16,6 +16,7 @@ BALANCE_LUMI = "LUMI"
 BALANCE_RGB = "RGB"
 BALANCE_HSV = "HSV"
 BALANCE_HLS = "HLS"
+VALID_CHANNELS = [BALANCE_LUMI, BALANCE_RGB, BALANCE_HSV, BALANCE_HLS]
 
 DEFAULT_IMG_SCALE = 8
 DEFAULT_CORR_MAP = BALANCE_LINEAR
@@ -204,8 +205,10 @@ class LumiCorrection(Correction):
                 hist_col = self.calc_hist_1ch(chan)
                 self.histo_plot(axs[1], hist_col, "r,g,b luminosity", color, alpha=0.5)
             plt.xlim(0, self.two_n)
-            save_plot(self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx),
-                      show=self.plot_histograms)
+            plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx)
+            save_plot(plot_path, show=self.plot_histograms)
+            plt.close('all')
+            self.process.callback('save_plot', self.process.id, self.process.name, plot_path)            
         return [hist]
 
     def end(self, ref_idx):
@@ -221,9 +224,10 @@ class LumiCorrection(Correction):
             plt.legend()
             plt.xlim(x[0], x[-1])
             plt.ylim(0)
-            save_plot(self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-balance.pdf")
+            plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-balance.pdf"
+            save_plot(plot_path)
             plt.close('all')
-
+            self.process.callback('save_plot', self.process.id, self.process.name, plot_path)
 
 class RGBCorrection(Correction):
     def __init__(self, **kwargs):
@@ -237,9 +241,10 @@ class RGBCorrection(Correction):
             for c in [2, 1, 0]:
                 self.histo_plot(axs[c], hist[c], colors[c] + " luminosity", colors[c])
             plt.xlim(0, self.two_n)
-            save_plot(self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx),
-                      show=self.plot_histograms)
+            plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx)
+            save_plot(plot_path, show=self.plot_histograms)
             plt.close('all')
+            self.process.callback('save_plot', self.process.id, self.process.name, plot_path)
         return hist
 
     def end(self, ref_idx):
@@ -257,9 +262,10 @@ class RGBCorrection(Correction):
             plt.legend()
             plt.xlim(x[0], x[-1])
             plt.ylim(0)
-            save_plot(self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-balance.pdf")
+            plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-balance.pdf"
+            save_plot(plot_path)
             plt.close('all')
-
+            self.process.callback('save_plot', self.process.id, self.process.name, plot_path)
 
 class Ch2Correction(Correction):
     def __init__(self, **kwargs):
@@ -278,8 +284,9 @@ class Ch2Correction(Correction):
             for c in range(3):
                 self.histo_plot(axs[c], hist[c], self.labels[c], self.colors[c])
             plt.xlim(0, self.two_n)
-            save_plot(self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "_hist_{:04d}.pdf".format(idx),
-                      show=self.plot_histograms)
+            plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "_hist_{:04d}.pdf".format(idx)
+            save_plot(plot_path, show=self.plot_histograms)
+            self.process.callback('save_plot', self.process.id, self.process.name, plot_path)
         return hist[1:]
 
     def end(self, ref_idx):
@@ -296,9 +303,10 @@ class Ch2Correction(Correction):
             plt.legend()
             plt.xlim(x[0], x[-1])
             plt.ylim(0)
-            save_plot(self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-balance.pdf")
+            plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-balance.pdf"
+            save_plot(plot_path)
             plt.close('all')
-
+            self.process.callback('save_plot', self.process.id, self.process.name, plot_path)
 
 class SVCorrection(Ch2Correction):
     def __init__(self, **kwargs):
@@ -327,17 +335,20 @@ class LSCorrection(Ch2Correction):
 
 
 class BalanceFrames(SubAction):
-    def __init__(self, channel=DEFAULT_CHANNEL, img_scale=-1, corr_map=DEFAULT_CORR_MAP, enabled=True, **kwargs):
+    def __init__(self, enabled=True, **kwargs):
         super().__init__(enabled=enabled)
-        img_scale = (1 if corr_map == BALANCE_MATCH_HIST else DEFAULT_IMG_SCALE) if img_scale == -1 else img_scale
+        corr_map = kwargs.get('corr_map', DEFAULT_CORR_MAP)
+        img_scale = kwargs.get('img_scale', DEFAULT_IMG_SCALE)
+        channel = kwargs.pop('channel', DEFAULT_CHANNEL)
+        kwargs['img_scale'] = (1 if corr_map == BALANCE_MATCH_HIST else DEFAULT_IMG_SCALE) if img_scale == -1 else img_scale
         if channel == BALANCE_LUMI:
-            self.correction = LumiCorrection(img_scale=img_scale, corr_map=corr_map, **kwargs)
+            self.correction = LumiCorrection(**kwargs)
         elif channel == BALANCE_RGB:
-            self.correction = RGBCorrection(img_scale=img_scale, corr_map=corr_map, **kwargs)
+            self.correction = RGBCorrection(**kwargs)
         elif channel == BALANCE_HSV:
-            self.correction = SVCorrection(img_scale=img_scale, corr_map=corr_map, **kwargs)
+            self.correction = SVCorrection(**kwargs)
         elif channel == BALANCE_HLS:
-            self.correction = LSCorrection(img_scale=img_scale, corr_map=corr_map, **kwargs)
+            self.correction = LSCorrection(**kwargs)
         else:
             raise InvalidOptionError("channel", channel)
 
