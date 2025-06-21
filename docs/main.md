@@ -39,7 +39,7 @@ A GUI is also available, still experimental and with no documentetion.
 To run the GUI, from the main package directory run:
 
 ```console
-$ python -m gui.main
+python -m gui.main
 ```
 
 ## Documentation
