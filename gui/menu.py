@@ -186,7 +186,7 @@ class WindowMenu(QMainWindow):
         self.add_help_menu(menubar)
 
     def website(self):
-        webbrowser.open("https://github.com/lucalista/focusstack/")
+        webbrowser.open("https://github.com/lucalista/focusstack/blob/main/docs/main.md")
 
     def _refresh_ui(self, job_row=-1, action_row=-1):
         self.job_list.clear()
