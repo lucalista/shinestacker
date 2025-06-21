@@ -10,12 +10,14 @@ class MyPdfView(QPdfView):
     def __init__(self, file_path, parent=None):
         super().__init__(parent)
         self.file_path = file_path
-        self.document = QPdfDocument()
-        self.document.load(file_path)
-        self.setDocument(self.document)
-        self.setZoomFactor(0.25)
-        self.resize(200, 150)
-
+        self.resize(200, 100)
+        self.pdf_document = QPdfDocument()
+        err = self.pdf_document.load(file_path)
+        if err == QPdfDocument.Error.None_:
+            self.setDocument(self.pdf_document)
+            self.setZoomFactor(0.25)
+        else:
+            raise RuntimeError(f"Can't load file: {file_path}. Error code: {err}.")
 
     def mouseReleaseEvent(self, event):
         try:
