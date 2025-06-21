@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout, QTabWidget,
                                QLabel, QComboBox, QMessageBox, QDialog, QSplitter)
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QGuiApplication
 from gui.project_model import Project, ActionConfig
 from gui.action_config import ActionConfigDialog
 from gui.project_model import SUB_ACTION_TYPES, ACTION_TYPES, ACTION_COMBO
@@ -16,7 +17,9 @@ class MainWindow(WindowMenu, LogManager):
         WindowMenu.__init__(self)
         LogManager.__init__(self)
         self.setWindowTitle("Focus Stacking GUI")
-        self.resize(1200, 800)
+        self.resize(1200, 900)
+        center = QGuiApplication.primaryScreen().geometry().center()
+        self.move(center - self.rect().center())        
         self.project = Project()
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -29,7 +32,7 @@ class MainWindow(WindowMenu, LogManager):
         top_widget.setLayout(h_layout)
         h_splitter.addWidget(top_widget)
         self.tab_widget = QTabWidget()
-        self.tab_widget.resize(1000, 500)
+        self.tab_widget.resize(1000, 400)
         h_splitter.addWidget(self.tab_widget)
         self.job_list = QListWidget()
         self.job_list.currentRowChanged.connect(self.on_job_selected)
