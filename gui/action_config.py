@@ -7,13 +7,13 @@ from gui.project_model import (ActionConfig,
                                ACTION_FOCUSSTACKBUNCH, ACTION_MULTILAYER,
                                ACTION_MASKNOISE, ACTION_VIGNETTING, ACTION_ALIGNFRAMES,
                                ACTION_BALANCEFRAMES)
-
 from abc import ABC, abstractmethod
 from typing import Dict, Any
 import os.path
 from focus_stack.align import VALID_BORDER_MODES, VALID_TRANSFORMS, VALID_MATCHING_METHODS
 from focus_stack.noise_detection import DEFAULT_NOISE_MAP_FILENAME
 from focus_stack.balance import VALID_BALANCE
+from focus_stack.depth_map import VALID_MAP, VALID_ENERGY
 
 FIELD_TEXT = 'text'
 FIELD_ABS_PATH = 'abs_path'
@@ -420,6 +420,8 @@ class NoiseDetectionConfigurator(DefaultActionConfigurator):
 
 
 class FocusStackBaseConfigurator(DefaultActionConfigurator):
+    ENERGY_OPTIONS = ['Laplacian', 'Sobel']
+    MAP_TYPE_OPTIONS = ['Average', 'Maximum']
     def create_form(self, layout, action):
         super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
@@ -455,19 +457,31 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
             elif text == 'Depth map':
                 stacked.setCurrentWidget(q_depthmap)
         change()
-        self.builder.add_field('pyramid_min_size', FIELD_INT, 'Minimum size (px)', required=False, add_to_layout=q_pyramid.layout(),
+        self.builder.add_field('pyramid_min_size', FIELD_INT, 'Minimum size (px)',
+                               required=False, add_to_layout=q_pyramid.layout(),
                                default=32, min=2, max=256)
-        self.builder.add_field('pyramid_kernel_size', FIELD_INT, 'Kernel size (px)', required=False, add_to_layout=q_pyramid.layout(),
+        self.builder.add_field('pyramid_kernel_size', FIELD_INT, 'Kernel size (px)',
+                               required=False, add_to_layout=q_pyramid.layout(),
                                default=5, min=3, max=21)
-        self.builder.add_field('pyramid_gen_kernel', FIELD_FLOAT, 'Gen. kernel', required=False, add_to_layout=q_pyramid.layout(),
+        self.builder.add_field('pyramid_gen_kernel', FIELD_FLOAT, 'Gen. kernel',
+                               required=False, add_to_layout=q_pyramid.layout(),
                                default=0.4, min=0.0, max=2.0)
-        self.builder.add_field('depthmap_energy', FIELD_COMBO, 'Energy', required=False, add_to_layout=q_depthmap.layout(),
-                               options=['Laplacian', 'Sobel'], default='Laplacian')
-        self.builder.add_field('depthmap_kernel_size', FIELD_INT, 'Kernel size (px)', required=False, add_to_layout=q_depthmap.layout(),
+        energy_map = self.make_convertion_map(self.ENERGY_OPTIONS, VALID_ENERGY)
+        self.builder.add_field('depthmap_energy', FIELD_COMBO, 'Energy', required=False,
+                               add_to_layout=q_depthmap.layout(),
+                               options=self.ENERGY_OPTIONS, default='Laplacian', convertion_map=energy_map)
+        map_type_map = self.make_convertion_map(self.MAP_TYPE_OPTIONS, VALID_MAP)
+        self.builder.add_field('map_type', FIELD_COMBO, 'Map type', required=False,
+                               add_to_layout=q_depthmap.layout(),
+                               options=self.MAP_TYPE_OPTIONS, default='Average', convertion_map=map_type_map)
+        self.builder.add_field('depthmap_kernel_size', FIELD_INT, 'Kernel size (px)',
+                               required=False, add_to_layout=q_depthmap.layout(),
                                default=5, min=3, max=21)
-        self.builder.add_field('depthmap_blur_size', FIELD_INT, 'Blurl size (px)', required=False, add_to_layout=q_depthmap.layout(),
+        self.builder.add_field('depthmap_blur_size', FIELD_INT, 'Blurl size (px)',
+                               required=False, add_to_layout=q_depthmap.layout(),
                                default=5, min=1, max=21)
-        self.builder.add_field('depthmap_smooth_size', FIELD_INT, 'Smooth size (px)', required=False, add_to_layout=q_depthmap.layout(),
+        self.builder.add_field('depthmap_smooth_size', FIELD_INT, 'Smooth size (px)',
+                               required=False, add_to_layout=q_depthmap.layout(),
                                default=32, min=1, max=256)
         self.builder.layout.addRow(stacked)
         combo.currentIndexChanged.connect(change)

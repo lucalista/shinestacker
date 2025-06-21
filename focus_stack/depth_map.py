@@ -21,10 +21,12 @@ def get_sobel_map(images):
     return energies
 
 
-ENERGY_SOBEL = "sobel"
 ENERGY_LAPLACIAN = "laplacian"
-MAP_MAX = "max"
+ENERGY_SOBEL = "sobel"
 MAP_AVERAGE = "average"
+MAP_MAX = "max"
+VALID_MAP = [MAP_AVERAGE, MAP_MAX]
+VALID_ENERGY = [ENERGY_LAPLACIAN, ENERGY_SOBEL]
 
 
 class DepthMapStack:
