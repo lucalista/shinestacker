@@ -35,7 +35,7 @@ job.run()
 
 ## Graphical User Interface
 
-A GUI is also available, still experimental and with no documentetion.
+A GUI is also available, still experimental and undocumented.
 To run the GUI, from the main package directory run:
 
 ```console
