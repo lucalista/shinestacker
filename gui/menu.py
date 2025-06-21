@@ -238,6 +238,9 @@ class WindowMenu(QMainWindow):
                 QMessageBox.critical(self, "Error", f"Cannot open file {file_path}:\n{str(e)}")
         self._modified_project = False
 
+    def current_file_name(self):
+        return os.path.basename(self._current_file) if self._current_file else ''
+
     def save_project(self):
         if self._current_file:
             self.do_save(self._current_file)

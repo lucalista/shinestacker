@@ -115,15 +115,19 @@ class MainWindow(WindowMenu, LogManager):
         self.run_all_jobs_action.setEnabled(True)
 
     def create_new_window(self, title, labels=[]):
-        new_window = RunWindow(labels)
+        new_window = RunWindow(labels, self, self.tab_widget.count())
         self.tab_widget.addTab(new_window, title)
         self.tab_widget.setCurrentIndex(self.tab_widget.count() - 1)
         if title is not None:
             new_window.setWindowTitle(title)
         new_window.show()
-        self._windows[self.last_id()] = new_window
         self.add_gui_logger(new_window)
+        self._windows[self.last_id()] = new_window
         return new_window, self.last_id_str()
+
+    def close_window(self, tab_position):
+        self._windows.pop(tab_position)
+        self.tab_widget.removeTab(tab_position)
 
     def connect_signals(self, worker, window):
         worker.before_action_signal.connect(window.handle_before_action)
@@ -152,7 +156,10 @@ class MainWindow(WindowMenu, LogManager):
 
     def run_all_jobs(self):
         labels = [[(self.action_text(a), a.enabled() and job.enabled()) for a in job.sub_actions] for job in self.project.jobs]
-        new_window, id_str = self.create_new_window("Project", labels)
+        project_name = ".".join(self.current_file_name().split(".")[:-1])
+        if project_name == '':
+            project_name = '[new]'
+        new_window, id_str = self.create_new_window("Project: " + project_name, labels)
         worker = ProjectLogWorker(self.project, id_str)
         self.connect_signals(worker, new_window)
         self.start_thread(worker)

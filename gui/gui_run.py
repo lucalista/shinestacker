@@ -1,7 +1,7 @@
 from config.config import config
-from PySide6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QProgressBar
+from PySide6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QProgressBar, QGridLayout, QMessageBox
 from PySide6.QtGui import QColor
-from PySide6.QtCore import Signal, Slot
+from PySide6.QtCore import Qt, Signal, Slot
 from gui.project_converter import ProjectConverter
 from gui.gui_logging import LogWorker, QTextEditLogger, LOG_FONTS_STR
 
@@ -68,8 +68,10 @@ class RunWindow(QTextEditLogger):
     action_running_color = ColorPalette.MEDIUM_BLUE
     action_done_color = ColorPalette.MEDIUM_GREEN
 
-    def __init__(self, labels, parent=None):
+    def __init__(self, labels, main_window, tab_position, parent=None):
         QTextEditLogger.__init__(self, parent)
+        self.main_window = main_window
+        self.tab_position = tab_position
         self.row_widget_id = 0
         layout = QVBoxLayout()
         self.color_widgets = []
@@ -92,8 +94,30 @@ class RunWindow(QTextEditLogger):
         self.progress_bar.setValue(0)
         layout.addWidget(self.progress_bar)
         layout.addWidget(self.text_edit)
+        self.close_button = QPushButton("Close")
+        self.setStyleSheet(f"""
+            QPushButton {{
+                background-color: #{ColorPalette.MEDIUM_RED.hex()};
+                color: #{ColorPalette.DARK_RED.hex()};
+                font-weight: bold;
+                border-radius: 5px;
+                padding: 4px;
+            }}
+        """)
+        self.close_button.clicked.connect(self.close_window)
+        self.status_bar.addPermanentWidget(self.close_button)
         layout.addWidget(self.status_bar)
         self.setLayout(layout)
+
+    def close_window(self):
+            confirm = QMessageBox()
+            confirm.setIcon(QMessageBox.Question)
+            confirm.setWindowTitle('Close Window')
+            confirm.setInformativeText("Really close window?")
+            confirm.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+            confirm.setDefaultButton(QMessageBox.Cancel)
+            if confirm.exec() == QMessageBox.Ok:
+                self.main_window.close_window(self.tab_position)
 
     def set_progress_bar_style(self, bar_color=None):
         if bar_color is None:
