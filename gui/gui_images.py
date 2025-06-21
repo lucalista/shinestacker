@@ -1,24 +1,36 @@
+from PySide6.QtWidgets import QSizePolicy
 from PySide6.QtPdf import QPdfDocument
 from PySide6.QtPdfWidgets import QPdfView
+from PySide6.QtCore import Qt, QSize
 import sys
 import webbrowser
 import subprocess
 import os
 import platform
 
+
 class MyPdfView(QPdfView):
     def __init__(self, file_path, parent=None):
         super().__init__(parent)
         self.file_path = file_path
-        self.resize(200, 120)
-        self.setMinimumHeight(120)
+        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)        
+        self.setContentsMargins(0, 0, 0, 0)
         self.pdf_document = QPdfDocument()
         err = self.pdf_document.load(file_path)
         if err == QPdfDocument.Error.None_:
             self.setDocument(self.pdf_document)
-            self.setZoomFactor(0.25)
+            first_page_size = self.pdf_document.pagePointSize(0)
+            zoom_factor = 0.3
+            self.setZoomFactor(zoom_factor)
+            self.setFixedSize(int(first_page_size.width() * zoom_factor),
+                              int(first_page_size.height() * zoom_factor))
         else:
             raise RuntimeError(f"Can't load file: {file_path}. Error code: {err}.")
+        
+    def sizeHint(self):
+        return self.size()
 
     def mouseReleaseEvent(self, event):
         try:
@@ -31,8 +43,3 @@ class MyPdfView(QPdfView):
         except Exception:
             webbrowser.open("file://" + self.file_path)
 
-
-def new_pdf_view(file_path, parent=None):
-    view = MyPdfView(file_path, parent)
-    view.show()
-    return view

@@ -1,10 +1,12 @@
 from config.config import config
-from PySide6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QProgressBar, QMessageBox, QScrollArea, QSizePolicy
+from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QProgressBar,
+                               QMessageBox, QScrollArea, QSizePolicy, QFrame)
 from PySide6.QtGui import QColor
+from PySide6.QtCore import Qt
 from PySide6.QtCore import Signal, Slot
 from gui.project_converter import ProjectConverter
 from gui.gui_logging import LogWorker, QTextEditLogger, LOG_FONTS_STR
-from gui.gui_images import new_pdf_view
+from gui.gui_images import MyPdfView
 
 DISABLED_TAG = ""  # " <disabled>"
 INDENT_SPACE = "     "
@@ -95,24 +97,43 @@ class RunWindow(QTextEditLogger):
         self.progress_bar.setRange(0, 10)
         self.progress_bar.setValue(0)
         layout.addWidget(self.progress_bar)
-        
+
         output_layout = QHBoxLayout()
         left_layout, right_layout = QVBoxLayout(), QVBoxLayout()
-        output_layout.addLayout(left_layout, stretch=3)
-        output_layout.addLayout(right_layout, stretch=1)
-        left_layout.addWidget(self.text_edit)
-        right_area = QScrollArea()
-        image_area_widget = QWidget()
-        image_area_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
-        right_area.setWidget(image_area_widget)
-        right_area.setWidgetResizable(True)
-        self.image_layout = QVBoxLayout()
-        image_area_widget.setLayout(self.image_layout)
-        right_layout.addWidget(right_area)
-        right_layout.setContentsMargins(0, 0, 0, 0)
-        self.image_layout.setContentsMargins(0, 0, 0, 0)
-        layout.addLayout(output_layout)
         
+        output_layout.addLayout(left_layout, stretch=1)
+        output_layout.addLayout(right_layout, stretch=0)
+        
+        left_layout.addWidget(self.text_edit)
+        
+        self.right_area = QScrollArea()
+        self.right_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.right_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.right_area.setWidgetResizable(True)
+        self.right_area.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
+        self.right_area.setContentsMargins(0, 0, 0, 0)
+        self.right_area.setFrameShape(QFrame.NoFrame)
+        self.right_area.setViewportMargins(0, 0, 0, 0)
+        self.right_area.viewport().setStyleSheet("background: transparent; border: 0px;")        
+        self.image_area_widget = QWidget()
+        self.image_area_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
+        self.image_area_widget.setContentsMargins(0, 0, 0, 0)
+        self.right_area.setWidget(self.image_area_widget)
+        
+        self.image_layout = QVBoxLayout()
+        self.image_layout.setSpacing(5)
+        self.image_layout.setContentsMargins(0, 0, 0, 0)
+        self.image_layout.setAlignment(Qt.AlignTop)        
+        self.image_area_widget.setLayout(self.image_layout)
+        
+        right_layout.addWidget(self.right_area)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        self.right_area.setMinimumWidth(0)
+        self.right_area.setMaximumWidth(0)
+        self.image_area_widget.setFixedWidth(0)
+        
+        layout.addLayout(output_layout)        
+
         self.close_button = QPushButton("Close")
         self.setStyleSheet(f"""
             QPushButton {{
@@ -193,11 +214,18 @@ class RunWindow(QTextEditLogger):
 
     @Slot(int, str, str)
     def handle_save_plot(self, id, name, path):
-        pdf_view = new_pdf_view(path, self)
+        pdf_view = MyPdfView(path, self)
         pdf_view.setWindowTitle(name)
         self.pdf_views.append(pdf_view)
         self.image_layout.addWidget(pdf_view)
-
+        max_width = max(pv.size().width() for pv in self.pdf_views) if self.pdf_views else 0        
+        scrollbar_needed = any(pv.size().height() > self.right_area.viewport().height() for pv in self.pdf_views)
+        scrollbar_width = self.right_area.verticalScrollBar().sizeHint().width() if scrollbar_needed else 0
+        needed_width = max_width + scrollbar_width + 2
+        self.right_area.setFixedWidth(needed_width)
+        self.image_area_widget.setFixedWidth(needed_width)
+        self.right_area.updateGeometry()
+        self.image_area_widget.updateGeometry()    
 
 class RunWorker(LogWorker):
     before_action_signal = Signal(int, str)
