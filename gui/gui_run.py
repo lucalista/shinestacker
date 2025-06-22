@@ -6,7 +6,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtCore import Signal, Slot
 from gui.project_converter import ProjectConverter
 from gui.gui_logging import LogWorker, QTextEditLogger, LOG_FONTS_STR
-from gui.gui_images import GuiPdfView
+from gui.gui_images import GuiPdfView, GuiImageView
 
 DISABLED_TAG = ""  # " <disabled>"
 INDENT_SPACE = "     "
@@ -78,7 +78,7 @@ class RunWindow(QTextEditLogger):
         self.row_widget_id = 0
         layout = QVBoxLayout()
         self.color_widgets = []
-        self.pdf_views = []
+        self.image_views = []
         if len(labels) > 0:
             for label_row in labels:
                 self.color_widgets.append([])
@@ -209,13 +209,17 @@ class RunWindow(QTextEditLogger):
         label = QLabel(name, self)
         label.setStyleSheet("QLabel {margin-top: 5px; font-weight: bold;}")
         self.image_layout.addWidget(label)
-        pdf_view = GuiPdfView(path, self)
-        self.pdf_views.append(pdf_view)
-        self.image_layout.addWidget(pdf_view)
-        max_width = max(pv.size().width() for pv in self.pdf_views) if self.pdf_views else 0
-        scrollbar_needed = any(pv.size().height() > self.right_area.viewport().height() for pv in self.pdf_views)
-        scrollbar_width = self.right_area.verticalScrollBar().sizeHint().width() if scrollbar_needed else 0
-        needed_width = max_width + scrollbar_width + 2
+        ext = path.split('.')[-1].lower()
+        if ext == 'pdf':
+            image_view = GuiPdfView(path, self)
+        elif ext in ['jpg', 'jpeg', 'tif', 'tiff', 'png']:
+            image_view = GuiImageView(path, self)
+        else:
+            raise RuntimeError("Can't visualize file type {ext}.")
+        self.image_views.append(image_view)
+        self.image_layout.addWidget(image_view)
+        max_width = max(pv.size().width() for pv in self.image_views) if self.image_views else 0
+        needed_width = max_width + 15
         self.right_area.setFixedWidth(needed_width)
         self.image_area_widget.setFixedWidth(needed_width)
         self.right_area.updateGeometry()

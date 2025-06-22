@@ -2,7 +2,6 @@ import numpy as np
 import cv2
 import os
 from termcolor import colored
-import matplotlib.pyplot as plt
 from .exif import copy_exif
 from focus_stack.utils import write_img, save_plot, img_8bit
 from focus_stack.framework import JobBase
@@ -37,23 +36,15 @@ class FocusStackBase:
             self.sub_message_r(': copy exif data')
             dirpath, _, fnames = next(os.walk(self.exif_path))
             fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in EXTENSIONS]
-            exif_filename = self.exif_path + '/' + fnames[0]
+            exif_filename = f"{self.exif_path}/{fnames[0]}"
             copy_exif(exif_filename, out_filename)
             self.sub_message_r(' ' * 60)
         if self.plot_stack:
             idx_str = "{:04d}".format(self.frame_count) if self.frame_count >= 0 else ''
-            idx_postfix = f"-{idx_str}" if idx_str != '' else ''
-            plot_path = f"{self.working_path}/{self.plot_path}/{self.name}-stack{idx_postfix}.pdf"
-            plt.figure(figsize=(10, 5))
-            plt.title("Stack" + (f", bunch: {idx_str}" if idx_str != '' else ''))
-            plot_img = cv2.cvtColor(img_8bit(stacked_img), cv2.COLOR_BGR2RGB)
-            plt.imshow(plot_img, 'gray')
-            save_plot(plot_path)
-            plt.close('all')
             name = f"{self.name}: stack"
             if idx_str != '':
                 name += f"\n bunch: {idx_str}"
-            self.callback('save_plot', self.id, name, plot_path)
+            self.callback('save_plot', self.id, name, out_filename)
         if self.frame_count >= 0:
             self.frame_count += 1
 
