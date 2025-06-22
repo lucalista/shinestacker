@@ -9,7 +9,7 @@ from focus_stack.stack_framework import FrameDirectory, ActionList
 from focus_stack.exceptions import InvalidOptionError
 
 EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
-
+DEFAULT_FRAMES = 10
 
 class FocusStackBase:
     def __init__(self, stack_algo, exif_path='', postfix='', denoise=0):
@@ -44,15 +44,19 @@ class FocusStackBase:
             self.exif_path = working_path + "/" + self.exif_path
 
 
-class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
-    def __init__(self, name, stack_algo, enabled=True, frames=10, overlap=0, denoise=0, postfix='', exif_path='', **kwargs):
+class FocusStackBunch(FocusStackBase, FrameDirectory, ActionList):
+    def __init__(self, name, stack_algo, enabled=True, **kwargs):
+        denoise = kwargs.pop('denoise', 0)
+        postfix = kwargs.pop('postfix', '')
+        exif_path = kwargs.pop('exif_path', '')
+        FocusStackBase.__init__(self, stack_algo, exif_path, postfix, denoise)
         FrameDirectory.__init__(self, name, **kwargs)
         ActionList.__init__(self, name, enabled)
-        FocusStackBase.__init__(self, stack_algo, exif_path, postfix, denoise)
-        if overlap >= frames:
-            raise InvalidOptionError("overlap", overlap, "overlap must be smaller than batch size")
-        self.frames = frames
-        self.overlap = overlap
+        self.frames = kwargs.get('frames', DEFAULT_FRAMES)
+        self.overlap = kwargs.get('overlap', 0)
+        self.denoise = kwargs.get('denoise', 0)
+        if self.overlap >= self.frames:
+            raise InvalidOptionError("overlap", self.overlap, "overlap must be smaller than batch size")
 
     def begin(self):
         ActionList.begin(self)
@@ -73,8 +77,10 @@ class FocusStackBunch(FrameDirectory, ActionList, FocusStackBase):
 
 
 class FocusStack(FrameDirectory, JobBase, FocusStackBase):
-    def __init__(self, name, stack_algo, enabled=True, denoise=0, postfix='', exif_path='', **kwargs):
-        self.name = name
+    def __init__(self, name, stack_algo, enabled=True, **kwargs):
+        denoise = kwargs.pop('denoise', 0)
+        postfix = kwargs.pop('postfix', '')
+        exif_path = kwargs.pop('exif_path', '')
         FrameDirectory.__init__(self, name, **kwargs)
         JobBase.__init__(self, name, enabled)
         FocusStackBase.__init__(self, stack_algo, exif_path, postfix, denoise)

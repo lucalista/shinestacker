@@ -16,6 +16,7 @@ from focus_stack.balance import VALID_BALANCE, DEFAULT_IMG_SCALE, VALID_CHANNELS
 from focus_stack.depth_map import VALID_MAP, VALID_ENERGY
 from focus_stack.vignetting import DEFAULT_R_STEPS, DEFALUT_BLACK_THRESHOLD, DEFAULT_MAX_CORRECTION
 from focus_stack.stack_framework import DEFAULT_PLOTS_PATH
+from focus_stack.stack import DEFAULT_FRAMES
 
 FIELD_TEXT = 'text'
 FIELD_ABS_PATH = 'abs_path'
@@ -507,7 +508,7 @@ class FocusStackBunchConfigurator(FocusStackBaseConfigurator):
     def create_form(self, layout, action):
         super().create_form(layout, action)
         self.builder.add_field('frames', FIELD_INT, 'Frames', required=False,
-                               default=10, min=1, max=100)
+                               default=DEFAULT_FRAMES, min=1, max=100)
         self.builder.add_field('overlap', FIELD_INT, 'Overlapping frames', required=False,
                                default=2, min=0, max=100)
         super().common_fields(layout, action)
