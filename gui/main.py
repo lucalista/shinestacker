@@ -47,7 +47,7 @@ def main():
         app.setAttribute(Qt.AA_DontUseNativeMenuBar)
     else:
         disable_macos_special_menu_items()
-    app.setWindowIcon(QIcon('ico/focus_stack.ico'))
+    app.setWindowIcon(QIcon('ico/focus_stack.png'))
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
