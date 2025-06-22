@@ -18,6 +18,7 @@ from focus_stack.vignetting import DEFAULT_R_STEPS, DEFALUT_BLACK_THRESHOLD, DEF
 from focus_stack.stack_framework import DEFAULT_PLOTS_PATH
 from focus_stack.stack import DEFAULT_FRAMES
 from focus_stack.depth_map import DEFAULT_DM_MAP, DEFAULT_DM_ENERGY, DEFAULT_DM_KERNEL_SIZE, DEFAULT_DM_BLUR_SIZE, DEFAULT_DM_SMOOTH_SIZE
+from focus_stack.pyramid import DEFAULT_PY_MIN_SIZE, DEFAULT_PY_KERNEL_SIZE, DEFAULT_PY_GEN_KERNEL
 
 
 FIELD_TEXT = 'text'
@@ -468,17 +469,19 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
         change()
         self.builder.add_field('pyramid_min_size', FIELD_INT, 'Minimum size (px)',
                                required=False, add_to_layout=q_pyramid.layout(),
-                               default=32, min=2, max=256)
+                               default=DEFAULT_PY_MIN_SIZE, min=2, max=256)
         self.builder.add_field('pyramid_kernel_size', FIELD_INT, 'Kernel size (px)',
                                required=False, add_to_layout=q_pyramid.layout(),
-                               default=5, min=3, max=21)
+                               default=DEFAULT_PY_KERNEL_SIZE, min=3, max=21)
         self.builder.add_field('pyramid_gen_kernel', FIELD_FLOAT, 'Gen. kernel',
                                required=False, add_to_layout=q_pyramid.layout(),
-                               default=0.4, min=0.0, max=2.0)
+                               default=DEFAULT_PY_GEN_KERNEL, min=0.0, max=2.0)
         energy_map = self.make_convertion_map(self.ENERGY_OPTIONS, VALID_ENERGY)
         self.builder.add_field('depthmap_energy', FIELD_COMBO, 'Energy', required=False,
                                add_to_layout=q_depthmap.layout(),
-                               options=self.ENERGY_OPTIONS, default='Laplacian', convertion_map=energy_map)
+                               options=self.ENERGY_OPTIONS,
+                               default={v: k for k, v in energy_map.items()}[DEFAULT_DM_ENERGY],
+                               convertion_map=energy_map)
         map_type_map = self.make_convertion_map(self.MAP_TYPE_OPTIONS, VALID_MAP)
         self.builder.add_field('map_type', FIELD_COMBO, 'Map type', required=False,
                                add_to_layout=q_depthmap.layout(),

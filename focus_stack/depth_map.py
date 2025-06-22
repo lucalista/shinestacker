@@ -33,6 +33,7 @@ DEFAULT_DM_KERNEL_SIZE = 5
 DEFAULT_DM_BLUR_SIZE = 5
 DEFAULT_DM_SMOOTH_SIZE = 32
 
+
 class DepthMapStack:
     def __init__(self, map_type=DEFAULT_DM_MAP, energy=DEFAULT_DM_ENERGY,
                  kernel_size=DEFAULT_DM_KERNEL_SIZE, blur_size=DEFAULT_DM_BLUR_SIZE,
