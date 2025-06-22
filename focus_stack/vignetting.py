@@ -90,10 +90,11 @@ class Vignetting(SubAction):
             plt.legend()
             plt.xlim(radii[0], radii[-1])
             plt.ylim(0)
-            plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-radial-intensity-{:04d}.pdf".format(idx) 
+            idx_str = "{:04d}".format(idx)            
+            plot_path = f"{self.process.working_path}/{self.process.plot_path}/{self.process.name}-radial-intensity-{idx_str}.pdf"
             save_plot(plot_path)
             plt.close('all')
-            self.process.callback('save_plot', self.process.id, self.process.name, plot_path)
+            self.process.callback('save_plot', self.process.id, f"{self.process.name}: frame {idx_str}", plot_path)
         for i, p in enumerate(self.percentiles):
             self.corrections[i][idx] = fsolve(lambda x: Vignetting.sigmoid(x, *pars) / self.v0 - p, r0_fit)[0]
         if self.apply_correction:
