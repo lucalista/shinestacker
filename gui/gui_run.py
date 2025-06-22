@@ -6,7 +6,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtCore import Signal, Slot
 from gui.project_converter import ProjectConverter
 from gui.gui_logging import LogWorker, QTextEditLogger, LOG_FONTS_STR
-from gui.gui_images import MyPdfView
+from gui.gui_images import GuiPdfView
 
 DISABLED_TAG = ""  # " <disabled>"
 INDENT_SPACE = "     "
@@ -209,7 +209,7 @@ class RunWindow(QTextEditLogger):
         label = QLabel(name, self)
         label.setStyleSheet("QLabel {margin-top: 5px; font-weight: bold;}")
         self.image_layout.addWidget(label)
-        pdf_view = MyPdfView(path, self)
+        pdf_view = GuiPdfView(path, self)
         self.pdf_views.append(pdf_view)
         self.image_layout.addWidget(pdf_view)
         max_width = max(pv.size().width() for pv in self.pdf_views) if self.pdf_views else 0
