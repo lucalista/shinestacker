@@ -62,7 +62,7 @@ def test_align_4():
 def test_jpg():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg", callbacks='tqdm')
-        job.add_action(CombinedActions("align-jpg", [AlignFrames(plot_histograms=True)],
+        job.add_action(CombinedActions("align-jpg", [AlignFrames(plot_summary=True)],
                                        output_path="output/img-jpg-align"))
         job.run()
     except Exception:
@@ -72,7 +72,7 @@ def test_jpg():
 def test_tif():
     try:
         job = StackJob("job", "./", input_path="input/img-tif", callbacks='tqdm')
-        job.add_action(CombinedActions("align-tif", [AlignFrames(plot_histograms=True)],
+        job.add_action(CombinedActions("align-tif", [AlignFrames(plot_summary=True)],
                                        output_path="output/img-tif-align"))
         job.run()
     except Exception:

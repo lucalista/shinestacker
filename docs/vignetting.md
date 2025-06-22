@@ -15,5 +15,6 @@ Arguments for the constructor of ```Vignetting``` are:
 * ```black_threshold``` (optional, default: 1): apply correction only on pixels with luminosity greater than.
 * ```max_correction``` (optional, default: 1): if less than one, the correction is rescaled in order to be at most the specified valye.
 * ```apply_correction``` (optional, default: ```True```): if ```False```, the correction is computed but not applied to the image. It may be useful in order to determine a value of the parameter ```mask_size``` for the action ```BalanceFrames``` by looking at the output curve plot.
-* ```plot_histograms```  (optional, default: ```False```): if ```True```, for plot a summary histogram with the vignetting correction levels.
+* ```plot_correction```  (optional, default: ```False```): if ```True```, plot vignetting correction curve for each frame.
+* ```plot_summary```  (optional, default: ```False```): if ```True```, plot a summary histogram with the vignetting correction levels.
 * ```enabled``` (optional, default: ```True```): allows to switch on and off this module.

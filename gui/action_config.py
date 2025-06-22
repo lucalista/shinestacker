@@ -15,6 +15,7 @@ from focus_stack.noise_detection import DEFAULT_NOISE_MAP_FILENAME, DEFAULT_CHAN
 from focus_stack.balance import VALID_BALANCE, DEFAULT_IMG_SCALE, VALID_CHANNELS
 from focus_stack.depth_map import VALID_MAP, VALID_ENERGY
 from focus_stack.vignetting import DEFAULT_R_STEPS, DEFALUT_BLACK_THRESHOLD, DEFAULT_MAX_CORRECTION
+from focus_stack.stack_framework import DEFAULT_PLOTS_PATH
 
 FIELD_TEXT = 'text'
 FIELD_ABS_PATH = 'abs_path'
@@ -416,7 +417,7 @@ class NoiseDetectionConfigurator(DefaultActionConfigurator):
                                default="hot", placeholder="hot")
         self.add_bold_label("Miscellanea:")
         self.builder.add_field('plot_histograms', FIELD_BOOL, 'Plot histograms', required=False, default=False)
-        self.builder.add_field('plot_path', FIELD_REL_PATH, 'Plots path', required=False, default="plots",
+        self.builder.add_field('plot_path', FIELD_REL_PATH, 'Plots path', required=False, default=DEFAULT_PLOTS_PATH,
                                placeholder='relative to working path')
         self.builder.add_field('plot_range', FIELD_INT_TUPLE, 'Plot range', required=False, size=2,
                                default=[5, 30], labels=['min', 'max'], min=[0] * 2, max=[1000] * 2)
@@ -433,6 +434,7 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
                                placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
+        self.builder.add_field('scratch_output_dir', FIELD_BOOL, 'Scratch output dir.', required=False, default=False)        
 
     def common_fields(self, layout, action):
         self.builder.add_field('denoise', FIELD_FLOAT, 'Denoise', required=False,
@@ -531,6 +533,7 @@ class CombinedActionsConfigurator(DefaultActionConfigurator):
                                must_exist=True, placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
+        self.builder.add_field('scratch_output_dir', FIELD_BOOL, 'Scratch output dir.', required=False, default=False)        
         self.builder.add_field('plot_path', FIELD_REL_PATH, 'Plots path', required=False, default="plots",
                                placeholder='relative to working path')
         self.builder.add_field('resample', FIELD_INT, 'Resample frame stack', required=False,
@@ -562,7 +565,8 @@ class VignettingConfigurator(NoNameActionConfigurator):
         self.builder.add_field('max_correction', FIELD_FLOAT, 'Max. correction', required=False,
                                default=DEFAULT_MAX_CORRECTION, min=0, max=1, step=0.05)
         self.add_bold_label("Miscellanea:")
-        self.builder.add_field('plot_histograms', FIELD_BOOL, 'Plot histograms', required=False, default=False)
+        self.builder.add_field('plot_correction', FIELD_BOOL, 'Plot correction', required=False, default=False)
+        self.builder.add_field('plot_summary', FIELD_BOOL, 'Plot summary', required=False, default=False)
         self.builder.add_field('apply_correction', FIELD_BOOL, 'Apply correction', required=False, default=True)
 
 
@@ -608,7 +612,8 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
         self.builder.add_field('border_blur', FIELD_FLOAT, 'Border blur', required=False,
                                default=50, min=0, max=1000, step=1)
         self.add_bold_label("Miscellanea:")
-        self.builder.add_field('plot_histograms', FIELD_BOOL, 'Plot histograms', required=False, default=False)
+        self.builder.add_field('plot_summary', FIELD_BOOL, 'Plot summary', required=False, default=False)
+        self.builder.add_field('plot_matches', FIELD_BOOL, 'Plot matches', required=False, default=False)
 
 
 class BalanceFramesConfigurator(NoNameActionConfigurator):

@@ -173,7 +173,8 @@ class AlignFrames(SubAction):
         self.matching_config = {**_DEFAULT_MATCHING_CONFIG, **(matching_config or {})}
         self.alignment_config = {**_DEFAULT_ALIGNMENT_CONFIG, **(alignment_config or {})}
         self.min_matches = 4 if self.alignment_config['transform'] == ALIGN_HOMOGRAPHY else 3
-        self.plot_histograms = kwargs.get('plot_histograms', False)
+        self.plot_summary = kwargs.get('plot_summary', False)
+        self.plot_matches = kwargs.get('plot_matches', False)
         for k in self.feature_config.keys():
             if k in kwargs.keys():
                 self.feature_config[k] = kwargs[k]
@@ -198,7 +199,7 @@ class AlignFrames(SubAction):
             'blur_message': lambda: self.process.sub_message_r(': blur borders'),
             'save_plot': lambda plot_path: self.process.callback('save_plot', self.process.id, self.process.name, plot_path)
         }
-        if self.plot_histograms:
+        if self.plot_matches:
             plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + f"{self.process.name}-matches-{idx:04d}.pdf"
         else:
             plot_path = None
@@ -221,7 +222,7 @@ class AlignFrames(SubAction):
         self.n_matches = np.zeros(process.counts)
 
     def end(self):
-        if self.plot_histograms:
+        if self.plot_summary:
             plt.figure(figsize=(10, 5))
             x = np.arange(1, len(self.n_matches) + 1, dtype=int)
             no_ref = (x != self.process.ref_idx + 1)

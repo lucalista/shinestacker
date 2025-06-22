@@ -6,6 +6,7 @@ from termcolor import colored
 import logging
 import os
 
+DEFAULT_PLOTS_PATH='plots'
 
 class StackJob(Job):
     def __init__(self, name, working_path, input_path='', **kwargs):
@@ -24,7 +25,8 @@ class StackJob(Job):
 class FramePaths:
     EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
-    def __init__(self, name, input_path='', output_path='', working_path='', plot_path='plots', resample=1, reverse_order=False, **kwargs):
+    def __init__(self, name, input_path='', output_path='', working_path='', plot_path=DEFAULT_PLOTS_PATH,
+                 scratch_output_dir=False, resample=1, reverse_order=False, **kwargs):
         self.name = name
         self.working_path = working_path
         self.plot_path = plot_path
@@ -32,6 +34,7 @@ class FramePaths:
         self.output_path = output_path
         self.resample = resample
         self.reverse_order = reverse_order
+        self.scratch_output_dir = scratch_output_dir
 
     def set_filelist(self):
         self.filenames = self.folder_filelist(self.input_dir)
@@ -48,8 +51,16 @@ class FramePaths:
         self.output_dir = self.working_path + ('' if self.working_path[-1] == '/' else '/') + self.output_path
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
-        elif len(os.listdir(self.output_dir)) > 0:
-            self.print_message(colored(f": output directory {self.output_path} not empty, files may be overwritten or merged with existing ones.", 'yellow'), level=logging.WARNING)
+        else:
+            list_dir = os.listdir(self.output_dir)
+            if len(list_dir) > 0:
+                if self.scratch_output_dir:
+                    for filename in list_dir:
+                        file_path = os.path.join(self.output_dir, filename)
+                        if os.path.isfile(file_path):
+                            os.remove(file_path)
+                else:
+                    self.print_message(colored(f": output directory {self.output_path} not empty, files may be overwritten or merged with existing ones.", 'yellow'), level=logging.WARNING)
         if self.plot_path == '':
             self.plot_path = self.working_path + ('' if self.working_path[-1] == '/' else '/') + self.plot_path
             if not os.path.exists(self.plot_path):
@@ -95,7 +106,7 @@ class FrameDirectory(FramePaths):
 class FrameMultiDirectory:
     EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
-    def __init__(self, name, input_path='', output_path='', working_path='', plot_path='plots',
+    def __init__(self, name, input_path='', output_path='', working_path='', plot_path=DEFAULT_PLOTS_PATH,
                  resample=1, reverse_order=False, **kwargs):
         FramePaths.__init__(self, name, input_path, output_path, working_path, plot_path, resample, reverse_order, **kwargs)
 
