@@ -10,6 +10,7 @@ from focus_stack.exceptions import InvalidOptionError
 
 EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 DEFAULT_FRAMES = 10
+DEFAULT_OVERLAP = 2
 
 
 class FocusStackBase:
@@ -66,7 +67,7 @@ class FocusStackBunch(FocusStackBase, FrameDirectory, ActionList):
         ActionList.__init__(self, name, enabled)
         self.frame_count = 0
         self.frames = kwargs.get('frames', DEFAULT_FRAMES)
-        self.overlap = kwargs.get('overlap', 0)
+        self.overlap = kwargs.get('overlap', DEFAULT_OVERLAP)
         self.denoise = kwargs.get('denoise', 0)
         if self.overlap >= self.frames:
             raise InvalidOptionError("overlap", self.overlap, "overlap must be smaller than batch size")

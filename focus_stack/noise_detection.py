@@ -13,11 +13,13 @@ import errno
 
 
 DEFAULT_NOISE_MAP_FILENAME = "noise-map/hot_pixels.png"
+DEFAULT_MN_KERNEL_SIZE = 3
 INTERPOLATE_MEAN = 'MEAN'
 INTERPOLATE_MEDIAN = 'MEDIAN'
 RGB_LABELS = ['r', 'g', 'b']
 DEFAULT_CHANNEL_THRESHOLDS = [13, 13, 13]
 DEFAULT_BLUR_SIZE = 5
+DEFAULT_PLOT_RANGE = [5, 30]
 
 VALID_INTERPOLATE = {INTERPOLATE_MEAN, INTERPOLATE_MEDIAN}
 
@@ -54,7 +56,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         if self.file_name == '':
             self.file_name = DEFAULT_NOISE_MAP_FILENAME
         self.channel_thresholds = kwargs.get('channel_thresholds', DEFAULT_CHANNEL_THRESHOLDS)
-        self.plot_range = kwargs.get('plot_range', (5, 30))
+        self.plot_range = kwargs.get('plot_range', DEFAULT_PLOT_RANGE)
         self.plot_histograms = kwargs.get('plot_histograms', False)
 
     def hot_map(self, ch, th):
@@ -114,7 +116,8 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
 
 
 class MaskNoise(SubAction):
-    def __init__(self, noise_mask=DEFAULT_NOISE_MAP_FILENAME, kernel_size=3, method=INTERPOLATE_MEAN, **kwargs):
+    def __init__(self, noise_mask=DEFAULT_NOISE_MAP_FILENAME,
+                 kernel_size=DEFAULT_MN_KERNEL_SIZE, method=INTERPOLATE_MEAN, **kwargs):
         super().__init__(**kwargs)
         self.noise_mask = noise_mask
         self.kernel_size = kernel_size

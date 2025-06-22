@@ -11,13 +11,16 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any
 import os.path
 from focus_stack.align import VALID_BORDER_MODES, VALID_TRANSFORMS, VALID_MATCHING_METHODS
-from focus_stack.noise_detection import DEFAULT_NOISE_MAP_FILENAME, DEFAULT_CHANNEL_THRESHOLDS, RGB_LABELS, DEFAULT_BLUR_SIZE
+from focus_stack.noise_detection import (DEFAULT_NOISE_MAP_FILENAME, DEFAULT_CHANNEL_THRESHOLDS,
+                                         RGB_LABELS, DEFAULT_BLUR_SIZE, DEFAULT_MN_KERNEL_SIZE,
+                                         DEFAULT_PLOT_RANGE)
 from focus_stack.balance import VALID_BALANCE, DEFAULT_IMG_SCALE, VALID_CHANNELS
 from focus_stack.depth_map import VALID_MAP, VALID_ENERGY
 from focus_stack.vignetting import DEFAULT_R_STEPS, DEFALUT_BLACK_THRESHOLD, DEFAULT_MAX_CORRECTION
 from focus_stack.stack_framework import DEFAULT_PLOTS_PATH
-from focus_stack.stack import DEFAULT_FRAMES
-from focus_stack.depth_map import DEFAULT_DM_MAP, DEFAULT_DM_ENERGY, DEFAULT_DM_KERNEL_SIZE, DEFAULT_DM_BLUR_SIZE, DEFAULT_DM_SMOOTH_SIZE
+from focus_stack.stack import DEFAULT_FRAMES, DEFAULT_OVERLAP
+from focus_stack.depth_map import (DEFAULT_DM_MAP, DEFAULT_DM_ENERGY, DEFAULT_DM_KERNEL_SIZE,
+                                   DEFAULT_DM_BLUR_SIZE, DEFAULT_DM_SMOOTH_SIZE)
 from focus_stack.pyramid import DEFAULT_PY_MIN_SIZE, DEFAULT_PY_KERNEL_SIZE, DEFAULT_PY_GEN_KERNEL
 
 
@@ -41,9 +44,6 @@ class ActionConfigurator(ABC):
     @abstractmethod
     def update_params(self, params: Dict[str, Any]):
         pass
-
-    def make_convertion_map(self, ks, vs):
-        return {k: v for k, v in zip(ks, vs)}
 
 
 class FieldBuilder:
@@ -115,10 +115,11 @@ class FieldBuilder:
             elif field['type'] == FIELD_INT_TUPLE:
                 params[tag] = [field['widget'].layout().itemAt(1 + i * 2).widget().value() for i in range(field['size'])]
             elif field['type'] == FIELD_COMBO:
+                values = field.get('values', None)
+                options = field.get('options', None)
                 text = field['widget'].currentText()
-                convertion_map = field.get('convertion_map', None)
-                if convertion_map:
-                    text = convertion_map[text]
+                if values is not None and options is not None:
+                    text = {k: v for k, v in zip(options, values)}[text]
                 params[tag] = text
             if field['required'] and not params[tag]:
                 required = True
@@ -324,12 +325,13 @@ class FieldBuilder:
 
     def _create_combo_field(self, tag, options=None, default=None, **kwargs):
         options = options or []
+        values = kwargs.get('values', None)
         combo = QComboBox()
         combo.addItems(options)
         value = self.action.params.get(tag, default or options[0] if options else '')
-        value = {v: k for k, v in kwargs.get('convertion_map', {}).items()}.get(value, value)
-        if value in options:
-            combo.setCurrentText(value)
+        if values is not None and len(options) > 0:
+            value = {k: v for k, v in zip(values, options)}.get(value, value)
+        combo.setCurrentText(value)
         return combo
 
     def _create_bool_field(self, tag, default=False, **kwargs):
@@ -425,7 +427,7 @@ class NoiseDetectionConfigurator(DefaultActionConfigurator):
         self.builder.add_field('plot_path', FIELD_REL_PATH, 'Plots path', required=False, default=DEFAULT_PLOTS_PATH,
                                placeholder='relative to working path')
         self.builder.add_field('plot_range', FIELD_INT_TUPLE, 'Plot range', required=False, size=2,
-                               default=[5, 30], labels=['min', 'max'], min=[0] * 2, max=[1000] * 2)
+                               default=DEFAULT_PLOT_RANGE, labels=['min', 'max'], min=[0] * 2, max=[1000] * 2)
 
 
 class FocusStackBaseConfigurator(DefaultActionConfigurator):
@@ -476,18 +478,14 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
         self.builder.add_field('pyramid_gen_kernel', FIELD_FLOAT, 'Gen. kernel',
                                required=False, add_to_layout=q_pyramid.layout(),
                                default=DEFAULT_PY_GEN_KERNEL, min=0.0, max=2.0)
-        energy_map = self.make_convertion_map(self.ENERGY_OPTIONS, VALID_ENERGY)
         self.builder.add_field('depthmap_energy', FIELD_COMBO, 'Energy', required=False,
                                add_to_layout=q_depthmap.layout(),
-                               options=self.ENERGY_OPTIONS,
-                               default={v: k for k, v in energy_map.items()}[DEFAULT_DM_ENERGY],
-                               convertion_map=energy_map)
-        map_type_map = self.make_convertion_map(self.MAP_TYPE_OPTIONS, VALID_MAP)
+                               options=self.ENERGY_OPTIONS, values=VALID_ENERGY,
+                               default={k: v for k, v in zip(VALID_ENERGY, self.ENERGY_OPTIONS)}[DEFAULT_DM_ENERGY])
         self.builder.add_field('map_type', FIELD_COMBO, 'Map type', required=False,
                                add_to_layout=q_depthmap.layout(),
-                               options=self.MAP_TYPE_OPTIONS,
-                               default={v: k for k, v in map_type_map.items()}[DEFAULT_DM_MAP],
-                               convertion_map=map_type_map)
+                               options=self.MAP_TYPE_OPTIONS, values=VALID_MAP,
+                               default={k: v for k, v in zip(VALID_MAP, self.MAP_TYPE_OPTIONS)}[DEFAULT_DM_MAP])
         self.builder.add_field('depthmap_kernel_size', FIELD_INT, 'Kernel size (px)',
                                required=False, add_to_layout=q_depthmap.layout(),
                                default=DEFAULT_DM_KERNEL_SIZE, min=3, max=21)
@@ -517,7 +515,7 @@ class FocusStackBunchConfigurator(FocusStackBaseConfigurator):
         self.builder.add_field('frames', FIELD_INT, 'Frames', required=False,
                                default=DEFAULT_FRAMES, min=1, max=100)
         self.builder.add_field('overlap', FIELD_INT, 'Overlapping frames', required=False,
-                               default=2, min=0, max=100)
+                               default=DEFAULT_OVERLAP, min=0, max=100)
         super().common_fields(layout, action)
 
 
@@ -558,7 +556,7 @@ class MaskNoiseConfigurator(NoNameActionConfigurator):
                                path_type='file', must_exist=True,
                                default=DEFAULT_NOISE_MAP_FILENAME, placeholder=DEFAULT_NOISE_MAP_FILENAME)
         self.builder.add_field('kernel_size', FIELD_INT, 'Kernel size', required=False,
-                               default=3, min=1, max=10)
+                               default=DEFAULT_MN_KERNEL_SIZE, min=1, max=10)
         self.builder.add_field('method', FIELD_COMBO, 'Interpolation method', required=False,
                                options=['Mean', 'Median'], default='Mean')
 
@@ -591,10 +589,9 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
         self.builder.add_field('descriptor', FIELD_COMBO, 'Descriptor', required=False,
                                options=['SIFT', 'ORB', 'AKAZE'], default='SIFT')
         self.add_bold_label("Feature matching:")
-        matching_method_map = self.make_convertion_map(self.MATCHING_METHOD_OPTIONS, VALID_MATCHING_METHODS)
         self.builder.add_field('method', FIELD_COMBO, 'Method', required=False,
-                               options=self.MATCHING_METHOD_OPTIONS, default='KNN',
-                               convertion_map=matching_method_map)
+                               options=self.MATCHING_METHOD_OPTIONS, values=VALID_MATCHING_METHODS,
+                               default='KNN')
         self.builder.add_field('flann_idx_kdtree', FIELD_INT, 'Flann idx kdtree', required=False,
                                default=2, min=0, max=10)
         self.builder.add_field('flann_trees', FIELD_INT, 'Flann trees', required=False,
@@ -604,17 +601,15 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
         self.builder.add_field('threshold', FIELD_FLOAT, 'Threshold', required=False,
                                default=0.75, min=0, max=1, step=0.05)
         self.add_bold_label("Transform:")
-        transform_convertion_map = self.make_convertion_map(self.TRANSFORM_OPTIONS, VALID_TRANSFORMS)
         self.builder.add_field('transform', FIELD_COMBO, 'Transform', required=False,
-                               options=self.TRANSFORM_OPTIONS, default='Rigid',
-                               convertion_map=transform_convertion_map)
+                               options=self.TRANSFORM_OPTIONS, values=VALID_TRANSFORMS,
+                               default='Rigid')
         self.builder.add_field('rans_threshold', FIELD_FLOAT, 'Homography RANS threshold', required=False,
                                default=5.0, min=0, max=20, step=0.1)
         self.add_bold_label("Border:")
-        border_mode_convertion_map = self.make_convertion_map(self.BORDER_MODE_OPTIONS, VALID_BORDER_MODES)
         self.builder.add_field('border_mode', FIELD_COMBO, 'Border mode', required=False,
-                               options=self.BORDER_MODE_OPTIONS, default='Replicate and blur',
-                               convertion_map=border_mode_convertion_map)
+                               options=self.BORDER_MODE_OPTIONS, values=VALID_BORDER_MODES,
+                               default='Replicate and blur')
         self.builder.add_field('border_value', FIELD_INT_TUPLE, 'Border value (if constant)', required=False, size=4,
                                default=[0] * 4, labels=['r', 'g', 'b', 'a'], min=[0] * 4, max=[255] * 4)
         self.builder.add_field('border_blur', FIELD_FLOAT, 'Border blur', required=False,
@@ -636,14 +631,12 @@ class BalanceFramesConfigurator(NoNameActionConfigurator):
                                default=[0, -1], labels=['min', 'max'], min=[-1] * 2, max=[65536] * 2)
         self.builder.add_field('img_scale', FIELD_INT, 'Image resample', required=False,
                                default=DEFAULT_IMG_SCALE, min=1, max=256)
-        correction_map_convertion_map = self.make_convertion_map(self.CORRECTION_MAP_OPTIONS, VALID_BALANCE)
         self.builder.add_field('corr_map', FIELD_COMBO, 'Correction map', required=False,
-                               options=self.CORRECTION_MAP_OPTIONS, default='Linear',
-                               convertion_map=correction_map_convertion_map)
-        channel_convertion_map = self.make_convertion_map(self.CHANNEL_OPTIONS, VALID_CHANNELS)
+                               options=self.CORRECTION_MAP_OPTIONS, values=VALID_BALANCE,
+                               default='Linear')
         self.builder.add_field('channel', FIELD_COMBO, 'Channel', required=False,
-                               options=self.CHANNEL_OPTIONS, default='Luminosity',
-                               convertion_map=channel_convertion_map)
+                               options=self.CHANNEL_OPTIONS, values=VALID_CHANNELS,
+                               default='Luminosity')
         self.add_bold_label("Miscellanea:")
         self.builder.add_field('plot_summary', FIELD_BOOL, 'Plot summary', required=False, default=False)
         self.builder.add_field('plot_histograms', FIELD_BOOL, 'Plot histograms', required=False, default=False)
