@@ -43,7 +43,7 @@ class FocusStackBase:
             idx_str = "{:04d}".format(self.frame_count) if self.frame_count >= 0 else ''
             name = f"{self.name}: {self.stack_algo.name()}"
             if idx_str != '':
-                name += f"\n bunch: {idx_str}"
+                name += f"\nbunch: {idx_str}"
             self.callback('save_plot', self.id, name, out_filename)
         if self.frame_count >= 0:
             self.frame_count += 1

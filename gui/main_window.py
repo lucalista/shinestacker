@@ -32,7 +32,7 @@ class MainWindow(WindowMenu, LogManager):
         top_widget.setLayout(h_layout)
         h_splitter.addWidget(top_widget)
         self.tab_widget = QTabWidget()
-        self.tab_widget.resize(1000, 400)
+        self.tab_widget.resize(1000, 500)
         h_splitter.addWidget(self.tab_widget)
         self.job_list = QListWidget()
         self.job_list.currentRowChanged.connect(self.on_job_selected)
