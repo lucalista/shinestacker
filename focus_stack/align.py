@@ -192,12 +192,14 @@ class AlignFrames(SubAction):
         return self.align_images(idx, img_ref, img_0)
 
     def align_images(self, idx, img_1, img_0):
+        idx_str = "{:04d}".format(idx)        
         callbacks = {
             'message': lambda: self.process.sub_message_r(': find matches'),
             'matches_message': lambda n: self.process.sub_message_r(f": matches: {n}"),
             'align_message': lambda: self.process.sub_message_r(': align images'),
             'blur_message': lambda: self.process.sub_message_r(': blur borders'),
-            'save_plot': lambda plot_path: self.process.callback('save_plot', self.process.id, self.process.name, plot_path)
+            'save_plot': lambda plot_path: self.process.callback('save_plot', self.process.id,
+                                                                 f"{self.process.name}: frame {idx_str}", plot_path)
         }
         if self.plot_matches:
             plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + f"{self.process.name}-matches-{idx:04d}.pdf"
@@ -238,7 +240,7 @@ class AlignFrames(SubAction):
             plt.legend()
             plt.ylim(0)
             plt.xlim(x[0], x[-1])
-            plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-matches.pdf"
+            plot_path = f"{self.process.working_path}/{self.process.plot_path}/{self.process.name}-matches.pdf"
             save_plot(plot_path)
             plt.close('all')
-            self.process.callback('save_plot', self.process.id, self.process.name, plot_path)
+            self.process.callback('save_plot', self.process.id, f"{self.process.name}: matches", plot_path)
