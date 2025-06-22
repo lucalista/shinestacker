@@ -321,11 +321,10 @@ class FieldBuilder:
 
     def _create_combo_field(self, tag, options=None, default=None, **kwargs):
         options = options or []
-        value = self.action.params.get(tag, default or options[0] if options else '')
         combo = QComboBox()
         combo.addItems(options)
-        convertion_map = {v: k for k, v in kwargs.get('convertion_map', {}).items()}
-        value = convertion_map.get(value, value)
+        value = self.action.params.get(tag, default or options[0] if options else '')
+        value = {v: k for k, v in kwargs.get('convertion_map', {}).items()}.get(value, value)
         if value in options:
             combo.setCurrentText(value)
         return combo
