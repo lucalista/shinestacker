@@ -68,7 +68,7 @@ def validate_image(img, expected_shape=None, expected_dtype=None):
         raise BitDepthError(dtype, expected_dtype)
 
 
-def save_plot(filename, show=True):
+def save_plot(filename):
     logging.getLogger(__name__).debug("save plot file: " + filename)
     dir_path = os.path.dirname(filename)
     if not dir_path:
@@ -76,6 +76,6 @@ def save_plot(filename, show=True):
     if not os.path.isdir(dir_path):
         os.makedirs(dir_path)
     plt.savefig(filename, dpi=150)
-    if show and config.JUPYTER_NOTEBOOK:
+    if config.JUPYTER_NOTEBOOK:
         plt.show()
     plt.close('all')

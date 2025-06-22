@@ -25,7 +25,7 @@ class MyPdfView(QPdfView):
             zoom_factor = 0.3
             self.setZoomFactor(zoom_factor)
             self.setFixedSize(int(first_page_size.width() * zoom_factor) + 12,
-                              int(first_page_size.height() * zoom_factor) + 12)
+                              int(first_page_size.height() * zoom_factor) + 16)
         else:
             raise RuntimeError(f"Can't load file: {file_path}. Error code: {err}.")
         

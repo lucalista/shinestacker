@@ -10,7 +10,8 @@ def test_tif_rgb_match():
         job = StackJob("job", "./", input_path="input/img-tif", callbacks='tqdm')
         job.add_action(CombinedActions("balance",
                                        [BalanceFrames(channel=BALANCE_RGB,
-                                                      corr_map=BALANCE_MATCH_HIST, plot_histograms=True)],
+                                                      corr_map=BALANCE_MATCH_HIST,
+                                                      plot_histograms=True, plot_summary=True)],
                                        output_path="output/img-tif-balance-rgb-match"))
         job.run()
     except Exception:
@@ -23,7 +24,7 @@ def test_jpg_lumi():
         job.add_action(CombinedActions("balance",
                                        [BalanceFrames(channel=BALANCE_LUMI,
                                                       corr_map=BALANCE_LINEAR,
-                                                      plot_histograms=True)],
+                                                      plot_histograms=True, plot_summary=True)],
                                        output_path="output/img-jpg-balance-lumi"))
         job.run()
     except Exception:
@@ -36,7 +37,7 @@ def test_tif_lumi():
         job.add_action(CombinedActions("balance",
                                        [BalanceFrames(channel=BALANCE_LUMI,
                                                       corr_map=BALANCE_GAMMA,
-                                                      plot_histograms=True)],
+                                                      plot_histograms=True, plot_summary=True)],
                                        output_path="output/img-tif-balance-lumi"))
         job.run()
     except Exception:
@@ -49,7 +50,7 @@ def test_jpg_rgb():
         job.add_action(CombinedActions("balance",
                                        [BalanceFrames(channel=BALANCE_RGB,
                                                       corr_map=BALANCE_LINEAR,
-                                                      plot_histograms=True)],
+                                                      plot_histograms=True, plot_summary=True)],
                                        output_path="output/img-jpg-balance-rgb"))
         job.run()
     except Exception:
@@ -62,7 +63,7 @@ def test_jpg_hsv():
         job.add_action(CombinedActions("balance",
                                        [BalanceFrames(channel=BALANCE_HSV,
                                                       corr_map=BALANCE_LINEAR,
-                                                      plot_histograms=True)],
+                                                      plot_histograms=True, plot_summary=True)],
                                        output_path="output/img-jpg-balance-sv"))
         job.run()
     except Exception:
@@ -75,7 +76,7 @@ def test_jpg_hls():
         job.add_action(CombinedActions("balance",
                                        [BalanceFrames(channel=BALANCE_HLS,
                                                       corr_map=BALANCE_GAMMA,
-                                                      plot_histograms=True)],
+                                                      plot_histograms=True, plot_summary=True)],
                                        output_path="output/img-jpg-balance-ls"))
         job.run()
     except Exception:

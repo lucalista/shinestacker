@@ -125,10 +125,12 @@ class LinearMap(CorrectionMap):
 
 
 class Correction:
-    def __init__(self, channels, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=DEFAULT_CORR_MAP, plot_histograms=False):
+    def __init__(self, channels, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=DEFAULT_CORR_MAP,
+                 plot_histograms=False, plot_summary=False):
         self.mask_size = mask_size
         self.intensity_interval = intensity_interval
         self.plot_histograms = plot_histograms
+        self.plot_summary = plot_summary
         self.img_scale = DEFAULT_IMG_SCALE if img_scale == -1 else img_scale
         self.corr_map = corr_map
         self.channels = channels
@@ -206,13 +208,13 @@ class LumiCorrection(Correction):
                 self.histo_plot(axs[1], hist_col, "r,g,b luminosity", color, alpha=0.5)
             plt.xlim(0, self.two_n)
             plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx)
-            save_plot(plot_path, show=self.plot_histograms)
+            save_plot(plot_path)
             plt.close('all')
             self.process.callback('save_plot', self.process.id, self.process.name, plot_path)            
         return [hist]
 
     def end(self, ref_idx):
-        if self.plot_histograms:
+        if self.plot_summary:
             plt.figure(figsize=(10, 5))
             x = np.arange(1, len(self.corrections) + 1, dtype=int)
             y = self.corrections
@@ -242,13 +244,13 @@ class RGBCorrection(Correction):
                 self.histo_plot(axs[c], hist[c], colors[c] + " luminosity", colors[c])
             plt.xlim(0, self.two_n)
             plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx)
-            save_plot(plot_path, show=self.plot_histograms)
+            save_plot(plot_path)
             plt.close('all')
             self.process.callback('save_plot', self.process.id, self.process.name, plot_path)
         return hist
 
     def end(self, ref_idx):
-        if self.plot_histograms:
+        if self.plot_summary:
             plt.figure(figsize=(10, 5))
             x = np.arange(1, len(self.corrections) + 1, dtype=int)
             y = self.corrections
@@ -285,12 +287,12 @@ class Ch2Correction(Correction):
                 self.histo_plot(axs[c], hist[c], self.labels[c], self.colors[c])
             plt.xlim(0, self.two_n)
             plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "_hist_{:04d}.pdf".format(idx)
-            save_plot(plot_path, show=self.plot_histograms)
+            save_plot(plot_path)
             self.process.callback('save_plot', self.process.id, self.process.name, plot_path)
         return hist[1:]
 
     def end(self, ref_idx):
-        if self.plot_histograms:
+        if self.plot_summary:
             plt.figure(figsize=(10, 5))
             x = np.arange(1, len(self.corrections) + 1, dtype=int)
             y = self.corrections

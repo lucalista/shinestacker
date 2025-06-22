@@ -20,5 +20,6 @@ Note that for 8-bit images the maximum intensity is 255, while for 16-bit images
    * ```BALANCE_LINEAR```: a linear correction is applied in order to balance the average intensity of the corrected images to the reference image in the specified channels.
    * ```BALANCE_GAMMA```: a gamma correction, i.e.: a power law, is applied in order to balance the average intensity of the corrected images to reference image in the specified channels. The gamma correction avoids saturation of low or high intensity pixels which may occur for a linear coorection, but may introduce more distortion than a linear mapping.
    * ```BALANCE_MATCH_HIST```: the intensity histogram of the corrected image matches the histogram of the reference image in the specified channels. This options shoudl better be used with the value ```BALANCE_RGB``` for the ```channel``` option. If this option is specified, the options ```intensity_interval``` and ```img_scale```are not used.  This option may be somewhat slow for 16-bit images.
-* ```plot_histograms```  (optional, default: ```False```): if ```True```, plot a summary of the for each image and for the reference image histograms with pixel content are plotted. May be useful for inspection and debugging.
+* ```plot_histograms```  (optional, default: ```False```): if ```True```, plot hisograms for each image and for the reference frame.
+* ```plot_summary```  (optional, default: ```False```): if ```True```, plot a summary of the corrections.
 * ```enabled``` (optional, default: ```True```): allows to switch on and off this module. 

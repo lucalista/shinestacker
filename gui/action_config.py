@@ -637,4 +637,5 @@ class BalanceFramesConfigurator(NoNameActionConfigurator):
                                options=self.CHANNEL_OPTIONS, default='Luminosity',
                                convertion_map=channel_convertion_map)
         self.add_bold_label("Miscellanea:")
+        self.builder.add_field('plot_summary', FIELD_BOOL, 'Plot summary', required=False, default=False)
         self.builder.add_field('plot_histograms', FIELD_BOOL, 'Plot histograms', required=False, default=False)
