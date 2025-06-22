@@ -110,7 +110,7 @@ class RunWindow(QTextEditLogger):
         self.right_area.setContentsMargins(0, 0, 0, 0)
         self.right_area.setFrameShape(QFrame.NoFrame)
         self.right_area.setViewportMargins(0, 0, 0, 0)
-        self.right_area.viewport().setStyleSheet("background: transparent; border: 0px;")        
+        self.right_area.viewport().setStyleSheet("background: transparent; border: 0px;")
         self.image_area_widget = QWidget()
         self.image_area_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
         self.image_area_widget.setContentsMargins(0, 0, 0, 0)
@@ -118,14 +118,14 @@ class RunWindow(QTextEditLogger):
         self.image_layout = QVBoxLayout()
         self.image_layout.setSpacing(5)
         self.image_layout.setContentsMargins(0, 0, 0, 0)
-        self.image_layout.setAlignment(Qt.AlignTop)        
+        self.image_layout.setAlignment(Qt.AlignTop)
         self.image_area_widget.setLayout(self.image_layout)
         right_layout.addWidget(self.right_area)
         right_layout.setContentsMargins(0, 0, 0, 0)
         self.right_area.setMinimumWidth(0)
         self.right_area.setMaximumWidth(0)
         self.image_area_widget.setFixedWidth(0)
-        layout.addLayout(output_layout)        
+        layout.addLayout(output_layout)
         self.close_button = QPushButton("Close")
         self.setStyleSheet(f"""
             QPushButton {{
@@ -212,14 +212,15 @@ class RunWindow(QTextEditLogger):
         pdf_view = MyPdfView(path, self)
         self.pdf_views.append(pdf_view)
         self.image_layout.addWidget(pdf_view)
-        max_width = max(pv.size().width() for pv in self.pdf_views) if self.pdf_views else 0        
+        max_width = max(pv.size().width() for pv in self.pdf_views) if self.pdf_views else 0
         scrollbar_needed = any(pv.size().height() > self.right_area.viewport().height() for pv in self.pdf_views)
         scrollbar_width = self.right_area.verticalScrollBar().sizeHint().width() if scrollbar_needed else 0
         needed_width = max_width + scrollbar_width + 2
         self.right_area.setFixedWidth(needed_width)
         self.image_area_widget.setFixedWidth(needed_width)
         self.right_area.updateGeometry()
-        self.image_area_widget.updateGeometry()    
+        self.image_area_widget.updateGeometry()
+
 
 class RunWorker(LogWorker):
     before_action_signal = Signal(int, str)

@@ -90,7 +90,7 @@ class Vignetting(SubAction):
             plt.legend()
             plt.xlim(radii[0], radii[-1])
             plt.ylim(0)
-            idx_str = "{:04d}".format(idx)            
+            idx_str = "{:04d}".format(idx)
             plot_path = f"{self.process.working_path}/{self.process.plot_path}/{self.process.name}-radial-intensity-{idx_str}.pdf"
             save_plot(plot_path)
             plt.close('all')
@@ -133,7 +133,7 @@ class Vignetting(SubAction):
             plt.legend(ncols=2)
             plt.xlim(xs[0], xs[-1])
             plt.ylim(0, self.r_max * 1.05)
-            plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-r0.pdf" 
+            plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-r0.pdf"
             save_plot(plot_path)
             plt.close('all')
             self.process.callback('save_plot', self.process.id, f"{self.process.name}: vignetting", plot_path)

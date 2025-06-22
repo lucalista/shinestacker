@@ -435,7 +435,8 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
                                placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
-        self.builder.add_field('scratch_output_dir', FIELD_BOOL, 'Scratch output dir.', required=False, default=False)        
+        self.builder.add_field('scratch_output_dir', FIELD_BOOL, 'Scratch output dir.', required=False, default=False)
+        self.builder.add_field('plot_stack', FIELD_BOOL, 'Plot stack', required=False, default=False)
 
     def common_fields(self, layout, action):
         self.builder.add_field('denoise', FIELD_FLOAT, 'Denoise', required=False,
@@ -518,8 +519,8 @@ class MultiLayerConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
         super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
-        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path (separate by ;)', required=False, multiple_entries=True,
-                               placeholder='relative to working path')
+        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path (separate by ;)', required=False,
+                               multiple_entries=True, placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
         self.builder.add_field('exif_path', FIELD_REL_PATH, 'Exif data path', required=False,
@@ -534,7 +535,7 @@ class CombinedActionsConfigurator(DefaultActionConfigurator):
                                must_exist=True, placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
-        self.builder.add_field('scratch_output_dir', FIELD_BOOL, 'Scratch output dir.', required=False, default=False)        
+        self.builder.add_field('scratch_output_dir', FIELD_BOOL, 'Scratch output dir.', required=False, default=False)
         self.builder.add_field('plot_path', FIELD_REL_PATH, 'Plots path', required=False, default="plots",
                                placeholder='relative to working path')
         self.builder.add_field('resample', FIELD_INT, 'Resample frame stack', required=False,
@@ -560,9 +561,9 @@ class VignettingConfigurator(NoNameActionConfigurator):
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
         self.builder.add_field('r_steps', FIELD_INT, 'Radial steps', required=False,
-                               default=DEFAULT_R_STEPS,  min=1, max=1000)
+                               default=DEFAULT_R_STEPS, min=1, max=1000)
         self.builder.add_field('black_threshold', FIELD_INT, 'Black intensity threshold', required=False,
-                               default= DEFALUT_BLACK_THRESHOLD, min=0, max=1000)
+                               default=DEFALUT_BLACK_THRESHOLD, min=0, max=1000)
         self.builder.add_field('max_correction', FIELD_FLOAT, 'Max. correction', required=False,
                                default=DEFAULT_MAX_CORRECTION, min=0, max=1, step=0.05)
         self.add_bold_label("Miscellanea:")

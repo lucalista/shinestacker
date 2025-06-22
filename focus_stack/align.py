@@ -192,7 +192,7 @@ class AlignFrames(SubAction):
         return self.align_images(idx, img_ref, img_0)
 
     def align_images(self, idx, img_1, img_0):
-        idx_str = "{:04d}".format(idx)        
+        idx_str = "{:04d}".format(idx)
         callbacks = {
             'message': lambda: self.process.sub_message_r(': find matches'),
             'matches_message': lambda n: self.process.sub_message_r(f": matches: {n}"),

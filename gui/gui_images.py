@@ -1,8 +1,7 @@
 from PySide6.QtWidgets import QSizePolicy
 from PySide6.QtPdf import QPdfDocument
 from PySide6.QtPdfWidgets import QPdfView
-from PySide6.QtCore import Qt, QSize
-import sys
+from PySide6.QtCore import Qt
 import webbrowser
 import subprocess
 import os
@@ -15,7 +14,7 @@ class MyPdfView(QPdfView):
         self.file_path = file_path
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)        
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setContentsMargins(0, 0, 0, 0)
         self.pdf_document = QPdfDocument()
         err = self.pdf_document.load(file_path)
@@ -28,18 +27,17 @@ class MyPdfView(QPdfView):
                               int(first_page_size.height() * zoom_factor) + 16)
         else:
             raise RuntimeError(f"Can't load file: {file_path}. Error code: {err}.")
-        
+
     def sizeHint(self):
         return self.size()
 
     def mouseReleaseEvent(self, event):
         try:
             if platform.system() == 'Darwin':       # macOS
-                subprocess.call(('open', file_path))
+                subprocess.call(('open', self.file_path))
             elif platform.system() == 'Windows':    # Windows
-                os.startfile(filepath)
+                os.startfile(self.filepath)
             else:                                   # linux variants
-                subprocess.call(('xdg-open', file_path))
+                subprocess.call(('xdg-open', self.file_path))
         except Exception:
             webbrowser.open("file://" + self.file_path)
-

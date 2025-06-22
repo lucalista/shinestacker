@@ -90,7 +90,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         if not os.path.exists(self.working_path + '/' + path):
             self.print_message("create directory: " + path)
             os.mkdir(self.working_path + '/' + path)
-        
+
         self.print_message("writing hot pixels map file: " + self.file_name)
         cv2.imwrite(self.working_path + '/' + self.file_name, hot)
         th_range = range(*self.plot_range)
@@ -109,7 +109,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
             plt.ylim(0)
             plot_path = self.working_path + "/" + self.plot_path + "/" + self.name + "-hot-pixels.pdf"
             save_plot(plot_path)
-            self.callback('save_plot', self.id, f"{self.name}: noise", plot_path)            
+            self.callback('save_plot', self.id, f"{self.name}: noise", plot_path)
             plt.close('all')
 
 

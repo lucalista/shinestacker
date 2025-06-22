@@ -204,8 +204,8 @@ class Correction:
         save_plot(plot_path)
         plt.close('all')
         self.process.callback('save_plot', self.process.id, f"{self.process.name}: {name}", plot_path)
-        
-        
+
+
 class LumiCorrection(Correction):
     def __init__(self, **kwargs):
         Correction.__init__(self, 1, **kwargs)
@@ -239,6 +239,7 @@ class LumiCorrection(Correction):
             plt.ylim(0)
             self.save_summary_plot()
 
+
 class RGBCorrection(Correction):
     def __init__(self, **kwargs):
         Correction.__init__(self, 3, **kwargs)
@@ -270,6 +271,7 @@ class RGBCorrection(Correction):
             plt.xlim(x[0], x[-1])
             plt.ylim(0)
             self.save_summary_plot()
+
 
 class Ch2Correction(Correction):
     def __init__(self, **kwargs):
@@ -306,6 +308,7 @@ class Ch2Correction(Correction):
             plt.xlim(x[0], x[-1])
             plt.ylim(0)
             self.save_summary_plot()
+
 
 class SVCorrection(Ch2Correction):
     def __init__(self, **kwargs):
@@ -366,8 +369,8 @@ class BalanceFrames(SubAction):
         if self.plot_summary and self.mask_size > 0:
             shape = self.shape[:2]
             img = np.zeros(shape)
-            mask_radius = int(min(*shape) * self.mask_size / 2)            
-            cv2.circle(img, (shape[1]//2, shape[0]//2), mask_radius, 255, -1)
+            mask_radius = int(min(*shape) * self.mask_size / 2)
+            cv2.circle(img, (shape[1] // 2, shape[0] // 2), mask_radius, 255, -1)
             plt.figure(figsize=(10, 5))
             plt.imshow(img, 'gray')
             self.correction.save_summary_plot("mask")

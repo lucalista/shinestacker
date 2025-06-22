@@ -6,7 +6,8 @@ from termcolor import colored
 import logging
 import os
 
-DEFAULT_PLOTS_PATH='plots'
+DEFAULT_PLOTS_PATH = 'plots'
+
 
 class StackJob(Job):
     def __init__(self, name, working_path, input_path='', **kwargs):
@@ -60,7 +61,7 @@ class FramePaths:
                         if os.path.isfile(file_path):
                             os.remove(file_path)
                 else:
-                    self.print_message(colored(f": output directory {self.output_path} not empty, files may be overwritten or merged with existing ones.", 'yellow'), level=logging.WARNING)
+                    self.print_message(colored(f": output directory {self.output_path} not empty, files may be overwritten or merged with existing ones.", 'yellow'), level=logging.WARNING) # noqa
         if self.plot_path == '':
             self.plot_path = self.working_path + ('' if self.working_path[-1] == '/' else '/') + self.plot_path
             if not os.path.exists(self.plot_path):

@@ -2,8 +2,9 @@ import numpy as np
 import cv2
 import os
 from termcolor import colored
+import matplotlib.pyplot as plt
 from .exif import copy_exif
-from focus_stack.utils import write_img
+from focus_stack.utils import write_img, save_plot, img_8bit
 from focus_stack.framework import JobBase
 from focus_stack.stack_framework import FrameDirectory, ActionList
 from focus_stack.exceptions import InvalidOptionError
@@ -11,13 +12,16 @@ from focus_stack.exceptions import InvalidOptionError
 EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 DEFAULT_FRAMES = 10
 
+
 class FocusStackBase:
-    def __init__(self, stack_algo, exif_path='', postfix='', denoise=0):
+    def __init__(self, stack_algo, exif_path='', postfix='', denoise=0, plot_stack=False):
         self.stack_algo = stack_algo
         self.exif_path = exif_path
         self.postfix = postfix
         self.denoise = denoise
+        self.plot_stack = plot_stack
         self.stack_algo.messenger(self)
+        self.frame_count = -1
 
     def focus_stack(self, filenames):
         self.sub_message_r(': reading input files')
@@ -36,6 +40,21 @@ class FocusStackBase:
             exif_filename = self.exif_path + '/' + fnames[0]
             copy_exif(exif_filename, out_filename)
             self.sub_message_r(' ' * 60)
+        if self.plot_stack:
+            plt.figure(figsize=(10, 5))
+            plot_img = cv2.cvtColor(img_8bit(stacked_img), cv2.COLOR_BGR2RGB)
+            plt.imshow(plot_img, 'gray')
+            idx_str = "{:04d}".format(self.frame_count) if self.frame_count >= 0 else ''
+            idx_postfix = f"-{idx_str}" if idx_str != '' else ''
+            plot_path = f"{self.working_path}/{self.plot_path}/{self.name}-stack{idx_postfix}.pdf"
+            save_plot(plot_path)
+            plt.close('all')
+            name = f"{self.name}: stack"
+            if idx_str != '':
+                name += f"\n frame: {idx_str}"
+            self.callback('save_plot', self.id, name, plot_path)
+        if self.frame_count >= 0:
+            self.frame_count += 1
 
     def init(self, job, working_path):
         if self.exif_path is None:
@@ -46,12 +65,14 @@ class FocusStackBase:
 
 class FocusStackBunch(FocusStackBase, FrameDirectory, ActionList):
     def __init__(self, name, stack_algo, enabled=True, **kwargs):
-        denoise = kwargs.pop('denoise', 0)
-        postfix = kwargs.pop('postfix', '')
-        exif_path = kwargs.pop('exif_path', '')
-        FocusStackBase.__init__(self, stack_algo, exif_path, postfix, denoise)
+        FocusStackBase.__init__(self, stack_algo,
+                                exif_path=kwargs.pop('exif_path', ''),
+                                postfix=kwargs.pop('postfix', ''),
+                                denoise=kwargs.pop('denoise', 0),
+                                plot_stack=kwargs.pop('plot_stack', ''))
         FrameDirectory.__init__(self, name, **kwargs)
         ActionList.__init__(self, name, enabled)
+        self.frame_count = 0
         self.frames = kwargs.get('frames', DEFAULT_FRAMES)
         self.overlap = kwargs.get('overlap', 0)
         self.denoise = kwargs.get('denoise', 0)
@@ -78,12 +99,13 @@ class FocusStackBunch(FocusStackBase, FrameDirectory, ActionList):
 
 class FocusStack(FrameDirectory, JobBase, FocusStackBase):
     def __init__(self, name, stack_algo, enabled=True, **kwargs):
-        denoise = kwargs.pop('denoise', 0)
-        postfix = kwargs.pop('postfix', '')
-        exif_path = kwargs.pop('exif_path', '')
         FrameDirectory.__init__(self, name, **kwargs)
         JobBase.__init__(self, name, enabled)
-        FocusStackBase.__init__(self, stack_algo, exif_path, postfix, denoise)
+        FocusStackBase.__init__(self, stack_algo,
+                                exif_path=kwargs.pop('exif_path', ''),
+                                postfix=kwargs.pop('postfix', ''),
+                                denoise=kwargs.pop('denoise', 0),
+                                plot_stack=kwargs.pop('plot_stack', ''))
 
     def run_core(self):
         self.set_filelist()

@@ -470,7 +470,7 @@ class WindowMenu(QMainWindow):
         if current_index < 0:
             QMessageBox.warning(self, "No Job Selected", "Please select a job first.")
             return
-        if type_name == False:
+        if type_name is False:
             type_name = self.action_selector.currentText()
         action = ActionConfig(type_name)
         action.parent = self.get_current_job()
@@ -511,7 +511,7 @@ class WindowMenu(QMainWindow):
             action_counter += len(act.sub_actions)
         if not action or action.type_name != ACTION_COMBO:
             return
-        if type_name == False:
+        if type_name is False:
             type_name = self.sub_action_selector.currentText()
         sub_action = ActionConfig(type_name)
         dialog = ActionConfigDialog(sub_action, self)
