@@ -27,10 +27,16 @@ MAP_AVERAGE = "average"
 MAP_MAX = "max"
 VALID_MAP = [MAP_AVERAGE, MAP_MAX]
 VALID_ENERGY = [ENERGY_LAPLACIAN, ENERGY_SOBEL]
-
+DEFAULT_DM_MAP = MAP_AVERAGE
+DEFAULT_DM_ENERGY = ENERGY_LAPLACIAN
+DEFAULT_DM_KERNEL_SIZE = 5
+DEFAULT_DM_BLUR_SIZE = 5
+DEFAULT_DM_SMOOTH_SIZE = 32
 
 class DepthMapStack:
-    def __init__(self, map_type=MAP_AVERAGE, energy=ENERGY_LAPLACIAN, kernel_size=5, blur_size=5, smooth_size=32):
+    def __init__(self, map_type=DEFAULT_DM_MAP, energy=DEFAULT_DM_ENERGY,
+                 kernel_size=DEFAULT_DM_KERNEL_SIZE, blur_size=DEFAULT_DM_BLUR_SIZE,
+                 smooth_size=DEFAULT_DM_SMOOTH_SIZE):
         self.map_type = map_type
         self.energy = energy
         self.kernel_size = kernel_size

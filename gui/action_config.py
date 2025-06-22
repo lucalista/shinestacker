@@ -17,6 +17,8 @@ from focus_stack.depth_map import VALID_MAP, VALID_ENERGY
 from focus_stack.vignetting import DEFAULT_R_STEPS, DEFALUT_BLACK_THRESHOLD, DEFAULT_MAX_CORRECTION
 from focus_stack.stack_framework import DEFAULT_PLOTS_PATH
 from focus_stack.stack import DEFAULT_FRAMES
+from focus_stack.depth_map import DEFAULT_DM_MAP, DEFAULT_DM_ENERGY, DEFAULT_DM_KERNEL_SIZE, DEFAULT_DM_BLUR_SIZE, DEFAULT_DM_SMOOTH_SIZE
+
 
 FIELD_TEXT = 'text'
 FIELD_ABS_PATH = 'abs_path'
@@ -480,16 +482,18 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
         map_type_map = self.make_convertion_map(self.MAP_TYPE_OPTIONS, VALID_MAP)
         self.builder.add_field('map_type', FIELD_COMBO, 'Map type', required=False,
                                add_to_layout=q_depthmap.layout(),
-                               options=self.MAP_TYPE_OPTIONS, default='Average', convertion_map=map_type_map)
+                               options=self.MAP_TYPE_OPTIONS,
+                               default={v: k for k, v in map_type_map.items()}[DEFAULT_DM_MAP],
+                               convertion_map=map_type_map)
         self.builder.add_field('depthmap_kernel_size', FIELD_INT, 'Kernel size (px)',
                                required=False, add_to_layout=q_depthmap.layout(),
-                               default=5, min=3, max=21)
+                               default=DEFAULT_DM_KERNEL_SIZE, min=3, max=21)
         self.builder.add_field('depthmap_blur_size', FIELD_INT, 'Blurl size (px)',
                                required=False, add_to_layout=q_depthmap.layout(),
-                               default=5, min=1, max=21)
+                               default=DEFAULT_DM_BLUR_SIZE, min=1, max=21)
         self.builder.add_field('depthmap_smooth_size', FIELD_INT, 'Smooth size (px)',
                                required=False, add_to_layout=q_depthmap.layout(),
-                               default=32, min=1, max=256)
+                               default=DEFAULT_DM_SMOOTH_SIZE, min=1, max=256)
         self.builder.layout.addRow(stacked)
         combo.currentIndexChanged.connect(change)
 
