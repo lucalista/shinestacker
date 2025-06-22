@@ -324,6 +324,8 @@ class FieldBuilder:
         value = self.action.params.get(tag, default or options[0] if options else '')
         combo = QComboBox()
         combo.addItems(options)
+        convertion_map = {v: k for k, v in kwargs.get('convertion_map', {}).items()}
+        value = convertion_map.get(value, value)
         if value in options:
             combo.setCurrentText(value)
         return combo
@@ -444,8 +446,6 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
         self.add_bold_label("Stacking algorithm:")
         combo = self.builder.add_field('stacker', FIELD_COMBO, 'Stacking algorithm', required=True,
                                        options=['Pyramid', 'Depth map'], default='Pyramid')
-        combo.setCurrentIndex(0)
-        combo.setCurrentText('Pyramid')
         q_pyramid, q_depthmap = QWidget(), QWidget()
         for q in [q_pyramid, q_depthmap]:
             layout = QFormLayout()
