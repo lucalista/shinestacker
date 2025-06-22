@@ -41,17 +41,18 @@ class FocusStackBase:
             copy_exif(exif_filename, out_filename)
             self.sub_message_r(' ' * 60)
         if self.plot_stack:
-            plt.figure(figsize=(10, 5))
-            plot_img = cv2.cvtColor(img_8bit(stacked_img), cv2.COLOR_BGR2RGB)
-            plt.imshow(plot_img, 'gray')
             idx_str = "{:04d}".format(self.frame_count) if self.frame_count >= 0 else ''
             idx_postfix = f"-{idx_str}" if idx_str != '' else ''
             plot_path = f"{self.working_path}/{self.plot_path}/{self.name}-stack{idx_postfix}.pdf"
+            plt.figure(figsize=(10, 5))
+            plt.title("Stack" + (f", bunch: {idx_str}" if idx_str != '' else ''))
+            plot_img = cv2.cvtColor(img_8bit(stacked_img), cv2.COLOR_BGR2RGB)
+            plt.imshow(plot_img, 'gray')
             save_plot(plot_path)
             plt.close('all')
             name = f"{self.name}: stack"
             if idx_str != '':
-                name += f"\n frame: {idx_str}"
+                name += f"\n bunch: {idx_str}"
             self.callback('save_plot', self.id, name, plot_path)
         if self.frame_count >= 0:
             self.frame_count += 1

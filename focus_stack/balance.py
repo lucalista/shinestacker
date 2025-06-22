@@ -372,6 +372,7 @@ class BalanceFrames(SubAction):
             mask_radius = int(min(*shape) * self.mask_size / 2)
             cv2.circle(img, (shape[1] // 2, shape[0] // 2), mask_radius, 255, -1)
             plt.figure(figsize=(10, 5))
+            plt.title('Mask')
             plt.imshow(img, 'gray')
             self.correction.save_summary_plot("mask")
 
