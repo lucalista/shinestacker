@@ -127,6 +127,7 @@ class RunWindow(QTextEditLogger):
         self.image_area_widget.setFixedWidth(0)
         layout.addLayout(output_layout)
         self.close_button = QPushButton("Close")
+        self.close_button.setEnabled(False)
         self.setStyleSheet(f"""
             QPushButton {{
                 background-color: #{ColorPalette.MEDIUM_RED.hex()};
@@ -134,6 +135,10 @@ class RunWindow(QTextEditLogger):
                 font-weight: bold;
                 border-radius: 5px;
                 padding: 4px;
+            }}
+            QPushButton:disabled {{
+                background-color: #{ColorPalette.LIGHT_RED.hex()};
+                color: #{ColorPalette.MEDIUM_RED.hex()};
             }}
         """)
         self.close_button.clicked.connect(self.close_window)
@@ -300,7 +305,7 @@ class RunWorker(LogWorker):
         <span style="color: {color}; font-weight: bold;">{message}</span>
         </div>
         ''')
-        self.end_signal.emit(status, message)
+        self.end_signal.emit(status, self.id_str, message)
         self.status_signal.emit(f"{self.tag} completed", 0)
 
 

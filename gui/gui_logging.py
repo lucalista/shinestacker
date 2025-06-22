@@ -118,12 +118,12 @@ class QTextEditLogger(GuiLogger):
 class LogWorker(QThread):
     log_signal = Signal(str, str)
     html_signal = Signal(str)
-    end_signal = Signal(int, str)
+    end_signal = Signal(int, str, str)
     status_signal = Signal(str, int)
     exception_signal = Signal(str)
 
     def run(self):
-        pass  # Implement your thread logic here
+        pass
 
 
 class LogManager:
@@ -170,9 +170,9 @@ class LogManager:
     def before_thread_begins(self):
         pass
 
-    def _do_handle_end_message(self, status, message):
+    def _do_handle_end_message(self, status, id_str, message):
         pass
 
-    @Slot(int)
-    def handle_end_message(self, status, message):
-        self._do_handle_end_message(status, message)
+    @Slot(int, str, str)
+    def handle_end_message(self, status, id_str, message):
+        self._do_handle_end_message(status, id_str, message)
