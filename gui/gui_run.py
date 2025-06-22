@@ -71,10 +71,9 @@ class RunWindow(QTextEditLogger):
     action_running_color = ColorPalette.MEDIUM_BLUE
     action_done_color = ColorPalette.MEDIUM_GREEN
 
-    def __init__(self, labels, main_window, tab_position, parent=None):
+    def __init__(self, labels, main_window, parent=None):
         QTextEditLogger.__init__(self, parent)
         self.main_window = main_window
-        self.tab_position = tab_position
         self.row_widget_id = 0
         layout = QVBoxLayout()
         self.color_widgets = []
@@ -154,7 +153,12 @@ class RunWindow(QTextEditLogger):
         confirm.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
         confirm.setDefaultButton(QMessageBox.Cancel)
         if confirm.exec() == QMessageBox.Ok:
-            self.main_window.close_window(self.tab_position)
+            tab_widget = self.main_window.tab_widget
+            for i in range(tab_widget.count()):
+                w = tab_widget.widget(i)
+                if w.id_str() == self.id_str():
+                    self.main_window.close_window(i)
+                    break
 
     def set_progress_bar_style(self, bar_color=None):
         if bar_color is None:

@@ -11,7 +11,7 @@ from gui.gui_run import RunWindow, JobLogWorker, ProjectLogWorker, DISABLED_TAG,
 
 
 class MainWindow(WindowMenu, LogManager):
-    _windows = {}
+    _windows = []
 
     def __init__(self):
         WindowMenu.__init__(self)
@@ -120,18 +120,21 @@ class MainWindow(WindowMenu, LogManager):
         self.run_all_jobs_button.setEnabled(True)
         self.run_job_action.setEnabled(True)
         self.run_all_jobs_action.setEnabled(True)
-        id = int(id_str.split('_')[-1])
-        self.tab_widget.widget(id).close_button.setEnabled(True)
+        for i in range(self.tab_widget.count()):
+            w = self.tab_widget.widget(i)
+            if w.id_str() == id_str:
+                w.close_button.setEnabled(True)
+                break
 
     def create_new_window(self, title, labels=[]):
-        new_window = RunWindow(labels, self, self.tab_widget.count())
+        new_window = RunWindow(labels, self)
         self.tab_widget.addTab(new_window, title)
         self.tab_widget.setCurrentIndex(self.tab_widget.count() - 1)
         if title is not None:
             new_window.setWindowTitle(title)
         new_window.show()
         self.add_gui_logger(new_window)
-        self._windows[self.last_id()] = new_window
+        self._windows.append(new_window)
         return new_window, self.last_id_str()
 
     def close_window(self, tab_position):
