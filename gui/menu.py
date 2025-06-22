@@ -465,12 +465,12 @@ class WindowMenu(QMainWindow):
             self.job_list.setCurrentRow(self.job_list.count() - 1)
             self.job_list.item(self.job_list.count() - 1).setSelected(True)
 
-    def add_action(self, type_name=''):
+    def add_action(self, type_name=False):
         current_index = self.job_list.currentRow()
         if current_index < 0:
             QMessageBox.warning(self, "No Job Selected", "Please select a job first.")
             return
-        if type_name == '':
+        if type_name == False:
             type_name = self.action_selector.currentText()
         action = ActionConfig(type_name)
         action.parent = self.get_current_job()
@@ -495,7 +495,7 @@ class WindowMenu(QMainWindow):
     def add_action_MultiLayer(self):
         self.add_action(ACTION_MULTILAYER)
 
-    def add_sub_action(self, type_name=''):
+    def add_sub_action(self, type_name=False):
         current_job_index = self.job_list.currentRow()
         current_action_index = self.action_list.currentRow()
         if (current_job_index < 0 or current_action_index < 0 or current_job_index >= len(self.project.jobs)):
@@ -511,7 +511,7 @@ class WindowMenu(QMainWindow):
             action_counter += len(act.sub_actions)
         if not action or action.type_name != ACTION_COMBO:
             return
-        if type_name == '':
+        if type_name == False:
             type_name = self.sub_action_selector.currentText()
         sub_action = ActionConfig(type_name)
         dialog = ActionConfigDialog(sub_action, self)
