@@ -11,11 +11,12 @@ from gui.gui_run import RunWindow, JobLogWorker, ProjectLogWorker, DISABLED_TAG,
 
 
 class MainWindow(WindowMenu, LogManager):
-    _windows = []
 
     def __init__(self):
         WindowMenu.__init__(self)
         LogManager.__init__(self)
+        self._windows = []
+        self._workers = []
         self.setWindowTitle("Focus Stacking GUI")
         self.resize(1400, 900)
         center = QGuiApplication.primaryScreen().geometry().center()
@@ -139,6 +140,7 @@ class MainWindow(WindowMenu, LogManager):
 
     def close_window(self, tab_position):
         self._windows.pop(tab_position)
+        self._workers.pop(tab_position)
         self.tab_widget.removeTab(tab_position)
 
     def connect_signals(self, worker, window):
@@ -166,6 +168,7 @@ class MainWindow(WindowMenu, LogManager):
                 worker = JobLogWorker(job, id_str)
                 self.connect_signals(worker, new_window)
                 self.start_thread(worker)
+                self._workers.append(worker)
             else:
                 QMessageBox.warning(self, "Can't run Job", "Job " + job.params["name"] + " is disabled.")
                 return
