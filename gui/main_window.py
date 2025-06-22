@@ -54,7 +54,7 @@ class MainWindow(WindowMenu, LogManager):
         self.add_action_button.clicked.connect(self.add_action)
         self.action_selector = QComboBox()
         self.action_selector.addItems(ACTION_TYPES)
-        
+
         vbox_left = QVBoxLayout()
         vbox_left.setSpacing(4)
         vbox_left.addWidget(QLabel("Jobs"))
@@ -65,7 +65,7 @@ class MainWindow(WindowMenu, LogManager):
         hbox_job.addWidget(self.run_job_button)
         hbox_job.addWidget(self.run_all_jobs_button)
         vbox_left.addLayout(hbox_job)
-        
+
         vbox_right = QVBoxLayout()
         vbox_right.setSpacing(4)
         vbox_right.addWidget(QLabel("Actions"))

@@ -468,7 +468,7 @@ class WindowMenu(QMainWindow):
     def add_action(self, type_name=False):
         current_index = self.job_list.currentRow()
         if current_index < 0:
-            if len(self.project.jobs) > 0:            
+            if len(self.project.jobs) > 0:
                 QMessageBox.warning(self, "No Job Selected", "Please select a job first.")
             else:
                 QMessageBox.warning(self, "No Job Added", "Please add a job first.")
