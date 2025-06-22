@@ -155,7 +155,8 @@ class Correction:
         else:
             height, width = image.shape[:2]
             xv, yv = np.meshgrid(np.linspace(0, width - 1, width), np.linspace(0, height - 1, height))
-            image_sel = image[(xv - width / 2) ** 2 + (yv - height / 2) ** 2 <= (min(width, height) * self.mask_size / 2) ** 2]
+            mask_radius = (min(width, height) * self.mask_size / 2)
+            image_sel = image[(xv - width / 2) ** 2 + (yv - height / 2) ** 2 <= mask_radius ** 2]
         hist, bins = np.histogram((image_sel if self.img_scale == 1
                                    else image_sel[::self.img_scale][::self.img_scale]),
                                   bins=np.linspace(-0.5, self.two_n - 0.5, self.two_n + 1))
@@ -210,7 +211,7 @@ class LumiCorrection(Correction):
             plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx)
             save_plot(plot_path)
             plt.close('all')
-            self.process.callback('save_plot', self.process.id, self.process.name, plot_path)            
+
         return [hist]
 
     def end(self, ref_idx):
@@ -343,6 +344,8 @@ class BalanceFrames(SubAction):
         img_scale = kwargs.get('img_scale', DEFAULT_IMG_SCALE)
         channel = kwargs.pop('channel', DEFAULT_CHANNEL)
         kwargs['img_scale'] = (1 if corr_map == BALANCE_MATCH_HIST else DEFAULT_IMG_SCALE) if img_scale == -1 else img_scale
+        self.mask_size = kwargs.get('mask_size', 0)
+        self.plot_summary = kwargs.get('plot_summary', False)
         if channel == BALANCE_LUMI:
             self.correction = LumiCorrection(**kwargs)
         elif channel == BALANCE_RGB:
@@ -357,12 +360,24 @@ class BalanceFrames(SubAction):
     def begin(self, process):
         self.process = process
         self.correction.process = process
-        self.correction.begin(read_img(self.process.input_dir + "/" + self.process.filenames[process.ref_idx]),
-                              self.process.counts, process.ref_idx)
+        img = read_img(self.process.input_dir + "/" + self.process.filenames[process.ref_idx])
+        self.shape = img.shape
+        self.correction.begin(img, self.process.counts, process.ref_idx)
 
     def end(self):
         self.process.print_message(' ' * 60)
         self.correction.end(self.process.ref_idx)
+        if self.plot_summary and self.mask_size > 0:
+            shape = self.shape[:2]
+            img = np.zeros(shape)
+            mask_radius = int(min(*shape) * self.mask_size / 2)            
+            cv2.circle(img, (shape[1]//2, shape[0]//2), mask_radius, 255, -1)
+            plt.figure(figsize=(10, 5))
+            plt.imshow(img, 'gray')
+            plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-mask.pdf"
+            save_plot(plot_path)
+            plt.close('all')
+            self.process.callback('save_plot', self.process.id, self.process.name, plot_path)            
 
     def run_frame(self, idx, ref_idx, image):
         if idx != self.process.ref_idx:
