@@ -125,7 +125,7 @@ class LinearMap(CorrectionMap):
 
 
 class Correction:
-    def __init__(self, channels, mask_size=None, intensity_interval=None, img_scale=-1, corr_map=DEFAULT_CORR_MAP,
+    def __init__(self, channels, mask_size=0, intensity_interval=None, img_scale=-1, corr_map=DEFAULT_CORR_MAP,
                  plot_histograms=False, plot_summary=False):
         self.mask_size = mask_size
         self.intensity_interval = intensity_interval
@@ -150,7 +150,7 @@ class Correction:
         self.corrections = np.ones((size, self.channels))
 
     def calc_hist_1ch(self, image):
-        if self.mask_size is None:
+        if self.mask_size == 0:
             image_sel = image
         else:
             height, width = image.shape[:2]
