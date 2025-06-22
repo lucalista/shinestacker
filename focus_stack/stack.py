@@ -3,7 +3,7 @@ import cv2
 import os
 from termcolor import colored
 from .exif import copy_exif
-from focus_stack.utils import write_img, save_plot, img_8bit
+from focus_stack.utils import write_img
 from focus_stack.framework import JobBase
 from focus_stack.stack_framework import FrameDirectory, ActionList
 from focus_stack.exceptions import InvalidOptionError

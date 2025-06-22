@@ -14,12 +14,11 @@ def open_file(file_path):
         if platform.system() == 'Darwin':       # macOS
             subprocess.call(('open', file_path))
         elif platform.system() == 'Windows':    # Windows
-            os.startfile(filepath)
+            os.startfile(file_path)
         else:                                   # linux variants
             subprocess.call(('xdg-open', file_path))
     except Exception:
         webbrowser.open("file://" + file_path)
-
 
 
 class GuiPdfView(QPdfView):
@@ -49,6 +48,7 @@ class GuiPdfView(QPdfView):
     def mouseReleaseEvent(self, event):
         open_file(self.file_path)
 
+
 class GuiImageView(QWidget):
     def __init__(self, file_path, parent=None):
         super().__init__(parent)
@@ -66,11 +66,10 @@ class GuiImageView(QWidget):
             scaled_pixmap = pixmap.scaledToWidth(250, Qt.SmoothTransformation)
             self.image_label.setPixmap(scaled_pixmap)
         else:
-            raise RuntimeError(f"Can't load file: {file_path}.")            
+            raise RuntimeError(f"Can't load file: {file_path}.")
 
     def sizeHint(self):
         return self.size()
 
     def mouseReleaseEvent(self, event):
-        open_file(self.file_path)        
-            
+        open_file(self.file_path)
