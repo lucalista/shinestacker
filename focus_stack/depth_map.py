@@ -37,6 +37,9 @@ class DepthMapStack:
         self.blur_size = blur_size
         self.smooth_size = smooth_size
 
+    def name(self):
+        return "depth map"
+
     def messenger(self, messenger):
         self.messenger = messenger
 

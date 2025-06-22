@@ -14,6 +14,9 @@ class PyramidStack:
         kernel = np.array([0.25 - gen_kernel / 2.0, 0.25, gen_kernel, 0.25, 0.25 - gen_kernel / 2.0])
         self.gen_kernel = np.outer(kernel, kernel)
 
+    def name(self):
+        return "pyramid"
+
     def messenger(self, messenger):
         self.messenger = messenger
 
