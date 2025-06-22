@@ -192,7 +192,20 @@ class Correction:
         ax.set_yscale('log')
         ax.plot(hist, color=color, alpha=alpha)
 
+    def save_plot(self, idx):
+        idx_str = "{:04d}".format(idx)
+        plot_path = f"{self.process.working_path}/{self.process.plot_path}/{self.process.name}-hist-{idx_str}.pdf"
+        save_plot(plot_path)
+        plt.close('all')
+        self.process.callback('save_plot', self.process.id, f"{self.process.name}: frame {idx_str}", plot_path)
 
+    def save_summary_plot(self, name='balance'):
+        plot_path = f"{self.process.working_path}/{self.process.plot_path}/{self.process.name}-{name}.pdf"
+        save_plot(plot_path)
+        plt.close('all')
+        self.process.callback('save_plot', self.process.id, f"{self.process.name}: {name}", plot_path)
+        
+        
 class LumiCorrection(Correction):
     def __init__(self, **kwargs):
         Correction.__init__(self, 1, **kwargs)
@@ -208,10 +221,7 @@ class LumiCorrection(Correction):
                 hist_col = self.calc_hist_1ch(chan)
                 self.histo_plot(axs[1], hist_col, "r,g,b luminosity", color, alpha=0.5)
             plt.xlim(0, self.two_n)
-            plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx)
-            save_plot(plot_path)
-            plt.close('all')
-
+            self.save_plot(idx)
         return [hist]
 
     def end(self, ref_idx):
@@ -227,10 +237,7 @@ class LumiCorrection(Correction):
             plt.legend()
             plt.xlim(x[0], x[-1])
             plt.ylim(0)
-            plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-balance.pdf"
-            save_plot(plot_path)
-            plt.close('all')
-            self.process.callback('save_plot', self.process.id, self.process.name, plot_path)
+            self.save_summary_plot()
 
 class RGBCorrection(Correction):
     def __init__(self, **kwargs):
@@ -244,10 +251,7 @@ class RGBCorrection(Correction):
             for c in [2, 1, 0]:
                 self.histo_plot(axs[c], hist[c], colors[c] + " luminosity", colors[c])
             plt.xlim(0, self.two_n)
-            plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-hist-{:04d}.pdf".format(idx)
-            save_plot(plot_path)
-            plt.close('all')
-            self.process.callback('save_plot', self.process.id, self.process.name, plot_path)
+            self.save_plot(idx)
         return hist
 
     def end(self, ref_idx):
@@ -265,10 +269,7 @@ class RGBCorrection(Correction):
             plt.legend()
             plt.xlim(x[0], x[-1])
             plt.ylim(0)
-            plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-balance.pdf"
-            save_plot(plot_path)
-            plt.close('all')
-            self.process.callback('save_plot', self.process.id, self.process.name, plot_path)
+            self.save_summary_plot()
 
 class Ch2Correction(Correction):
     def __init__(self, **kwargs):
@@ -287,9 +288,7 @@ class Ch2Correction(Correction):
             for c in range(3):
                 self.histo_plot(axs[c], hist[c], self.labels[c], self.colors[c])
             plt.xlim(0, self.two_n)
-            plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "_hist_{:04d}.pdf".format(idx)
-            save_plot(plot_path)
-            self.process.callback('save_plot', self.process.id, self.process.name, plot_path)
+            self.save_plot(idx)
         return hist[1:]
 
     def end(self, ref_idx):
@@ -306,10 +305,7 @@ class Ch2Correction(Correction):
             plt.legend()
             plt.xlim(x[0], x[-1])
             plt.ylim(0)
-            plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-balance.pdf"
-            save_plot(plot_path)
-            plt.close('all')
-            self.process.callback('save_plot', self.process.id, self.process.name, plot_path)
+            self.save_summary_plot()
 
 class SVCorrection(Ch2Correction):
     def __init__(self, **kwargs):
@@ -374,10 +370,7 @@ class BalanceFrames(SubAction):
             cv2.circle(img, (shape[1]//2, shape[0]//2), mask_radius, 255, -1)
             plt.figure(figsize=(10, 5))
             plt.imshow(img, 'gray')
-            plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + self.process.name + "-mask.pdf"
-            save_plot(plot_path)
-            plt.close('all')
-            self.process.callback('save_plot', self.process.id, self.process.name, plot_path)            
+            self.correction.save_summary_plot("mask")
 
     def run_frame(self, idx, ref_idx, image):
         if idx != self.process.ref_idx:

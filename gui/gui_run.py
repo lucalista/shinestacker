@@ -1,6 +1,6 @@
 from config.config import config
 from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QProgressBar,
-                               QMessageBox, QScrollArea, QSizePolicy, QFrame)
+                               QMessageBox, QScrollArea, QSizePolicy, QFrame, QLabel)
 from PySide6.QtGui import QColor
 from PySide6.QtCore import Qt
 from PySide6.QtCore import Signal, Slot
@@ -206,8 +206,10 @@ class RunWindow(QTextEditLogger):
 
     @Slot(int, str, str)
     def handle_save_plot(self, id, name, path):
+        label = QLabel(name, self)
+        label.setStyleSheet("QLabel {margin-top: 5px; font-size: 12px; font-weight: bold;}")
+        self.image_layout.addWidget(label)
         pdf_view = MyPdfView(path, self)
-        pdf_view.setWindowTitle(name)
         self.pdf_views.append(pdf_view)
         self.image_layout.addWidget(pdf_view)
         max_width = max(pv.size().width() for pv in self.pdf_views) if self.pdf_views else 0        
