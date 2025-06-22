@@ -199,10 +199,10 @@ class AlignFrames(SubAction):
             'align_message': lambda: self.process.sub_message_r(': align images'),
             'blur_message': lambda: self.process.sub_message_r(': blur borders'),
             'save_plot': lambda plot_path: self.process.callback('save_plot', self.process.id,
-                                                                 f"{self.process.name}: frame {idx_str}", plot_path)
+                                                                 f"{self.process.name}: matches\nframe {idx_str}", plot_path)
         }
         if self.plot_matches:
-            plot_path = self.process.working_path + "/" + self.process.plot_path + "/" + f"{self.process.name}-matches-{idx:04d}.pdf"
+            plot_path = f"{self.process.working_path}/{self.process.plot_path}/{self.process.name}-matches-{idx_str}.pdf"
         else:
             plot_path = None
         n_good_matches, img = align_images(

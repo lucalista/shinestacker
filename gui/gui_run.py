@@ -207,7 +207,7 @@ class RunWindow(QTextEditLogger):
     @Slot(int, str, str)
     def handle_save_plot(self, id, name, path):
         label = QLabel(name, self)
-        label.setStyleSheet("QLabel {margin-top: 5px; font-size: 12px; font-weight: bold;}")
+        label.setStyleSheet("QLabel {margin-top: 5px; font-weight: bold;}")
         self.image_layout.addWidget(label)
         pdf_view = MyPdfView(path, self)
         self.pdf_views.append(pdf_view)

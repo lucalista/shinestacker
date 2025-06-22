@@ -197,7 +197,7 @@ class Correction:
         plot_path = f"{self.process.working_path}/{self.process.plot_path}/{self.process.name}-hist-{idx_str}.pdf"
         save_plot(plot_path)
         plt.close('all')
-        self.process.callback('save_plot', self.process.id, f"{self.process.name}: frame {idx_str}", plot_path)
+        self.process.callback('save_plot', self.process.id, f"{self.process.name}: balance\nframe {idx_str}", plot_path)
 
     def save_summary_plot(self, name='balance'):
         plot_path = f"{self.process.working_path}/{self.process.plot_path}/{self.process.name}-{name}.pdf"

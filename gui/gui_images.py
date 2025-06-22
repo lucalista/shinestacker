@@ -22,7 +22,7 @@ class MyPdfView(QPdfView):
         if err == QPdfDocument.Error.None_:
             self.setDocument(self.pdf_document)
             first_page_size = self.pdf_document.pagePointSize(0)
-            zoom_factor = 0.3
+            zoom_factor = 0.35
             self.setZoomFactor(zoom_factor)
             self.setFixedSize(int(first_page_size.width() * zoom_factor) + 12,
                               int(first_page_size.height() * zoom_factor) + 16)

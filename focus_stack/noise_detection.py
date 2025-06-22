@@ -109,7 +109,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
             plt.ylim(0)
             plot_path = self.working_path + "/" + self.plot_path + "/" + self.name + "-hot-pixels.pdf"
             save_plot(plot_path)
-            self.callback('save_plot', self.id, self.name, plot_path)            
+            self.callback('save_plot', self.id, f"{self.name}: noise", plot_path)            
             plt.close('all')
 
 
