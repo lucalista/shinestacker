@@ -10,7 +10,7 @@ from gui.project_model import (ActionConfig,
 from abc import ABC, abstractmethod
 from typing import Dict, Any
 import os.path
-from config.config import constants
+from config.constants import constants
 from focus_stack.align import VALID_BORDER_MODES, VALID_TRANSFORMS, VALID_MATCHING_METHODS
 from focus_stack.balance import VALID_BALANCE, DEFAULT_IMG_SCALE, VALID_CHANNELS
 from focus_stack.depth_map import VALID_MAP, VALID_ENERGY

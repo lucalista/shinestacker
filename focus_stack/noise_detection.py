@@ -1,4 +1,4 @@
-from config.config import config, constants
+from config.constants import config, constants
 from focus_stack.framework import JobBase
 from focus_stack.stack_framework import FrameMultiDirectory, SubAction
 from focus_stack.utils import read_img, save_plot, make_tqdm_bar, get_img_metadata, validate_image
