@@ -73,9 +73,11 @@ def detect_and_compute(img_0, img_1, feature_config=None, matching_config=None):
     descriptor = descriptor_map[feature_config['descriptor']]()
     feature_config_detector = feature_config['detector']
     feature_config_descriptor = feature_config['descriptor']
-    if feature_config_detector == constants.DETECTOR_ORB and feature_config_descriptor == constants.DESCRIPTOR_ORB and matching_config['method'] != constants.MATCHING_NORM_HAMMING:
+    if feature_config_detector == constants.DETECTOR_ORB and \
+       feature_config_descriptor == constants.DESCRIPTOR_ORB and matching_config['method'] != constants.MATCHING_NORM_HAMMING:
         raise RuntimeError(RAISE_ORB_ORB_HAMMING)
-    if feature_config_detector == feature_config_descriptor and feature_config_detector in (constants.DETECTOR_SIFT, constants.DETECTOR_AKAZE):
+    if feature_config_detector == feature_config_descriptor and \
+       feature_config_detector in (constants.DETECTOR_SIFT, constants.DETECTOR_AKAZE):
         kp_0, des_0 = detector.detectAndCompute(img_bw_0, None)
         kp_1, des_1 = detector.detectAndCompute(img_bw_1, None)
     else:

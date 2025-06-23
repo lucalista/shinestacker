@@ -8,25 +8,6 @@ from focus_stack.utils import read_img, save_plot
 from focus_stack.exceptions import InvalidOptionError
 from focus_stack.stack_framework import SubAction
 
-BALANCE_LINEAR = "LINEAR"
-BALANCE_GAMMA = "GAMMA"
-BALANCE_MATCH_HIST = "MATCH_HIST"
-VALID_BALANCE = [BALANCE_LINEAR, BALANCE_GAMMA, BALANCE_MATCH_HIST]
-
-BALANCE_LUMI = "LUMI"
-BALANCE_RGB = "RGB"
-BALANCE_HSV = "HSV"
-BALANCE_HLS = "HLS"
-VALID_CHANNELS = [BALANCE_LUMI, BALANCE_RGB, BALANCE_HSV, BALANCE_HLS]
-
-DEFAULT_IMG_SCALE = 8
-DEFAULT_CORR_MAP = BALANCE_LINEAR
-DEFAULT_CHANNEL = BALANCE_LUMI
-DEFAULT_INTENSITY_INTERVAL = {
-    'min': 0,
-    'max': -1
-}
-
 
 class CorrectionMapBase:
     def __init__(self, dtype, ref_hist, intensity_interval=None):
@@ -126,13 +107,13 @@ class LinearMap(CorrectionMap):
 
 
 class Correction:
-    def __init__(self, channels, mask_size=0, intensity_interval=None, img_scale=-1, corr_map=DEFAULT_CORR_MAP,
+    def __init__(self, channels, mask_size=0, intensity_interval=None, img_scale=-1, corr_map=constants.DEFAULT_CORR_MAP,
                  plot_histograms=False, plot_summary=False):
         self.mask_size = mask_size
         self.intensity_interval = intensity_interval
         self.plot_histograms = plot_histograms
         self.plot_summary = plot_summary
-        self.img_scale = DEFAULT_IMG_SCALE if img_scale == -1 else img_scale
+        self.img_scale = constants.DEFAULT_IMG_SCALE if img_scale == -1 else img_scale
         self.corr_map = corr_map
         self.channels = channels
 
@@ -140,11 +121,11 @@ class Correction:
         self.dtype = ref_image.dtype
         self.two_n = 256 if ref_image.dtype == np.uint8 else 65536
         hist = self.get_hist(self.preprocess(ref_image), ref_idx)
-        if self.corr_map == BALANCE_LINEAR:
+        if self.corr_map == constants.BALANCE_LINEAR:
             self.corr_map = LinearMap(self.dtype, hist, self.intensity_interval)
-        elif self.corr_map == BALANCE_GAMMA:
+        elif self.corr_map == constants.BALANCE_GAMMA:
             self.corr_map = GammaMap(self.dtype, hist, self.intensity_interval)
-        elif self.corr_map == BALANCE_MATCH_HIST:
+        elif self.corr_map == constants.BALANCE_MATCH_HIST:
             self.corr_map = MatchHist(self.dtype, hist, self.intensity_interval)
         else:
             raise InvalidOptionError("corr_map", self.corr_map)

@@ -40,7 +40,7 @@ def test_align_3():
     except Exception:
         assert False
 
-        
+
 def test_align_4():
     try:
         img_1, img_2 = [read_img(f"input/img-jpg/000{i}.jpg") for i in (2, 3)]

@@ -632,7 +632,7 @@ class BalanceFramesConfigurator(NoNameActionConfigurator):
                                options=self.CORRECTION_MAP_OPTIONS, values=constants.VALID_BALANCE,
                                default='Linear')
         self.builder.add_field('channel', FIELD_COMBO, 'Channel', required=False,
-                               options=self.CHANNEL_OPTIONS, values=constants.VALID_CHANNELS,
+                               options=self.CHANNEL_OPTIONS, values=constants.VALID_BALANCE_CHANNELS,
                                default='Luminosity')
         self.add_bold_label("Miscellanea:")
         self.builder.add_field('plot_summary', FIELD_BOOL, 'Plot summary', required=False, default=False)

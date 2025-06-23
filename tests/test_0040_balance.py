@@ -1,16 +1,16 @@
 import sys
 sys.path.append('../')
+from config.constants import constants
 from focus_stack.stack_framework import StackJob, CombinedActions
-from focus_stack import (BalanceFrames, BALANCE_RGB, BALANCE_MATCH_HIST, BALANCE_LUMI,
-                         BALANCE_LINEAR, BALANCE_GAMMA, BALANCE_HSV, BALANCE_HLS)
+from focus_stack import BalanceFrames
 
 
 def test_tif_rgb_match():
     try:
         job = StackJob("job", "./", input_path="input/img-tif", callbacks='tqdm')
         job.add_action(CombinedActions("balance",
-                                       [BalanceFrames(channel=BALANCE_RGB,
-                                                      corr_map=BALANCE_MATCH_HIST,
+                                       [BalanceFrames(channel=constants.BALANCE_RGB,
+                                                      corr_map=constants.BALANCE_MATCH_HIST,
                                                       plot_histograms=True, plot_summary=True)],
                                        output_path="output/img-tif-balance-rgb-match"))
         job.run()
@@ -22,8 +22,8 @@ def test_jpg_lumi():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg", callbacks='tqdm')
         job.add_action(CombinedActions("balance",
-                                       [BalanceFrames(channel=BALANCE_LUMI,
-                                                      corr_map=BALANCE_LINEAR,
+                                       [BalanceFrames(channel=constants.BALANCE_LUMI,
+                                                      corr_map=constants.BALANCE_LINEAR,
                                                       plot_histograms=True, plot_summary=True)],
                                        output_path="output/img-jpg-balance-lumi"))
         job.run()
@@ -35,8 +35,8 @@ def test_tif_lumi():
     try:
         job = StackJob("job", "./", input_path="input/img-tif", callbacks='tqdm')
         job.add_action(CombinedActions("balance",
-                                       [BalanceFrames(channel=BALANCE_LUMI,
-                                                      corr_map=BALANCE_GAMMA,
+                                       [BalanceFrames(channel=constants.BALANCE_LUMI,
+                                                      corr_map=constants.BALANCE_GAMMA,
                                                       plot_histograms=True, plot_summary=True)],
                                        output_path="output/img-tif-balance-lumi"))
         job.run()
@@ -48,8 +48,8 @@ def test_jpg_rgb():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg", callbacks='tqdm')
         job.add_action(CombinedActions("balance",
-                                       [BalanceFrames(channel=BALANCE_RGB,
-                                                      corr_map=BALANCE_LINEAR,
+                                       [BalanceFrames(channel=constants.BALANCE_RGB,
+                                                      corr_map=constants.BALANCE_LINEAR,
                                                       plot_histograms=True, plot_summary=True)],
                                        output_path="output/img-jpg-balance-rgb"))
         job.run()
@@ -61,8 +61,8 @@ def test_jpg_hsv():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg", callbacks='tqdm')
         job.add_action(CombinedActions("balance",
-                                       [BalanceFrames(channel=BALANCE_HSV,
-                                                      corr_map=BALANCE_LINEAR,
+                                       [BalanceFrames(channel=constants.BALANCE_HSV,
+                                                      corr_map=constants.BALANCE_LINEAR,
                                                       plot_histograms=True, plot_summary=True)],
                                        output_path="output/img-jpg-balance-sv"))
         job.run()
@@ -74,8 +74,8 @@ def test_jpg_hls():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg", callbacks='tqdm')
         job.add_action(CombinedActions("balance",
-                                       [BalanceFrames(channel=BALANCE_HLS,
-                                                      corr_map=BALANCE_GAMMA,
+                                       [BalanceFrames(channel=constants.BALANCE_HLS,
+                                                      corr_map=constants.BALANCE_GAMMA,
                                                       plot_histograms=True, plot_summary=True)],
                                        output_path="output/img-jpg-balance-ls"))
         job.run()

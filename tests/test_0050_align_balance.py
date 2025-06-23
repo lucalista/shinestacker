@@ -1,6 +1,7 @@
 import sys
 sys.path.append('../')
-from focus_stack import StackJob, CombinedActions, AlignFrames, BalanceFrames, BALANCE_GAMMA, BALANCE_HSV, BALANCE_HLS, BALANCE_LUMI, BALANCE_RGB
+from config.constants import constants
+from focus_stack import StackJob, CombinedActions, AlignFrames, BalanceFrames
 
 
 def test_hls_gamma():
@@ -8,8 +9,8 @@ def test_hls_gamma():
         job = StackJob("job", "./", input_path="input/img-jpg")
         job.add_action(CombinedActions("align",
                                        [AlignFrames(),
-                                        BalanceFrames(channel=BALANCE_HLS,
-                                                      corr_map=BALANCE_GAMMA)],
+                                        BalanceFrames(channel=constants.BALANCE_HLS,
+                                                      corr_map=constants.BALANCE_GAMMA)],
                                        output_path="output/img-jpg-align-balance-ls"))
         job.run()
     except Exception:
@@ -21,7 +22,7 @@ def test_hsv():
         job = StackJob("job", "./", input_path="input/img-jpg")
         job.add_action(CombinedActions("align",
                                        [AlignFrames(),
-                                        BalanceFrames(channel=BALANCE_HSV)],
+                                        BalanceFrames(channel=constants.BALANCE_HSV)],
                                        output_path="output/img-jpg-align-balance-sv"))
         job.run()
     except Exception:
@@ -33,7 +34,7 @@ def test_rgb():
         job = StackJob("job", "./", input_path="input/img-jpg")
         job.add_action(CombinedActions("align",
                                        [AlignFrames(),
-                                        BalanceFrames(channel=BALANCE_RGB)],
+                                        BalanceFrames(channel=constants.BALANCE_RGB)],
                                        output_path="output/img-jpg-align-balance-rgb"))
         job.run()
     except Exception:
@@ -44,7 +45,7 @@ def test_lumi():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg")
         job.add_action(CombinedActions("align",
-                                       [AlignFrames(), BalanceFrames(channel=BALANCE_LUMI)],
+                                       [AlignFrames(), BalanceFrames(channel=constants.BALANCE_LUMI)],
                                        output_path="output/img-jpg-align-balance-lumi"))
         job.run()
     except Exception:
