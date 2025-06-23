@@ -79,6 +79,7 @@ class JobBase:
             callback = self.callbacks.get(key, None)
             if callback:
                 return callback(*args)
+        return True
 
     def run(self):
         self.__t0 = time.time()
