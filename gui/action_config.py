@@ -425,7 +425,7 @@ class NoiseDetectionConfigurator(DefaultActionConfigurator):
         self.builder.add_field('plot_path', FIELD_REL_PATH, 'Plots path', required=False, default=DEFAULT_PLOTS_PATH,
                                placeholder='relative to working path')
         self.builder.add_field('plot_range', FIELD_INT_TUPLE, 'Plot range', required=False, size=2,
-                               default=constants.DEFAULT_PLOT_RANGE, labels=['min', 'max'], min=[0] * 2, max=[1000] * 2)
+                               default=constants.DEFAULT_NOISE_PLOT_RANGE, labels=['min', 'max'], min=[0] * 2, max=[1000] * 2)
 
 
 class FocusStackBaseConfigurator(DefaultActionConfigurator):

@@ -1,4 +1,5 @@
-from config.constants import config, constants
+from config.config import config
+from config.constants import constants
 from focus_stack.framework import JobBase
 from focus_stack.stack_framework import FrameMultiDirectory, SubAction
 from focus_stack.utils import read_img, save_plot, make_tqdm_bar, get_img_metadata, validate_image
@@ -44,7 +45,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         if self.file_name == '':
             self.file_name = constants.DEFAULT_NOISE_MAP_FILENAME
         self.channel_thresholds = kwargs.get('channel_thresholds', constants.DEFAULT_CHANNEL_THRESHOLDS)
-        self.plot_range = kwargs.get('plot_range', constants.DEFAULT_PLOT_RANGE)
+        self.plot_range = kwargs.get('plot_range', constants.DEFAULT_NOISE_PLOT_RANGE)
         self.plot_histograms = kwargs.get('plot_histograms', False)
 
     def hot_map(self, ch, th):

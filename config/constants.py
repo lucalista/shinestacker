@@ -6,7 +6,7 @@ class _Constants:
     RGB_LABELS = ['r', 'g', 'b']
     DEFAULT_CHANNEL_THRESHOLDS = [13, 13, 13]
     DEFAULT_BLUR_SIZE = 5
-    DEFAULT_PLOT_RANGE = [5, 30]
+    DEFAULT_NOISE_PLOT_RANGE = [5, 30]
     VALID_INTERPOLATE = {INTERPOLATE_MEAN, INTERPOLATE_MEDIAN}
 
     def __setattr__(self, name, value):
