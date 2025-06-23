@@ -116,17 +116,19 @@ class MainWindow(WindowMenu, LogManager):
         self.run_job_action.setEnabled(False)
         self.run_all_jobs_action.setEnabled(False)
 
-    def get_tab_at_position(self, id_str):
+    def get_tab_and_position(self, id_str):
         for i in range(self.tab_widget.count()):
             w = self.tab_widget.widget(i)
             if w.id_str() == id_str:
-                return w
+                return i, w
+
+    def get_tab_at_position(self, id_str):
+        i, w = self.get_tab_and_position(id_str)
+        return w
 
     def get_tab_position(self, id_str):
-        for i in range(self.tab_widget.count()):
-            w = self.tab_widget.widget(i)
-            if w.id_str() == id_str:
-                return i
+        i, w = self.get_tab_and_position(id_str)
+        return i
 
     def _do_handle_end_message(self, status, id_str, message):
         self.run_job_button.setEnabled(True)
