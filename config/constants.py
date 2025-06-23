@@ -44,6 +44,7 @@ class _Constants:
     DEFAULT_IMG_SCALE = 8
     DEFAULT_CORR_MAP = BALANCE_LINEAR
     DEFAULT_CHANNEL = BALANCE_LUMI
+    DEFAULT_RANS_THRESHOLD = .50
     DEFAULT_INTENSITY_INTERVAL = {
         'min': 0,
         'max': -1

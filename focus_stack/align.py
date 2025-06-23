@@ -24,7 +24,7 @@ _DEFAULT_MATCHING_CONFIG = {
 
 _DEFAULT_ALIGNMENT_CONFIG = {
     'transform': constants.ALIGN_RIGID,
-    'rans_threshold': 5.0,
+    'rans_threshold': constants.DEFAULT_RANS_THRESHOLD,
     'border_mode': constants.BORDER_REPLICATE_BLUR,
     'border_value': (0, 0, 0, 0),
     'border_blur': constants.DEFAULT_BORDER_BLUR

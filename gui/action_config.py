@@ -601,7 +601,7 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
                                options=self.TRANSFORM_OPTIONS, values=constants.VALID_TRANSFORMS,
                                default='Rigid')
         self.builder.add_field('rans_threshold', FIELD_FLOAT, 'Homography RANS threshold', required=False,
-                               default=5.0, min=0, max=20, step=0.1)
+                               default=constants.DEFAULT_RANS_THRESHOLD, min=0, max=20, step=0.1)
         self.add_bold_label("Border:")
         self.builder.add_field('border_mode', FIELD_COMBO, 'Border mode', required=False,
                                options=self.BORDER_MODE_OPTIONS, values=constants.VALID_BORDER_MODES,
