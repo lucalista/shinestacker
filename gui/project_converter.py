@@ -29,6 +29,7 @@ class ProjectConverter:
         except Exception as e:
             msg = str(e)
             logger.warning(f"=== job: {job.name} failed: {msg} ===")
+            raise e
 
     def run_project(self, project: Project, logger_name=None, callbacks=None):
         logger = logging.getLogger(__name__ if logger_name is None else logger_name)

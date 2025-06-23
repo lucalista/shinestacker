@@ -2,7 +2,7 @@ from config.constants import constants
 from .framework import Job, ActionList
 from .utils import check_path_exists
 from focus_stack.utils import read_img, write_img
-from focus_stack.exceptions import ShapeError, BitDepthError
+from focus_stack.exceptions import ShapeError, BitDepthError, RunStopException
 from termcolor import colored
 import logging
 import os

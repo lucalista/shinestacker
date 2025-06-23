@@ -8,24 +8,23 @@ from focus_stack.utils import get_img_metadata, validate_image
 from focus_stack.stack_framework import SubAction
 import logging
 
-
 _DEFAULT_FEATURE_CONFIG = {
-    'detector': constants.DETECTOR_SIFT,
-    'descriptor': constants.DESCRIPTOR_SIFT
+    'detector': constants.DEFAULT_DETECTOR,
+    'descriptor': constants.DEFAULT_DESCRIPTOR
 }
 
 _DEFAULT_MATCHING_CONFIG = {
-    'method': constants.MATCHING_KNN,
-    'flann_idx_kdtree': 2,
-    'flann_trees': 5,
-    'flann_checks': 50,
-    'threshold': 0.75
+    'method': constants.DEFAULT_MATCHING_METHOD,
+    'flann_idx_kdtree': constants.DEFAULT_FLANN_IDX_KDTREE,
+    'flann_trees': constants.DEFAULT_FLANN_TREES,
+    'flann_checks': constants.DEFAULT_FLANN_CHECKS,
+    'threshold': constants.DEFAULT_ALIGN_THRESHOLD
 }
 
 _DEFAULT_ALIGNMENT_CONFIG = {
-    'transform': constants.ALIGN_RIGID,
+    'transform': constants.DEFAULT_TRANSFORM,
     'rans_threshold': constants.DEFAULT_RANS_THRESHOLD,
-    'border_mode': constants.BORDER_REPLICATE_BLUR,
+    'border_mode': constants.DEFAULT_BORDER_MODE,
     'border_value': constants.DEFAULT_BORDER_VALUE,
     'border_blur': constants.DEFAULT_BORDER_BLUR
 }
@@ -86,7 +85,7 @@ def detect_and_compute(img_0, img_1, feature_config=None, matching_config=None):
     return kp_0, kp_1, get_good_matches(des_0, des_1, matching_config)
 
 
-def find_transform(src_pts, dst_pts, transform=constants.ALIGN_RIGID, rans_threshold=5.0):
+def find_transform(src_pts, dst_pts, transform=constants.DEFAULT_TRANSFORM, rans_threshold=constants.DEFAULT_RANS_THRESHOLD):
     if transform == constants.ALIGN_HOMOGRAPHY:
         return cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, rans_threshold)
     elif transform == constants.ALIGN_RIGID:

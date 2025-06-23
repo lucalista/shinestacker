@@ -559,7 +559,7 @@ class VignettingConfigurator(NoNameActionConfigurator):
         self.builder.add_field('r_steps', FIELD_INT, 'Radial steps', required=False,
                                default=constants.DEFAULT_R_STEPS, min=1, max=1000)
         self.builder.add_field('black_threshold', FIELD_INT, 'Black intensity threshold', required=False,
-                               default=constants.DEFALUT_BLACK_THRESHOLD, min=0, max=1000)
+                               default=constants.DEFAULT_BLACK_THRESHOLD, min=0, max=1000)
         self.builder.add_field('max_correction', FIELD_FLOAT, 'Max. correction', required=False,
                                default=constants.DEFAULT_MAX_CORRECTION, min=0, max=1, step=0.05)
         self.add_bold_label("Miscellanea:")
@@ -577,34 +577,34 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
         DefaultActionConfigurator.create_form(self, layout, action)
         self.add_bold_label("Feature identification:")
         self.builder.add_field('detector', FIELD_COMBO, 'Detector', required=False,
-                               options=['SIFT', 'ORB', 'SURF', 'AKAZE'], default='SIFT')
+                               options=['SIFT', 'ORB', 'SURF', 'AKAZE'], default=constants.DEFAULT_DETECTOR)
         self.builder.add_field('descriptor', FIELD_COMBO, 'Descriptor', required=False,
-                               options=['SIFT', 'ORB', 'AKAZE'], default='SIFT')
+                               options=['SIFT', 'ORB', 'AKAZE'], default=constants.DEFAULT_DESCRIPTOR)
         self.add_bold_label("Feature matching:")
         self.builder.add_field('method', FIELD_COMBO, 'Method', required=False,
                                options=self.MATCHING_METHOD_OPTIONS, values=constants.VALID_MATCHING_METHODS,
-                               default='KNN')
+                               default=constants.DEFAULT_MATCHING_METHOD)
         self.builder.add_field('flann_idx_kdtree', FIELD_INT, 'Flann idx kdtree', required=False,
-                               default=2, min=0, max=10)
+                               default=constants.DEFAULT_FLANN_IDX_KDTREE, min=0, max=10)
         self.builder.add_field('flann_trees', FIELD_INT, 'Flann trees', required=False,
-                               default=5, min=0, max=10)
+                               default=constants.DEFAULT_FLANN_TREES, min=0, max=10)
         self.builder.add_field('flann_checks', FIELD_INT, 'Flann checks', required=False,
-                               default=50, min=0, max=1000)
+                               default=constants.DEFAULT_FLANN_CHECKS, min=0, max=1000)
         self.builder.add_field('threshold', FIELD_FLOAT, 'Threshold', required=False,
-                               default=0.75, min=0, max=1, step=0.05)
+                               default=constants.DEFAULT_ALIGN_THRESHOLD, min=0, max=1, step=0.05)
         self.add_bold_label("Transform:")
         self.builder.add_field('transform', FIELD_COMBO, 'Transform', required=False,
                                options=self.TRANSFORM_OPTIONS, values=constants.VALID_TRANSFORMS,
-                               default='Rigid')
+                               default=constants.DEFAULT_TRANSFORM)
         self.builder.add_field('rans_threshold', FIELD_FLOAT, 'Homography RANS threshold', required=False,
                                default=constants.DEFAULT_RANS_THRESHOLD, min=0, max=20, step=0.1)
         self.add_bold_label("Border:")
         self.builder.add_field('border_mode', FIELD_COMBO, 'Border mode', required=False,
                                options=self.BORDER_MODE_OPTIONS, values=constants.VALID_BORDER_MODES,
-                               default='Replicate and blur')
+                               default=constants.DEFAULT_BORDER_MODE)
         self.builder.add_field('border_value', FIELD_INT_TUPLE, 'Border value (if constant)', required=False, size=4,
                                default=constants.DEFAULT_BORDER_VALUE, labels=constants.RGBA_LABELS,
-                               min=[0] * 4, max=[255] * 4)
+                               min=constants.DEFAULT_BORDER_VALUE, max=[255] * 4)
         self.builder.add_field('border_blur', FIELD_FLOAT, 'Border blur', required=False,
                                default=constants.DEFAULT_BORDER_BLUR, min=0, max=1000, step=1)
         self.add_bold_label("Miscellanea:")
