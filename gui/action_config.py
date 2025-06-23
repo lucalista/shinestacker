@@ -11,7 +11,6 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any
 import os.path
 from config.constants import constants
-from focus_stack.balance import VALID_BALANCE, DEFAULT_IMG_SCALE, VALID_CHANNELS
 from focus_stack.depth_map import VALID_MAP, VALID_ENERGY
 from focus_stack.vignetting import DEFAULT_R_STEPS, DEFALUT_BLACK_THRESHOLD, DEFAULT_MAX_CORRECTION
 from focus_stack.stack_framework import DEFAULT_PLOTS_PATH
@@ -625,14 +624,15 @@ class BalanceFramesConfigurator(NoNameActionConfigurator):
         self.builder.add_field('mask_size', FIELD_FLOAT, 'Mask size', required=False,
                                default=0, min=0, max=5, step=0.1)
         self.builder.add_field('intensity_interval', FIELD_INT_TUPLE, 'Intensity range', required=False, size=2,
-                               default=[0, -1], labels=['min', 'max'], min=[-1] * 2, max=[65536] * 2)
+                               default=[v for k, v in constants.DEFAULT_INTENSITY_INTERVAL.items()],
+                               labels=['min', 'max'], min=[-1] * 2, max=[65536] * 2)
         self.builder.add_field('img_scale', FIELD_INT, 'Image resample', required=False,
-                               default=DEFAULT_IMG_SCALE, min=1, max=256)
+                               default=constants.DEFAULT_IMG_SCALE, min=1, max=256)
         self.builder.add_field('corr_map', FIELD_COMBO, 'Correction map', required=False,
-                               options=self.CORRECTION_MAP_OPTIONS, values=VALID_BALANCE,
+                               options=self.CORRECTION_MAP_OPTIONS, values=constants.VALID_BALANCE,
                                default='Linear')
         self.builder.add_field('channel', FIELD_COMBO, 'Channel', required=False,
-                               options=self.CHANNEL_OPTIONS, values=VALID_CHANNELS,
+                               options=self.CHANNEL_OPTIONS, values=constants.VALID_CHANNELS,
                                default='Luminosity')
         self.add_bold_label("Miscellanea:")
         self.builder.add_field('plot_summary', FIELD_BOOL, 'Plot summary', required=False, default=False)

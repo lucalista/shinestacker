@@ -3,6 +3,7 @@ import cv2
 import matplotlib.pyplot as plt
 from scipy.optimize import bisect
 from scipy.interpolate import interp1d
+from config.constants import constants
 from focus_stack.utils import read_img, save_plot
 from focus_stack.exceptions import InvalidOptionError
 from focus_stack.stack_framework import SubAction
@@ -29,7 +30,7 @@ DEFAULT_INTENSITY_INTERVAL = {
 
 class CorrectionMapBase:
     def __init__(self, dtype, ref_hist, intensity_interval=None):
-        intensity_interval = {**DEFAULT_INTENSITY_INTERVAL, **(intensity_interval or {})}
+        intensity_interval = {**constants.DEFAULT_INTENSITY_INTERVAL, **(intensity_interval or {})}
         self.dtype = dtype
         self.two_n = 256 if dtype == np.uint8 else 65536
         self.two_n_1 = self.two_n - 1
@@ -339,19 +340,19 @@ class LSCorrection(Ch2Correction):
 class BalanceFrames(SubAction):
     def __init__(self, enabled=True, **kwargs):
         super().__init__(enabled=enabled)
-        corr_map = kwargs.get('corr_map', DEFAULT_CORR_MAP)
-        img_scale = kwargs.get('img_scale', DEFAULT_IMG_SCALE)
-        channel = kwargs.pop('channel', DEFAULT_CHANNEL)
-        kwargs['img_scale'] = (1 if corr_map == BALANCE_MATCH_HIST else DEFAULT_IMG_SCALE) if img_scale == -1 else img_scale
+        corr_map = kwargs.get('corr_map', constants.DEFAULT_CORR_MAP)
+        img_scale = kwargs.get('img_scale', constants.DEFAULT_IMG_SCALE)
+        channel = kwargs.pop('channel', constants.DEFAULT_CHANNEL)
+        kwargs['img_scale'] = (1 if corr_map == constants.BALANCE_MATCH_HIST else constants.DEFAULT_IMG_SCALE) if img_scale == -1 else img_scale
         self.mask_size = kwargs.get('mask_size', 0)
         self.plot_summary = kwargs.get('plot_summary', False)
-        if channel == BALANCE_LUMI:
+        if channel == constants.BALANCE_LUMI:
             self.correction = LumiCorrection(**kwargs)
-        elif channel == BALANCE_RGB:
+        elif channel == constants.BALANCE_RGB:
             self.correction = RGBCorrection(**kwargs)
-        elif channel == BALANCE_HSV:
+        elif channel == constants.BALANCE_HSV:
             self.correction = SVCorrection(**kwargs)
-        elif channel == BALANCE_HLS:
+        elif channel == constants.BALANCE_HLS:
             self.correction = LSCorrection(**kwargs)
         else:
             raise InvalidOptionError("channel", channel)
