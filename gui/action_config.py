@@ -607,7 +607,8 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
                                options=self.BORDER_MODE_OPTIONS, values=constants.VALID_BORDER_MODES,
                                default='Replicate and blur')
         self.builder.add_field('border_value', FIELD_INT_TUPLE, 'Border value (if constant)', required=False, size=4,
-                               default=[0] * 4, labels=['r', 'g', 'b', 'a'], min=[0] * 4, max=[255] * 4)
+                               default=constants.DEFAULT_BORDER_VALUE, labels=constants.RGBA_LABELS,
+                               min=[0] * 4, max=[255] * 4)
         self.builder.add_field('border_blur', FIELD_FLOAT, 'Border blur', required=False,
                                default=constants.DEFAULT_BORDER_BLUR, min=0, max=1000, step=1)
         self.add_bold_label("Miscellanea:")

@@ -4,6 +4,7 @@ class _Constants:
     INTERPOLATE_MEAN = 'MEAN'
     INTERPOLATE_MEDIAN = 'MEDIAN'
     RGB_LABELS = ['r', 'g', 'b']
+    RGBA_LABELS = ['r', 'g', 'b', 'a']
     DEFAULT_CHANNEL_THRESHOLDS = [13, 13, 13]
     DEFAULT_BLUR_SIZE = 5
     DEFAULT_NOISE_PLOT_RANGE = [5, 30]
@@ -45,6 +46,7 @@ class _Constants:
     DEFAULT_CORR_MAP = BALANCE_LINEAR
     DEFAULT_CHANNEL = BALANCE_LUMI
     DEFAULT_RANS_THRESHOLD = .50
+    DEFAULT_BORDER_VALUE = [0] * 4
     DEFAULT_INTENSITY_INTERVAL = {
         'min': 0,
         'max': -1
