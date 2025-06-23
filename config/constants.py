@@ -1,6 +1,6 @@
 class _Constants:
     DEFAULT_PLOTS_PATH = 'plots'
-    
+
     DEFAULT_NOISE_MAP_FILENAME = "noise-map/hot_pixels.png"
     DEFAULT_MN_KERNEL_SIZE = 3
     INTERPOLATE_MEAN = 'MEAN'
@@ -49,15 +49,12 @@ class _Constants:
     DEFAULT_CHANNEL = BALANCE_LUMI
     DEFAULT_RANS_THRESHOLD = .50
     DEFAULT_BORDER_VALUE = [0] * 4
-    DEFAULT_INTENSITY_INTERVAL = {
-        'min': 0,
-        'max': -1
-    }
+    DEFAULT_INTENSITY_INTERVAL = {'min': 0, 'max': -1}
 
     DEFAULT_R_STEPS = 100
     DEFALUT_BLACK_THRESHOLD = 1
     DEFAULT_MAX_CORRECTION = 1
-    
+
     DM_ENERGY_LAPLACIAN = "laplacian"
     DM_ENERGY_SOBEL = "sobel"
     DM_MAP_AVERAGE = "average"
@@ -69,7 +66,11 @@ class _Constants:
     DEFAULT_DM_KERNEL_SIZE = 5
     DEFAULT_DM_BLUR_SIZE = 5
     DEFAULT_DM_SMOOTH_SIZE = 32
-    
+
+    DEFAULT_PY_MIN_SIZE = 32
+    DEFAULT_PY_KERNEL_SIZE = 5
+    DEFAULT_PY_GEN_KERNEL = 0.4
+
     def __setattr__(self, name, value):
         raise AttributeError(f"Can't reassign constant '{name}'")
 

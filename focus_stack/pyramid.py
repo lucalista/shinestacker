@@ -1,16 +1,15 @@
 import numpy as np
 import cv2
 from termcolor import colored
+from config.constants import constants
 from focus_stack.exceptions import ImageLoadError
 from focus_stack.utils import read_img, get_img_metadata, validate_image
 
-DEFAULT_PY_MIN_SIZE = 32
-DEFAULT_PY_KERNEL_SIZE = 5
-DEFAULT_PY_GEN_KERNEL = 0.4
-
 
 class PyramidStack:
-    def __init__(self, min_size=DEFAULT_PY_MIN_SIZE, kernel_size=DEFAULT_PY_KERNEL_SIZE, gen_kernel=DEFAULT_PY_GEN_KERNEL):
+    def __init__(self, min_size=constants.DEFAULT_PY_MIN_SIZE,
+                 kernel_size=constants.DEFAULT_PY_KERNEL_SIZE,
+                 gen_kernel=constants.DEFAULT_PY_GEN_KERNEL):
         self.min_size = min_size
         self.kernel_size = kernel_size
         self.pad_amount = int((self.kernel_size - 1) / 2)

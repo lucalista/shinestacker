@@ -12,7 +12,6 @@ from typing import Dict, Any
 import os.path
 from config.constants import constants
 from focus_stack.stack import DEFAULT_FRAMES, DEFAULT_OVERLAP
-from focus_stack.pyramid import DEFAULT_PY_MIN_SIZE, DEFAULT_PY_KERNEL_SIZE, DEFAULT_PY_GEN_KERNEL
 
 
 FIELD_TEXT = 'text'
@@ -46,7 +45,7 @@ class FieldBuilder:
     def add_field(self, tag: str, field_type: str, label: str,
                   required: bool = False, add_to_layout=None, **kwargs):
         if field_type == FIELD_TEXT:
-           widget = self._create_text_field(tag, **kwargs)
+            widget = self._create_text_field(tag, **kwargs)
         elif field_type == FIELD_ABS_PATH:
             widget = self._create_abs_path_field(tag, **kwargs)
         elif field_type == FIELD_REL_PATH:
@@ -462,22 +461,22 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
         change()
         self.builder.add_field('pyramid_min_size', FIELD_INT, 'Minimum size (px)',
                                required=False, add_to_layout=q_pyramid.layout(),
-                               default=DEFAULT_PY_MIN_SIZE, min=2, max=256)
+                               default=constants.DEFAULT_PY_MIN_SIZE, min=2, max=256)
         self.builder.add_field('pyramid_kernel_size', FIELD_INT, 'Kernel size (px)',
                                required=False, add_to_layout=q_pyramid.layout(),
-                               default=DEFAULT_PY_KERNEL_SIZE, min=3, max=21)
+                               default=constants.DEFAULT_PY_KERNEL_SIZE, min=3, max=21)
         self.builder.add_field('pyramid_gen_kernel', FIELD_FLOAT, 'Gen. kernel',
                                required=False, add_to_layout=q_pyramid.layout(),
-                               default=DEFAULT_PY_GEN_KERNEL, min=0.0, max=2.0)
+                               default=constants.DEFAULT_PY_GEN_KERNEL, min=0.0, max=2.0)
         self.builder.add_field('depthmap_energy', FIELD_COMBO, 'Energy', required=False,
                                add_to_layout=q_depthmap.layout(),
-                               options=self.ENERGY_OPTIONS, values=VALID_ENERGY,
-                               default={k: v for k, v in \
-                                        zip(constans.VALID_DM_ENERGY, self.ENERGY_OPTIONS)}[constants.DEFAULT_DM_ENERGY])
+                               options=self.ENERGY_OPTIONS, values=constants.VALID_DM_ENERGY,
+                               default={k: v for k, v in
+                                        zip(constants.VALID_DM_ENERGY, self.ENERGY_OPTIONS)}[constants.DEFAULT_DM_ENERGY])
         self.builder.add_field('map_type', FIELD_COMBO, 'Map type', required=False,
                                add_to_layout=q_depthmap.layout(),
-                               options=self.MAP_TYPE_OPTIONS, values=VALID_MAP,
-                               default={k: v for k, v in \
+                               options=self.MAP_TYPE_OPTIONS, values=constants.VALID_DM_MAP,
+                               default={k: v for k, v in
                                         zip(constants.VALID_DM_MAP, self.MAP_TYPE_OPTIONS)}[constants.DEFAULT_DM_MAP])
         self.builder.add_field('depthmap_kernel_size', FIELD_INT, 'Kernel size (px)',
                                required=False, add_to_layout=q_depthmap.layout(),
