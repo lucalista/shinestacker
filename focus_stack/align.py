@@ -1,34 +1,21 @@
 import matplotlib.pyplot as plt
 import cv2
 import numpy as np
+from config.constants import constants
 from focus_stack.utils import img_8bit, img_bw_8bit, save_plot
 from focus_stack.exceptions import AlignmentError, InvalidOptionError
 from focus_stack.utils import get_img_metadata, validate_image
 from focus_stack.stack_framework import SubAction
 import logging
 
-ALIGN_HOMOGRAPHY = "ALIGN_HOMOGRAPHY"
-ALIGN_RIGID = "ALIGN_RIGID"
-BORDER_CONSTANT = "BORDER_CONSTANT"
-BORDER_REPLICATE = "BORDER_REPLICATE"
-BORDER_REPLICATE_BLUR = "BORDER_REPLICATE_BLUR"
-DETECTOR_SIFT = "SIFT"
-DETECTOR_ORB = "ORB"
-DETECTOR_SURF = "SURF"
-DETECTOR_AKAZE = "AKAZE"
-DESCRIPTOR_SIFT = "SIFT"
-DESCRIPTOR_ORB = "ORB"
-DESCRIPTOR_AKAZE = "AKAZE"
-MATCHING_KNN = "KNN"
-MATCHING_NORM_HAMMING = "NORM_HAMMING"
 
 _DEFAULT_FEATURE_CONFIG = {
-    'detector': DETECTOR_SIFT,
-    'descriptor': DESCRIPTOR_SIFT
+    'detector': constants.DETECTOR_SIFT,
+    'descriptor': constants.DESCRIPTOR_SIFT
 }
 
 _DEFAULT_MATCHING_CONFIG = {
-    'method': MATCHING_KNN,
+    'method': constants.MATCHING_KNN,
     'flann_idx_kdtree': 2,
     'flann_trees': 5,
     'flann_checks': 50,
@@ -36,37 +23,32 @@ _DEFAULT_MATCHING_CONFIG = {
 }
 
 _DEFAULT_ALIGNMENT_CONFIG = {
-    'transform': ALIGN_RIGID,
+    'transform': constants.ALIGN_RIGID,
     'rans_threshold': 5.0,
-    'border_mode': BORDER_REPLICATE_BLUR,
+    'border_mode': constants.BORDER_REPLICATE_BLUR,
     'border_value': (0, 0, 0, 0),
-    'border_blur': 50
+    'border_blur': constants.DEFAULT_BORDER_BLUR
 }
 
 _cv2_border_mode_map = {
-    BORDER_CONSTANT: cv2.BORDER_CONSTANT,
-    BORDER_REPLICATE: cv2.BORDER_REPLICATE,
-    BORDER_REPLICATE_BLUR: cv2.BORDER_REPLICATE
+    constants.BORDER_CONSTANT: cv2.BORDER_CONSTANT,
+    constants.BORDER_REPLICATE: cv2.BORDER_REPLICATE,
+    constants.BORDER_REPLICATE_BLUR: cv2.BORDER_REPLICATE
 }
 
-VALID_DETECTORS = [DETECTOR_SIFT, DETECTOR_ORB, DETECTOR_SURF, DETECTOR_AKAZE]
-VALID_DESCRIPTORS = [DESCRIPTOR_SIFT, DESCRIPTOR_ORB, DESCRIPTOR_AKAZE]
-VALID_MATCHING_METHODS = [MATCHING_KNN, MATCHING_NORM_HAMMING]
-VALID_TRANSFORMS = [ALIGN_RIGID, ALIGN_HOMOGRAPHY]
-VALID_BORDER_MODES = [BORDER_CONSTANT, BORDER_REPLICATE, BORDER_REPLICATE_BLUR]
 RAISE_ORB_ORB_HAMMING = "align: detector ORB and descriptor ORB require match method NORM_HAMMING"
 
 
 def get_good_matches(des_0, des_1, matching_config=None):
     matching_config = {**_DEFAULT_MATCHING_CONFIG, **(matching_config or {})}
     matching_config_method = matching_config['method']
-    if matching_config_method == MATCHING_KNN:
+    if matching_config_method == constants.MATCHING_KNN:
         flann = cv2.FlannBasedMatcher(
             dict(algorithm=matching_config['flann_idx_kdtree'], trees=matching_config['flann_trees']),
             dict(checks=matching_config['flann_checks']))
         matches = flann.knnMatch(des_0, des_1, k=2)
         good_matches = [m for m, n in matches if m.distance < matching_config['threshold'] * n.distance]
-    elif matching_config_method == MATCHING_NORM_HAMMING:
+    elif matching_config_method == constants.MATCHING_NORM_HAMMING:
         bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
         good_matches = sorted(bf.match(des_0, des_1), key=lambda x: x.distance)
     return good_matches
@@ -77,23 +59,23 @@ def detect_and_compute(img_0, img_1, feature_config=None, matching_config=None):
     matching_config = {**_DEFAULT_MATCHING_CONFIG, **(matching_config or {})}
     img_bw_0, img_bw_1 = img_bw_8bit(img_0), img_bw_8bit(img_1)
     detector_map = {
-        DETECTOR_SIFT: cv2.SIFT_create,
-        DETECTOR_ORB: cv2.ORB_create,
-        DETECTOR_SURF: cv2.FastFeatureDetector_create,
-        DETECTOR_AKAZE: cv2.AKAZE_create
+        constants.DETECTOR_SIFT: cv2.SIFT_create,
+        constants.DETECTOR_ORB: cv2.ORB_create,
+        constants.DETECTOR_SURF: cv2.FastFeatureDetector_create,
+        constants.DETECTOR_AKAZE: cv2.AKAZE_create
     }
     descriptor_map = {
-        DESCRIPTOR_SIFT: cv2.SIFT_create,
-        DESCRIPTOR_ORB: cv2.ORB_create,
-        DESCRIPTOR_AKAZE: cv2.AKAZE_create
+        constants.DESCRIPTOR_SIFT: cv2.SIFT_create,
+        constants.DESCRIPTOR_ORB: cv2.ORB_create,
+        constants.DESCRIPTOR_AKAZE: cv2.AKAZE_create
     }
     detector = detector_map[feature_config['detector']]()
     descriptor = descriptor_map[feature_config['descriptor']]()
     feature_config_detector = feature_config['detector']
     feature_config_descriptor = feature_config['descriptor']
-    if feature_config_detector == DETECTOR_ORB and feature_config_descriptor == DESCRIPTOR_ORB and matching_config['method'] != MATCHING_NORM_HAMMING:
+    if feature_config_detector == constants.DETECTOR_ORB and feature_config_descriptor == constants.DESCRIPTOR_ORB and matching_config['method'] != constants.MATCHING_NORM_HAMMING:
         raise RuntimeError(RAISE_ORB_ORB_HAMMING)
-    if feature_config_detector == feature_config_descriptor and feature_config_detector in {DETECTOR_SIFT, DETECTOR_AKAZE}:
+    if feature_config_detector == feature_config_descriptor and feature_config_detector in (constants.DETECTOR_SIFT, constants.DETECTOR_AKAZE):
         kp_0, des_0 = detector.detectAndCompute(img_bw_0, None)
         kp_1, des_1 = detector.detectAndCompute(img_bw_1, None)
     else:
@@ -102,10 +84,10 @@ def detect_and_compute(img_0, img_1, feature_config=None, matching_config=None):
     return kp_0, kp_1, get_good_matches(des_0, des_1, matching_config)
 
 
-def find_transform(src_pts, dst_pts, transform=ALIGN_RIGID, rans_threshold=5.0):
-    if transform == ALIGN_HOMOGRAPHY:
+def find_transform(src_pts, dst_pts, transform=constants.ALIGN_RIGID, rans_threshold=5.0):
+    if transform == constants.ALIGN_HOMOGRAPHY:
         return cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, rans_threshold)
-    elif transform == ALIGN_RIGID:
+    elif transform == constants.ALIGN_RIGID:
         return cv2.estimateAffinePartial2D(src_pts, dst_pts, method=cv2.RANSAC, ransacReprojThreshold=rans_threshold)
     raise InvalidOptionError("transform", transform)
 
@@ -118,7 +100,7 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
         cv2_border_mode = _cv2_border_mode_map[alignment_config['border_mode']]
     except KeyError:
         raise InvalidOptionError("border_mode", alignment_config['border_mode'])
-    min_matches = 4 if alignment_config['transform'] == ALIGN_HOMOGRAPHY else 3
+    min_matches = 4 if alignment_config['transform'] == constants.ALIGN_HOMOGRAPHY else 3
     validate_image(img_0, *get_img_metadata(img_1))
     if callbacks and 'message' in callbacks.keys():
         callbacks['message']()
@@ -134,19 +116,19 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
         h, w = img_0.shape[:2]
         if callbacks and 'align_message' in callbacks.keys():
             callbacks['align_message']()
-        if alignment_config['transform'] == ALIGN_HOMOGRAPHY:
+        if alignment_config['transform'] == constants.ALIGN_HOMOGRAPHY:
             img_warp = cv2.warpPerspective(img_0, M, (w, h),
                                            borderMode=cv2_border_mode, borderValue=alignment_config['border_value'])
-            if alignment_config['border_mode'] == BORDER_REPLICATE_BLUR:
+            if alignment_config['border_mode'] == constants.BORDER_REPLICATE_BLUR:
                 mask = cv2.warpPerspective(np.ones_like(img_0, dtype=np.uint8), M, (w, h),
                                            borderMode=cv2.BORDER_CONSTANT, borderValue=0)
-        elif alignment_config['transform'] == ALIGN_RIGID:
+        elif alignment_config['transform'] == constants.ALIGN_RIGID:
             img_warp = cv2.warpAffine(img_0, M, (img_0.shape[1], img_0.shape[0]),
                                       borderMode=cv2_border_mode, borderValue=alignment_config['border_value'])
-            if alignment_config['border_mode'] == BORDER_REPLICATE_BLUR:
+            if alignment_config['border_mode'] == constants.BORDER_REPLICATE_BLUR:
                 mask = cv2.warpAffine(np.ones_like(img_0, dtype=np.uint8), M, (w, h),
                                       borderMode=cv2.BORDER_CONSTANT, borderValue=0)
-        if alignment_config['border_mode'] == BORDER_REPLICATE_BLUR:
+        if alignment_config['border_mode'] == constants.BORDER_REPLICATE_BLUR:
             if callbacks and 'blur_message' in callbacks.keys():
                 callbacks['blur_message']()
             mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
@@ -172,7 +154,7 @@ class AlignFrames(SubAction):
         self.feature_config = {**_DEFAULT_FEATURE_CONFIG, **(feature_config or {})}
         self.matching_config = {**_DEFAULT_MATCHING_CONFIG, **(matching_config or {})}
         self.alignment_config = {**_DEFAULT_ALIGNMENT_CONFIG, **(alignment_config or {})}
-        self.min_matches = 4 if self.alignment_config['transform'] == ALIGN_HOMOGRAPHY else 3
+        self.min_matches = 4 if self.alignment_config['transform'] == constants.ALIGN_HOMOGRAPHY else 3
         self.plot_summary = kwargs.get('plot_summary', False)
         self.plot_matches = kwargs.get('plot_matches', False)
         for k in self.feature_config.keys():

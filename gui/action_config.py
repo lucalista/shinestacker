@@ -11,7 +11,6 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any
 import os.path
 from config.constants import constants
-from focus_stack.align import VALID_BORDER_MODES, VALID_TRANSFORMS, VALID_MATCHING_METHODS
 from focus_stack.balance import VALID_BALANCE, DEFAULT_IMG_SCALE, VALID_CHANNELS
 from focus_stack.depth_map import VALID_MAP, VALID_ENERGY
 from focus_stack.vignetting import DEFAULT_R_STEPS, DEFALUT_BLACK_THRESHOLD, DEFAULT_MAX_CORRECTION
@@ -588,7 +587,7 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
                                options=['SIFT', 'ORB', 'AKAZE'], default='SIFT')
         self.add_bold_label("Feature matching:")
         self.builder.add_field('method', FIELD_COMBO, 'Method', required=False,
-                               options=self.MATCHING_METHOD_OPTIONS, values=VALID_MATCHING_METHODS,
+                               options=self.MATCHING_METHOD_OPTIONS, values=constants.VALID_MATCHING_METHODS,
                                default='KNN')
         self.builder.add_field('flann_idx_kdtree', FIELD_INT, 'Flann idx kdtree', required=False,
                                default=2, min=0, max=10)
@@ -600,18 +599,18 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
                                default=0.75, min=0, max=1, step=0.05)
         self.add_bold_label("Transform:")
         self.builder.add_field('transform', FIELD_COMBO, 'Transform', required=False,
-                               options=self.TRANSFORM_OPTIONS, values=VALID_TRANSFORMS,
+                               options=self.TRANSFORM_OPTIONS, values=constants.VALID_TRANSFORMS,
                                default='Rigid')
         self.builder.add_field('rans_threshold', FIELD_FLOAT, 'Homography RANS threshold', required=False,
                                default=5.0, min=0, max=20, step=0.1)
         self.add_bold_label("Border:")
         self.builder.add_field('border_mode', FIELD_COMBO, 'Border mode', required=False,
-                               options=self.BORDER_MODE_OPTIONS, values=VALID_BORDER_MODES,
+                               options=self.BORDER_MODE_OPTIONS, values=constants.VALID_BORDER_MODES,
                                default='Replicate and blur')
         self.builder.add_field('border_value', FIELD_INT_TUPLE, 'Border value (if constant)', required=False, size=4,
                                default=[0] * 4, labels=['r', 'g', 'b', 'a'], min=[0] * 4, max=[255] * 4)
         self.builder.add_field('border_blur', FIELD_FLOAT, 'Border blur', required=False,
-                               default=50, min=0, max=1000, step=1)
+                               default=constants.DEFAULT_BORDER_BLUR, min=0, max=1000, step=1)
         self.add_bold_label("Miscellanea:")
         self.builder.add_field('plot_summary', FIELD_BOOL, 'Plot summary', required=False, default=False)
         self.builder.add_field('plot_matches', FIELD_BOOL, 'Plot matches', required=False, default=False)
