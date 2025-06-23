@@ -1,4 +1,4 @@
-from config.config import config
+from config.config import config, constants
 from focus_stack.framework import JobBase
 from focus_stack.stack_framework import FrameMultiDirectory, SubAction
 from focus_stack.utils import read_img, save_plot, make_tqdm_bar, get_img_metadata, validate_image
@@ -10,18 +10,6 @@ import matplotlib.pyplot as plt
 import logging
 import os
 import errno
-
-
-DEFAULT_NOISE_MAP_FILENAME = "noise-map/hot_pixels.png"
-DEFAULT_MN_KERNEL_SIZE = 3
-INTERPOLATE_MEAN = 'MEAN'
-INTERPOLATE_MEDIAN = 'MEDIAN'
-RGB_LABELS = ['r', 'g', 'b']
-DEFAULT_CHANNEL_THRESHOLDS = [13, 13, 13]
-DEFAULT_BLUR_SIZE = 5
-DEFAULT_PLOT_RANGE = [5, 30]
-
-VALID_INTERPOLATE = {INTERPOLATE_MEAN, INTERPOLATE_MEDIAN}
 
 
 def mean_image(file_paths, message_callback=None, progress_callback=None):
@@ -51,12 +39,12 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
     def __init__(self, name="noise-map", enabled=True, **kwargs):
         FrameMultiDirectory.__init__(self, name, **kwargs)
         JobBase.__init__(self, name, enabled)
-        self.blur_size = kwargs.get('blur_size', DEFAULT_BLUR_SIZE)
-        self.file_name = kwargs.get('file_name', DEFAULT_NOISE_MAP_FILENAME)
+        self.blur_size = kwargs.get('blur_size', constants.DEFAULT_BLUR_SIZE)
+        self.file_name = kwargs.get('file_name', constants.DEFAULT_NOISE_MAP_FILENAME)
         if self.file_name == '':
-            self.file_name = DEFAULT_NOISE_MAP_FILENAME
-        self.channel_thresholds = kwargs.get('channel_thresholds', DEFAULT_CHANNEL_THRESHOLDS)
-        self.plot_range = kwargs.get('plot_range', DEFAULT_PLOT_RANGE)
+            self.file_name = constants.DEFAULT_NOISE_MAP_FILENAME
+        self.channel_thresholds = kwargs.get('channel_thresholds', constants.DEFAULT_CHANNEL_THRESHOLDS)
+        self.plot_range = kwargs.get('plot_range', constants.DEFAULT_PLOT_RANGE)
         self.plot_histograms = kwargs.get('plot_histograms', False)
 
     def hot_map(self, ch, th):
@@ -85,7 +73,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         hot_px = [self.hot_map(ch, self.channel_thresholds[i]) for i, ch in enumerate(channels)]
         hot_rgb = cv2.bitwise_or(hot_px[0], cv2.bitwise_or(hot_px[1], hot_px[2]))
         msg = []
-        for ch, hot in zip(['rgb', *RGB_LABELS], [hot_rgb] + hot_px):
+        for ch, hot in zip(['rgb', *constants.RGB_LABELS], [hot_rgb] + hot_px):
             msg.append("{}: {}".format(ch, np.count_nonzero(hot > 0)))
         self.print_message("hot pixels: " + ", ".join(msg))
         path = "/".join(self.file_name.split("/")[:-1])
@@ -100,7 +88,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
             plt.figure(figsize=(10, 5))
             x = np.array(list(th_range))
             ys = [[np.count_nonzero(self.hot_map(ch, th) > 0) for th in th_range] for ch in channels]
-            for i, ch, y in zip(range(3), RGB_LABELS, ys):
+            for i, ch, y in zip(range(3), constants.RGB_LABELS, ys):
                 plt.plot(x, y, c=ch, label=ch)
                 plt.plot([self.channel_thresholds[i], self.channel_thresholds[i]],
                          [0, y[self.channel_thresholds[i] - int(x[0])]], c=ch, linestyle="--")
@@ -116,8 +104,8 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
 
 
 class MaskNoise(SubAction):
-    def __init__(self, noise_mask=DEFAULT_NOISE_MAP_FILENAME,
-                 kernel_size=DEFAULT_MN_KERNEL_SIZE, method=INTERPOLATE_MEAN, **kwargs):
+    def __init__(self, noise_mask=constants.DEFAULT_NOISE_MAP_FILENAME,
+                 kernel_size=constants.DEFAULT_MN_KERNEL_SIZE, method=constants.INTERPOLATE_MEAN, **kwargs):
         super().__init__(**kwargs)
         self.noise_mask = noise_mask
         self.kernel_size = kernel_size
@@ -157,8 +145,8 @@ class MaskNoise(SubAction):
             ]
             valid_pixels = neighborhood[neighborhood != 0]
             if len(valid_pixels) > 0:
-                if self.method == INTERPOLATE_MEAN:
+                if self.method == constants.INTERPOLATE_MEAN:
                     corrected[y, x] = np.mean(valid_pixels)
-                elif self.method == INTERPOLATE_MEDIAN:
+                elif self.method == constants.INTERPOLATE_MEDIAN:
                     corrected[y, x] = np.median(valid_pixels)
         return corrected

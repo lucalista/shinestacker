@@ -10,10 +10,8 @@ from gui.project_model import (ActionConfig,
 from abc import ABC, abstractmethod
 from typing import Dict, Any
 import os.path
+from config.config import constants
 from focus_stack.align import VALID_BORDER_MODES, VALID_TRANSFORMS, VALID_MATCHING_METHODS
-from focus_stack.noise_detection import (DEFAULT_NOISE_MAP_FILENAME, DEFAULT_CHANNEL_THRESHOLDS,
-                                         RGB_LABELS, DEFAULT_BLUR_SIZE, DEFAULT_MN_KERNEL_SIZE,
-                                         DEFAULT_PLOT_RANGE)
 from focus_stack.balance import VALID_BALANCE, DEFAULT_IMG_SCALE, VALID_CHANNELS
 from focus_stack.depth_map import VALID_MAP, VALID_ENERGY
 from focus_stack.vignetting import DEFAULT_R_STEPS, DEFALUT_BLACK_THRESHOLD, DEFAULT_MAX_CORRECTION
@@ -417,9 +415,9 @@ class NoiseDetectionConfigurator(DefaultActionConfigurator):
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
         self.builder.add_field('channel_thresholds', FIELD_INT_TUPLE, 'Noise threshold', required=False, size=3,
-                               default=DEFAULT_CHANNEL_THRESHOLDS, labels=RGB_LABELS, min=[1] * 3, max=[1000] * 3)
+                               default=constants.DEFAULT_CHANNEL_THRESHOLDS, labels=constants.RGB_LABELS, min=[1] * 3, max=[1000] * 3)
         self.builder.add_field('blur_size', FIELD_INT, 'Blur size (px)', required=False,
-                               default=DEFAULT_BLUR_SIZE, min=1, max=50)
+                               default=constants.DEFAULT_BLUR_SIZE, min=1, max=50)
         self.builder.add_field('file_name', FIELD_TEXT, 'File name', required=False,
                                default="hot", placeholder="hot")
         self.add_bold_label("Miscellanea:")
@@ -427,7 +425,7 @@ class NoiseDetectionConfigurator(DefaultActionConfigurator):
         self.builder.add_field('plot_path', FIELD_REL_PATH, 'Plots path', required=False, default=DEFAULT_PLOTS_PATH,
                                placeholder='relative to working path')
         self.builder.add_field('plot_range', FIELD_INT_TUPLE, 'Plot range', required=False, size=2,
-                               default=DEFAULT_PLOT_RANGE, labels=['min', 'max'], min=[0] * 2, max=[1000] * 2)
+                               default=constants.DEFAULT_PLOT_RANGE, labels=['min', 'max'], min=[0] * 2, max=[1000] * 2)
 
 
 class FocusStackBaseConfigurator(DefaultActionConfigurator):
@@ -554,9 +552,9 @@ class MaskNoiseConfigurator(NoNameActionConfigurator):
         DefaultActionConfigurator.create_form(self, layout, action)
         self.builder.add_field('noise_mask', FIELD_REL_PATH, 'Noise mask file', required=False,
                                path_type='file', must_exist=True,
-                               default=DEFAULT_NOISE_MAP_FILENAME, placeholder=DEFAULT_NOISE_MAP_FILENAME)
+                               default=constants.DEFAULT_NOISE_MAP_FILENAME, placeholder=constants.DEFAULT_NOISE_MAP_FILENAME)
         self.builder.add_field('kernel_size', FIELD_INT, 'Kernel size', required=False,
-                               default=DEFAULT_MN_KERNEL_SIZE, min=1, max=10)
+                               default=constants.DEFAULT_MN_KERNEL_SIZE, min=1, max=10)
         self.builder.add_field('method', FIELD_COMBO, 'Interpolation method', required=False,
                                options=['Mean', 'Median'], default='Mean')
 
