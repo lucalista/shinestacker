@@ -116,16 +116,24 @@ class MainWindow(WindowMenu, LogManager):
         self.run_job_action.setEnabled(False)
         self.run_all_jobs_action.setEnabled(False)
 
+    def get_tab_at_position(self, id_str):
+        for i in range(self.tab_widget.count()):
+            w = self.tab_widget.widget(i)
+            if w.id_str() == id_str:
+                return w
+
+    def get_tab_position(self, id_str):
+        for i in range(self.tab_widget.count()):
+            w = self.tab_widget.widget(i)
+            if w.id_str() == id_str:
+                return i
+
     def _do_handle_end_message(self, status, id_str, message):
         self.run_job_button.setEnabled(True)
         self.run_all_jobs_button.setEnabled(True)
         self.run_job_action.setEnabled(True)
         self.run_all_jobs_action.setEnabled(True)
-        for i in range(self.tab_widget.count()):
-            w = self.tab_widget.widget(i)
-            if w.id_str() == id_str:
-                w.close_button.setEnabled(True)
-                break
+        self.get_tab_at_position(id_str).close_button.setEnabled(True)
 
     def create_new_window(self, title, labels=[]):
         new_window = RunWindow(labels, self)

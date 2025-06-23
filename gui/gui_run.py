@@ -153,12 +153,7 @@ class RunWindow(QTextEditLogger):
         confirm.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
         confirm.setDefaultButton(QMessageBox.Cancel)
         if confirm.exec() == QMessageBox.Ok:
-            tab_widget = self.main_window.tab_widget
-            for i in range(tab_widget.count()):
-                w = tab_widget.widget(i)
-                if w.id_str() == self.id_str():
-                    self.main_window.close_window(i)
-                    break
+            self.main_window.close_window(self.main_window.get_tab_position(self.id_str()))
 
     def set_progress_bar_style(self, bar_color=None):
         if bar_color is None:
