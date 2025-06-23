@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import cv2
 import numpy as np
+from config.constants import constants
 from focus_stack.utils import img_8bit, save_plot
 from focus_stack.stack_framework import SubAction
 from scipy.optimize import curve_fit, fsolve
@@ -8,20 +9,17 @@ from termcolor import colored
 import logging
 
 CLIP_EXP = 10
-DEFAULT_R_STEPS = 100
-DEFALUT_BLACK_THRESHOLD = 1
-DEFAULT_MAX_CORRECTION = 1
 
 
 class Vignetting(SubAction):
     def __init__(self, enabled=True, percentiles=(0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95), **kwargs):
         super().__init__(enabled)
-        self.r_steps = kwargs.get('r_steps', DEFAULT_R_STEPS)
-        self.black_threshold = kwargs.get('black_threshold', DEFALUT_BLACK_THRESHOLD)
+        self.r_steps = kwargs.get('r_steps', constants.DEFAULT_R_STEPS)
+        self.black_threshold = kwargs.get('black_threshold', constants.DEFALUT_BLACK_THRESHOLD)
         self.apply_correction = kwargs.get('apply_correction', True)
         self.plot_correction = kwargs.get('plot_correction', False)
         self.plot_summary = kwargs.get('plot_summary', False)
-        self.max_correction = kwargs.get('max_correction', DEFAULT_MAX_CORRECTION)
+        self.max_correction = kwargs.get('max_correction', constants.DEFAULT_MAX_CORRECTION)
         self.percentiles = np.sort(percentiles)
 
     def radial_mean_intensity(self, image):

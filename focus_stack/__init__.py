@@ -5,7 +5,7 @@ from focus_stack.stack_framework import StackJob, CombinedActions
 from focus_stack.align import AlignFrames
 from focus_stack.balance import BalanceFrames
 from focus_stack.stack import FocusStackBunch, FocusStack
-from focus_stack.depth_map import DepthMapStack, ENERGY_SOBEL, ENERGY_LAPLACIAN, MAP_MAX, MAP_AVERAGE
+from focus_stack.depth_map import DepthMapStack
 from focus_stack.pyramid import PyramidStack
 from focus_stack.pyramid_sequential import PyramidSequentialStack
 from focus_stack.multilayer import MultiLayer

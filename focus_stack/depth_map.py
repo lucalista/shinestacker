@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 from termcolor import colored
+from config.constants import constants
 from focus_stack.utils import read_img, get_img_metadata, validate_image
 from focus_stack.exceptions import ImageLoadError
 
@@ -21,23 +22,10 @@ def get_sobel_map(images):
     return energies
 
 
-ENERGY_LAPLACIAN = "laplacian"
-ENERGY_SOBEL = "sobel"
-MAP_AVERAGE = "average"
-MAP_MAX = "max"
-VALID_MAP = [MAP_AVERAGE, MAP_MAX]
-VALID_ENERGY = [ENERGY_LAPLACIAN, ENERGY_SOBEL]
-DEFAULT_DM_MAP = MAP_AVERAGE
-DEFAULT_DM_ENERGY = ENERGY_LAPLACIAN
-DEFAULT_DM_KERNEL_SIZE = 5
-DEFAULT_DM_BLUR_SIZE = 5
-DEFAULT_DM_SMOOTH_SIZE = 32
-
-
 class DepthMapStack:
-    def __init__(self, map_type=DEFAULT_DM_MAP, energy=DEFAULT_DM_ENERGY,
-                 kernel_size=DEFAULT_DM_KERNEL_SIZE, blur_size=DEFAULT_DM_BLUR_SIZE,
-                 smooth_size=DEFAULT_DM_SMOOTH_SIZE):
+    def __init__(self, map_type=constants.DEFAULT_DM_MAP, energy=constants.DEFAULT_DM_ENERGY,
+                 kernel_size=constants.DEFAULT_DM_KERNEL_SIZE, blur_size=constants.DEFAULT_DM_BLUR_SIZE,
+                 smooth_size=constants.DEFAULT_DM_SMOOTH_SIZE):
         self.map_type = map_type
         self.energy = energy
         self.kernel_size = kernel_size
@@ -68,7 +56,7 @@ class DepthMapStack:
         return smoothed
 
     def get_focus_map(self, energies):
-        if (self.map_type == MAP_AVERAGE):
+        if (self.map_type == constants.DM_MAP_AVERAGE):
             tile_shape = np.array(energies.shape)
             tile_shape[1:] = 1
             sum_energies = np.tile(np.sum(energies, axis=0), tile_shape)
@@ -106,9 +94,9 @@ class DepthMapStack:
         for index in range(self.images.shape[0]):
             gray_images[index] = convert_to_grayscale(self.images[index])
         self.print_message(': compute energy map')
-        if self.energy == ENERGY_SOBEL:
+        if self.energy == constants.DM_ENERGY_SOBEL:
             energy_map = get_sobel_map(gray_images)
-        elif self.energy == ENERGY_LAPLACIAN:
+        elif self.energy == constants.DM_ENERGY_LAPLACIAN:
             energy_map = self.get_laplacian_map(gray_images)
         else:
             assert False, 'invalid energy parameter: ' + self.energy

@@ -1,3 +1,4 @@
+from config.constants import constants
 from .framework import Job, ActionList
 from .utils import check_path_exists
 from focus_stack.utils import read_img, write_img
@@ -5,8 +6,6 @@ from focus_stack.exceptions import ShapeError, BitDepthError
 from termcolor import colored
 import logging
 import os
-
-DEFAULT_PLOTS_PATH = 'plots'
 
 
 class StackJob(Job):
@@ -26,7 +25,7 @@ class StackJob(Job):
 class FramePaths:
     EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
-    def __init__(self, name, input_path='', output_path='', working_path='', plot_path=DEFAULT_PLOTS_PATH,
+    def __init__(self, name, input_path='', output_path='', working_path='', plot_path=constants.DEFAULT_PLOTS_PATH,
                  scratch_output_dir=False, resample=1, reverse_order=False, **kwargs):
         self.name = name
         self.working_path = working_path
@@ -107,7 +106,7 @@ class FrameDirectory(FramePaths):
 class FrameMultiDirectory:
     EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
-    def __init__(self, name, input_path='', output_path='', working_path='', plot_path=DEFAULT_PLOTS_PATH,
+    def __init__(self, name, input_path='', output_path='', working_path='', plot_path=constants.DEFAULT_PLOTS_PATH,
                  resample=1, reverse_order=False, **kwargs):
         FramePaths.__init__(self, name, input_path, output_path, working_path, plot_path, resample, reverse_order, **kwargs)
 

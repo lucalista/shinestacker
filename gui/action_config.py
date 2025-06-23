@@ -11,12 +11,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any
 import os.path
 from config.constants import constants
-from focus_stack.depth_map import VALID_MAP, VALID_ENERGY
-from focus_stack.vignetting import DEFAULT_R_STEPS, DEFALUT_BLACK_THRESHOLD, DEFAULT_MAX_CORRECTION
-from focus_stack.stack_framework import DEFAULT_PLOTS_PATH
 from focus_stack.stack import DEFAULT_FRAMES, DEFAULT_OVERLAP
-from focus_stack.depth_map import (DEFAULT_DM_MAP, DEFAULT_DM_ENERGY, DEFAULT_DM_KERNEL_SIZE,
-                                   DEFAULT_DM_BLUR_SIZE, DEFAULT_DM_SMOOTH_SIZE)
 from focus_stack.pyramid import DEFAULT_PY_MIN_SIZE, DEFAULT_PY_KERNEL_SIZE, DEFAULT_PY_GEN_KERNEL
 
 
@@ -51,7 +46,7 @@ class FieldBuilder:
     def add_field(self, tag: str, field_type: str, label: str,
                   required: bool = False, add_to_layout=None, **kwargs):
         if field_type == FIELD_TEXT:
-            widget = self._create_text_field(tag, **kwargs)
+           widget = self._create_text_field(tag, **kwargs)
         elif field_type == FIELD_ABS_PATH:
             widget = self._create_abs_path_field(tag, **kwargs)
         elif field_type == FIELD_REL_PATH:
@@ -420,7 +415,7 @@ class NoiseDetectionConfigurator(DefaultActionConfigurator):
                                default="hot", placeholder="hot")
         self.add_bold_label("Miscellanea:")
         self.builder.add_field('plot_histograms', FIELD_BOOL, 'Plot histograms', required=False, default=False)
-        self.builder.add_field('plot_path', FIELD_REL_PATH, 'Plots path', required=False, default=DEFAULT_PLOTS_PATH,
+        self.builder.add_field('plot_path', FIELD_REL_PATH, 'Plots path', required=False, default=constants.DEFAULT_PLOTS_PATH,
                                placeholder='relative to working path')
         self.builder.add_field('plot_range', FIELD_INT_TUPLE, 'Plot range', required=False, size=2,
                                default=constants.DEFAULT_NOISE_PLOT_RANGE, labels=['min', 'max'], min=[0] * 2, max=[1000] * 2)
@@ -477,20 +472,22 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
         self.builder.add_field('depthmap_energy', FIELD_COMBO, 'Energy', required=False,
                                add_to_layout=q_depthmap.layout(),
                                options=self.ENERGY_OPTIONS, values=VALID_ENERGY,
-                               default={k: v for k, v in zip(VALID_ENERGY, self.ENERGY_OPTIONS)}[DEFAULT_DM_ENERGY])
+                               default={k: v for k, v in \
+                                        zip(constans.VALID_DM_ENERGY, self.ENERGY_OPTIONS)}[constants.DEFAULT_DM_ENERGY])
         self.builder.add_field('map_type', FIELD_COMBO, 'Map type', required=False,
                                add_to_layout=q_depthmap.layout(),
                                options=self.MAP_TYPE_OPTIONS, values=VALID_MAP,
-                               default={k: v for k, v in zip(VALID_MAP, self.MAP_TYPE_OPTIONS)}[DEFAULT_DM_MAP])
+                               default={k: v for k, v in \
+                                        zip(constants.VALID_DM_MAP, self.MAP_TYPE_OPTIONS)}[constants.DEFAULT_DM_MAP])
         self.builder.add_field('depthmap_kernel_size', FIELD_INT, 'Kernel size (px)',
                                required=False, add_to_layout=q_depthmap.layout(),
-                               default=DEFAULT_DM_KERNEL_SIZE, min=3, max=21)
+                               default=constants.DEFAULT_DM_KERNEL_SIZE, min=3, max=21)
         self.builder.add_field('depthmap_blur_size', FIELD_INT, 'Blurl size (px)',
                                required=False, add_to_layout=q_depthmap.layout(),
-                               default=DEFAULT_DM_BLUR_SIZE, min=1, max=21)
+                               default=constants.DEFAULT_DM_BLUR_SIZE, min=1, max=21)
         self.builder.add_field('depthmap_smooth_size', FIELD_INT, 'Smooth size (px)',
                                required=False, add_to_layout=q_depthmap.layout(),
-                               default=DEFAULT_DM_SMOOTH_SIZE, min=1, max=256)
+                               default=constants.DEFAULT_DM_SMOOTH_SIZE, min=1, max=256)
         self.builder.layout.addRow(stacked)
         combo.currentIndexChanged.connect(change)
 
@@ -561,11 +558,11 @@ class VignettingConfigurator(NoNameActionConfigurator):
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
         self.builder.add_field('r_steps', FIELD_INT, 'Radial steps', required=False,
-                               default=DEFAULT_R_STEPS, min=1, max=1000)
+                               default=constants.DEFAULT_R_STEPS, min=1, max=1000)
         self.builder.add_field('black_threshold', FIELD_INT, 'Black intensity threshold', required=False,
-                               default=DEFALUT_BLACK_THRESHOLD, min=0, max=1000)
+                               default=constants.DEFALUT_BLACK_THRESHOLD, min=0, max=1000)
         self.builder.add_field('max_correction', FIELD_FLOAT, 'Max. correction', required=False,
-                               default=DEFAULT_MAX_CORRECTION, min=0, max=1, step=0.05)
+                               default=constants.DEFAULT_MAX_CORRECTION, min=0, max=1, step=0.05)
         self.add_bold_label("Miscellanea:")
         self.builder.add_field('plot_correction', FIELD_BOOL, 'Plot correction', required=False, default=False)
         self.builder.add_field('plot_summary', FIELD_BOOL, 'Plot summary', required=False, default=False)
