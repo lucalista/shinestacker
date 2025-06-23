@@ -1,4 +1,5 @@
 from config.config import config
+from config.constants import constants
 from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QProgressBar,
                                QMessageBox, QScrollArea, QSizePolicy, QFrame, QLabel)
 from PySide6.QtGui import QColor
@@ -38,6 +39,21 @@ class ColorPalette:
     MEDIUM_BLUE = ColorEntry(160, 160, 200)
     MEDIUM_GREEN = ColorEntry(160, 200, 160)
     MEDIUM_RED = ColorEntry(200, 160, 160)
+
+
+RED_BUTTON_STYLE = f"""
+    QPushButton {{
+        background-color: #{ColorPalette.MEDIUM_RED.hex()};
+        color: #{ColorPalette.DARK_RED.hex()};
+        font-weight: bold;
+        border-radius: 5px;
+        padding: 4px;
+    }}
+    QPushButton:disabled {{
+        background-color: #{ColorPalette.LIGHT_RED.hex()};
+        color: #{ColorPalette.MEDIUM_RED.hex()};
+    }}
+"""
 
 
 class ColorButton(QPushButton):
@@ -125,25 +141,23 @@ class RunWindow(QTextEditLogger):
         self.right_area.setMaximumWidth(0)
         self.image_area_widget.setFixedWidth(0)
         layout.addLayout(output_layout)
+
+        self.stop_button = QPushButton("Stop")
+        self.setStyleSheet(RED_BUTTON_STYLE)
+        self.stop_button.clicked.connect(self.stop_worker)
+        self.status_bar.addPermanentWidget(self.stop_button)
+
         self.close_button = QPushButton("Close")
         self.close_button.setEnabled(False)
-        self.setStyleSheet(f"""
-            QPushButton {{
-                background-color: #{ColorPalette.MEDIUM_RED.hex()};
-                color: #{ColorPalette.DARK_RED.hex()};
-                font-weight: bold;
-                border-radius: 5px;
-                padding: 4px;
-            }}
-            QPushButton:disabled {{
-                background-color: #{ColorPalette.LIGHT_RED.hex()};
-                color: #{ColorPalette.MEDIUM_RED.hex()};
-            }}
-        """)
+        self.setStyleSheet(RED_BUTTON_STYLE)
         self.close_button.clicked.connect(self.close_window)
         self.status_bar.addPermanentWidget(self.close_button)
+
         layout.addWidget(self.status_bar)
         self.setLayout(layout)
+
+    def stop_worker(self):
+        self.main_window.stop_worker(self.main_window.get_tab_position(self.id_str()))
 
     def close_window(self):
         confirm = QMessageBox()
@@ -242,6 +256,7 @@ class RunWorker(LogWorker):
     def __init__(self, id_str):
         LogWorker.__init__(self)
         self.id_str = id_str
+        self.status = constants.STATUS_RUNNING
         self.callbacks = {
             'before_action': self.before_action,
             'after_action': self.after_action,
@@ -249,7 +264,8 @@ class RunWorker(LogWorker):
             'begin_steps': self.begin_steps,
             'end_steps': self.end_steps,
             'after_step': self.after_step,
-            'save_plot': self.save_plot
+            'save_plot': self.save_plot,
+            'check_running': self.check_running
         }
         self.tag = ""
 
@@ -274,6 +290,9 @@ class RunWorker(LogWorker):
     def save_plot(self, id, name, path):
         self.save_plot_signal.emit(id, name, path)
 
+    def check_running(self, id, name):
+        return self.status == constants.STATUS_RUNNING
+
     def run(self):
         run_error = False
         self.status_signal.emit(f"{self.tag} running...", 0)
@@ -293,11 +312,11 @@ class RunWorker(LogWorker):
             self._do_run()
         if run_error:
             message = f"{self.tag} failed"
-            status = 1
+            status = constants.RUN_FAILED
             color = "#" + ColorPalette.DARK_RED.hex()
         else:
             message = f"{self.tag} ended successfully"
-            status = 0
+            status = constants.RUN_COMPLETED
             color = "#" + ColorPalette.DARK_BLUE.hex()
             self.html_signal.emit(f'''
         <div style="margin: 2px 0; font-family: {LOG_FONTS_STR};">
@@ -306,6 +325,17 @@ class RunWorker(LogWorker):
         ''')
         self.end_signal.emit(status, self.id_str, message)
         self.status_signal.emit(f"{self.tag} completed", 0)
+
+    def stop(self):
+        self.status = constants.STATUS_STOPPED
+        self.wait()
+        message = f"{self.tag} stopped"
+        self.html_signal.emit(f'''
+        <div style="margin: 2px 0; font-family: {LOG_FONTS_STR};">
+        <span style="color: #{ColorPalette.DARK_RED.hex()}; font-weight: bold;">{message}</span>
+        </div>
+        ''')
+        self.end_signal.emit(constants.RUN_STOPPED, self.id_str, message)
 
 
 class JobLogWorker(RunWorker):

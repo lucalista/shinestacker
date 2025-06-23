@@ -234,6 +234,8 @@ class CombinedActions(FramesRefActions):
             if not a.enabled:
                 self.get_logger().warning(colored(self.base_message + ": sub-action disabled", 'red'))
             else:
+                if not self.callback('check_running', self.id, self.name):
+                    raise RunStopException(self.name)
                 img = a.run_frame(idx, ref_idx, img)
         self.sub_message_r(': write output image')
         if img is not None:

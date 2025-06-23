@@ -71,6 +71,14 @@ class _Constants:
     DEFAULT_PY_KERNEL_SIZE = 5
     DEFAULT_PY_GEN_KERNEL = 0.4
 
+    STATUS_RUNNING = 1
+    STATUS_PAUSED = 2
+    STATUS_STOPPED = 3
+
+    RUN_COMPLETED = 0
+    RUN_FAILED = 1
+    RUN_STOPPED = 2
+
     def __setattr__(self, name, value):
         raise AttributeError(f"Can't reassign constant '{name}'")
 

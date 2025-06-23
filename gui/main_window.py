@@ -136,6 +136,7 @@ class MainWindow(WindowMenu, LogManager):
         self.run_job_action.setEnabled(True)
         self.run_all_jobs_action.setEnabled(True)
         self.get_tab_at_position(id_str).close_button.setEnabled(True)
+        self.get_tab_at_position(id_str).stop_button.setEnabled(False)
 
     def create_new_window(self, title, labels=[]):
         new_window = RunWindow(labels, self)
@@ -152,6 +153,10 @@ class MainWindow(WindowMenu, LogManager):
         self._windows.pop(tab_position)
         self._workers.pop(tab_position)
         self.tab_widget.removeTab(tab_position)
+
+    def stop_worker(self, tab_position):
+        worker = self._workers[tab_position]
+        worker.stop()
 
     def connect_signals(self, worker, window):
         worker.before_action_signal.connect(window.handle_before_action)

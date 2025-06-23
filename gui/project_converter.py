@@ -12,29 +12,34 @@ from focus_stack.stack import FocusStack, FocusStackBunch
 from focus_stack.pyramid import PyramidStack
 from focus_stack.depth_map import DepthMapStack
 from focus_stack.multilayer import MultiLayer
-from focus_stack.exceptions import InvalidOptionError
+from focus_stack.exceptions import InvalidOptionError, RunStopException
 import logging
 
 
 class ProjectConverter:
+    def run(self, job, logger):
+        if job.enabled:
+            logger.info(f"=== run job: {job.name} ===")
+        else:
+            logger.warning(f"=== job: {job.name} disabled ===")
+        try:
+            job.run()
+        except RunStopException:
+            logger.warning(f"=== job: {job.name} stopped ===")
+        except Exception as e:
+            msg = str(e)
+            logger.warning(f"=== job: {job.name} failed: {msg} ===")
+
     def run_project(self, project: Project, logger_name=None, callbacks=None):
         logger = logging.getLogger(__name__ if logger_name is None else logger_name)
         jobs = self.project(project, logger_name, callbacks)
         for job in jobs:
-            if job.enabled:
-                logger.info("=== run job: " + job.name + " ===")
-            else:
-                logger.warning("=== job: " + job.name + " disabled ===")
-            job.run()
+            self.run(job, logger)
 
     def run_job(self, job: ActionConfig, logger_name=None, callbacks=None):
         logger = logging.getLogger(__name__ if logger_name is None else logger_name)
         job = self.job(job, logger_name, callbacks)
-        if job.enabled:
-            logger.info("=== run job: " + job.name + " ===")
-        else:
-            logger.warning("=== job: " + job.name + " disabled ===")
-        job.run()
+        self.run(job, logger)
 
     def project(self, project: Project, logger_name=None, callbacks=None):
         return [self.job(j, logger_name, callbacks) for j in project.jobs]

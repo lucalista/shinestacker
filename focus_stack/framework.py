@@ -6,6 +6,7 @@ from termcolor import colored
 from focus_stack.logging import setup_logging
 from focus_stack.utils import make_tqdm_bar
 import logging
+from focus_stack.exceptions import RunStopException
 
 LINE_UP = "\r\033[A"
 trailing_spaces = " " * 30
@@ -77,7 +78,7 @@ class JobBase:
         if has_callbacks and self.callbacks is not None:
             callback = self.callbacks.get(key, None)
             if callback:
-                callback(*args)
+                return callback(*args)
 
     def run(self):
         self.__t0 = time.time()
@@ -168,6 +169,8 @@ class Job(JobBase):
                 self.get_logger().warning(colored(a.name + f": {msg} disabled", 'red'))
                 # a.callback('after_action', a.id, a.name)
             else:
+                if not self.callback('check_running', self.id, self.name):
+                    raise RunStopException(self.name)
                 a.run()
 
 
