@@ -79,7 +79,7 @@ class JobBase:
             callback = self.callbacks.get(key, None)
             if callback:
                 return callback(*args)
-        return True
+        return None
 
     def run(self):
         self.__t0 = time.time()
@@ -170,7 +170,7 @@ class Job(JobBase):
                 self.get_logger().warning(colored(a.name + f": {msg} disabled", 'red'))
                 # a.callback('after_action', a.id, a.name)
             else:
-                if not self.callback('check_running', self.id, self.name):
+                if self.callback('check_running', self.id, self.name) is False:
                     raise RunStopException(self.name)
                 a.run()
 
