@@ -1,5 +1,6 @@
-from PySide6.QtWidgets import (QMessageBox, QFileDialog, QMainWindow, QListWidgetItem, QDialog, QMenu)
+from PySide6.QtWidgets import (QMessageBox, QFileDialog, QMainWindow, QListWidgetItem, QDialog, QMenu, QToolBar)
 from PySide6.QtGui import QAction, QColor, QIcon
+from PySide6.QtCore import Qt
 from gui.project_model import Project, ActionConfig
 from gui.project_model import (ACTION_JOB, ACTION_COMBO, ACTION_TYPES, SUB_ACTION_TYPES,
                                ACTION_NOISEDETECTION, ACTION_FOCUSSTACK, ACTION_FOCUSSTACKBUNCH, ACTION_MULTILAYER,
@@ -23,6 +24,19 @@ class WindowMenu(QMainWindow):
     _copy_buffer = None
     _modified_project = False
     _project_buffer = []
+
+    def __init__(self):
+        super().__init__()
+        self._current_file = None
+        menubar = self.menuBar()
+        self.add_file_menu(menubar)
+        self.add_edit_menu(menubar)
+        self.add_job_menu(menubar)
+        self.add_actions_menu(menubar)
+        self.add_help_menu(menubar)
+        toolbar = QToolBar(self)
+        self.addToolBar(Qt.TopToolBarArea, toolbar)
+        self.fill_toolbar(toolbar)
 
     def list_item(self, text, enabled):
         script_dir = os.path.dirname(__file__)
@@ -91,10 +105,12 @@ class WindowMenu(QMainWindow):
         clone_action.setShortcut("Ctrl+D")
         clone_action.triggered.connect(self.clone_element)
         menu.addAction(clone_action)
-        delete_action = QAction("Delete", self)
-        delete_action.setShortcut("Del")  # Qt.Key_Backspace
-        delete_action.triggered.connect(self.delete_element)
-        menu.addAction(delete_action)
+        self.delete_element_action = QAction("Delete", self)
+        self.delete_element_action.setShortcut("Del")  # Qt.Key_Backspace
+        self.delete_element_action.setIcon(QIcon.fromTheme("edit-delete"))
+        self.delete_element_action.setToolTip("delete")
+        self.delete_element_action.triggered.connect(self.delete_element)
+        menu.addAction(self.delete_element_action)
         menu.addSeparator()
         up_action = QAction("Move &Up", self)
         up_action.setShortcut("Ctrl+Up")
@@ -124,19 +140,24 @@ class WindowMenu(QMainWindow):
 
     def add_job_menu(self, menubar):
         menu = menubar.addMenu("&Jobs")
-        add_job_action = QAction("Add Job", self)
-        add_job_action.setShortcut("Ctrl+P")
-        add_job_action.triggered.connect(self.add_job)
-        menu.addAction(add_job_action)
+        self.add_job_action = QAction("Add Job", self)
+        self.add_job_action.setShortcut("Ctrl+P")
+        self.add_job_action.setIcon(QIcon.fromTheme("folder-new"))
+        self.add_job_action.setToolTip("Add job")
+        self.add_job_action.triggered.connect(self.add_job)
+        menu.addAction(self.add_job_action)
         menu.addSeparator()
         self.run_job_action = QAction("Run Job", self)
         self.run_job_action.setShortcut("Ctrl+J")
+        self.run_job_action.setIcon(QIcon.fromTheme("media-playback-start"))
+        self.run_job_action.setToolTip("Run job")
         self.run_job_action.triggered.connect(self.run_job)
         menu.addAction(self.run_job_action)
         self.run_all_jobs_action = QAction("Run All Jobs", self)
-        self.run_all_jobs_action.setShortcut("Ctrl+J")
-        self.run_all_jobs_action.triggered.connect(self.run_all_jobs)
         self.run_all_jobs_action.setShortcut("Ctrl+Shift+J")
+        self.run_all_jobs_action.setIcon(QIcon.fromTheme("media-seek-forward"))
+        self.run_all_jobs_action.setToolTip("Run all jobs")
+        self.run_all_jobs_action.triggered.connect(self.run_all_jobs)
         menu.addAction(self.run_all_jobs_action)
 
     def add_actions_menu(self, menubar):
@@ -174,15 +195,12 @@ class WindowMenu(QMainWindow):
         help_action.triggered.connect(self.website)
         menu.addAction(help_action)
 
-    def __init__(self):
-        super().__init__()
-        self._current_file = None
-        menubar = self.menuBar()
-        self.add_file_menu(menubar)
-        self.add_edit_menu(menubar)
-        self.add_job_menu(menubar)
-        self.add_actions_menu(menubar)
-        self.add_help_menu(menubar)
+    def fill_toolbar(self, toolbar):
+        toolbar.addAction(self.run_job_action)
+        toolbar.addAction(self.run_all_jobs_action)
+        toolbar.addAction(self.add_job_action)
+        toolbar.addAction(self.delete_element_action)
+        
 
     def website(self):
         webbrowser.open("https://github.com/lucalista/focusstack/blob/main/docs/main.md")
