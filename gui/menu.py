@@ -156,12 +156,14 @@ class WindowMenu(QMainWindow):
         self.run_job_action.setShortcut("Ctrl+J")
         self.run_job_action.setIcon(self.get_icon("play-button-round-icon"))
         self.run_job_action.setToolTip("Run job")
+        self.run_job_action.setEnabled(False)
         self.run_job_action.triggered.connect(self.run_job)
         menu.addAction(self.run_job_action)
         self.run_all_jobs_action = QAction("Run All Jobs", self)
         self.run_all_jobs_action.setShortcut("Ctrl+Shift+J")
         self.run_all_jobs_action.setIcon(self.get_icon("forward-button-icon"))
         self.run_all_jobs_action.setToolTip("Run all jobs")
+        self.run_all_jobs_action.setEnabled(False)
         self.run_all_jobs_action.triggered.connect(self.run_all_jobs)
         menu.addAction(self.run_all_jobs_action)
 
@@ -242,6 +244,17 @@ class WindowMenu(QMainWindow):
             self.job_list.setCurrentRow(job_row)
         if action_row >= 0:
             self.action_list.setCurrentRow(action_row)
+        if self.job_list.count() == 0:
+            self.add_action_entry_action.setEnabled(False)
+            self.action_selector.setEnabled(False)
+            self.run_job_action.setEnabled(False)
+            self.run_all_jobs_action.setEnabled(False)
+        else:
+            self.add_action_entry_action.setEnabled(True)
+            self.action_selector.setEnabled(True)
+            self.delete_element_action.setEnabled(True)
+            self.run_job_action.setEnabled(True)
+            self.run_all_jobs_action.setEnabled(True)
 
     def _update_title(self):
         title = "Focus Stacking GUI"
@@ -460,9 +473,6 @@ class WindowMenu(QMainWindow):
                 current_job = self.project.jobs.pop(current_index)
                 self.action_list.clear()
                 self._refresh_ui()
-                if self.job_list.count() == 0:
-                    self.add_action_entry_action.setEnabled(False)
-                    self.action_selector.setEnabled(False)
                 return current_job
         return None
 
@@ -514,9 +524,7 @@ class WindowMenu(QMainWindow):
             self.job_list.addItem(self.list_item(self.job_text(job_action), job_action.enabled()))
             self.job_list.setCurrentRow(self.job_list.count() - 1)
             self.job_list.item(self.job_list.count() - 1).setSelected(True)
-            self.add_action_entry_action.setEnabled(True)
-            self.action_selector.setEnabled(True)
-            self.delete_element_action.setEnabled(True)
+            self._refresch_ui()
 
     def add_action(self, type_name=False):
         current_index = self.job_list.currentRow()
