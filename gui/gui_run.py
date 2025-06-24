@@ -82,19 +82,19 @@ class ColorButton(QPushButton):
 action_running_color = ColorPalette.MEDIUM_BLUE
 action_done_color = ColorPalette.MEDIUM_GREEN
 
-        
+
 class TimerProgressBar(QProgressBar):
     light_background_color = ColorPalette.LIGHT_BLUE
     border_color = ColorPalette.DARK_BLUE
     text_color = ColorPalette.DARK_BLUE
-    
+
     def __init__(self):
         super().__init__()
         super().setRange(0, 10)
         super().setValue(0)
         self.set_running_style()
         self._start_time = -1
-        
+
     def set_style(self, bar_color=None):
         if bar_color is None:
             bar_color = ColorPalette.MEDIUM_BLUE
@@ -115,22 +115,37 @@ class TimerProgressBar(QProgressBar):
         }}
         """)
 
+    def time_str(self, secs):
+        ss = int(secs)
+        h = ss // 3600
+        m = (ss % 3600) // 60
+        s = (ss % 3600) % 60
+        x = secs - ss
+        t_str = "{:02d}".format(s) + "{:.1f}s".format(x).lstrip('0')
+        if m > 0:
+            t_str = "{:02d}:{}".format(m, t_str)
+        if h > 0:
+            t_str = "{:02d}:{}".format(h, t_str)
+        return t_str
+
     def check_time(self, val):
         if self._start_time < 0:
             raise RuntimeError("TimeProgressbar: start and must be called before setValue and stop")
         self._current_time = time.time()
         elapsed_time = self._current_time - self._start_time
-        fmt = f"Progress: %p% - %v of %m - elapsed: {elapsed_time:.2f}s"
-        if val < self.maximum():
-            time_per_iter = 0 if val == 0 else elapsed_time / val
+        elapsed_str = self.time_str(elapsed_time)
+        fmt = f"Progress: %p% - %v of %m - elapsed: {elapsed_str}"
+        if 0 < val < self.maximum():
+            time_per_iter = elapsed_time / val
             estimated_time = time_per_iter * self.maximum()
-            missing_time = max(0, estimated_time - elapsed_time)
-            fmt += f" - elapsed: {elapsed_time:.2f}s, end in: {missing_time:.2f}s"
+            remaining_time = max(0, estimated_time - elapsed_time)
+            remaining_str = self.time_str(remaining_time)
+            fmt += f", {remaining_str} remaining"
         self.setFormat(fmt)
-        
+
     def start(self, steps):
         super().setMaximum(steps)
-        self._start_time = time.time()        
+        self._start_time = time.time()
         self.setValue(0)
 
     def stop(self):
