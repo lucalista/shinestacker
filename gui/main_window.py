@@ -161,7 +161,7 @@ class MainWindow(WindowMenu, LogManager):
     def connect_signals(self, worker, window):
         worker.before_action_signal.connect(window.handle_before_action)
         worker.after_action_signal.connect(window.handle_after_action)
-        worker.step_count_signal.connect(window.handle_step_count)
+        worker.step_counts_signal.connect(window.handle_step_counts)
         worker.begin_steps_signal.connect(window.handle_begin_steps)
         worker.end_steps_signal.connect(window.handle_end_steps)
         worker.after_step_signal.connect(window.handle_after_step)

@@ -7,6 +7,7 @@ from PySide6.QtCore import Signal, Slot
 from gui.project_converter import ProjectConverter
 from gui.gui_logging import LogWorker, QTextEditLogger, LOG_FONTS_STR
 from gui.gui_images import GuiPdfView, GuiImageView
+import time
 
 DISABLED_TAG = ""  # " <disabled>"
 INDENT_SPACE = "     "
@@ -77,28 +78,71 @@ class ColorButton(QPushButton):
             }}
         """)
 
+
+action_running_color = ColorPalette.MEDIUM_BLUE
+action_done_color = ColorPalette.MEDIUM_GREEN
+
+        
 class TimerProgressBar(QProgressBar):
-    def __init__(self):
-        super().__init__()
-
-    def start(self, steps):
-        super().setMaximum(steps)
-
-    def stop(self):
-        self.setValue(self.maximum())
-
-    def setValue(self, val):
-        super().setValue(val)
-
-
-class RunWindow(QTextEditLogger):
     light_background_color = ColorPalette.LIGHT_BLUE
     border_color = ColorPalette.DARK_BLUE
     text_color = ColorPalette.DARK_BLUE
-    bar_color = ColorPalette.MEDIUM_BLUE
-    action_running_color = ColorPalette.MEDIUM_BLUE
-    action_done_color = ColorPalette.MEDIUM_GREEN
+    
+    def __init__(self):
+        super().__init__()
+        super().setRange(0, 10)
+        super().setValue(0)
+        self.set_running_style()
+        self._start_time = -1
+        
+    def set_style(self, bar_color=None):
+        if bar_color is None:
+            bar_color = ColorPalette.MEDIUM_BLUE
+        self.setStyleSheet(f"""
+        QProgressBar {{
+          border: 2px solid #{self.border_color.hex()};
+          border-radius: 8px;
+          text-align: center;
+          font-weight: bold;
+          font-size: 12px;
+          background-color: #{self.light_background_color.hex()};
+          color: #{self.text_color.hex()};
+          min-height: 1px;
+        }}
+        QProgressBar::chunk {{
+          border-radius: 6px;
+          background-color: #{bar_color.hex()};
+        }}
+        """)
 
+    def check_time(self):
+        if self._start_time < 0:
+            raise RuntimeError("TimeProgressbar: start and must be called before setValue and stop")
+        self._current_time = time.time()
+        elapsed_time = self._current_time - self._start_time
+        self.setFormat(f"Progress: %p% - %v of %m - {elapsed_time:.2f} s")
+        
+    def start(self, steps):
+        super().setMaximum(steps)
+        self._start_time = time.time()        
+        self.setValue(0)
+
+    def stop(self):
+        self.check_time()
+        self.setValue(self.maximum())
+
+    def setValue(self, val):
+        self.check_time()
+        super().setValue(val)
+
+    def set_running_style(self):
+        self.set_style(action_running_color)
+
+    def set_done_style(self):
+        self.set_style(action_done_color)
+
+
+class RunWindow(QTextEditLogger):
     def __init__(self, labels, main_window, parent=None):
         QTextEditLogger.__init__(self, parent)
         self.main_window = main_window
@@ -119,11 +163,6 @@ class RunWindow(QTextEditLogger):
                     self.color_widgets[-1].append(widget)
                 layout.addWidget(row)
         self.progress_bar = TimerProgressBar()
-        self.progress_bar.setMinimum(0)
-        self.set_progress_bar_style()
-        self.progress_bar.setRange(0, 10)
-        self.progress_bar.setValue(0)
-        self.progress_bar.setFormat("Progress: %p% - %v of %m")
         layout.addWidget(self.progress_bar)
         output_layout = QHBoxLayout()
         left_layout, right_layout = QVBoxLayout(), QVBoxLayout()
@@ -182,50 +221,30 @@ class RunWindow(QTextEditLogger):
         if confirm.exec() == QMessageBox.Ok:
             self.main_window.close_window(self.main_window.get_tab_position(self.id_str()))
 
-    def set_progress_bar_style(self, bar_color=None):
-        if bar_color is None:
-            bar_color = self.bar_color
-        self.progress_bar.setStyleSheet(f"""
-        QProgressBar {{
-          border: 2px solid #{self.border_color.hex()};
-          border-radius: 8px;
-          text-align: center;
-          font-weight: bold;
-          font-size: 12px;
-          background-color: #{self.light_background_color.hex()};
-          color: #{self.text_color.hex()};
-          min-height: 1px;
-        }}
-        QProgressBar::chunk {{
-          border-radius: 6px;
-          background-color: #{bar_color.hex()};
-        }}
-        """)
-
     @Slot(int, str)
     def handle_before_action(self, id, name):
         if 0 <= id < len(self.color_widgets[self.row_widget_id]):
-            self.color_widgets[self.row_widget_id][id].set_color(*self.action_running_color.tuple())
-            self.progress_bar.setValue(0)
+            self.color_widgets[self.row_widget_id][id].set_color(*action_running_color.tuple())
+            self.progress_bar.start(1)
         if id == -1:
-            self.set_progress_bar_style(self.action_running_color)
+            self.progress_bar.set_running_style()
 
     @Slot(int, str)
     def handle_after_action(self, id, name):
         if 0 <= id < len(self.color_widgets[self.row_widget_id]):
-            self.color_widgets[self.row_widget_id][id].set_color(*self.action_done_color.tuple())
+            self.color_widgets[self.row_widget_id][id].set_color(*action_done_color.tuple())
             self.progress_bar.stop()
         if id == -1:
-            self.set_progress_bar_style(self.action_done_color)
             self.row_widget_id += 1
+            self.progress_bar.set_done_style()
 
     @Slot(int, str, str)
-    def handle_step_count(self, id, name, steps):
+    def handle_step_counts(self, id, name, steps):
         self.progress_bar.start(steps)
 
     @Slot(int, str)
     def handle_begin_steps(self, id, name):
-        self.progress_bar.setValue(0)
+        self.progress_bar.start(1)
 
     @Slot(int, str)
     def handle_end_steps(self, id, name):
@@ -260,7 +279,7 @@ class RunWindow(QTextEditLogger):
 class RunWorker(LogWorker):
     before_action_signal = Signal(int, str)
     after_action_signal = Signal(int, str)
-    step_count_signal = Signal(int, str, int)
+    step_counts_signal = Signal(int, str, int)
     begin_steps_signal = Signal(int, str)
     end_steps_signal = Signal(int, str)
     after_step_signal = Signal(int, str, int)
@@ -273,7 +292,7 @@ class RunWorker(LogWorker):
         self.callbacks = {
             'before_action': self.before_action,
             'after_action': self.after_action,
-            'step_count': self.step_count,
+            'step_counts': self.step_counts,
             'begin_steps': self.begin_steps,
             'end_steps': self.end_steps,
             'after_step': self.after_step,
@@ -288,8 +307,8 @@ class RunWorker(LogWorker):
     def after_action(self, id, name):
         self.after_action_signal.emit(id, name)
 
-    def step_count(self, id, name, steps):
-        self.step_count_signal.emit(id, name, steps)
+    def step_counts(self, id, name, steps):
+        self.step_counts_signal.emit(id, name, steps)
 
     def begin_steps(self, id, name):
         self.begin_steps_signal.emit(id, name)
