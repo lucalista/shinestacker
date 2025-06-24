@@ -107,8 +107,8 @@ class FrameMultiDirectory:
     EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
     def __init__(self, name, input_path='', output_path='', working_path='', plot_path=constants.DEFAULT_PLOTS_PATH,
-                 resample=1, reverse_order=False, **kwargs):
-        FramePaths.__init__(self, name, input_path, output_path, working_path, plot_path, resample, reverse_order, **kwargs)
+                 scratch_output_dir=True, resample=1, reverse_order=False, **kwargs):
+        FramePaths.__init__(self, name, input_path, output_path, working_path, plot_path, scratch_output_dir, resample, reverse_order, **kwargs)
 
     def folder_list_str(self):
         if isinstance(self.input_dir, list):

@@ -522,6 +522,8 @@ class MultiLayerConfigurator(DefaultActionConfigurator):
                                placeholder='relative to working path')
         self.builder.add_field('exif_path', FIELD_REL_PATH, 'Exif data path', required=False,
                                placeholder='relative to working path')
+        self.builder.add_field('scratch_output_dir', FIELD_BOOL, 'Scratch output dir.',
+                               required=False, default=True)
 
 
 class CombinedActionsConfigurator(DefaultActionConfigurator):
