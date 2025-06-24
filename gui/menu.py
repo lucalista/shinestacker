@@ -1,4 +1,5 @@
-from PySide6.QtWidgets import (QMessageBox, QFileDialog, QMainWindow, QListWidgetItem, QDialog, QMenu, QToolBar)
+from PySide6.QtWidgets import (QMessageBox, QFileDialog, QMainWindow, QListWidgetItem, QDialog,
+                               QMenu, QToolBar, QComboBox)
 from PySide6.QtGui import QAction, QColor, QIcon
 from PySide6.QtCore import Qt
 from gui.project_model import Project, ActionConfig
@@ -110,6 +111,7 @@ class WindowMenu(QMainWindow):
         self.delete_element_action.setIcon(QIcon.fromTheme("edit-delete"))
         self.delete_element_action.setToolTip("delete")
         self.delete_element_action.triggered.connect(self.delete_element)
+        self.delete_element_action.setEnabled(False)
         menu.addAction(self.delete_element_action)
         menu.addSeparator()
         up_action = QAction("Move &Up", self)
@@ -196,10 +198,33 @@ class WindowMenu(QMainWindow):
         menu.addAction(help_action)
 
     def fill_toolbar(self, toolbar):
+        toolbar.addAction(self.add_job_action)
+        toolbar.addSeparator()
+        self.action_selector = QComboBox()
+        self.action_selector.addItems(ACTION_TYPES)
+        self.action_selector.setEnabled(False)
+        toolbar.addWidget(self.action_selector)
+        self.add_action_entry_action = QAction("Add Action", self)
+        self.add_action_entry_action.setIcon(QIcon.fromTheme("appointment-soon"))
+        self.add_action_entry_action.setToolTip("Add action")
+        self.add_action_entry_action.triggered.connect(self.add_action)
+        self.add_action_entry_action.setEnabled(False)
+        toolbar.addAction(self.add_action_entry_action)
+        self.sub_action_selector = QComboBox()
+        self.sub_action_selector.addItems(SUB_ACTION_TYPES)
+        self.sub_action_selector.setEnabled(False)
+        toolbar.addWidget(self.sub_action_selector)
+        self.add_sub_action_entry_action = QAction("Add Sub Action", self)
+        self.add_sub_action_entry_action.setIcon(QIcon.fromTheme("appointment-soon"))
+        self.add_sub_action_entry_action.setToolTip("Add sub action")
+        self.add_sub_action_entry_action.triggered.connect(self.add_sub_action)
+        self.add_sub_action_entry_action.setEnabled(False)
+        toolbar.addAction(self.add_sub_action_entry_action)
+        toolbar.addSeparator()
+        toolbar.addAction(self.delete_element_action)
+        toolbar.addSeparator()
         toolbar.addAction(self.run_job_action)
         toolbar.addAction(self.run_all_jobs_action)
-        toolbar.addAction(self.add_job_action)
-        toolbar.addAction(self.delete_element_action)
 
     def website(self):
         webbrowser.open("https://github.com/lucalista/focusstack/blob/main/docs/main.md")
@@ -432,6 +457,9 @@ class WindowMenu(QMainWindow):
                 current_job = self.project.jobs.pop(current_index)
                 self.action_list.clear()
                 self._refresh_ui()
+                if self.job_list.count() == 0:
+                    self.add_action_entry_action.setEnabled(False)
+                    self.action_selector.setEnabled(False)
                 return current_job
         return None
 
@@ -470,6 +498,8 @@ class WindowMenu(QMainWindow):
             element = self.delete_job(confirm)
         elif self.action_list.hasFocus():
             element = self.delete_action(confirm)
+        if self.job_list.count() > 0:
+            self.delete_element_action.setEnabled(True)
         return element
 
     def add_job(self):
@@ -481,6 +511,9 @@ class WindowMenu(QMainWindow):
             self.job_list.addItem(self.list_item(self.job_text(job_action), job_action.enabled()))
             self.job_list.setCurrentRow(self.job_list.count() - 1)
             self.job_list.item(self.job_list.count() - 1).setSelected(True)
+            self.add_action_entry_action.setEnabled(True)
+            self.action_selector.setEnabled(True)
+            self.delete_element_action.setEnabled(True)
 
     def add_action(self, type_name=False):
         current_index = self.job_list.currentRow()
@@ -499,6 +532,7 @@ class WindowMenu(QMainWindow):
             self.touch_project()
             self.project.jobs[current_index].add_sub_action(action)
             self.action_list.addItem(self.list_item(self.action_text(action), action.enabled()))
+            self.delete_element_action.setEnabled(False)
 
     def add_action_CombinedActions(self):
         self.add_action(ACTION_COMBO)

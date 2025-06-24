@@ -1,10 +1,10 @@
-from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QListWidget, QHBoxLayout, QTabWidget,
-                               QLabel, QComboBox, QMessageBox, QDialog, QSplitter)
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QListWidget, QHBoxLayout, QTabWidget,
+                               QLabel, QMessageBox, QDialog, QSplitter)
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication
 from gui.project_model import Project
 from gui.action_config import ActionConfigDialog
-from gui.project_model import SUB_ACTION_TYPES, ACTION_TYPES, ACTION_COMBO
+from gui.project_model import ACTION_COMBO
 from gui.menu import WindowMenu
 from gui.gui_logging import LogManager
 from gui.gui_run import RunWindow, JobLogWorker, ProjectLogWorker, DISABLED_TAG, INDENT_SPACE
@@ -40,57 +40,16 @@ class MainWindow(WindowMenu, LogManager):
         self.job_list.itemDoubleClicked.connect(self.on_job_double_clicked)
         self.action_list = QListWidget()
         self.action_list.itemDoubleClicked.connect(self.on_action_double_clicked)
-
-        self.add_job_button = QPushButton("Add Job")
-        self.add_job_button.clicked.connect(self.add_job)
-        self.run_job_button = QPushButton("Run Job")
-        self.run_job_button.clicked.connect(self.run_job)
-        self.run_all_jobs_button = QPushButton("Run All Jobs")
-        self.run_all_jobs_button.clicked.connect(self.run_all_jobs)
-        self.delete_job_button = QPushButton("Delete Job")
-        self.delete_job_button.setEnabled(False)
-        self.delete_job_button.clicked.connect(self.delete_job)
-
-        self.add_action_button = QPushButton("Add Action")
-        self.add_action_button.clicked.connect(self.add_action)
-        self.action_selector = QComboBox()
-        self.action_selector.addItems(ACTION_TYPES)
-
         vbox_left = QVBoxLayout()
         vbox_left.setSpacing(4)
         vbox_left.addWidget(QLabel("Jobs"))
         vbox_left.addWidget(self.job_list)
-        hbox_job = QHBoxLayout()
-        hbox_job.addWidget(self.add_job_button)
-        hbox_job.addWidget(self.delete_job_button)
-        hbox_job.addWidget(self.run_job_button)
-        hbox_job.addWidget(self.run_all_jobs_button)
-        vbox_left.addLayout(hbox_job)
-
         vbox_right = QVBoxLayout()
         vbox_right.setSpacing(4)
         vbox_right.addWidget(QLabel("Actions"))
         vbox_right.addWidget(self.action_list)
-        hbox_actions = QHBoxLayout()
-        hbox_actions.addWidget(self.action_selector)
-        hbox_actions.addWidget(self.add_action_button)
-        hbox_actions.setAlignment(Qt.AlignTop)
-        vbox_right.addLayout(hbox_actions)
         self.job_list.itemSelectionChanged.connect(self.update_delete_buttons_state)
         self.action_list.itemSelectionChanged.connect(self.update_delete_buttons_state)
-
-        self.sub_action_selector = QComboBox()
-        self.sub_action_selector.addItems(SUB_ACTION_TYPES)
-        self.sub_action_selector.setEnabled(False)
-        self.add_sub_action_button = QPushButton("Add Sub-Action")
-        self.add_sub_action_button.clicked.connect(self.add_sub_action)
-        self.add_sub_action_button.setEnabled(False)
-        hbox_actions.addWidget(self.sub_action_selector)
-        hbox_actions.addWidget(self.add_sub_action_button)
-        self.delete_action_button = QPushButton("Delete Action")
-        self.delete_action_button.setEnabled(False)
-        self.delete_action_button.clicked.connect(self.delete_action)
-        hbox_actions.addWidget(self.delete_action_button)
         h_layout.addLayout(vbox_left)
         h_layout.addLayout(vbox_right)
         layout.addWidget(h_splitter)
@@ -111,8 +70,6 @@ class MainWindow(WindowMenu, LogManager):
         return None if current_index < 0 else self.project.jobs[current_index]
 
     def before_thread_begins(self):
-        self.run_job_button.setEnabled(False)
-        self.run_all_jobs_button.setEnabled(False)
         self.run_job_action.setEnabled(False)
         self.run_all_jobs_action.setEnabled(False)
 
@@ -131,8 +88,6 @@ class MainWindow(WindowMenu, LogManager):
         return i
 
     def _do_handle_end_message(self, status, id_str, message):
-        self.run_job_button.setEnabled(True)
-        self.run_all_jobs_button.setEnabled(True)
         self.run_job_action.setEnabled(True)
         self.run_all_jobs_action.setEnabled(True)
         self.get_tab_at_position(id_str).close_button.setEnabled(True)
@@ -205,16 +160,15 @@ class MainWindow(WindowMenu, LogManager):
             self.on_job_selected(current_job_index)
 
     def set_enabled_sub_actions_gui(self, enabled):
+        self.add_sub_action_entry_action.setEnabled(enabled)
         self.sub_action_selector.setEnabled(enabled)
-        self.add_sub_action_button.setEnabled(enabled)
         for a in self.sub_action_menu_entries:
             a.setEnabled(enabled)
 
     def update_delete_buttons_state(self):
         has_job_selected = len(self.job_list.selectedItems()) > 0
         has_action_selected = len(self.action_list.selectedItems()) > 0
-        self.delete_job_button.setEnabled(has_job_selected)
-        self.delete_action_button.setEnabled(has_action_selected)
+        self.delete_element_action.setEnabled(has_job_selected or has_action_selected)
         if has_action_selected and has_job_selected:
             job_index = self.job_list.currentRow()
             if job_index >= len(self.project.jobs):
@@ -238,16 +192,11 @@ class MainWindow(WindowMenu, LogManager):
                             break
                     if current_action:
                         break
-            enable_sub_actions = (current_action is not None and not is_sub_action and current_action.type_name == ACTION_COMBO)
-            self.sub_action_selector.setEnabled(enable_sub_actions)
+            enable_sub_actions = current_action is not None and \
+                not is_sub_action and current_action.type_name == ACTION_COMBO
             self.set_enabled_sub_actions_gui(enable_sub_actions)
-            if is_sub_action:
-                self.delete_action_button.setText("Delete Sub-action")
-            else:
-                self.delete_action_button.setText("Delete Action")
         else:
             self.set_enabled_sub_actions_gui(False)
-            self.delete_action_button.setText("Delete Action")
 
     def job_text(self, job):
         txt = job.params.get('name', '(job)')
