@@ -41,7 +41,7 @@ class WindowMenu(QMainWindow):
         self.fill_toolbar(toolbar)
 
     def get_icon(self, icon):
-        return QIcon(os.path.join(self.script_dir, f"img/{icon}.png"))      
+        return QIcon(os.path.join(self.script_dir, f"img/{icon}.png"))
 
     def list_item(self, text, enabled):
         if enabled:

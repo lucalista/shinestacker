@@ -20,11 +20,8 @@ class PyramidStack:
     def name(self):
         return "pyramid"
 
-    def messenger(self, messenger):
-        self.messenger = messenger
-
     def print_message(self, msg):
-        self.messenger.sub_message_r(colored(msg, "light_blue"))
+        self.process.sub_message_r(colored(msg, "light_blue"))
 
     def convolve(self, image):
         return cv2.filter2D(image, -1, self.gen_kernel, borderType=cv2.BORDER_REFLECT101)

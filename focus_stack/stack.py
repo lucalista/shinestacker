@@ -20,7 +20,7 @@ class FocusStackBase:
         self.postfix = postfix
         self.denoise = denoise
         self.plot_stack = plot_stack
-        self.stack_algo.messenger(self)
+        self.stack_algo.process = self
         self.frame_count = -1
 
     def focus_stack(self, filenames):

@@ -19,11 +19,8 @@ class PyramidStack:
     def name(self):
         return "pyramid"
 
-    def messenger(self, messenger):
-        self.messenger = messenger
-
     def print_message(self, msg):
-        self.messenger.sub_message_r(colored(msg, "light_blue"))
+        self.process.sub_message_r(colored(msg, "light_blue"))
 
     def convolve(self, image):
         return cv2.filter2D(image, -1, self.gen_kernel, borderType=cv2.BORDER_REFLECT101)
@@ -112,7 +109,8 @@ class PyramidStack:
         metadata = None
         pyramids = []
         base_levels = []
-        for img_path in filenames:
+        self.process.callback('step_counts', self.process.id, self.process.name, len(filenames))
+        for i, img_path in enumerate(filenames):
             self.print_message(': reading file {}'.format(img_path.split('/')[-1]))
             img = read_img(img_path)
             if img is None:
@@ -127,6 +125,7 @@ class PyramidStack:
             pyramid = self.compute_pyramids(img, levels)
             pyramids.append(pyramid)
             base_levels.append(pyramid[-1])
+            self.process.callback('after_step', self.process.id, self.process.name, i)
         fused_pyramid = [self.fuse_base(base_levels)]
         for level in range(levels - 1, -1, -1):
             current_levels = [p[level] for p in pyramids]
