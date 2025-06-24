@@ -200,7 +200,6 @@ class WindowMenu(QMainWindow):
         toolbar.addAction(self.run_all_jobs_action)
         toolbar.addAction(self.add_job_action)
         toolbar.addAction(self.delete_element_action)
-        
 
     def website(self):
         webbrowser.open("https://github.com/lucalista/focusstack/blob/main/docs/main.md")
