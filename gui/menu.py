@@ -28,6 +28,7 @@ class WindowMenu(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        self.script_dir = os.path.dirname(__file__)
         self._current_file = None
         menubar = self.menuBar()
         self.add_file_menu(menubar)
@@ -39,14 +40,16 @@ class WindowMenu(QMainWindow):
         self.addToolBar(Qt.TopToolBarArea, toolbar)
         self.fill_toolbar(toolbar)
 
+    def get_icon(self, icon):
+        return QIcon(os.path.join(self.script_dir, f"img/{icon}.png"))      
+
     def list_item(self, text, enabled):
-        script_dir = os.path.dirname(__file__)
         if enabled:
             color = QColor(*ENABLED_LIST_ITEM_COLOR)
-            icon = QIcon(os.path.join(script_dir, "img/on.png"))
+            icon = self.get_icon("on")
         else:
             color = QColor(*DISABLED_LIST_ITEM_COLOR)
-            icon = QIcon(os.path.join(script_dir, "img/off.png"))
+            icon = self.get_icon("off")
         item = QListWidgetItem(icon, text)
         item.setForeground(color)
         return item
@@ -108,7 +111,7 @@ class WindowMenu(QMainWindow):
         menu.addAction(clone_action)
         self.delete_element_action = QAction("Delete", self)
         self.delete_element_action.setShortcut("Del")  # Qt.Key_Backspace
-        self.delete_element_action.setIcon(QIcon.fromTheme("edit-delete"))
+        self.delete_element_action.setIcon(self.get_icon("close-round-line-icon"))
         self.delete_element_action.setToolTip("delete")
         self.delete_element_action.triggered.connect(self.delete_element)
         self.delete_element_action.setEnabled(False)
@@ -144,20 +147,20 @@ class WindowMenu(QMainWindow):
         menu = menubar.addMenu("&Jobs")
         self.add_job_action = QAction("Add Job", self)
         self.add_job_action.setShortcut("Ctrl+P")
-        self.add_job_action.setIcon(QIcon.fromTheme("folder-new"))
+        self.add_job_action.setIcon(self.get_icon("plus-round-line-icon"))
         self.add_job_action.setToolTip("Add job")
         self.add_job_action.triggered.connect(self.add_job)
         menu.addAction(self.add_job_action)
         menu.addSeparator()
         self.run_job_action = QAction("Run Job", self)
         self.run_job_action.setShortcut("Ctrl+J")
-        self.run_job_action.setIcon(QIcon.fromTheme("media-playback-start"))
+        self.run_job_action.setIcon(self.get_icon("play-button-round-icon"))
         self.run_job_action.setToolTip("Run job")
         self.run_job_action.triggered.connect(self.run_job)
         menu.addAction(self.run_job_action)
         self.run_all_jobs_action = QAction("Run All Jobs", self)
         self.run_all_jobs_action.setShortcut("Ctrl+Shift+J")
-        self.run_all_jobs_action.setIcon(QIcon.fromTheme("media-seek-forward"))
+        self.run_all_jobs_action.setIcon(self.get_icon("forward-button-icon"))
         self.run_all_jobs_action.setToolTip("Run all jobs")
         self.run_all_jobs_action.triggered.connect(self.run_all_jobs)
         menu.addAction(self.run_all_jobs_action)
@@ -205,7 +208,7 @@ class WindowMenu(QMainWindow):
         self.action_selector.setEnabled(False)
         toolbar.addWidget(self.action_selector)
         self.add_action_entry_action = QAction("Add Action", self)
-        self.add_action_entry_action.setIcon(QIcon.fromTheme("appointment-soon"))
+        self.add_action_entry_action.setIcon(QIcon(os.path.join(self.script_dir, "img/plus-round-line-icon.png")))
         self.add_action_entry_action.setToolTip("Add action")
         self.add_action_entry_action.triggered.connect(self.add_action)
         self.add_action_entry_action.setEnabled(False)
@@ -215,7 +218,7 @@ class WindowMenu(QMainWindow):
         self.sub_action_selector.setEnabled(False)
         toolbar.addWidget(self.sub_action_selector)
         self.add_sub_action_entry_action = QAction("Add Sub Action", self)
-        self.add_sub_action_entry_action.setIcon(QIcon.fromTheme("appointment-soon"))
+        self.add_sub_action_entry_action.setIcon(QIcon(os.path.join(self.script_dir, "img/plus-round-line-icon.png")))
         self.add_sub_action_entry_action.setToolTip("Add sub action")
         self.add_sub_action_entry_action.triggered.connect(self.add_sub_action)
         self.add_sub_action_entry_action.setEnabled(False)
