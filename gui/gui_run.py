@@ -126,6 +126,12 @@ class TimerProgressBar(QProgressBar):
             t_str = "{:02d}:{}".format(m, t_str)
         if h > 0:
             t_str = "{:02d}:{}".format(h, t_str)
+        if m > 0 or h > 0:
+            t_str = t_str.lstrip('0')
+        elif 0 < s < 10:
+            t_str = t_str.lstrip('0')
+        elif s == 0:
+            t_str = t_str[1:]
         return t_str
 
     def check_time(self, val):
