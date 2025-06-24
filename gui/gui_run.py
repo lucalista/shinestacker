@@ -115,12 +115,18 @@ class TimerProgressBar(QProgressBar):
         }}
         """)
 
-    def check_time(self):
+    def check_time(self, val):
         if self._start_time < 0:
             raise RuntimeError("TimeProgressbar: start and must be called before setValue and stop")
         self._current_time = time.time()
         elapsed_time = self._current_time - self._start_time
-        self.setFormat(f"Progress: %p% - %v of %m - {elapsed_time:.2f} s")
+        fmt = f"Progress: %p% - %v of %m - elapsed: {elapsed_time:.2f}s"
+        if val < self.maximum():
+            time_per_iter = 0 if val == 0 else elapsed_time / val
+            estimated_time = time_per_iter * self.maximum()
+            missing_time = max(0, estimated_time - elapsed_time)
+            fmt += f" - elapsed: {elapsed_time:.2f}s, end in: {missing_time:.2f}s"
+        self.setFormat(fmt)
         
     def start(self, steps):
         super().setMaximum(steps)
@@ -128,11 +134,11 @@ class TimerProgressBar(QProgressBar):
         self.setValue(0)
 
     def stop(self):
-        self.check_time()
+        self.check_time(self.maximum())
         self.setValue(self.maximum())
 
     def setValue(self, val):
-        self.check_time()
+        self.check_time(val)
         super().setValue(val)
 
     def set_running_style(self):
