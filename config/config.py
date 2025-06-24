@@ -10,7 +10,6 @@ class _Config:
 
     def _init_defaults(self):
         self._DISABLE_TQDM = False
-        self._TRAP_RUN_EXCEPTIONS = True
         try:
             __IPYTHON__ # noqa
             self._JUPYTER_NOTEBOOK = True
@@ -30,10 +29,6 @@ class _Config:
     @property
     def DISABLE_TQDM(self):
         return self._DISABLE_TQDM
-
-    @property
-    def TRAP_RUN_EXCEPTIONS(self):
-        return self._TRAP_RUN_EXCEPTIONS
 
     @property
     def JUPYTER_NOTEBOOK(self):

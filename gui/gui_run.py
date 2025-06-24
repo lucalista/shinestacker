@@ -1,4 +1,3 @@
-from config.config import config
 from config.constants import constants
 from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QProgressBar,
                                QMessageBox, QScrollArea, QSizePolicy, QFrame, QLabel)
@@ -294,31 +293,20 @@ class RunWorker(LogWorker):
         return self.status == constants.STATUS_RUNNING
 
     def run(self):
-        run_error = False
         self.status_signal.emit(f"{self.tag} running...", 0)
         self.html_signal.emit(f'''
         <div style="margin: 2px 0; font-family: {LOG_FONTS_STR};">
         <span style="color: #{ColorPalette.DARK_BLUE.hex()}; font-weight: bold;">{self.tag} begins</span>
         </div>
         ''')
-        if config.TRAP_RUN_EXCEPTIONS:
-            try:
-                self._do_run()
-            except Exception as e:
-                run_error = True
-                self.exception_signal.emit(f'{self.tag} failed:\n{str(e)}')
-                self.exception_signal.emit(f'{self.tag} failed:\n{str(e)}')
-        else:
-            self._do_run()
-        if run_error:
+        status = self._do_run()
+        if status == constants.RUN_FAILED:
             message = f"{self.tag} failed"
-            status = constants.RUN_FAILED
             color = "#" + ColorPalette.DARK_RED.hex()
         else:
             message = f"{self.tag} ended successfully"
-            status = constants.RUN_COMPLETED
             color = "#" + ColorPalette.DARK_BLUE.hex()
-            self.html_signal.emit(f'''
+        self.html_signal.emit(f'''
         <div style="margin: 2px 0; font-family: {LOG_FONTS_STR};">
         <span style="color: {color}; font-weight: bold;">{message}</span>
         </div>
@@ -346,7 +334,7 @@ class JobLogWorker(RunWorker):
 
     def _do_run(self):
         converter = ProjectConverter()
-        converter.run_job(self.job, self.id_str, self.callbacks)
+        return converter.run_job(self.job, self.id_str, self.callbacks)
 
 
 class ProjectLogWorker(RunWorker):
@@ -357,4 +345,4 @@ class ProjectLogWorker(RunWorker):
 
     def _do_run(self):
         converter = ProjectConverter()
-        converter.run_project(self.project, self.id_str, self.callbacks)
+        return converter.run_project(self.project, self.id_str, self.callbacks)

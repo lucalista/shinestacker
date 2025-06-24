@@ -26,7 +26,7 @@ class FramePaths:
     EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
     def __init__(self, name, input_path='', output_path='', working_path='', plot_path=constants.DEFAULT_PLOTS_PATH,
-                 scratch_output_dir=False, resample=1, reverse_order=False, **kwargs):
+                 scratch_output_dir=True, resample=1, reverse_order=False, **kwargs):
         self.name = name
         self.working_path = working_path
         self.plot_path = plot_path

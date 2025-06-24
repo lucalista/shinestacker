@@ -2,7 +2,7 @@ import sys
 sys.path.append('../')
 from config.config import config
 # Debug mode: don't trap exception and show to console
-config.init(DISABLE_TQDM=True, TRAP_RUN_EXCEPTIONS=False)
+config.init(DISABLE_TQDM=True)
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt

@@ -431,7 +431,8 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
                                placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
-        self.builder.add_field('scratch_output_dir', FIELD_BOOL, 'Scratch output dir.', required=False, default=False)
+        self.builder.add_field('scratch_output_dir', FIELD_BOOL, 'Scratch output dir.',
+                               required=False, default=True)
         self.builder.add_field('plot_stack', FIELD_BOOL, 'Plot stack', required=False, default=False)
 
     def common_fields(self, layout, action):
@@ -531,7 +532,8 @@ class CombinedActionsConfigurator(DefaultActionConfigurator):
                                must_exist=True, placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
-        self.builder.add_field('scratch_output_dir', FIELD_BOOL, 'Scratch output dir.', required=False, default=False)
+        self.builder.add_field('scratch_output_dir', FIELD_BOOL, 'Scratch output dir.',
+                               required=False, default=True)
         self.builder.add_field('plot_path', FIELD_REL_PATH, 'Plots path', required=False, default="plots",
                                placeholder='relative to working path')
         self.builder.add_field('resample', FIELD_INT, 'Resample frame stack', required=False,

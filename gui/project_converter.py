@@ -3,6 +3,7 @@ from gui.project_model import (Project, ActionConfig,
                                ACTION_FOCUSSTACKBUNCH, ACTION_MULTILAYER,
                                ACTION_MASKNOISE, ACTION_VIGNETTING, ACTION_ALIGNFRAMES,
                                ACTION_BALANCEFRAMES)
+from config.constants import constants
 from focus_stack.stack_framework import StackJob, CombinedActions
 from focus_stack.noise_detection import NoiseDetection, MaskNoise
 from focus_stack.vignetting import Vignetting
@@ -14,6 +15,7 @@ from focus_stack.depth_map import DepthMapStack
 from focus_stack.multilayer import MultiLayer
 from focus_stack.exceptions import InvalidOptionError, RunStopException
 import logging
+import traceback
 
 
 class ProjectConverter:
@@ -24,23 +26,32 @@ class ProjectConverter:
             logger.warning(f"=== job: {job.name} disabled ===")
         try:
             job.run()
+            return constants.RUN_COMPLETED
         except RunStopException:
             logger.warning(f"=== job: {job.name} stopped ===")
+            return constants.RUN_STOPPED
         except Exception as e:
             msg = str(e)
             logger.warning(f"=== job: {job.name} failed: {msg} ===")
-            raise e
+            traceback.print_tb(e.__traceback__)
+            return constants.RUN_FAILED
 
     def run_project(self, project: Project, logger_name=None, callbacks=None):
         logger = logging.getLogger(__name__ if logger_name is None else logger_name)
         jobs = self.project(project, logger_name, callbacks)
+        status = constants.RUN_COMPLETED
         for job in jobs:
-            self.run(job, logger)
+            job_status = self.run(job, logger)
+            if job_status == constants.RUN_STOPPED:
+                return constants.RUN_STOPPED
+            if job_status == constants.RUN_FAILED:
+                status = constants.RUN_FAILED
+        return status
 
     def run_job(self, job: ActionConfig, logger_name=None, callbacks=None):
         logger = logging.getLogger(__name__ if logger_name is None else logger_name)
         job = self.job(job, logger_name, callbacks)
-        self.run(job, logger)
+        return self.run(job, logger)
 
     def project(self, project: Project, logger_name=None, callbacks=None):
         return [self.job(j, logger_name, callbacks) for j in project.jobs]
