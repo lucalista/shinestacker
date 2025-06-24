@@ -77,6 +77,19 @@ class ColorButton(QPushButton):
             }}
         """)
 
+class TimerProgressBar(QProgressBar):
+    def __init__(self):
+        super().__init__()
+
+    def start(self, steps):
+        super().setMaximum(steps)
+
+    def stop(self):
+        self.setValue(self.maximum())
+
+    def setValue(self, val):
+        super().setValue(val)
+
 
 class RunWindow(QTextEditLogger):
     light_background_color = ColorPalette.LIGHT_BLUE
@@ -105,11 +118,12 @@ class RunWindow(QTextEditLogger):
                     h_layout.addWidget(widget, stretch=1)
                     self.color_widgets[-1].append(widget)
                 layout.addWidget(row)
-        self.progress_bar = QProgressBar()
+        self.progress_bar = TimerProgressBar()
         self.progress_bar.setMinimum(0)
         self.set_progress_bar_style()
         self.progress_bar.setRange(0, 10)
         self.progress_bar.setValue(0)
+        self.progress_bar.setFormat("Progress: %p% - %v of %m")
         layout.addWidget(self.progress_bar)
         output_layout = QHBoxLayout()
         left_layout, right_layout = QVBoxLayout(), QVBoxLayout()
@@ -200,14 +214,14 @@ class RunWindow(QTextEditLogger):
     def handle_after_action(self, id, name):
         if 0 <= id < len(self.color_widgets[self.row_widget_id]):
             self.color_widgets[self.row_widget_id][id].set_color(*self.action_done_color.tuple())
-            self.progress_bar.setValue(self.progress_bar.maximum())
+            self.progress_bar.stop()
         if id == -1:
             self.set_progress_bar_style(self.action_done_color)
             self.row_widget_id += 1
 
     @Slot(int, str, str)
     def handle_step_count(self, id, name, steps):
-        self.progress_bar.setMaximum(steps)
+        self.progress_bar.start(steps)
 
     @Slot(int, str)
     def handle_begin_steps(self, id, name):
@@ -215,7 +229,7 @@ class RunWindow(QTextEditLogger):
 
     @Slot(int, str)
     def handle_end_steps(self, id, name):
-        self.progress_bar.setValue(self.progress_bar.maximum())
+        self.progress_bar.stop()
 
     @Slot(int, str, str)
     def handle_after_step(self, id, name, step):
