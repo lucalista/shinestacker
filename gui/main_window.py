@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QListWidget, QHBoxLayout, QTabWidget,
-                               QLabel, QMessageBox, QDialog, QSplitter, QMenu)
+                               QLabel, QDialog, QSplitter, QMenu)
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication
 from gui.project_model import Project
@@ -7,7 +7,7 @@ from gui.action_config import ActionConfigDialog
 from gui.project_model import ACTION_COMBO
 from gui.menu import WindowMenu
 from gui.gui_logging import LogManager
-from gui.gui_run import RunWindow, JobLogWorker, ProjectLogWorker, DISABLED_TAG, INDENT_SPACE
+from gui.gui_run import RunWindow
 
 
 class MainWindow(WindowMenu, LogManager):
@@ -19,7 +19,6 @@ class MainWindow(WindowMenu, LogManager):
         self._workers = []
         self.setWindowTitle("Focus Stacking GUI")
         self.resize(1200, 800)
-#        self.setContextMenuPolicy(Qt.ActionsContextMenu)
         center = QGuiApplication.primaryScreen().geometry().center()
         self.move(center - self.rect().center())
         self.project = Project()
@@ -80,10 +79,6 @@ class MainWindow(WindowMenu, LogManager):
                 if current_row >= 0:
                     self.job_list.item(current_row).setText(job.params['name'])
 
-    def get_current_job(self):
-        current_index = self.job_list.currentRow()
-        return None if current_index < 0 else self.project.jobs[current_index]
-
     def before_thread_begins(self):
         self.run_job_action.setEnabled(False)
         self.run_all_jobs_action.setEnabled(False)
@@ -137,37 +132,6 @@ class MainWindow(WindowMenu, LogManager):
         worker.after_step_signal.connect(window.handle_after_step)
         worker.save_plot_signal.connect(window.handle_save_plot)
 
-    def run_job(self):
-        current_index = self.job_list.currentRow()
-        if current_index < 0:
-            if len(self.project.jobs) > 0:
-                QMessageBox.warning(self, "No Job Selected", "Please select a job first.")
-            else:
-                QMessageBox.warning(self, "No Job Added", "Please add a job first.")
-            return
-        if current_index >= 0:
-            job = self.project.jobs[current_index]
-            if job.enabled():
-                labels = [[(self.action_text(a), a.enabled()) for a in job.sub_actions]]
-                new_window, id_str = self.create_new_window("Job: " + job.params["name"], labels)
-                worker = JobLogWorker(job, id_str)
-                self.connect_signals(worker, new_window)
-                self.start_thread(worker)
-                self._workers.append(worker)
-            else:
-                QMessageBox.warning(self, "Can't run Job", "Job " + job.params["name"] + " is disabled.")
-                return
-
-    def run_all_jobs(self):
-        labels = [[(self.action_text(a), a.enabled() and job.enabled()) for a in job.sub_actions] for job in self.project.jobs]
-        project_name = ".".join(self.current_file_name().split(".")[:-1])
-        if project_name == '':
-            project_name = '[new]'
-        new_window, id_str = self.create_new_window("Project: " + project_name, labels)
-        worker = ProjectLogWorker(self.project, id_str)
-        self.connect_signals(worker, new_window)
-        self.start_thread(worker)
-
     def show_action_config_dialog(self, action):
         dialog = ActionConfigDialog(action, self)
         if dialog.exec():
@@ -212,21 +176,6 @@ class MainWindow(WindowMenu, LogManager):
             self.set_enabled_sub_actions_gui(enable_sub_actions)
         else:
             self.set_enabled_sub_actions_gui(False)
-
-    def job_text(self, job):
-        txt = job.params.get('name', '(job)')
-        if not job.enabled():
-            txt += DISABLED_TAG
-        return txt
-
-    def action_text(self, action, is_sub_action=False, indent=True):
-        txt = INDENT_SPACE if is_sub_action and indent else ""
-        if action.params.get('name', '') != '':
-            txt += action.params["name"]
-        txt += f" [{action.type_name}]"
-        if not action.enabled():
-            txt += DISABLED_TAG
-        return txt
 
     def on_job_selected(self, index):
         self.action_list.clear()

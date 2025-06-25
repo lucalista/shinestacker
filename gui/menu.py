@@ -6,8 +6,9 @@ from gui.project_model import Project, ActionConfig
 from gui.project_model import (ACTION_JOB, ACTION_COMBO, ACTION_TYPES, SUB_ACTION_TYPES,
                                ACTION_NOISEDETECTION, ACTION_FOCUSSTACK, ACTION_FOCUSSTACKBUNCH, ACTION_MULTILAYER,
                                ACTION_MASKNOISE, ACTION_VIGNETTING, ACTION_ALIGNFRAMES, ACTION_BALANCEFRAMES)
-
+from gui.gui_run import JobLogWorker, ProjectLogWorker
 from gui.gui_run import ColorPalette
+from gui.gui_run import DISABLED_TAG, INDENT_SPACE
 from gui.action_config import ActionConfigDialog
 import os.path
 import os
@@ -262,6 +263,21 @@ class WindowMenu(QMainWindow):
             title += f" - {os.path.basename(self._current_file)}"
         self.setWindowTitle(title)
 
+    def job_text(self, job):
+        txt = job.params.get('name', '(job)')
+        if not job.enabled():
+            txt += DISABLED_TAG
+        return txt
+
+    def action_text(self, action, is_sub_action=False, indent=True):
+        txt = INDENT_SPACE if is_sub_action and indent else ""
+        if action.params.get('name', '') != '':
+            txt += action.params["name"]
+        txt += f" [{action.type_name}]"
+        if not action.enabled():
+            txt += DISABLED_TAG
+        return txt
+
     def quit(self):
         if self._check_unsaved_changes():
             self.close()
@@ -354,7 +370,11 @@ class WindowMenu(QMainWindow):
             jobs.insert(new_index, jobs.pop(job_index))
             self._refresh_ui(new_index, -1)
 
-    def _get_current_action(self):
+    def get_current_job(self):
+        current_index = self.job_list.currentRow()
+        return None if current_index < 0 else self.project.jobs[current_index]
+
+    def get_current_action(self):
         action_row = self.action_list.currentRow()
         job_row = self.job_list.currentRow()
         if (0 <= job_row < len(self.project.jobs)) and (0 <= action_row < self.action_list.count()):
@@ -380,7 +400,7 @@ class WindowMenu(QMainWindow):
         return job_row, action_row, None, None, -1, -1
 
     def _shift_action(self, delta):
-        job_row, action_row, actions, sub_actions, action_index, sub_action_index = self._get_current_action()
+        job_row, action_row, actions, sub_actions, action_index, sub_action_index = self.get_current_action()
         if actions is not None:
             new_row = action_row
             if sub_action_index == -1:
@@ -425,7 +445,7 @@ class WindowMenu(QMainWindow):
             self._refresh_ui(new_job_index, -1)
 
     def clone_action(self):
-        job_row, action_row, actions, sub_actions, action_index, sub_action_index = self._get_current_action()
+        job_row, action_row, actions, sub_actions, action_index, sub_action_index = self.get_current_action()
         action = actions[action_index]
         if actions is not None:
             if sub_action_index == -1:
@@ -477,7 +497,7 @@ class WindowMenu(QMainWindow):
         return None
 
     def delete_action(self, confirm=True):
-        job_row, action_row, actions, sub_actions, action_index, sub_action_index = self._get_current_action()
+        job_row, action_row, actions, sub_actions, action_index, sub_action_index = self.get_current_action()
         if actions is not None:
             action = actions[action_index]
             current_action = action if sub_action_index == -1 else sub_actions[sub_action_index]
@@ -604,7 +624,7 @@ class WindowMenu(QMainWindow):
             self._copy_buffer = self.project.jobs[current_index].clone()
 
     def copy_action(self):
-        job_row, action_row, actions, sub_actions, action_index, sub_action_index = self._get_current_action()
+        job_row, action_row, actions, sub_actions, action_index, sub_action_index = self.get_current_action()
         if actions is not None:
             if sub_action_index == -1:
                 self._copy_buffer = actions[action_index].clone()
@@ -630,7 +650,7 @@ class WindowMenu(QMainWindow):
             self._refresh_ui(new_job_index, -1)
 
     def paste_action(self):
-        job_row, action_row, actions, sub_actions, action_index, sub_action_index = self._get_current_action()
+        job_row, action_row, actions, sub_actions, action_index, sub_action_index = self.get_current_action()
         action = actions[action_index]
         if actions is not None:
             if sub_action_index == -1:
@@ -695,7 +715,7 @@ class WindowMenu(QMainWindow):
                 current_action = self.project.jobs[job_row]
                 action_row = -1
         elif self.action_list.hasFocus():
-            job_row, action_row, actions, sub_actions, action_index, sub_action_index = self._get_current_action()
+            job_row, action_row, actions, sub_actions, action_index, sub_action_index = self.get_current_action()
             if actions is not None:
                 action = actions[action_index]
                 current_action = action if sub_action_index == -1 else sub_actions[sub_action_index]
@@ -724,3 +744,34 @@ class WindowMenu(QMainWindow):
 
     def disable_all(self):
         self.set_enabled_all(False)
+
+    def run_job(self):
+        current_index = self.job_list.currentRow()
+        if current_index < 0:
+            if len(self.project.jobs) > 0:
+                QMessageBox.warning(self, "No Job Selected", "Please select a job first.")
+            else:
+                QMessageBox.warning(self, "No Job Added", "Please add a job first.")
+            return
+        if current_index >= 0:
+            job = self.project.jobs[current_index]
+            if job.enabled():
+                labels = [[(self.action_text(a), a.enabled()) for a in job.sub_actions]]
+                new_window, id_str = self.create_new_window("Job: " + job.params["name"], labels)
+                worker = JobLogWorker(job, id_str)
+                self.connect_signals(worker, new_window)
+                self.start_thread(worker)
+                self._workers.append(worker)
+            else:
+                QMessageBox.warning(self, "Can't run Job", "Job " + job.params["name"] + " is disabled.")
+                return
+
+    def run_all_jobs(self):
+        labels = [[(self.action_text(a), a.enabled() and job.enabled()) for a in job.sub_actions] for job in self.project.jobs]
+        project_name = ".".join(self.current_file_name().split(".")[:-1])
+        if project_name == '':
+            project_name = '[new]'
+        new_window, id_str = self.create_new_window("Project: " + project_name, labels)
+        worker = ProjectLogWorker(self.project, id_str)
+        self.connect_signals(worker, new_window)
+        self.start_thread(worker)
