@@ -83,7 +83,7 @@ class MainWindow(WindowMenu, LogManager):
         i, w = self.get_tab_and_position(id_str)
         return i
 
-    def _do_handle_end_message(self, status, id_str, message):
+    def do_handle_end_message(self, status, id_str, message):
         self.run_job_action.setEnabled(True)
         self.run_all_jobs_action.setEnabled(True)
         self.get_tab_at_position(id_str).close_button.setEnabled(True)
