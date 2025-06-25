@@ -57,17 +57,29 @@ class MainWindow(WindowMenu, LogManager):
 
     def contextMenuEvent(self, event):
         item = self.job_list.itemAt(self.job_list.viewport().mapFrom(self, event.pos()))
+        current_action = None
         if item:
             index = self.job_list.row(item)
-            print(f"Selected job: ({index}) {item.text()}")
+            current_action = self.get_job_at(index)
+            self.job_list.setCurrentRow(index)
         item = self.action_list.itemAt(self.action_list.viewport().mapFrom(self, event.pos()))
         if item:
             index = self.action_list.row(item)
-            print(f"Selected action: ({index}) {item.text()}")
-        menu = QMenu(self)
-        menu.addAction(self.run_job_action)
-        menu.addAction(self.run_all_jobs_action)
-        menu.exec(event.globalPos())
+            self.action_list.setCurrentRow(index)
+            job_row, action_row, actions, sub_actions, action_index, sub_action_index = self.get_action_at(index)
+            if actions is not None:
+                action = actions[action_index]
+                current_action = action if sub_action_index == -1 else sub_actions[sub_action_index]
+        if current_action:
+            menu = QMenu(self)
+            if current_action.enabled():
+                menu.addAction(self.disable_action)
+            else:
+                menu.addAction(self.enable_action)
+            menu.addSeparator()
+            menu.addAction(self.run_job_action)
+            menu.addAction(self.run_all_jobs_action)
+            menu.exec(event.globalPos())
 
     def on_job_double_clicked(self, item):
         index = self.job_list.row(item)

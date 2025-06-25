@@ -127,14 +127,14 @@ class WindowMenu(QMainWindow):
         down_action.triggered.connect(self.move_element_down)
         menu.addAction(down_action)
         menu.addSeparator()
-        enable_action = QAction("E&nable", self)
-        enable_action.setShortcut("Ctrl+E")
-        enable_action.triggered.connect(self.enable)
-        menu.addAction(enable_action)
-        disable_action = QAction("Di&sable", self)
-        disable_action.setShortcut("Ctrl+B")
-        disable_action.triggered.connect(self.disable)
-        menu.addAction(disable_action)
+        self.enable_action = QAction("E&nable", self)
+        self.enable_action.setShortcut("Ctrl+E")
+        self.enable_action.triggered.connect(self.enable)
+        menu.addAction(self.enable_action)
+        self.disable_action = QAction("Di&sable", self)
+        self.disable_action.setShortcut("Ctrl+B")
+        self.disable_action.triggered.connect(self.disable)
+        menu.addAction(self.disable_action)
         enable_all_action = QAction("Enable All", self)
         enable_all_action.setShortcut("Ctrl+Shift+E")
         enable_all_action.triggered.connect(self.enable_all)
@@ -309,6 +309,9 @@ class WindowMenu(QMainWindow):
                     self.job_list.setCurrentRow(0)
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Cannot open file {file_path}:\n{str(e)}")
+        if len(self.project.jobs) > 0:
+            self.job_list.setCurrentRow(0)
+            self.activateWindow()
         self._modified_project = False
 
     def current_file_name(self):
@@ -370,12 +373,16 @@ class WindowMenu(QMainWindow):
             jobs.insert(new_index, jobs.pop(job_index))
             self._refresh_ui(new_index, -1)
 
+    def get_job_at(self, index):
+        return None if index < 0 else self.project.jobs[index]
+
     def get_current_job(self):
-        current_index = self.job_list.currentRow()
-        return None if current_index < 0 else self.project.jobs[current_index]
+        return self.get_job_at(self.job_list.currentRow())
 
     def get_current_action(self):
-        action_row = self.action_list.currentRow()
+        return self.get_action_at(self.action_list.currentRow())
+
+    def get_action_at(self, action_row):
         job_row = self.job_list.currentRow()
         if (0 <= job_row < len(self.project.jobs)) and (0 <= action_row < self.action_list.count()):
             job = self.project.jobs[job_row]
