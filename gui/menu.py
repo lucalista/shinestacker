@@ -821,18 +821,18 @@ class WindowMenu(QMainWindow):
                 self.browse_wp_action = QAction("Browse Working Path")
                 self.browse_wp_action.triggered.connect(self.browse_wp_path)
                 menu.addAction(self.browse_wp_action)
-            ip = current_action.params.get('input_path', '')
-            if ip != '' and ip.find(';') == -1:
+            ip = self.get_action_ip(current_action)
+            if ip != '':
                 self.current_action_ip = f"{self.current_action_wp}/{ip}"
                 self.browse_ip_action = QAction("Browse Input Path")
                 self.browse_ip_action.triggered.connect(self.browse_ip_path)
                 menu.addAction(self.browse_ip_action)
-            op = current_action.params.get('output_path', '')
+            op = self.get_action_op(current_action)
             if op != '':
                 self.current_action_op = f"{self.current_action_wp}/{op}"
                 self.browse_op_action = QAction("Browse Output Path")
                 self.browse_op_action.triggered.connect(self.browse_op_path)
-                menu.addAction(self.browse_ip_action)
+                menu.addAction(self.browse_op_action)
             menu.addSeparator()
             menu.addAction(self.run_job_action)
             menu.addAction(self.run_all_jobs_action)
@@ -845,6 +845,16 @@ class WindowMenu(QMainWindow):
             wp = parent.params.get('working_path', '')
             parent = parent.parent
         return wp
+
+    def get_action_ip(self, action):
+        path = action.params.get('input_path', '')
+        if path.find(';') != -1:
+            path = ''
+        return path
+
+    def get_action_op(self, action):
+        path = action.params.get('output_path', '')
+        return path
 
     def browse_path(self, path):
         if running_under_windows():
