@@ -359,7 +359,7 @@ class WindowMenu(QMainWindow):
         else:
             return True
 
-    def _shift_job(self, delta):
+    def shift_job(self, delta):
         job_index = self.job_list.currentRow()
         if job_index < 0:
             return
@@ -399,7 +399,7 @@ class WindowMenu(QMainWindow):
             return job_row, action_row, actions, sub_actions, action_index, sub_action_index
         return job_row, action_row, None, None, -1, -1
 
-    def _shift_action(self, delta):
+    def shift_action(self, delta):
         job_row, action_row, actions, sub_actions, action_index, sub_action_index = self.get_current_action()
         if actions is not None:
             new_row = action_row
@@ -423,15 +423,15 @@ class WindowMenu(QMainWindow):
 
     def move_element_up(self):
         if self.job_list.hasFocus():
-            self._shift_job(-1)
+            self.shift_job(-1)
         elif self.action_list.hasFocus():
-            self._shift_action(-1)
+            self.shift_action(-1)
 
     def move_element_down(self):
         if self.job_list.hasFocus():
-            self._shift_job(+1)
+            self.shift_job(+1)
         elif self.action_list.hasFocus():
-            self._shift_action(+1)
+            self.shift_action(+1)
 
     def clone_job(self):
         job_index = self.job_list.currentRow()
