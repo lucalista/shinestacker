@@ -15,11 +15,22 @@ import os
 import json
 import jsonpickle
 import webbrowser
+import platform
+import subprocess
+
 
 CLONE_POSTFIX = " (clone)"
 DONT_USE_NATIVE_MENU = True
 ENABLED_LIST_ITEM_COLOR = ColorPalette.DARK_BLUE.tuple()
 DISABLED_LIST_ITEM_COLOR = ColorPalette.DARK_RED.tuple()
+
+
+def running_under_windows() -> bool:
+    return os.name in ['nt', 'ce']
+
+
+def running_under_macos() -> bool:
+    return "darwin" in platform.system().casefold()
 
 
 class WindowMenu(QMainWindow):
@@ -782,3 +793,69 @@ class WindowMenu(QMainWindow):
         worker = ProjectLogWorker(self.project, id_str)
         self.connect_signals(worker, new_window)
         self.start_thread(worker)
+
+    def contextMenuEvent(self, event):
+        item = self.job_list.itemAt(self.job_list.viewport().mapFrom(self, event.pos()))
+        current_action = None
+        if item:
+            index = self.job_list.row(item)
+            current_action = self.get_job_at(index)
+            self.job_list.setCurrentRow(index)
+        item = self.action_list.itemAt(self.action_list.viewport().mapFrom(self, event.pos()))
+        if item:
+            index = self.action_list.row(item)
+            self.action_list.setCurrentRow(index)
+            job_row, action_row, actions, sub_actions, action_index, sub_action_index = self.get_action_at(index)
+            if actions is not None:
+                action = actions[action_index]
+                current_action = action if sub_action_index == -1 else sub_actions[sub_action_index]
+        if current_action:
+            menu = QMenu(self)
+            if current_action.enabled():
+                menu.addAction(self.disable_action)
+            else:
+                menu.addAction(self.enable_action)
+            menu.addSeparator()
+            wp = current_action.params.get('working_path', '')
+            parent = current_action.parent
+            while wp == '' and parent is not None:
+                wp = parent.params.get('working_path', '')
+                parent = parent.parent
+            if wp != '':
+                self.current_action_wp = wp
+                self.browse_wp_action = QAction("Browse Working Path")
+                self.browse_wp_action.triggered.connect(self.browse_wp_path)
+                menu.addAction(self.browse_wp_action)
+            ip = current_action.params.get('input_path', '')
+            if ip != '' and ip.find(';') == -1:
+                self.current_action_ip = f"{wp}/{ip}"
+                self.browse_ip_action = QAction("Browse Input Path")
+                self.browse_ip_action.triggered.connect(self.browse_ip_path)
+                menu.addAction(self.browse_ip_action)
+            op = current_action.params.get('output_path', '')
+            if op != '':
+                self.current_action_op = f"{wp}/{op}"
+                self.browse_op_action = QAction("Browse Output Path")
+                self.browse_op_action.triggered.connect(self.browse_op_path)
+                menu.addAction(self.browse_ip_action)
+            menu.addSeparator()
+            menu.addAction(self.run_job_action)
+            menu.addAction(self.run_all_jobs_action)
+            menu.exec(event.globalPos())
+
+    def browse_path(self, path):
+        if running_under_windows():
+            os.startfile(os.path.normpath(path))
+        elif running_under_macos():
+            subprocess.run(['open', path])
+        else:
+            subprocess.run(['xdg-open', path])
+
+    def browse_wp_path(self):
+        self.browse_path(self.current_action_wp)
+
+    def browse_ip_path(self):
+        self.browse_path(self.current_action_ip)
+
+    def browse_op_path(self):
+        self.browse_path(self.current_action_op)
