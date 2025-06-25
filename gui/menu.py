@@ -816,25 +816,20 @@ class WindowMenu(QMainWindow):
             else:
                 menu.addAction(self.enable_action)
             menu.addSeparator()
-            wp = current_action.params.get('working_path', '')
-            parent = current_action.parent
-            while wp == '' and parent is not None:
-                wp = parent.params.get('working_path', '')
-                parent = parent.parent
-            if wp != '':
-                self.current_action_wp = wp
+            self.current_action_wp = self.get_action_wp(current_action)
+            if self.current_action_wp != '':
                 self.browse_wp_action = QAction("Browse Working Path")
                 self.browse_wp_action.triggered.connect(self.browse_wp_path)
                 menu.addAction(self.browse_wp_action)
             ip = current_action.params.get('input_path', '')
             if ip != '' and ip.find(';') == -1:
-                self.current_action_ip = f"{wp}/{ip}"
+                self.current_action_ip = f"{self.current_action_wp}/{ip}"
                 self.browse_ip_action = QAction("Browse Input Path")
                 self.browse_ip_action.triggered.connect(self.browse_ip_path)
                 menu.addAction(self.browse_ip_action)
             op = current_action.params.get('output_path', '')
             if op != '':
-                self.current_action_op = f"{wp}/{op}"
+                self.current_action_op = f"{self.current_action_wp}/{op}"
                 self.browse_op_action = QAction("Browse Output Path")
                 self.browse_op_action.triggered.connect(self.browse_op_path)
                 menu.addAction(self.browse_ip_action)
@@ -842,6 +837,14 @@ class WindowMenu(QMainWindow):
             menu.addAction(self.run_job_action)
             menu.addAction(self.run_all_jobs_action)
             menu.exec(event.globalPos())
+
+    def get_action_wp(self, action):
+        wp = action.params.get('working_path', '')
+        parent = action.parent
+        while wp == '' and parent is not None:
+            wp = parent.params.get('working_path', '')
+            parent = parent.parent
+        return wp
 
     def browse_path(self, path):
         if running_under_windows():
