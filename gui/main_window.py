@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QListWidget, QHBoxLayout, QTabWidget,
-                               QLabel, QMessageBox, QDialog, QSplitter)
+                               QLabel, QMessageBox, QDialog, QSplitter, QMenu)
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication
 from gui.project_model import Project
@@ -18,7 +18,8 @@ class MainWindow(WindowMenu, LogManager):
         self._windows = []
         self._workers = []
         self.setWindowTitle("Focus Stacking GUI")
-        self.resize(1400, 900)
+        self.resize(1200, 800)
+#        self.setContextMenuPolicy(Qt.ActionsContextMenu)
         center = QGuiApplication.primaryScreen().geometry().center()
         self.move(center - self.rect().center())
         self.project = Project()
@@ -54,6 +55,12 @@ class MainWindow(WindowMenu, LogManager):
         h_layout.addLayout(vbox_right)
         layout.addWidget(h_splitter)
         self.central_widget.setLayout(layout)
+
+    def contextMenuEvent(self, event):
+        menu = QMenu(self)
+        menu.addAction(self.run_job_action)
+        menu.addAction(self.run_all_jobs_action)
+        menu.exec(event.globalPos())        
 
     def on_job_double_clicked(self, item):
         index = self.job_list.row(item)
