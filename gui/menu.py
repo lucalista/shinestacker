@@ -794,6 +794,10 @@ class WindowMenu(QMainWindow):
         self.start_thread(worker)
         self._workers.append(worker)
 
+    def stop_worker(self, tab_position):
+        worker = self._workers[tab_position]
+        worker.stop()
+
     def contextMenuEvent(self, event):
         item = self.job_list.itemAt(self.job_list.viewport().mapFrom(self, event.pos()))
         current_action = None

@@ -103,10 +103,6 @@ class MainWindow(WindowMenu, LogManager):
         self._workers.pop(tab_position)
         self.tab_widget.removeTab(tab_position)
 
-    def stop_worker(self, tab_position):
-        worker = self._workers[tab_position]
-        worker.stop()
-
     def connect_signals(self, worker, window):
         worker.before_action_signal.connect(window.handle_before_action)
         worker.after_action_signal.connect(window.handle_after_action)
