@@ -2,15 +2,11 @@ from PySide6.QtWidgets import (QWidget, QPushButton, QHBoxLayout, QFileDialog, Q
                                QMessageBox, QSizePolicy, QStackedWidget, QDialog, QFormLayout,
                                QLineEdit, QSpinBox, QDoubleSpinBox, QCheckBox, QTreeView, QAbstractItemView, QListView)
 from PySide6.QtCore import Qt
-from gui.project_model import (ActionConfig,
-                               ACTION_JOB, ACTION_COMBO, ACTION_NOISEDETECTION, ACTION_FOCUSSTACK,
-                               ACTION_FOCUSSTACKBUNCH, ACTION_MULTILAYER,
-                               ACTION_MASKNOISE, ACTION_VIGNETTING, ACTION_ALIGNFRAMES,
-                               ACTION_BALANCEFRAMES)
+from config.constants import constants
+from gui.project_model import ActionConfig
 from abc import ABC, abstractmethod
 from typing import Dict, Any
 import os.path
-from config.constants import constants
 from focus_stack.stack import DEFAULT_FRAMES, DEFAULT_OVERLAP
 
 
@@ -355,16 +351,16 @@ class ActionConfigDialog(QDialog):
 
     def _get_configurator(self, action_type: str) -> ActionConfigurator:
         configurators = {
-            ACTION_JOB: JobConfigurator(),
-            ACTION_COMBO: CombinedActionsConfigurator(),
-            ACTION_NOISEDETECTION: NoiseDetectionConfigurator(),
-            ACTION_FOCUSSTACK: FocusStackConfigurator(),
-            ACTION_FOCUSSTACKBUNCH: FocusStackBunchConfigurator(),
-            ACTION_MULTILAYER: MultiLayerConfigurator(),
-            ACTION_MASKNOISE: MaskNoiseConfigurator(),
-            ACTION_VIGNETTING: VignettingConfigurator(),
-            ACTION_ALIGNFRAMES: AlignFramesConfigurator(),
-            ACTION_BALANCEFRAMES: BalanceFramesConfigurator(),
+            constants.ACTION_JOB: JobConfigurator(),
+            constants.ACTION_COMBO: CombinedActionsConfigurator(),
+            constants.ACTION_NOISEDETECTION: NoiseDetectionConfigurator(),
+            constants.ACTION_FOCUSSTACK: FocusStackConfigurator(),
+            constants.ACTION_FOCUSSTACKBUNCH: FocusStackBunchConfigurator(),
+            constants.ACTION_MULTILAYER: MultiLayerConfigurator(),
+            constants.ACTION_MASKNOISE: MaskNoiseConfigurator(),
+            constants.ACTION_VIGNETTING: VignettingConfigurator(),
+            constants.ACTION_ALIGNFRAMES: AlignFramesConfigurator(),
+            constants.ACTION_BALANCEFRAMES: BalanceFramesConfigurator(),
         }
         return configurators.get(action_type, DefaultActionConfigurator())
 

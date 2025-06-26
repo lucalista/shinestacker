@@ -2,9 +2,9 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QListWidget, QHBoxLayout, Q
                                QLabel, QDialog, QSplitter)
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication
+from config.constants import constants
 from gui.project_model import Project
 from gui.action_config import ActionConfigDialog
-from gui.project_model import ACTION_COMBO
 from gui.menu import WindowMenu
 from gui.gui_logging import LogManager
 from gui.gui_run import RunWindow
@@ -158,7 +158,7 @@ class MainWindow(WindowMenu, LogManager):
                     if current_action:
                         break
             enable_sub_actions = current_action is not None and \
-                not is_sub_action and current_action.type_name == ACTION_COMBO
+                not is_sub_action and current_action.type_name == constants.ACTION_COMBO
             self.set_enabled_sub_actions_gui(enable_sub_actions)
         else:
             self.set_enabled_sub_actions_gui(False)
@@ -201,5 +201,5 @@ class MainWindow(WindowMenu, LogManager):
                 if is_sub_action:
                     self.show_action_config_dialog(current_action)
                 else:
-                    self.set_enabled_sub_actions_gui(current_action.type_name == ACTION_COMBO)
+                    self.set_enabled_sub_actions_gui(current_action.type_name == constants.ACTION_COMBO)
                     self.show_action_config_dialog(current_action)

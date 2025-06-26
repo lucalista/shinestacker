@@ -1,9 +1,5 @@
-from gui.project_model import (Project, ActionConfig,
-                               ACTION_COMBO, ACTION_NOISEDETECTION, ACTION_FOCUSSTACK,
-                               ACTION_FOCUSSTACKBUNCH, ACTION_MULTILAYER,
-                               ACTION_MASKNOISE, ACTION_VIGNETTING, ACTION_ALIGNFRAMES,
-                               ACTION_BALANCEFRAMES)
 from config.constants import constants
+from gui.project_model import Project, ActionConfig
 from focus_stack.stack_framework import StackJob, CombinedActions
 from focus_stack.noise_detection import NoiseDetection, MaskNoise
 from focus_stack.vignetting import Vignetting
@@ -62,9 +58,9 @@ class ProjectConverter:
         return dict_with, dict_without
 
     def action(self, action_config):
-        if action_config.type_name == ACTION_NOISEDETECTION:
+        if action_config.type_name == constants.ACTION_NOISEDETECTION:
             return NoiseDetection(**action_config.params)
-        elif action_config.type_name == ACTION_COMBO:
+        elif action_config.type_name == constants.ACTION_COMBO:
             sub_actions = []
             for sa in action_config.sub_actions:
                 a = self.action(sa)
@@ -72,22 +68,22 @@ class ProjectConverter:
                     sub_actions.append(a)
             a = CombinedActions(**action_config.params, actions=sub_actions)
             return a
-        elif action_config.type_name == ACTION_MASKNOISE:
+        elif action_config.type_name == constants.ACTION_MASKNOISE:
             params = {k: v for k, v in action_config.params.items() if k != 'name'}
             return MaskNoise(**params)
-        elif action_config.type_name == ACTION_VIGNETTING:
+        elif action_config.type_name == constants.ACTION_VIGNETTING:
             params = {k: v for k, v in action_config.params.items() if k != 'name'}
             return Vignetting(**params)
-        elif action_config.type_name == ACTION_ALIGNFRAMES:
+        elif action_config.type_name == constants.ACTION_ALIGNFRAMES:
             params = {k: v for k, v in action_config.params.items() if k != 'name'}
             return AlignFrames(**params)
-        elif action_config.type_name == ACTION_BALANCEFRAMES:
+        elif action_config.type_name == constants.ACTION_BALANCEFRAMES:
             params = {k: v for k, v in action_config.params.items() if k != 'name'}
             if 'intensity_interval' in params.keys():
                 i = params['intensity_interval']
                 params['intensity_interval'] = {'min': i[0], 'max': i[1]}
             return BalanceFrames(**params)
-        elif action_config.type_name == ACTION_FOCUSSTACK or action_config.type_name == ACTION_FOCUSSTACKBUNCH:
+        elif action_config.type_name == constants.ACTION_FOCUSSTACK or action_config.type_name == constants.ACTION_FOCUSSTACKBUNCH:
             stacker = action_config.params.get('stacker', 'Pyramid')
             if stacker == 'Pyramid':
                 algo_dict, module_dict = self.filter_dict_keys(action_config.params, 'pyramid_')
@@ -95,13 +91,13 @@ class ProjectConverter:
             elif stacker == 'Depth map':
                 algo_dict, module_dict = self.filter_dict_keys(action_config.params, 'depthmap_')
                 stack_algo = DepthMapStack(**algo_dict)
-            if action_config.type_name == ACTION_FOCUSSTACK:
+            if action_config.type_name == constants.ACTION_FOCUSSTACK:
                 return FocusStack(**module_dict, stack_algo=stack_algo)
-            elif action_config.type_name == ACTION_FOCUSSTACKBUNCH:
+            elif action_config.type_name == constants.ACTION_FOCUSSTACKBUNCH:
                 return FocusStackBunch(**module_dict, stack_algo=stack_algo)
             else:
                 raise InvalidOptionError("stracker", stacker, details="valid values are: Pyramid, Depth map.")
-        elif action_config.type_name == ACTION_MULTILAYER:
+        elif action_config.type_name == constants.ACTION_MULTILAYER:
             input_path = list(filter(lambda p: p != '', action_config.params.get('input_path', '').split(";")))
             params = {k: v for k, v in action_config.params.items() if k != 'imput_path'}
             params['input_path'] = [i.strip() for i in input_path]

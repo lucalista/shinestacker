@@ -3,9 +3,7 @@ from PySide6.QtWidgets import (QMessageBox, QFileDialog, QMainWindow, QListWidge
 from PySide6.QtGui import QAction, QColor, QIcon
 from PySide6.QtCore import Qt
 from gui.project_model import Project, ActionConfig
-from gui.project_model import (ACTION_JOB, ACTION_COMBO, ACTION_TYPES, SUB_ACTION_TYPES,
-                               ACTION_NOISEDETECTION, ACTION_FOCUSSTACK, ACTION_FOCUSSTACKBUNCH, ACTION_MULTILAYER,
-                               ACTION_MASKNOISE, ACTION_VIGNETTING, ACTION_ALIGNFRAMES, ACTION_BALANCEFRAMES)
+from config.constants import constants
 from gui.gui_run import JobLogWorker, ProjectLogWorker
 from gui.gui_run import ColorPalette
 from gui.gui_run import DISABLED_TAG, INDENT_SPACE
@@ -182,26 +180,26 @@ class WindowMenu(QMainWindow):
     def add_actions_menu(self, menubar):
         menu = menubar.addMenu("&Actions")
         add_action_menu = QMenu("Add Action", self)
-        for action in ACTION_TYPES:
+        for action in constants.ACTION_TYPES:
             entry_action = QAction(action, self)
             entry_action.triggered.connect({
-                ACTION_COMBO: self.add_action_CombinedActions,
-                ACTION_NOISEDETECTION: self.add_action_NoiseDetection,
-                ACTION_FOCUSSTACK: self.add_action_FocusStack,
-                ACTION_FOCUSSTACKBUNCH: self.add_action_FocusStackBunch,
-                ACTION_MULTILAYER: self.add_action_MultiLayer
+                constants.ACTION_COMBO: self.add_action_CombinedActions,
+                constants.ACTION_NOISEDETECTION: self.add_action_NoiseDetection,
+                constants.ACTION_FOCUSSTACK: self.add_action_FocusStack,
+                constants.ACTION_FOCUSSTACKBUNCH: self.add_action_FocusStackBunch,
+                constants.ACTION_MULTILAYER: self.add_action_MultiLayer
             }[action])
             add_action_menu.addAction(entry_action)
         menu.addMenu(add_action_menu)
         add_sub_action_menu = QMenu("Add Sub Action", self)
         self.sub_action_menu_entries = []
-        for action in SUB_ACTION_TYPES:
+        for action in constants.SUB_ACTION_TYPES:
             entry_action = QAction(action, self)
             entry_action.triggered.connect({
-                ACTION_MASKNOISE: self.add_sub_action_MakeNoise,
-                ACTION_VIGNETTING: self.add_sub_action_Vignetting,
-                ACTION_ALIGNFRAMES: self.add_sub_action_AlignFrames,
-                ACTION_BALANCEFRAMES: self.add_sub_action_BalanceFrames
+                constants.ACTION_MASKNOISE: self.add_sub_action_MakeNoise,
+                constants.ACTION_VIGNETTING: self.add_sub_action_Vignetting,
+                constants.ACTION_ALIGNFRAMES: self.add_sub_action_AlignFrames,
+                constants.ACTION_BALANCEFRAMES: self.add_sub_action_BalanceFrames
             }[action])
             entry_action.setEnabled(False)
             self.sub_action_menu_entries.append(entry_action)
@@ -218,7 +216,7 @@ class WindowMenu(QMainWindow):
         toolbar.addAction(self.add_job_action)
         toolbar.addSeparator()
         self.action_selector = QComboBox()
-        self.action_selector.addItems(ACTION_TYPES)
+        self.action_selector.addItems(constants.ACTION_TYPES)
         self.action_selector.setEnabled(False)
         toolbar.addWidget(self.action_selector)
         self.add_action_entry_action = QAction("Add Action", self)
@@ -228,7 +226,7 @@ class WindowMenu(QMainWindow):
         self.add_action_entry_action.setEnabled(False)
         toolbar.addAction(self.add_action_entry_action)
         self.sub_action_selector = QComboBox()
-        self.sub_action_selector.addItems(SUB_ACTION_TYPES)
+        self.sub_action_selector.addItems(constants.SUB_ACTION_TYPES)
         self.sub_action_selector.setEnabled(False)
         toolbar.addWidget(self.sub_action_selector)
         self.add_sub_action_entry_action = QAction("Add Sub Action", self)
@@ -584,19 +582,19 @@ class WindowMenu(QMainWindow):
             self.delete_element_action.setEnabled(False)
 
     def add_action_CombinedActions(self):
-        self.add_action(ACTION_COMBO)
+        self.add_action(constants.ACTION_COMBO)
 
     def add_action_NoiseDetection(self):
-        self.add_action(ACTION_NOISEDETECTION)
+        self.add_action(constants.ACTION_NOISEDETECTION)
 
     def add_action_FocusStack(self):
-        self.add_action(ACTION_FOCUSSTACK)
+        self.add_action(constants.ACTION_FOCUSSTACK)
 
     def add_action_FocusStackBunch(self):
-        self.add_action(ACTION_FOCUSSTACKBUNCH)
+        self.add_action(constants.ACTION_FOCUSSTACKBUNCH)
 
     def add_action_MultiLayer(self):
-        self.add_action(ACTION_MULTILAYER)
+        self.add_action(constants.ACTION_MULTILAYER)
 
     def add_sub_action(self, type_name=False):
         current_job_index = self.job_list.currentRow()
@@ -612,7 +610,7 @@ class WindowMenu(QMainWindow):
                 action = act
                 break
             action_counter += len(act.sub_actions)
-        if not action or action.type_name != ACTION_COMBO:
+        if not action or action.type_name != constants.ACTION_COMBO:
             return
         if type_name is False:
             type_name = self.sub_action_selector.currentText()
@@ -625,16 +623,16 @@ class WindowMenu(QMainWindow):
             self.action_list.setCurrentRow(current_action_index)
 
     def add_sub_action_MakeNoise(self):
-        self.add_sub_action(ACTION_MASKNOISE)
+        self.add_sub_action(constants.ACTION_MASKNOISE)
 
     def add_sub_action_Vignetting(self):
-        self.add_sub_action(ACTION_VIGNETTING)
+        self.add_sub_action(constants.ACTION_VIGNETTING)
 
     def add_sub_action_AlignFrames(self):
-        self.add_sub_action(ACTION_ALIGNFRAMES)
+        self.add_sub_action(constants.ACTION_ALIGNFRAMES)
 
     def add_sub_action_BalanceFrames(self):
-        self.add_sub_action(ACTION_BALANCEFRAMES)
+        self.add_sub_action(constants.ACTION_BALANCEFRAMES)
 
     def copy_job(self):
         current_index = self.job_list.currentRow()
@@ -656,7 +654,7 @@ class WindowMenu(QMainWindow):
             self.copy_action()
 
     def paste_job(self):
-        if self._copy_buffer.type_name != ACTION_JOB:
+        if self._copy_buffer.type_name != constants.ACTION_JOB:
             return
         job_index = self.job_list.currentRow()
         if 0 <= job_index < len(self.project.jobs):
@@ -672,12 +670,13 @@ class WindowMenu(QMainWindow):
         action = actions[action_index]
         if actions is not None:
             if sub_action_index == -1:
-                if self._copy_buffer.type_name not in ACTION_TYPES:
+                if self._copy_buffer.type_name not in constants.ACTION_TYPES:
                     return
                 self.touch_project()
                 actions.insert(action_index, self._copy_buffer)
             else:
-                if action.type_name != ACTION_COMBO or self._copy_buffer.type_name not in SUB_ACTION_TYPES:
+                if action.type_name != constants.ACTION_COMBO or \
+                   self._copy_buffer.type_name not in constants.SUB_ACTION_TYPES:
                     return
                 self.touch_project()
                 sub_actions.insert(sub_action_index, self._copy_buffer)
@@ -816,53 +815,83 @@ class WindowMenu(QMainWindow):
             else:
                 menu.addAction(self.enable_action)
             menu.addSeparator()
-            self.current_action_wp = self.get_action_wp(current_action)
-            if self.current_action_wp != '':
-                self.browse_wp_action = QAction("Browse Working Path")
+            self.current_action_wp, name = self.get_action_wp(current_action)
+            if self.current_action_wp != '' and os.path.exists(self.current_action_wp):
+                action_name = "Browse Working Path" + (f" > {name}" if name != '' else '')
+                self.browse_wp_action = QAction(action_name)
                 self.browse_wp_action.triggered.connect(self.browse_wp_path)
                 menu.addAction(self.browse_wp_action)
-            ip = self.get_action_ip(current_action)
+            ip, name = self.get_action_ip(current_action)
             if ip != '':
                 self.current_action_ip = f"{self.current_action_wp}/{ip}"
-                self.browse_ip_action = QAction("Browse Input Path")
-                self.browse_ip_action.triggered.connect(self.browse_ip_path)
-                menu.addAction(self.browse_ip_action)
-            op = self.get_action_op(current_action)
+                if os.path.exists(self.current_action_ip):
+                    action_name = "Browse Input Path" + (f" > {name}" if name != '' else '')
+                    self.browse_ip_action = QAction(action_name)
+                    self.browse_ip_action.triggered.connect(self.browse_ip_path)
+                    menu.addAction(self.browse_ip_action)
+            op, name = self.get_action_op(current_action)
             if op != '':
                 self.current_action_op = f"{self.current_action_wp}/{op}"
-                self.browse_op_action = QAction("Browse Output Path")
-                self.browse_op_action.triggered.connect(self.browse_op_path)
-                menu.addAction(self.browse_op_action)
+                if os.path.exists(self.current_action_op):
+                    action_name = "Browse Output Path" + (f" > {name}" if name != '' else '')
+                    self.browse_op_action = QAction(action_name)
+                    self.browse_op_action.triggered.connect(self.browse_op_path)
+                    menu.addAction(self.browse_op_action)
             menu.addSeparator()
             menu.addAction(self.run_job_action)
             menu.addAction(self.run_all_jobs_action)
             menu.exec(event.globalPos())
 
-    def get_action_wp(self, action):
+    def get_action_wp(self, action, get_name=False):
+        if action is None:
+            return '', ''
+        if action in constants.SUB_ACTION_TYPES:
+            return self.get_action_wp(action.parent, True)
         wp = action.params.get('working_path', '')
-        parent = action.parent
-        while wp == '' and parent is not None:
-            wp = parent.params.get('working_path', '')
-            parent = parent.parent
-        return wp
+        if wp != '':
+            return wp, (f" {action.params.get('name', '')} [{action.type_name}]" if get_name else '')
+        else:
+            return self.get_action_wp(action.parent, True)
 
-    def get_action_ip(self, action):
-        path = action.params.get('input_path', '')
-        if path.find(';') != -1:
-            path = ''
-        return path
-
-    def get_action_op(self, action):
+    def get_action_op(self, action, get_name=False):
+        if action is None:
+            return '', ''
+        if action.type_name in constants.SUB_ACTION_TYPES:
+            return self.get_action_op(action.parent, True)
+        name = action.params.get('name', '')
         path = action.params.get('output_path', '')
-        return path
+        if path == '':
+            path = name
+        return path, (f" {action.params.get('name', '')} [{action.type_name}]" if get_name else '')
+
+    def get_action_ip(self, action, get_name=False):
+        if action is None:
+            return '', ''
+        if action.type_name in constants.SUB_ACTION_TYPES:
+            return self.get_action_ip(action.parent, True)
+        path = action.params.get('input_path', '')
+        if path == '':
+            actions = action.parent.sub_actions
+            if action in actions:
+                i = actions.index(action)
+                if i == 0:
+                    return self.get_action_ip(action.parent, True)
+                else:
+                    return self.get_action_op(actions[i - 1], True)
+            else:
+                return '', ''
+        else:
+            return path, (f" {action.params.get('name', '')} [{action.type_name}]" if get_name else '')
 
     def browse_path(self, path):
-        if running_under_windows():
-            os.startfile(os.path.normpath(path))
-        elif running_under_macos():
-            subprocess.run(['open', path])
-        else:
-            subprocess.run(['xdg-open', path])
+        ps = path.split(';')
+        for p in ps:
+            if running_under_windows():
+                os.startfile(os.path.normpath(path))
+            elif running_under_macos():
+                subprocess.run(['open', path])
+            else:
+                subprocess.run(['xdg-open', path])
 
     def browse_wp_path(self):
         self.browse_path(self.current_action_wp)
