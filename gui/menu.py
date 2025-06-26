@@ -266,7 +266,7 @@ class WindowMenu(QMainWindow):
             self.run_job_action.setEnabled(True)
             self.run_all_jobs_action.setEnabled(True)
 
-    def _update_title(self):
+    def update_title(self):
         title = "Focus Stacking GUI"
         if self._current_file:
             title += f" - {os.path.basename(self._current_file)}"
@@ -295,7 +295,7 @@ class WindowMenu(QMainWindow):
         if self._check_unsaved_changes():
             self.project = Project()
             self._current_file = None
-            self._update_title()
+            self.update_title()
             self.job_list.clear()
             self.action_list.clear()
             self._modified_project = False
@@ -312,7 +312,7 @@ class WindowMenu(QMainWindow):
                 json_obj = json.load(file)
                 self.project = Project.from_dict(json_obj['project'])
                 self._current_file = file_path
-                self._update_title()
+                self.update_title()
                 self.refresh_ui(0, -1)
                 if self.job_list.count() > 0:
                     self.job_list.setCurrentRow(0)
@@ -340,7 +340,7 @@ class WindowMenu(QMainWindow):
                 file_path += '.fsp'
             self.do_save(file_path)
             self._current_file = file_path
-            self._update_title()
+            self.update_title()
 
     def do_save(self, file_path):
         try:
