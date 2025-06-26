@@ -365,9 +365,12 @@ class ActionConfigDialog(QDialog):
         return configurators.get(action_type, DefaultActionConfigurator())
 
     def accept(self):
+        self.parent()._project_buffer.append(self.parent().project.clone())
         if self.configurator.update_params(self.action.params):
+            self.parent()._modified_project = True
             super().accept()
-
+        else:
+            self.parent()._project_buffer.pop()
 
 class NoNameActionConfigurator(ActionConfigurator):
     def update_params(self, params):
