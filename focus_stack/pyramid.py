@@ -47,7 +47,7 @@ class PyramidStack:
         return next_layer
 
     def compute_pyramids(self, image, levels):
-        gaussian = [image.astype(np.float64)]
+        gaussian = [image.astype(np.float32)]
         for _ in range(levels):
             reduced = self.reduce_layer(gaussian[-1])
             if min(reduced.shape[:2]) < 4:

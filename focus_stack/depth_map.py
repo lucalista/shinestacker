@@ -2,12 +2,8 @@ import numpy as np
 import cv2
 from termcolor import colored
 from config.constants import constants
-from focus_stack.utils import read_img, get_img_metadata, validate_image
+from focus_stack.utils import read_img, get_img_metadata, validate_image, img_bw
 from focus_stack.exceptions import ImageLoadError
-
-
-def convert_to_grayscale(image):
-    return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
 
 def blend(images, focus_map):
@@ -89,7 +85,7 @@ class DepthMapStack:
             Exception("Invalid image type: " + t.str)
         gray_images = np.zeros(self.images.shape[:-1], dtype=t)
         for index in range(self.images.shape[0]):
-            gray_images[index] = convert_to_grayscale(self.images[index])
+            gray_images[index] = img_bw(self.images[index])
         self.print_message(': compute energy map')
         if self.energy == constants.DM_ENERGY_SOBEL:
             energy_map = get_sobel_map(gray_images)

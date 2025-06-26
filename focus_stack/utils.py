@@ -56,6 +56,10 @@ def img_bw_8bit(img):
     return cv2.cvtColor(img_8bit(img), cv2.COLOR_BGR2GRAY)
 
 
+def img_bw(img):
+    return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+
 def get_img_metadata(img):
     return img.shape[:2], img.dtype
 

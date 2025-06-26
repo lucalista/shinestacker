@@ -372,6 +372,7 @@ class ActionConfigDialog(QDialog):
         else:
             self.parent()._project_buffer.pop()
 
+
 class NoNameActionConfigurator(ActionConfigurator):
     def update_params(self, params):
         return self.builder.update_params(params)
