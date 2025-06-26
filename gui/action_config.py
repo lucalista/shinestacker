@@ -41,21 +41,21 @@ class FieldBuilder:
     def add_field(self, tag: str, field_type: str, label: str,
                   required: bool = False, add_to_layout=None, **kwargs):
         if field_type == FIELD_TEXT:
-            widget = self._create_text_field(tag, **kwargs)
+            widget = self.create_text_field(tag, **kwargs)
         elif field_type == FIELD_ABS_PATH:
-            widget = self._create_abs_path_field(tag, **kwargs)
+            widget = self.create_abs_path_field(tag, **kwargs)
         elif field_type == FIELD_REL_PATH:
-            widget = self._create_rel_path_field(tag, **kwargs)
+            widget = self.create_rel_path_field(tag, **kwargs)
         elif field_type == FIELD_FLOAT:
-            widget = self._create_float_field(tag, **kwargs)
+            widget = self.create_float_field(tag, **kwargs)
         elif field_type == FIELD_INT:
-            widget = self._create_int_field(tag, **kwargs)
+            widget = self.create_int_field(tag, **kwargs)
         elif field_type == FIELD_INT_TUPLE:
-            widget = self._create_int_tuple_field(tag, **kwargs)
+            widget = self.create_int_tuple_field(tag, **kwargs)
         elif field_type == FIELD_BOOL:
-            widget = self._create_bool_field(tag, **kwargs)
+            widget = self.create_bool_field(tag, **kwargs)
         elif field_type == FIELD_COMBO:
-            widget = self._create_combo_field(tag, **kwargs)
+            widget = self.create_combo_field(tag, **kwargs)
         else:
             raise ValueError(f"Unknown field type: {field_type}")
         self.fields[tag] = {
@@ -137,13 +137,13 @@ class FieldBuilder:
                     return False
         return True
 
-    def _create_text_field(self, tag, **kwargs):
+    def create_text_field(self, tag, **kwargs):
         value = self.action.params.get(tag, '')
         edit = QLineEdit(value)
         edit.setPlaceholderText(kwargs.get('placeholder', ''))
         return edit
 
-    def _create_abs_path_field(self, tag, **kwargs):
+    def create_abs_path_field(self, tag, **kwargs):
         value = self.action.params.get(tag, '')
         edit = QLineEdit(value)
         edit.setPlaceholderText(kwargs.get('placeholder', ''))
@@ -164,7 +164,7 @@ class FieldBuilder:
         container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         return container
 
-    def _create_rel_path_field(self, tag, **kwargs):
+    def create_rel_path_field(self, tag, **kwargs):
         value = self.action.params.get(tag, kwargs.get('default', ''))
         edit = QLineEdit(value)
         edit.setPlaceholderText(kwargs.get('placeholder', ''))
@@ -276,20 +276,20 @@ class FieldBuilder:
         container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         return container
 
-    def _create_float_field(self, tag, default=0.0, min=0.0, max=1.0, step=0.1, **kwargs):
+    def create_float_field(self, tag, default=0.0, min=0.0, max=1.0, step=0.1, **kwargs):
         spin = QDoubleSpinBox()
         spin.setValue(self.action.params.get(tag, default))
         spin.setRange(min, max)
         spin.setSingleStep(step)
         return spin
 
-    def _create_int_field(self, tag, default=0, min=0, max=100, **kwargs):
+    def create_int_field(self, tag, default=0, min=0, max=100, **kwargs):
         spin = QSpinBox()
         spin.setRange(min, max)
         spin.setValue(self.action.params.get(tag, default))
         return spin
 
-    def _create_int_tuple_field(self, tag, size=1, default=[0] * 100, min=[0] * 100, max=[100] * 100, **kwargs):
+    def create_int_tuple_field(self, tag, size=1, default=[0] * 100, min=[0] * 100, max=[100] * 100, **kwargs):
         layout = QHBoxLayout()
         spins = [QSpinBox() for i in range(size)]
         labels = kwargs.get('labels', ('') * size)
@@ -309,7 +309,7 @@ class FieldBuilder:
         container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         return container
 
-    def _create_combo_field(self, tag, options=None, default=None, **kwargs):
+    def create_combo_field(self, tag, options=None, default=None, **kwargs):
         options = options or []
         values = kwargs.get('values', None)
         combo = QComboBox()
@@ -320,7 +320,7 @@ class FieldBuilder:
         combo.setCurrentText(value)
         return combo
 
-    def _create_bool_field(self, tag, default=False, **kwargs):
+    def create_bool_field(self, tag, default=False, **kwargs):
         checkbox = QCheckBox()
         checkbox.setChecked(self.action.params.get(tag, default))
         return checkbox
