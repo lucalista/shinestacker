@@ -359,13 +359,16 @@ class RunWorker(LogWorker):
         <span style="color: #{ColorPalette.DARK_BLUE.hex()}; font-weight: bold;">{self.tag} begins</span>
         </div>
         ''')
-        status = self._do_run()
+        status = self.do_run()
         if status == constants.RUN_FAILED:
             message = f"{self.tag} failed"
             color = "#" + ColorPalette.DARK_RED.hex()
-        else:
+        elif status == constants.RUN_COMPLETED:
             message = f"{self.tag} ended successfully"
             color = "#" + ColorPalette.DARK_BLUE.hex()
+        elif status == constants.RUN_STOPPED:
+            message = f"{self.tag} stopped"
+            color = "#" + ColorPalette.DARK_RED.hex()
         self.html_signal.emit(f'''
         <div style="margin: 2px 0; font-family: {LOG_FONTS_STR};">
         <span style="color: {color}; font-weight: bold;">{message}</span>
@@ -377,13 +380,6 @@ class RunWorker(LogWorker):
     def stop(self):
         self.status = constants.STATUS_STOPPED
         self.wait()
-        message = f"{self.tag} stopped"
-        self.html_signal.emit(f'''
-        <div style="margin: 2px 0; font-family: {LOG_FONTS_STR};">
-        <span style="color: #{ColorPalette.DARK_RED.hex()}; font-weight: bold;">{message}</span>
-        </div>
-        ''')
-        self.end_signal.emit(constants.RUN_STOPPED, self.id_str, message)
 
 
 class JobLogWorker(RunWorker):
@@ -392,7 +388,7 @@ class JobLogWorker(RunWorker):
         self.job = job
         self.tag = "Job"
 
-    def _do_run(self):
+    def do_run(self):
         converter = ProjectConverter()
         return converter.run_job(self.job, self.id_str, self.callbacks)
 
@@ -403,6 +399,6 @@ class ProjectLogWorker(RunWorker):
         self.project = project
         self.tag = "Project"
 
-    def _do_run(self):
+    def do_run(self):
         converter = ProjectConverter()
         return converter.run_project(self.project, self.id_str, self.callbacks)

@@ -4,6 +4,7 @@ from termcolor import colored
 from config.constants import constants
 from focus_stack.exceptions import ImageLoadError
 from focus_stack.utils import read_img, get_img_metadata, validate_image
+from focus_stack.exceptions import RunStopException
 
 
 class PyramidStack:
@@ -126,6 +127,8 @@ class PyramidStack:
             pyramids.append(pyramid)
             base_levels.append(pyramid[-1])
             self.process.callback('after_step', self.process.id, self.process.name, i)
+            if self.process.callback('check_running', self.process.id, self.process.name) is False:
+                raise RunStopException(self.name)
         fused_pyramid = [self.fuse_base(base_levels)]
         for level in range(levels - 1, -1, -1):
             current_levels = [p[level] for p in pyramids]

@@ -160,7 +160,6 @@ class Job(JobBase):
     def run_core(self):
         for a in self.__actions:
             if not (a.enabled and self.enabled):
-                # a.callback('before_action', a.id, a.name)
                 z = []
                 if not a.enabled:
                     z.append("action")
@@ -168,7 +167,6 @@ class Job(JobBase):
                     z.append("job")
                 msg = " and ".join(z)
                 self.get_logger().warning(colored(a.name + f": {msg} disabled", 'red'))
-                # a.callback('after_action', a.id, a.name)
             else:
                 if self.callback('check_running', self.id, self.name) is False:
                     raise RunStopException(self.name)
