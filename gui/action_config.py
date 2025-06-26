@@ -332,7 +332,7 @@ class ActionConfigDialog(QDialog):
         self.action = action
         self.setWindowTitle(f"Configure {action.type_name}")
         self.resize(500, self.height())
-        self.configurator = self._get_configurator(action.type_name)
+        self.configurator = self.get_configurator(action.type_name)
         self.layout = QFormLayout(self)
         self.layout.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
         self.layout.setRowWrapPolicy(QFormLayout.DontWrapRows)
@@ -349,7 +349,7 @@ class ActionConfigDialog(QDialog):
         ok_button.clicked.connect(self.accept)
         cancel_button.clicked.connect(self.reject)
 
-    def _get_configurator(self, action_type: str) -> ActionConfigurator:
+    def get_configurator(self, action_type: str) -> ActionConfigurator:
         configurators = {
             constants.ACTION_JOB: JobConfigurator(),
             constants.ACTION_COMBO: CombinedActionsConfigurator(),
