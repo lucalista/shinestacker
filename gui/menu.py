@@ -792,6 +792,7 @@ class WindowMenu(QMainWindow):
         worker = ProjectLogWorker(self.project, id_str)
         self.connect_signals(worker, new_window)
         self.start_thread(worker)
+        self._workers.append(worker)
 
     def contextMenuEvent(self, event):
         item = self.job_list.itemAt(self.job_list.viewport().mapFrom(self, event.pos()))
