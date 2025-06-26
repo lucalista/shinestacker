@@ -815,75 +815,75 @@ class WindowMenu(QMainWindow):
             else:
                 menu.addAction(self.enable_action)
             menu.addSeparator()
-            self.current_action_wp, name = self.get_action_wp(current_action)
-            if self.current_action_wp != '' and os.path.exists(self.current_action_wp):
+            self.current_action_working_path, name = self.get_action_working_path(current_action)
+            if self.current_action_working_path != '' and os.path.exists(self.current_action_working_path):
                 action_name = "Browse Working Path" + (f" > {name}" if name != '' else '')
-                self.browse_wp_action = QAction(action_name)
-                self.browse_wp_action.triggered.connect(self.browse_wp_path)
-                menu.addAction(self.browse_wp_action)
-            ip, name = self.get_action_ip(current_action)
+                self.browse_working_path_action = QAction(action_name)
+                self.browse_working_path_action.triggered.connect(self.browse_working_path_path)
+                menu.addAction(self.browse_working_path_action)
+            ip, name = self.get_action_input_path(current_action)
             if ip != '':
                 ips = ip.split(';')
-                self.current_action_ip = ";".join([f"{self.current_action_wp}/{ip}" for ip in ips])
+                self.current_action_input_path = ";".join([f"{self.current_action_working_path}/{ip}" for ip in ips])
                 p_exists = False
-                for p in self.current_action_ip.split(";"):
+                for p in self.current_action_input_path.split(";"):
                     if os.path.exists(p):
                         p_exists = True
                         break
                 if p_exists:
                     action_name = "Browse Input Path" + (f" > {name}" if name != '' else '')
-                    self.browse_ip_action = QAction(action_name)
-                    self.browse_ip_action.triggered.connect(self.browse_ip_path)
-                    menu.addAction(self.browse_ip_action)
-            op, name = self.get_action_op(current_action)
+                    self.browse_input_path_action = QAction(action_name)
+                    self.browse_input_path_action.triggered.connect(self.browse_input_path_path)
+                    menu.addAction(self.browse_input_path_action)
+            op, name = self.get_action_output_path(current_action)
             if op != '':
-                self.current_action_op = f"{self.current_action_wp}/{op}"
-                if os.path.exists(self.current_action_op):
+                self.current_action_output_path = f"{self.current_action_working_path}/{op}"
+                if os.path.exists(self.current_action_output_path):
                     action_name = "Browse Output Path" + (f" > {name}" if name != '' else '')
-                    self.browse_op_action = QAction(action_name)
-                    self.browse_op_action.triggered.connect(self.browse_op_path)
-                    menu.addAction(self.browse_op_action)
+                    self.browse_output_path_action = QAction(action_name)
+                    self.browse_output_path_action.triggered.connect(self.browse_output_path_path)
+                    menu.addAction(self.browse_output_path_action)
             menu.addSeparator()
             menu.addAction(self.run_job_action)
             menu.addAction(self.run_all_jobs_action)
             menu.exec(event.globalPos())
 
-    def get_action_wp(self, action, get_name=False):
+    def get_action_working_path(self, action, get_name=False):
         if action is None:
             return '', ''
         if action in constants.SUB_ACTION_TYPES:
-            return self.get_action_wp(action.parent, True)
+            return self.get_action_working_path(action.parent, True)
         wp = action.params.get('working_path', '')
         if wp != '':
             return wp, (f" {action.params.get('name', '')} [{action.type_name}]" if get_name else '')
         else:
-            return self.get_action_wp(action.parent, True)
+            return self.get_action_working_path(action.parent, True)
 
-    def get_action_op(self, action, get_name=False):
+    def get_action_output_path(self, action, get_name=False):
         if action is None:
             return '', ''
         if action.type_name in constants.SUB_ACTION_TYPES:
-            return self.get_action_op(action.parent, True)
+            return self.get_action_output_path(action.parent, True)
         name = action.params.get('name', '')
         path = action.params.get('output_path', '')
         if path == '':
             path = name
         return path, (f" {action.params.get('name', '')} [{action.type_name}]" if get_name else '')
 
-    def get_action_ip(self, action, get_name=False):
+    def get_action_input_path(self, action, get_name=False):
         if action is None:
             return '', ''
         if action.type_name in constants.SUB_ACTION_TYPES:
-            return self.get_action_ip(action.parent, True)
+            return self.get_action_input_path(action.parent, True)
         path = action.params.get('input_path', '')
         if path == '':
             actions = action.parent.sub_actions
             if action in actions:
                 i = actions.index(action)
                 if i == 0:
-                    return self.get_action_ip(action.parent, True)
+                    return self.get_action_input_path(action.parent, True)
                 else:
-                    return self.get_action_op(actions[i - 1], True)
+                    return self.get_action_output_path(actions[i - 1], True)
             else:
                 return '', ''
         else:
@@ -900,11 +900,11 @@ class WindowMenu(QMainWindow):
                 else:
                     subprocess.run(['xdg-open', p])
 
-    def browse_wp_path(self):
-        self.browse_path(self.current_action_wp)
+    def browse_working_path_path(self):
+        self.browse_path(self.current_action_working_path)
 
-    def browse_ip_path(self):
-        self.browse_path(self.current_action_ip)
+    def browse_input_path_path(self):
+        self.browse_path(self.current_action_input_path)
 
-    def browse_op_path(self):
-        self.browse_path(self.current_action_op)
+    def browse_output_path_path(self):
+        self.browse_path(self.current_action_output_path)
