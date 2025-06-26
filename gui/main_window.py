@@ -11,7 +11,6 @@ from gui.gui_run import RunWindow
 
 
 class MainWindow(WindowMenu, LogManager):
-
     def __init__(self):
         WindowMenu.__init__(self)
         LogManager.__init__(self)
