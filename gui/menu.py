@@ -825,10 +825,16 @@ class WindowMenu(QMainWindow):
             if ip != '':
                 ips = ip.split(';')
                 self.current_action_ip = ";".join([f"{self.current_action_wp}/{ip}" for ip in ips])
-                action_name = "Browse Input Path" + (f" > {name}" if name != '' else '')
-                self.browse_ip_action = QAction(action_name)
-                self.browse_ip_action.triggered.connect(self.browse_ip_path)
-                menu.addAction(self.browse_ip_action)
+                p_exists = False
+                for p in self.current_action_ip.split(";"):
+                    if os.path.exists(p):
+                        p_exists = True
+                        break
+                if p_exists:
+                    action_name = "Browse Input Path" + (f" > {name}" if name != '' else '')
+                    self.browse_ip_action = QAction(action_name)
+                    self.browse_ip_action.triggered.connect(self.browse_ip_path)
+                    menu.addAction(self.browse_ip_action)
             op, name = self.get_action_op(current_action)
             if op != '':
                 self.current_action_op = f"{self.current_action_wp}/{op}"
