@@ -823,12 +823,12 @@ class WindowMenu(QMainWindow):
                 menu.addAction(self.browse_wp_action)
             ip, name = self.get_action_ip(current_action)
             if ip != '':
-                self.current_action_ip = f"{self.current_action_wp}/{ip}"
-                if os.path.exists(self.current_action_ip):
-                    action_name = "Browse Input Path" + (f" > {name}" if name != '' else '')
-                    self.browse_ip_action = QAction(action_name)
-                    self.browse_ip_action.triggered.connect(self.browse_ip_path)
-                    menu.addAction(self.browse_ip_action)
+                ips = ip.split(';')
+                self.current_action_ip = ";".join([f"{self.current_action_wp}/{ip}" for ip in ips])
+                action_name = "Browse Input Path" + (f" > {name}" if name != '' else '')
+                self.browse_ip_action = QAction(action_name)
+                self.browse_ip_action.triggered.connect(self.browse_ip_path)
+                menu.addAction(self.browse_ip_action)
             op, name = self.get_action_op(current_action)
             if op != '':
                 self.current_action_op = f"{self.current_action_wp}/{op}"
@@ -886,12 +886,13 @@ class WindowMenu(QMainWindow):
     def browse_path(self, path):
         ps = path.split(';')
         for p in ps:
-            if running_under_windows():
-                os.startfile(os.path.normpath(path))
-            elif running_under_macos():
-                subprocess.run(['open', path])
-            else:
-                subprocess.run(['xdg-open', path])
+            if os.path.exists(p):
+                if running_under_windows():
+                    os.startfile(os.path.normpath(p))
+                elif running_under_macos():
+                    subprocess.run(['open', p])
+                else:
+                    subprocess.run(['xdg-open', p])
 
     def browse_wp_path(self):
         self.browse_path(self.current_action_wp)
