@@ -38,7 +38,7 @@ class PyramidStack:
 
     def expand_layer(self, layer):
         if len(layer.shape) == 2:
-            expand = np.zeros((2 * layer.shape[0], 2 * layer.shape[1]), dtype=np.float64)
+            expand = np.zeros((2 * layer.shape[0], 2 * layer.shape[1]), dtype=np.float32)
             expand[::2, ::2] = layer
             return 4. * self.convolve(expand)
         ch_layer = self.expand_layer(layer[:, :, 0])
@@ -50,7 +50,7 @@ class PyramidStack:
 
     def gaussian_pyramid(self, levels):
         self.print_message(': beginning gaussian pyramids')
-        pyramid = [self.images.astype(np.float64)]
+        pyramid = [self.images.astype(np.float32)]
         while levels > 0:
             self.print_message(': gaussian pyramids, level: {}'.format(levels))
             next_layer = self.reduce_layer(pyramid[-1][0])
@@ -83,22 +83,22 @@ class PyramidStack:
 
     def area_entropy(self, area, probabilities):
         levels = area.flatten()
-        return np.float64(-1. * (levels * np.log(probabilities[levels])).sum())
+        return np.float32(-1. * (levels * np.log(probabilities[levels])).sum())
 
     def get_pad(self, padded_image, row, column):
         return padded_image[row + self.pad_amount + self.offset[:, np.newaxis], column + self.pad_amount + self.offset]
 
     def entropy(self, image):
         levels, counts = np.unique(image.astype(self.dtype), return_counts=True)
-        probabilities = np.zeros((self.n_values), dtype=np.float64)
-        probabilities[levels] = counts.astype(np.float64) / counts.sum()
+        probabilities = np.zeros((self.n_values), dtype=np.float32)
+        probabilities[levels] = counts.astype(np.float32) / counts.sum()
         padded_image = cv2.copyMakeBorder(image, self.pad_amount, self.pad_amount, self.pad_amount,
                                           self.pad_amount, cv2.BORDER_REFLECT101)
         return np.fromfunction(np.vectorize(lambda row, column: self.area_entropy(
             self.get_pad(padded_image, row, column), probabilities)), image.shape[:2], dtype=int)
 
     def area_deviation(self, area):
-        return np.square(area - np.average(area).astype(np.float64)).sum() / area.size
+        return np.square(area - np.average(area).astype(np.float32)).sum() / area.size
 
     def deviation(self, image):
         padded_image = cv2.copyMakeBorder(image, self.pad_amount, self.pad_amount, self.pad_amount,
@@ -109,7 +109,7 @@ class PyramidStack:
 
     def get_fused_base(self, images):
         layers, height, width, _ = images.shape
-        entropies = np.zeros(images.shape[:3], dtype=np.float64)
+        entropies = np.zeros(images.shape[:3], dtype=np.float32)
         deviations = np.copy(entropies)
         gray_images = np.array([cv2.cvtColor(images[layer].astype(np.float32),
                                              cv2.COLOR_BGR2GRAY).astype(self.dtype) for layer in range(layers)])
@@ -117,7 +117,7 @@ class PyramidStack:
         deviations = np.array([self.deviation(img) for img in gray_images])
         best_e = np.argmax(entropies, axis=0)
         best_d = np.argmax(deviations, axis=0)
-        fused = np.zeros(images.shape[1:], dtype=np.float64)
+        fused = np.zeros(images.shape[1:], dtype=np.float32)
         for layer in range(layers):
             img = images[layer]
             fused += np.where(best_e[:, :, np.newaxis] == layer, img, 0)
@@ -130,7 +130,7 @@ class PyramidStack:
             laplacians = pyramids[layer]
             layers = laplacians.shape[0]
             self.print_message(': fusing pyramids, layer: {}'.format(layer + 1))
-            region_energies = np.zeros(laplacians.shape[:3], dtype=np.float64)
+            region_energies = np.zeros(laplacians.shape[:3], dtype=np.float32)
             gray_laps = [cv2.cvtColor(laplacians[layer].astype(np.float32),
                                       cv2.COLOR_BGR2GRAY) for layer in range(layers)]
             region_energies = np.array([self.convolve(np.square(gray_lap)) for gray_lap in gray_laps])
