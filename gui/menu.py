@@ -40,6 +40,7 @@ class WindowMenu(QMainWindow):
         super().__init__()
         self.script_dir = os.path.dirname(__file__)
         self._current_file = None
+        self._workers = []
         menubar = self.menuBar()
         self.add_file_menu(menubar)
         self.add_edit_menu(menubar)
