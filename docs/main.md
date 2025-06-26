@@ -33,6 +33,11 @@ job.add_action(MultiLayer("multilayer", input_path=['batches', 'stack']))
 job.run()
 ```
 
+if some constants have to be used in the configuration, the set of predefined constants should be imported:
+```python
+from config.constants import constants
+```
+
 ## Graphical User Interface
 
 A GUI based on ```PySide6``` is also available, still experimental and undocumented.
@@ -76,6 +81,6 @@ pip install git+https://github.com/lucalista/focusstack.git
 ```
 ## Issues
 
-* ```BALANCE_HSV``` and ```BALANCE_HLS``` are only supported for 8-bit images
+* Balance modes ```BALANCE_HSV``` and ```BALANCE_HLS``` are only supported for 8-bit images
 * Focus stacking modules crashes for TIFF files if  ```denoise``` is set different from zero due to an assertion failure in the Open CV library. This is similar to a [known issue on stackoverflow](https://stackoverflow.com/questions/76647895/opencv-fastnlmeansdenoisingmulti-should-support-16-bit-images-but-does-it).
 * PNG files have not been tested so far.
