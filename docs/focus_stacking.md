@@ -40,7 +40,7 @@ Arguments for the constructor are:
    * ```kernel_size``` (optional, default: 5)
    * ```gen_kernel``` (optional, default: 0.4)
   
-```DepthMapStack```, based on [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar.
+```DepthMapStack```
 
 Arguments for the constructor are:
    * ```map_type``` (optional), possible values are  ```MAP_MAX``` (default) and ```MAP_AVERAGE```. ```MAP_MAX``` select for wach pixel the layer which has the best focus. ```MAP_AVERAGE``` performs for each pixel an average of all layers weighted by the quality of focus.
