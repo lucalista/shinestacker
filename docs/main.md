@@ -35,7 +35,7 @@ job.run()
 
 ## Graphical User Interface
 
-A GUI is also available, still experimental and undocumented.
+A GUI based on ```PySide6``` is also available, still experimental and undocumented.
 It basically reflects the structure of the python modules documented below, with the corresponding configurable parameterrs.
 To run the GUI, from the main package directory run:
 
