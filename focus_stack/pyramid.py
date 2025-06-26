@@ -29,17 +29,15 @@ class PyramidStack:
     def reduce_layer(self, layer):
         if len(layer.shape) == 2:
             return self.convolve(layer)[::2, ::2]
-        ch_layer = self.reduce_layer(layer[:, :, 0])
-        next_layer = np.zeros(list(ch_layer.shape) + [layer.shape[2]], dtype=layer.dtype)
-        next_layer[:, :, 0] = ch_layer
-        for channel in range(1, layer.shape[2]):
-            next_layer[:, :, channel] = self.reduce_layer(layer[:, :, channel])
-        return next_layer
+        reduced_channels = [self.reduce_layer(layer[:, :, channel]) for channel in range(layer.shape[2])]
+        return np.stack(reduced_channels, axis=-1)
 
     def expand_layer(self, layer):
         if len(layer.shape) == 2:
-            expand = np.zeros((2 * layer.shape[0], 2 * layer.shape[1]), dtype=np.float64)
+            expand = np.empty((2 * layer.shape[0], 2 * layer.shape[1]), dtype=layer.dtype)
             expand[::2, ::2] = layer
+            expand[1::2, :] = 0
+            expand[:, 1::2] = 0
             return 4. * self.convolve(expand)
         ch_layer = self.expand_layer(layer[:, :, 0])
         next_layer = np.zeros(list(ch_layer.shape) + [layer.shape[2]], dtype=layer.dtype)
@@ -52,29 +50,28 @@ class PyramidStack:
         gaussian = [image.astype(np.float64)]
         for _ in range(levels):
             reduced = self.reduce_layer(gaussian[-1])
-            if min(reduced.shape[:2]) < 2:
+            if min(reduced.shape[:2]) < 4:
                 break
             gaussian.append(reduced)
         laplacian = [gaussian[-1]]
         for level in range(len(gaussian) - 1, 0, -1):
             expanded = self.expand_layer(gaussian[level])
-            target_shape = gaussian[level - 1].shape
-            if expanded.shape != target_shape:
-                expanded = expanded[:target_shape[0], :target_shape[1]]
+            h, w = gaussian[level - 1].shape[:2]
+            expanded = expanded[:h, :w]
             laplacian.append(gaussian[level - 1] - expanded)
         return laplacian[::-1]
 
     def calculate_entropy(self, image):
         hist = cv2.calcHist([image.astype(self.dtype)], [0], None, [self.n_values], [0, self.n_values])
-        hist = hist / hist.sum()
-        hist[hist == 0] = 1e-10
+        hist = np.maximum(hist / hist.sum(), 1e-10)
         entropy = -np.sum(hist * np.log(hist))
         return np.full(image.shape, entropy)
 
     def calculate_deviation(self, image):
-        mean = cv2.blur(image, (self.kernel_size, self.kernel_size))
-        sq_diff = (image - mean)**2
-        return cv2.blur(sq_diff, (self.kernel_size, self.kernel_size))
+        mean = cv2.boxFilter(image, -1, (self.kernel_size, self.kernel_size), normalize=True)
+        sq_diff = cv2.multiply(image - mean, image - mean)
+        variance = cv2.boxFilter(sq_diff, -1, (self.kernel_size, self.kernel_size), normalize=True)
+        return variance
 
     def fuse_base(self, base_imgs):
         gray_imgs = [cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2GRAY) for img in base_imgs]
