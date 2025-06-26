@@ -32,12 +32,11 @@ def running_under_macos() -> bool:
 
 
 class WindowMenu(QMainWindow):
-    _copy_buffer = None
-    _modified_project = False
-    _project_buffer = []
-
     def __init__(self):
         super().__init__()
+        self._copy_buffer = None
+        self._modified_project = False
+        self._project_buffer = []
         self.script_dir = os.path.dirname(__file__)
         self._current_file = None
         self._workers = []
