@@ -48,8 +48,8 @@ class MainWindow(WindowMenu, LogManager):
         vbox_right.setSpacing(4)
         vbox_right.addWidget(QLabel("Actions"))
         vbox_right.addWidget(self.action_list)
-        self.job_list.itemSelectionChanged.connect(self.update_delete_buttons_state)
-        self.action_list.itemSelectionChanged.connect(self.update_delete_buttons_state)
+        self.job_list.itemSelectionChanged.connect(self.update_delete_action_state)
+        self.action_list.itemSelectionChanged.connect(self.update_delete_action_state)
         h_layout.addLayout(vbox_left)
         h_layout.addLayout(vbox_right)
         layout.addWidget(h_splitter)
@@ -130,7 +130,7 @@ class MainWindow(WindowMenu, LogManager):
         for a in self.sub_action_menu_entries:
             a.setEnabled(enabled)
 
-    def update_delete_buttons_state(self):
+    def update_delete_action_state(self):
         has_job_selected = len(self.job_list.selectedItems()) > 0
         has_action_selected = len(self.action_list.selectedItems()) > 0
         self.delete_element_action.setEnabled(has_job_selected or has_action_selected)
