@@ -823,10 +823,10 @@ class WindowMenu(QMainWindow):
                 menu.addAction(self.browse_working_path_action)
             ip, name = self.get_action_input_path(current_action)
             if ip != '':
-                ips = ip.split(';')
-                self.current_action_input_path = ";".join([f"{self.current_action_working_path}/{ip}" for ip in ips])
+                ips = ip.split(constants.PATH_SEPARATOR)
+                self.current_action_input_path = constants.PATH_SEPARATOR.join([f"{self.current_action_working_path}/{ip}" for ip in ips])
                 p_exists = False
-                for p in self.current_action_input_path.split(";"):
+                for p in self.current_action_input_path.split(constants.PATH_SEPARATOR):
                     if os.path.exists(p):
                         p_exists = True
                         break
@@ -890,7 +890,7 @@ class WindowMenu(QMainWindow):
             return path, (f" {action.params.get('name', '')} [{action.type_name}]" if get_name else '')
 
     def browse_path(self, path):
-        ps = path.split(';')
+        ps = path.split(constants.PATH_SEPARATOR)
         for p in ps:
             if os.path.exists(p):
                 if running_under_windows():

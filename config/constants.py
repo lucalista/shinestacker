@@ -17,6 +17,8 @@ class _Constants:
 
     DEFAULT_PLOTS_PATH = 'plots'
 
+    PATH_SEPARATOR = ';'
+
     DEFAULT_NOISE_MAP_FILENAME = "noise-map/hot_pixels.png"
     DEFAULT_MN_KERNEL_SIZE = 3
     INTERPOLATE_MEAN = 'MEAN'

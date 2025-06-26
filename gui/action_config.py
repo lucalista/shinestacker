@@ -125,7 +125,7 @@ class FieldBuilder:
                     if field.get('must_exist', False):
                         paths = [abs_path]
                         if field.get('multiple_entries', False):
-                            paths = abs_path.split(";")
+                            paths = abs_path.split(constants.PATH_SEPARATOR)
                         for p in paths:
                             p = p.strip()
                             if not os.path.exists(p):
@@ -218,7 +218,7 @@ class FieldBuilder:
                                 return
 
                         if rel_paths:
-                            edit.setText(";".join(rel_paths))
+                            edit.setText(constants.PATH_SEPARATOR.join(rel_paths))
 
                 elif path_type == 'file':
                     paths, _ = QFileDialog.getOpenFileNames(None, f"Select {label}", working_path)
@@ -235,7 +235,7 @@ class FieldBuilder:
                             except ValueError:
                                 QMessageBox.warning(None, "Error", "Could not compute relative path")
                                 return
-                            edit.setText(";".join(rel_paths))
+                            edit.setText(constants.PATH_SEPARATOR.join(rel_paths))
                 else:
                     raise ValueError("path_type must be 'directory' (default) or 'file'.")
         else:
@@ -398,7 +398,7 @@ class NoiseDetectionConfigurator(DefaultActionConfigurator):
         super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True,
                                placeholder='inherit from job')
-        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path (separate by ;)', required=False,
+        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path (separate by {constants.PATH_SEPARATOR})', required=False,
                                multiple_entries=True, placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
@@ -512,7 +512,7 @@ class MultiLayerConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
         super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
-        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path (separate by ;)', required=False,
+        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path (separate by {constants.PATH_SEPARATOR})', required=False,
                                multiple_entries=True, placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                placeholder='relative to working path')
