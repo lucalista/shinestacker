@@ -1,5 +1,6 @@
 from config.constants import constants
 from gui.project_model import Project, ActionConfig
+from gui.action_config import FocusStackBaseConfigurator
 from focus_stack.stack_framework import StackJob, CombinedActions
 from focus_stack.noise_detection import NoiseDetection, MaskNoise
 from focus_stack.vignetting import Vignetting
@@ -85,16 +86,21 @@ class ProjectConverter:
                 params['intensity_interval'] = {'min': i[0], 'max': i[1]}
             return BalanceFrames(**params)
         elif action_config.type_name == constants.ACTION_FOCUSSTACK or action_config.type_name == constants.ACTION_FOCUSSTACKBUNCH:
-            stacker = action_config.params.get('stacker', 'Pyramid')
-            if stacker == 'Pyramid':
+            stacker = action_config.params.get('stacker', FocusStackBaseConfigurator.STACK_ALGO_DEFAULT)
+            if stacker == FocusStackBaseConfigurator.STACK_ALGO_PYRAMID:
                 algo_dict, module_dict = self.filter_dict_keys(action_config.params, 'pyramid_')
                 stack_algo = PyramidStack(**algo_dict)
-            if stacker == 'Pyramid block':
+            if stacker == FocusStackBaseConfigurator.STACK_ALGO_PYRAMID_BLOCK:
                 algo_dict, module_dict = self.filter_dict_keys(action_config.params, 'pyramid_')
                 stack_algo = PyramidBlock(**algo_dict)
-            elif stacker == 'Depth map':
+            elif stacker == FocusStackBaseConfigurator.STACK_ALGO_DEPTH_MAP:
                 algo_dict, module_dict = self.filter_dict_keys(action_config.params, 'depthmap_')
                 stack_algo = DepthMapStack(**algo_dict)
+            else:
+                raise InvalidOptionError('stacker', stacker, "valid options are: "
+                                         "{FocusStackBaseConfigurator.FOCUS_ALGO_PYRAMID}, "
+                                         "{FocusStackBaseConfigurator.FOCUS_ALGO_PYRAMID_BLOCK}, "
+                                         "{FocusStackBaseConfigurator.FOCUS_ALGO_DEPTH_MAP}")
             if action_config.type_name == constants.ACTION_FOCUSSTACK:
                 return FocusStack(**module_dict, stack_algo=stack_algo)
             elif action_config.type_name == constants.ACTION_FOCUSSTACKBUNCH:

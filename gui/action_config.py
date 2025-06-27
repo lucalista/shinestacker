@@ -424,6 +424,11 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
     ENERGY_OPTIONS = ['Laplacian', 'Sobel']
     MAP_TYPE_OPTIONS = ['Average', 'Maximum']
     FLOAT_OPTIONS = ['float 32 bits', 'float 64 bits']
+    STACK_ALGO_PYRAMID = 'Pyramid'
+    STACK_ALGO_PYRAMID_BLOCK = 'Pyramid'
+    STACK_ALGO_DEPTH_MAP = 'Depth map'
+    STACK_ALGO_OPTIONS = [STACK_ALGO_PYRAMID, STACK_ALGO_PYRAMID_BLOCK, STACK_ALGO_DEPTH_MAP]
+    STACK_ALGO_DEFAULT = STACK_ALGO_PYRAMID
 
     def create_form(self, layout, action):
         super().create_form(layout, action)
@@ -441,7 +446,7 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
                                default=0, min=0, max=10)
         self.add_bold_label("Stacking algorithm:")
         combo = self.builder.add_field('stacker', FIELD_COMBO, 'Stacking algorithm', required=True,
-                                       options=['Pyramid', 'Pyramid block', 'Depth map'], default='Pyramid')
+                                       options=self.STACK_ALGO_OPTIONS, default=self.STACK_ALGO_DEFAULT)
         q_pyramid, q_depthmap = QWidget(), QWidget()
         for q in [q_pyramid, q_depthmap]:
             layout = QFormLayout()
@@ -470,7 +475,7 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
         self.builder.add_field('pyramid_gen_kernel', FIELD_FLOAT, 'Gen. kernel',
                                required=False, add_to_layout=q_pyramid.layout(),
                                default=constants.DEFAULT_PY_GEN_KERNEL, min=0.0, max=2.0)
-        self.builder.add_field('float_type', FIELD_COMBO, 'Precision', required=False,
+        self.builder.add_field('pyramid_float_type', FIELD_COMBO, 'Precision', required=False,
                                add_to_layout=q_pyramid.layout(), options=self.FLOAT_OPTIONS, values=constants.VALID_FLOATS,
                                default={k: v for k, v in
                                         zip(constants.VALID_FLOATS, self.FLOAT_OPTIONS)}[constants.DEFAULT_PY_FLOAT])
@@ -493,7 +498,7 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
         self.builder.add_field('depthmap_smooth_size', FIELD_INT, 'Smooth size (px)',
                                required=False, add_to_layout=q_depthmap.layout(),
                                default=constants.DEFAULT_DM_SMOOTH_SIZE, min=1, max=256)
-        self.builder.add_field('float_type', FIELD_COMBO, 'Precision', required=False,
+        self.builder.add_field('depthmap_float_type', FIELD_COMBO, 'Precision', required=False,
                                add_to_layout=q_depthmap.layout(), options=self.FLOAT_OPTIONS, values=constants.VALID_FLOATS,
                                default={k: v for k, v in
                                         zip(constants.VALID_FLOATS, self.FLOAT_OPTIONS)}[constants.DEFAULT_DM_FLOAT])
