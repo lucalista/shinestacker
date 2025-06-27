@@ -76,7 +76,7 @@ class PyramidBlock(PyramidBase):
 
     def fused_base(self, images):
         layers, height, width, _ = images.shape
-        gray_images = np.array([cv2.cvtColor(images[layer].astype(self.float32),
+        gray_images = np.array([cv2.cvtColor(images[layer].astype(np.float32),
                                              cv2.COLOR_BGR2GRAY).astype(self.dtype) for layer in range(layers)])
         entropies = np.array([self.entropy(img) for img in gray_images])
         deviations = np.array([self.deviation(img) for img in gray_images])

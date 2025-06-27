@@ -427,7 +427,7 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
 
     def create_form(self, layout, action):
         super().create_form(layout, action)
-        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
+        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=False)
         self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
                                placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
@@ -524,7 +524,7 @@ class FocusStackBunchConfigurator(FocusStackBaseConfigurator):
 class MultiLayerConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
         super().create_form(layout, action)
-        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
+        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=False)
         self.builder.add_field('input_path', FIELD_REL_PATH, f'Input path (separate by {constants.PATH_SEPARATOR})', required=False,
                                multiple_entries=True, placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
@@ -538,7 +538,7 @@ class MultiLayerConfigurator(DefaultActionConfigurator):
 class CombinedActionsConfigurator(DefaultActionConfigurator):
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
-        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
+        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=False)
         self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
                                must_exist=True, placeholder='relative to working path')
         self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
