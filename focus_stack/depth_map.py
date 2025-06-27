@@ -55,7 +55,7 @@ class DepthMapStack:
         return smoothed
 
     def get_focus_map(self, energies):
-        if (self.map_type == constants.DM_MAP_AVERAGE):
+        if self.map_type == constants.DM_MAP_AVERAGE:
             tile_shape = np.array(energies.shape)
             tile_shape[1:] = 1
             sum_energies = np.tile(np.sum(energies, axis=0), tile_shape)
@@ -82,14 +82,13 @@ class DepthMapStack:
             images.append(img)
         dtype = images[0].dtype
         self.images = np.array(images, dtype=dtype)
-        t = self.images[0].dtype
-        if t == np.uint8:
+        if dtype == np.uint8:
             n_values = 255
-        elif t == np.uint16:
+        elif dtype == np.uint16:
             n_values = 65535
         else:
             Exception("Invalid image type: " + t.str)
-        gray_images = np.zeros(self.images.shape[:-1], dtype=t)
+        gray_images = np.zeros(self.images.shape[:-1], dtype=dtype)
         for index in range(self.images.shape[0]):
             gray_images[index] = img_bw(self.images[index])
         self.print_message(': compute energy map')
@@ -106,4 +105,4 @@ class DepthMapStack:
         focus_map = self.get_focus_map(energy_map)
         self.print_message(': blending images')
         stacked_image = blend(self.images, focus_map)
-        return np.clip(np.absolute(stacked_image), 0, n_values).astype(t)
+        return np.clip(np.absolute(stacked_image), 0, n_values).astype(dtype)
