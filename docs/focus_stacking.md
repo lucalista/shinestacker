@@ -33,14 +33,17 @@ Arguments for the constructor of ```FocusStackBunch``` are:
 
 ## Stack algorithms
 
-```PyramidStack```, based on [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar.
+```PyramidStack```, Laplacian pyramid focus stacking algorithm
 
 Arguments for the constructor are:
    * ```pyramid_min_size``` (optional, default: 32)
    * ```kernel_size``` (optional, default: 5)
    * ```gen_kernel``` (optional, default: 0.4)
-  
-```DepthMapStack```
+   * ```float_type``` (optional, default: ```FLOAT_32```, possible values: ```FLOAT_32```, ```FLOAT_64```): precision for internal image representation
+
+```PyramidBlock```, alternative implementation based on original [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar.
+
+```DepthMapStack```, Depth map focus stacking algorithm
 
 Arguments for the constructor are:
    * ```map_type``` (optional), possible values are  ```MAP_MAX``` (default) and ```MAP_AVERAGE```. ```MAP_MAX``` select for wach pixel the layer which has the best focus. ```MAP_AVERAGE``` performs for each pixel an average of all layers weighted by the quality of focus.
