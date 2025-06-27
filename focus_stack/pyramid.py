@@ -28,15 +28,6 @@ class PyramidBase:
     def convolve(self, image):
         return cv2.filter2D(image, -1, self.gen_kernel, borderType=cv2.BORDER_REFLECT101)
 
-
-class PyramidStack(PyramidBase):
-    def __init__(self, min_size=constants.DEFAULT_PY_MIN_SIZE, kernel_size=constants.DEFAULT_PY_KERNEL_SIZE,
-                 gen_kernel=constants.DEFAULT_PY_GEN_KERNEL, float_type=constants.DEFAULT_PY_FLOAT):
-        super().__init__(min_size, kernel_size, gen_kernel, float_type)
-
-    def name(self):
-        return "pyramid"
-
     def reduce_layer(self, layer):
         if len(layer.shape) == 2:
             return self.convolve(layer)[::2, ::2]
@@ -57,9 +48,20 @@ class PyramidStack(PyramidBase):
             next_layer[:, :, channel] = self.expand_layer(layer[:, :, channel])
         return next_layer
 
+
+class PyramidStack(PyramidBase):
+    def __init__(self, min_size=constants.DEFAULT_PY_MIN_SIZE, kernel_size=constants.DEFAULT_PY_KERNEL_SIZE,
+                 gen_kernel=constants.DEFAULT_PY_GEN_KERNEL, float_type=constants.DEFAULT_PY_FLOAT):
+        super().__init__(min_size, kernel_size, gen_kernel, float_type)
+
+    def name(self):
+        return "pyramid"
+
     def compute_pyramids(self, image, levels):
+        self.print_message(': beginning gaussian pyramids')        
         gaussian = [image.astype(self.float_type)]
         for _ in range(levels):
+            self.print_message(f': gaussian pyramids, level: {_}/{levels}')
             reduced = self.reduce_layer(gaussian[-1])
             if min(reduced.shape[:2]) < 4:
                 break
@@ -70,6 +72,7 @@ class PyramidStack(PyramidBase):
             h, w = gaussian[level - 1].shape[:2]
             expanded = expanded[:h, :w]
             laplacian.append(gaussian[level - 1] - expanded)
+        self.print_message(': gaussian pyramids completed')
         return laplacian[::-1]
 
     def calculate_entropy(self, image):

@@ -5,34 +5,15 @@ from focus_stack.exceptions import ImageLoadError
 from focus_stack.utils import read_img, get_img_metadata, validate_image
 from focus_stack.pyramid import PyramidBase
 
+
 class PyramidBlock(PyramidBase):
     def __init__(self, min_size=constants.DEFAULT_PY_MIN_SIZE, kernel_size=constants.DEFAULT_PY_KERNEL_SIZE,
                  gen_kernel=constants.DEFAULT_PY_GEN_KERNEL, float_type=constants.DEFAULT_PY_FLOAT):
         super().__init__(min_size, kernel_size, gen_kernel, float_type)
         self.offset = np.arange(-self.pad_amount, self.pad_amount + 1)
-        
+
     def name(self):
         return "pyramid-block"
-
-    def reduce_layer(self, layer):
-        if len(layer.shape) == 2:
-            return self.convolve(layer)[::2, ::2]
-        reduced_channels = [self.reduce_layer(layer[:, :, channel]) for channel in range(layer.shape[2])]
-        return np.stack(reduced_channels, axis=-1)
-
-    def expand_layer(self, layer):
-        if len(layer.shape) == 2:
-            expand = np.empty((2 * layer.shape[0], 2 * layer.shape[1]), dtype=layer.dtype)
-            expand[::2, ::2] = layer
-            expand[1::2, :] = 0
-            expand[:, 1::2] = 0
-            return 4. * self.convolve(expand)
-        ch_layer = self.expand_layer(layer[:, :, 0])
-        next_layer = np.zeros(list(ch_layer.shape) + [layer.shape[2]], dtype=layer.dtype)
-        next_layer[:, :, 0] = ch_layer
-        for channel in range(1, layer.shape[2]):
-            next_layer[:, :, channel] = self.expand_layer(layer[:, :, channel])
-        return next_layer
 
     def gaussian_pyramid(self, levels):
         self.print_message(': beginning gaussian pyramids')
@@ -93,10 +74,8 @@ class PyramidBlock(PyramidBase):
             np.vectorize(lambda row, column: self.area_deviation(self.get_pad(padded_image, row, column))),
             image.shape[:2], dtype=int)
 
-    def get_fused_base(self, images):
+    def fused_base(self, images):
         layers, height, width, _ = images.shape
-        entropies = np.zeros(images.shape[:3], dtype=self.float_type)
-        deviations = np.copy(entropies)
         gray_images = np.array([cv2.cvtColor(images[layer].astype(self.float_type),
                                              cv2.COLOR_BGR2GRAY).astype(self.dtype) for layer in range(layers)])
         entropies = np.array([self.entropy(img) for img in gray_images])
@@ -111,7 +90,7 @@ class PyramidBlock(PyramidBase):
         return (fused / 2).astype(images.dtype)
 
     def fuse_pyramids(self, pyramids):
-        fused = [self.get_fused_base(pyramids[-1])]
+        fused = [self.fused_base(pyramids[-1])]
         for layer in range(len(pyramids) - 2, -1, -1):
             laplacians = pyramids[layer]
             layers = laplacians.shape[0]
@@ -132,14 +111,14 @@ class PyramidBlock(PyramidBase):
         self.print_message(': pyramids fusion completed')
         return fused[::-1]
 
-    def collapse(self, pyramid):
-        image = pyramid[-1]
+    def collapse_pyramid(self, pyramid):
+        img = pyramid[-1]
         for layer in pyramid[-2::-1]:
-            expanded = self.expand_layer(image)
+            expanded = self.expand_layer(img)
             if expanded.shape != layer.shape:
                 expanded = expanded[:layer.shape[0], :layer.shape[1]]
-            image = expanded + layer
-        return image
+            img = expanded + layer
+        return np.clip(np.abs(img), 0, self.n_values - 1)
 
     def focus_stack(self, filenames):
         images = []
@@ -158,6 +137,5 @@ class PyramidBlock(PyramidBase):
         self.images = np.array(images, dtype=self.dtype)
         self.num_images = self.images.shape[0]
         self.n_values = 256 if self.dtype == np.uint8 else 65536
-        stacked_image = self.collapse(self.fuse_pyramids(
+        return self.collapse_pyramid(self.fuse_pyramids(
             self.laplacian_pyramid(int(np.log2(min(self.images[0].shape[:2]) / self.min_size)))))
-        return np.clip(np.absolute(stacked_image), 0, self.n_values - 1).astype(self.dtype)
