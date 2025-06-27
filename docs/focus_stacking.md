@@ -33,7 +33,7 @@ Arguments for the constructor of ```FocusStackBunch``` are:
 
 ## Stack algorithms
 
-```PyramidStack```, Laplacian pyramid focus stacking algorithm
+```PyramidStack```, Laplacian pyramid focus stacking algorithm, optimized implementation
 
 Arguments for the constructor are:
    * ```pyramid_min_size``` (optional, default: 32)
