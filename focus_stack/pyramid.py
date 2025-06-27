@@ -117,7 +117,7 @@ class PyramidStack(PyramidBase):
         self.offset = np.arange(-self.pad_amount, self.pad_amount + 1)
 
     def name(self):
-        return "pyramid-block"
+        return "pyramid"
 
     def process_single_image(self, img, levels):
         pyramid = [img.astype(self.float_type)]
