@@ -425,7 +425,7 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
     MAP_TYPE_OPTIONS = ['Average', 'Maximum']
     FLOAT_OPTIONS = ['float 32 bits', 'float 64 bits']
     STACK_ALGO_PYRAMID = 'Pyramid'
-    STACK_ALGO_PYRAMID_BLOCK = 'Pyramid'
+    STACK_ALGO_PYRAMID_BLOCK = 'Pyramid block'
     STACK_ALGO_DEPTH_MAP = 'Depth map'
     STACK_ALGO_OPTIONS = [STACK_ALGO_PYRAMID, STACK_ALGO_PYRAMID_BLOCK, STACK_ALGO_DEPTH_MAP]
     STACK_ALGO_DEFAULT = STACK_ALGO_PYRAMID
