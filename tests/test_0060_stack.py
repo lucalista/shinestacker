@@ -20,7 +20,7 @@ def test_jpg():
 def test_jpg_block():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg")
-        job.add_action(FocusStack("stack-pyramid", PyramidBlock(),
+        job.add_action(FocusStack("stack-pyramid-block", PyramidBlock(),
                                   output_path="output/img-jpg-block", postfix='_pyr'))
         job.run()
     except Exception:
@@ -30,7 +30,7 @@ def test_jpg_block():
 def test_tif():
     try:
         job = StackJob("job", "./", input_path="input/img-tif")
-        job.add_action(FocusStack("stack-pyramid", PyramidStack(),
+        job.add_action(FocusStack("stack-pyramid-tiff", PyramidStack(),
                                   output_path="output/img-tif-stack", postfix='_pyr'))
         job.run()
     except Exception:
@@ -50,7 +50,7 @@ def test_jpg_dm():
 def test_bunches():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg")
-        job.add_action(FocusStackBunch("stack-pyramid", PyramidStack(),
+        job.add_action(FocusStackBunch("stack-pyramid-bunch", PyramidStack(),
                                        output_path="output/img-jpg-bunches", frames=3))
         job.run()
     except Exception:
