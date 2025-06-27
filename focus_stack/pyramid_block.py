@@ -15,28 +15,6 @@ class PyramidBlock(PyramidBase):
     def name(self):
         return "pyramid-block"
 
-    def reduce_layer(self, layer):
-        if len(layer.shape) == 2:
-            return self.convolve(layer)[::2, ::2]
-        ch_layer = self.reduce_layer(layer[:, :, 0])
-        next_layer = np.zeros(list(ch_layer.shape) + [layer.shape[2]], dtype=ch_layer.dtype)
-        next_layer[:, :, 0] = ch_layer
-        for channel in range(1, layer.shape[2]):
-            next_layer[:, :, channel] = self.reduce_layer(layer[:, :, channel])
-        return next_layer
-
-    def expand_layer(self, layer):
-        if len(layer.shape) == 2:
-            expand = np.zeros((2 * layer.shape[0], 2 * layer.shape[1]), dtype=self.float_type)
-            expand[::2, ::2] = layer
-            return 4. * self.convolve(expand)
-        ch_layer = self.expand_layer(layer[:, :, 0])
-        next_layer = np.zeros(list(ch_layer.shape) + [layer.shape[2]], dtype=ch_layer.dtype)
-        next_layer[:, :, 0] = ch_layer
-        for channel in range(1, layer.shape[2]):
-            next_layer[:, :, channel] = self.expand_layer(layer[:, :, channel])
-        return next_layer
-
     def gaussian_pyramid(self, levels):
         self.print_message(': beginning gaussian pyramids')
         pyramid = [self.images.astype(self.float_type)]
