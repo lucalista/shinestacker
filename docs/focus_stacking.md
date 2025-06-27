@@ -41,7 +41,7 @@ Arguments for the constructor are:
    * ```gen_kernel``` (optional, default: 0.4)
    * ```float_type``` (optional, default: ```FLOAT_32```, possible values: ```FLOAT_32```, ```FLOAT_64```): precision for internal image representation
 
-```PyramidBlock```, alternative implementation based on original [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar.
+```PyramidBlock```, alternative implementation, closer to the original [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar.
 
 ```DepthMapStack```, Depth map focus stacking algorithm
 
