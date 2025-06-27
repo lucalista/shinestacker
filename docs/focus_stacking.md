@@ -48,6 +48,8 @@ Arguments for the constructor are:
 Arguments for the constructor are:
    * ```map_type``` (optional), possible values are  ```MAP_MAX``` (default) and ```MAP_AVERAGE```. ```MAP_MAX``` select for wach pixel the layer which has the best focus. ```MAP_AVERAGE``` performs for each pixel an average of all layers weighted by the quality of focus.
    * ```energy``` (optional), possible values are ```ENERGY_LAPLACIAN``` (default) and ```ENERGY_SOBEL```.
-   * ```kernel_size``` (optional, default: 5) 
-   * ```blur_size``` (optional, default: 5) 
-   * ```smooth_size``` (optional, default: 32)
+   * ```kernel_size``` (optional, default: 5) size in pixels of Laplacian kernel.
+   * ```blur_size``` (optional, default: 5) size in pixels of the pre-Laplacian Gaussian blur.
+   * ```smooth_size``` (optional, default: 15) size of energy smoothing.
+   * ```temperature``` (optional, default: 0.1) controls fision transition: lower value means sharper transitions.
+   * ```levels``` (optional, defauls: 3) number of levels for the Laplacian pyramid.

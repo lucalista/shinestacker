@@ -31,21 +31,21 @@ class DepthMapStack:
     def print_message(self, msg):
         self.process.sub_message_r(colored(msg, "light_blue"))
 
-    def _get_sobel_map(self, images):
-        energies = np.zeros(images.shape, dtype=np.float32)
+    def get_sobel_map(self, images):
+        energies = np.zeros(images.shape, dtype=self.float_type)
         for i in range(images.shape[0]):
             img = images[i]
             energies[i] = np.abs(cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=3)) + np.abs(cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=3))
         return energies
 
-    def _get_laplacian_map(self, images):
-        laplacian = np.zeros(images.shape, dtype=np.float32)
+    def get_laplacian_map(self, images):
+        laplacian = np.zeros(images.shape, dtype=self.float_type)
         for i in range(images.shape[0]):
             blurred = cv2.GaussianBlur(images[i], (self.blur_size, self.blur_size), 0)
             laplacian[i] = np.abs(cv2.Laplacian(blurred, cv2.CV_64F, ksize=self.kernel_size))
         return laplacian
 
-    def _smooth_energy(self, energy_map):
+    def smooth_energy(self, energy_map):
         if self.smooth_size <= 0:
             return energy_map
         smoothed = np.zeros(energy_map.shape, dtype=energy_map.dtype)
@@ -53,19 +53,22 @@ class DepthMapStack:
             smoothed[i] = cv2.bilateralFilter(energy_map[i], self.smooth_size, 25, 25)
         return smoothed
 
-    def _get_focus_map(self, energies):
-        if self.map_type == 'average':
+    def get_focus_map(self, energies):
+        if self.map_type == constants.DM_MAP_AVERAGE:
             sum_energies = np.sum(energies, axis=0)
             return np.divide(energies, sum_energies, where=sum_energies != 0)
-        else:
+        elif self.map_type == constants.DM_MAP_MAX:
             max_energy = np.max(energies, axis=0)
             relative = np.exp((energies - max_energy) / self.temperature)
             return relative / np.sum(relative, axis=0)
+        else:
+            raise InvalidOptionError("map_type", self.map_type, details=f" valid values are "
+                                     f"{constants.DM_MAP_AVERAGE} and {constants.DM_MAP_MAX:}.")
 
-    def _pyramid_blend(self, images, weights):
+    def pyramid_blend(self, images, weights):
         blended = None
         for i in range(images.shape[0]):
-            img = images[i].astype(np.float32)
+            img = images[i].astype(self.float_type)
             weight = weights[i]
             gp_img = [img]
             gp_weight = [weight]
@@ -119,13 +122,13 @@ class DepthMapStack:
             gray[i] = img_bw(images[i])
         self.print_message(': compute energy map')
         if self.energy == 'sobel':
-            energy = self._get_sobel_map(gray)
+            energy = self.get_sobel_map(gray)
         else:
-            energy = self._get_laplacian_map(gray)
+            energy = self.get_laplacian_map(gray)
             self.print_message(': smooth energy map')
-        energy = self._smooth_energy(energy)
+        energy = self.smooth_energy(energy)
         self.print_message(': get weights')
-        weights = self._get_focus_map(energy)
+        weights = self.get_focus_map(energy)
         self.print_message(': blend pyramid')
-        result = self._pyramid_blend(images, weights)
+        result = self.pyramid_blend(images, weights)
         return np.clip(np.absolute(result), 0, n_values).astype(dtype)

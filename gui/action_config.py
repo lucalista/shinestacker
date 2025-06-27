@@ -497,7 +497,7 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
                                default=constants.DEFAULT_DM_BLUR_SIZE, min=1, max=21)
         self.builder.add_field('depthmap_smooth_size', FIELD_INT, 'Smooth size (px)',
                                required=False, add_to_layout=q_depthmap.layout(),
-                               default=constants.DEFAULT_DM_SMOOTH_SIZE, min=1, max=256)
+                               default=constants.DEFAULT_DM_SMOOTH_SIZE, min=0, max=256)
         self.builder.add_field('depthmap_temperature', FIELD_FLOAT, 'Temperature', required=False,
                                add_to_layout=q_depthmap.layout(), default=constants.DEFAULT_DM_TEMPERATURE, min=0, max=1, step=0.05)
         self.builder.add_field('depthmap_levels', FIELD_INT, 'Levels', required=False,
