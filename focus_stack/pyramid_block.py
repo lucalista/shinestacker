@@ -76,7 +76,7 @@ class PyramidBlock(PyramidBase):
 
     def fused_base(self, images):
         layers, height, width, _ = images.shape
-        gray_images = np.array([cv2.cvtColor(images[layer].astype(self.float_type),
+        gray_images = np.array([cv2.cvtColor(images[layer].astype(self.float32),
                                              cv2.COLOR_BGR2GRAY).astype(self.dtype) for layer in range(layers)])
         entropies = np.array([self.entropy(img) for img in gray_images])
         deviations = np.array([self.deviation(img) for img in gray_images])
@@ -96,7 +96,7 @@ class PyramidBlock(PyramidBase):
             layers = laplacians.shape[0]
             self.print_message(': fusing pyramids, layer: {}'.format(layer + 1))
             region_energies = np.zeros(laplacians.shape[:3], dtype=self.float_type)
-            gray_laps = [cv2.cvtColor(laplacians[layer].astype(self.float_type),
+            gray_laps = [cv2.cvtColor(laplacians[layer].astype(self.float32),
                                       cv2.COLOR_BGR2GRAY) for layer in range(layers)]
             region_energies = np.array([self.convolve(np.square(gray_lap)) for gray_lap in gray_laps])
             best_re = np.argmax(region_energies, axis=0)
