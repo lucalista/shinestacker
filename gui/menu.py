@@ -375,6 +375,9 @@ class WindowMenu(GuiActions):
                 menu.addAction(self.disable_action)
             else:
                 menu.addAction(self.enable_action)
+            edit_config_action = QAction("Edit configuration")
+            edit_config_action.triggered.connect(self.edit_current_action)
+            menu.addAction(edit_config_action)
             menu.addSeparator()
             self.current_action_working_path, name = self.get_action_working_path(current_action)
             if self.current_action_working_path != '' and os.path.exists(self.current_action_working_path):
@@ -434,19 +437,28 @@ class WindowMenu(GuiActions):
     def get_action_input_path(self, action, get_name=False):
         if action is None:
             return '', ''
-        if action.type_name in constants.SUB_ACTION_TYPES:
+        type_name = action.type_name
+        if type_name in constants.SUB_ACTION_TYPES:
             return self.get_action_input_path(action.parent, True)
         path = action.params.get('input_path', '')
         if path == '':
-            actions = action.parent.sub_actions
-            if action in actions:
-                i = actions.index(action)
-                if i == 0:
-                    return self.get_action_input_path(action.parent, True)
+            if action.parent is None:
+                if type_name == constants.ACTION_JOB and len(action.sub_actions) > 0:
+                    action = action.sub_actions[0]
+                    path = action.params.get('input_path', '')
+                    return path, f" {action.params.get('name', '')} [{action.type_name}]"
                 else:
-                    return self.get_action_output_path(actions[i - 1], True)
+                    return '', ''
             else:
-                return '', ''
+                actions = action.parent.sub_actions
+                if action in actions:
+                    i = actions.index(action)
+                    if i == 0:
+                        return self.get_action_input_path(action.parent, True)
+                    else:
+                        return self.get_action_output_path(actions[i - 1], True)
+                else:
+                    return '', ''
         else:
             return path, (f" {action.params.get('name', '')} [{action.type_name}]" if get_name else '')
 
@@ -503,8 +515,7 @@ class WindowMenu(GuiActions):
                     if current_action:
                         break
             if current_action:
-                if is_sub_action:
-                    self.show_action_config_dialog(current_action)
-                else:
+                if not is_sub_action:
                     self.set_enabled_sub_actions_gui(current_action.type_name == constants.ACTION_COMBO)
-                    self.show_action_config_dialog(current_action)
+                self.show_action_config_dialog(current_action)
+            
