@@ -7,6 +7,7 @@ from focus_stack.align import AlignFrames
 from focus_stack.balance import BalanceFrames
 from focus_stack.stack import FocusStack, FocusStackBunch
 from focus_stack.pyramid import PyramidStack
+from focus_stack.pyramid_block import PyramidBlock
 from focus_stack.depth_map import DepthMapStack
 from focus_stack.multilayer import MultiLayer
 from focus_stack.exceptions import InvalidOptionError, RunStopException
@@ -88,6 +89,9 @@ class ProjectConverter:
             if stacker == 'Pyramid':
                 algo_dict, module_dict = self.filter_dict_keys(action_config.params, 'pyramid_')
                 stack_algo = PyramidStack(**algo_dict)
+            if stacker == 'Pyramid block':
+                algo_dict, module_dict = self.filter_dict_keys(action_config.params, 'pyramid_')
+                stack_algo = PyramidBlock(**algo_dict)
             elif stacker == 'Depth map':
                 algo_dict, module_dict = self.filter_dict_keys(action_config.params, 'depthmap_')
                 stack_algo = DepthMapStack(**algo_dict)

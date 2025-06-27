@@ -440,7 +440,7 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
                                default=0, min=0, max=10)
         self.add_bold_label("Stacking algorithm:")
         combo = self.builder.add_field('stacker', FIELD_COMBO, 'Stacking algorithm', required=True,
-                                       options=['Pyramid', 'Depth map'], default='Pyramid')
+                                       options=['Pyramid', 'Pyramid block', 'Depth map'], default='Pyramid')
         q_pyramid, q_depthmap = QWidget(), QWidget()
         for q in [q_pyramid, q_depthmap]:
             layout = QFormLayout()
@@ -455,7 +455,7 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
 
         def change():
             text = combo.currentText()
-            if text == 'Pyramid':
+            if text == 'Pyramid' or text == 'Pyramid block':
                 stacked.setCurrentWidget(q_pyramid)
             elif text == 'Depth map':
                 stacked.setCurrentWidget(q_depthmap)

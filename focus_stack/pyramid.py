@@ -2,29 +2,40 @@ import numpy as np
 import cv2
 from termcolor import colored
 from config.constants import constants
-from focus_stack.exceptions import ImageLoadError
+from focus_stack.exceptions import ImageLoadError, InvalidOptionError
 from focus_stack.utils import read_img, get_img_metadata, validate_image
 from focus_stack.exceptions import RunStopException
 
 
-class PyramidStack:
-    def __init__(self, min_size=constants.DEFAULT_PY_MIN_SIZE,
-                 kernel_size=constants.DEFAULT_PY_KERNEL_SIZE,
-                 gen_kernel=constants.DEFAULT_PY_GEN_KERNEL):
+class PyramidBase:
+    def __init__(self, min_size=constants.DEFAULT_PY_MIN_SIZE, kernel_size=constants.DEFAULT_PY_KERNEL_SIZE,
+                 gen_kernel=constants.DEFAULT_PY_GEN_KERNEL, float_type=constants.DEFAULT_PY_FLOAT):
         self.min_size = min_size
         self.kernel_size = kernel_size
         self.pad_amount = (kernel_size - 1) // 2
         kernel = np.array([0.25 - gen_kernel / 2.0, 0.25, gen_kernel, 0.25, 0.25 - gen_kernel / 2.0])
         self.gen_kernel = np.outer(kernel, kernel)
-
-    def name(self):
-        return "pyramid"
+        if float_type == constants.FLOAT_32:
+            self.float_type = np.float32
+        elif float_type == constants.FLOAT_64:
+            self.float_type = np.float64
+        else:
+            raise InvalidOptionError("float_type", float_type, details=" valid values are FLOAT_32 and FLOAT_64")
 
     def print_message(self, msg):
         self.process.sub_message_r(colored(msg, "light_blue"))
 
     def convolve(self, image):
         return cv2.filter2D(image, -1, self.gen_kernel, borderType=cv2.BORDER_REFLECT101)
+
+
+class PyramidStack(PyramidBase):
+    def __init__(self, min_size=constants.DEFAULT_PY_MIN_SIZE, kernel_size=constants.DEFAULT_PY_KERNEL_SIZE,
+                 gen_kernel=constants.DEFAULT_PY_GEN_KERNEL, float_type=constants.DEFAULT_PY_FLOAT):
+        super().__init__(min_size, kernel_size, gen_kernel, float_type)
+
+    def name(self):
+        return "pyramid"
 
     def reduce_layer(self, layer):
         if len(layer.shape) == 2:
@@ -47,7 +58,7 @@ class PyramidStack:
         return next_layer
 
     def compute_pyramids(self, image, levels):
-        gaussian = [image.astype(np.float32)]
+        gaussian = [image.astype(self.float_type)]
         for _ in range(levels):
             reduced = self.reduce_layer(gaussian[-1])
             if min(reduced.shape[:2]) < 4:
@@ -74,7 +85,7 @@ class PyramidStack:
         return variance
 
     def fuse_base(self, base_imgs):
-        gray_imgs = [cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2GRAY) for img in base_imgs]
+        gray_imgs = [cv2.cvtColor(img.astype(self.float_type), cv2.COLOR_BGR2GRAY) for img in base_imgs]
         entropies = [self.calculate_entropy(gray) for gray in gray_imgs]
         deviations = [self.calculate_deviation(gray) for gray in gray_imgs]
         best_e = np.argmax(entropies, axis=0)
@@ -86,7 +97,7 @@ class PyramidStack:
         return (fused / 2)
 
     def fuse_laplacian(self, laplacians):
-        gray_laps = [cv2.cvtColor(lap.astype(np.float32), cv2.COLOR_BGR2GRAY) for lap in laplacians]
+        gray_laps = [cv2.cvtColor(lap.astype(self.float_type), cv2.COLOR_BGR2GRAY) for lap in laplacians]
         energies = [self.convolve(np.square(gray_lap)) for gray_lap in gray_laps]
         best = np.argmax(energies, axis=0)
         fused = np.zeros_like(laplacians[0])
