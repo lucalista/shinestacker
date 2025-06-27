@@ -88,7 +88,7 @@ class PyramidStack(PyramidBase):
         return variance
 
     def fuse_base(self, base_imgs):
-        gray_imgs = [cv2.cvtColor(img.astype(self.float32), cv2.COLOR_BGR2GRAY) for img in base_imgs]
+        gray_imgs = [cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2GRAY) for img in base_imgs]
         entropies = [self.calculate_entropy(gray) for gray in gray_imgs]
         deviations = [self.calculate_deviation(gray) for gray in gray_imgs]
         best_e = np.argmax(entropies, axis=0)
@@ -100,7 +100,7 @@ class PyramidStack(PyramidBase):
         return (fused / 2)
 
     def fuse_laplacian(self, laplacians):
-        gray_laps = [cv2.cvtColor(lap.astype(self.float32), cv2.COLOR_BGR2GRAY) for lap in laplacians]
+        gray_laps = [cv2.cvtColor(lap.astype(np.float32), cv2.COLOR_BGR2GRAY) for lap in laplacians]
         energies = [self.convolve(np.square(gray_lap)) for gray_lap in gray_laps]
         best = np.argmax(energies, axis=0)
         fused = np.zeros_like(laplacians[0])

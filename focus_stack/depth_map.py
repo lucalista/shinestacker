@@ -3,7 +3,7 @@ import cv2
 from termcolor import colored
 from config.constants import constants
 from focus_stack.utils import read_img, get_img_metadata, validate_image, img_bw
-from focus_stack.exceptions import ImageLoadError
+from focus_stack.exceptions import ImageLoadError, InvalidOptionError
 
 
 def blend(images, focus_map):
@@ -21,12 +21,18 @@ def get_sobel_map(images):
 class DepthMapStack:
     def __init__(self, map_type=constants.DEFAULT_DM_MAP, energy=constants.DEFAULT_DM_ENERGY,
                  kernel_size=constants.DEFAULT_DM_KERNEL_SIZE, blur_size=constants.DEFAULT_DM_BLUR_SIZE,
-                 smooth_size=constants.DEFAULT_DM_SMOOTH_SIZE):
+                 smooth_size=constants.DEFAULT_DM_SMOOTH_SIZE, float_type=constants.DEFAULT_DM_FLOAT):
         self.map_type = map_type
         self.energy = energy
         self.kernel_size = kernel_size
         self.blur_size = blur_size
         self.smooth_size = smooth_size
+        if float_type == constants.FLOAT_32:
+            self.float_type = np.float32
+        elif float_type == constants.FLOAT_64:
+            self.float_type = np.float64
+        else:
+            raise InvalidOptionError("float_type", float_type, details=" valid values are FLOAT_32 and FLOAT_64")
 
     def name(self):
         return "depth map"
@@ -55,7 +61,7 @@ class DepthMapStack:
             sum_energies = np.tile(np.sum(energies, axis=0), tile_shape)
             return np.divide(energies, sum_energies, where=sum_energies != 0)
         else:
-            focus_map = np.zeros(energies.shape, dtype=np.float64)
+            focus_map = np.zeros(energies.shape, dtype=self.float_type)
             best_layer = np.argmax(energies, axis=0)
             for index in range(energies.shape[0]):
                 focus_map[index] = best_layer == index

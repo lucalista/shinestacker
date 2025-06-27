@@ -84,6 +84,11 @@ class _Constants:
     DEFALUT_BLACK_THRESHOLD = 1
     DEFAULT_MAX_CORRECTION = 1
 
+    FLOAT_32 = 'float-32'
+    FLOAT_64 = 'float-64'
+    VALID_FLOATS = [FLOAT_32, FLOAT_64]
+
+    DEFAULT_DM_FLOAT = FLOAT_32
     DM_ENERGY_LAPLACIAN = "laplacian"
     DM_ENERGY_SOBEL = "sobel"
     DM_MAP_AVERAGE = "average"
@@ -96,8 +101,6 @@ class _Constants:
     DEFAULT_DM_BLUR_SIZE = 5
     DEFAULT_DM_SMOOTH_SIZE = 32
 
-    FLOAT_32 = 'float-32'
-    FLOAT_54 = 'float-64'
     DEFAULT_PY_FLOAT = FLOAT_32
     DEFAULT_PY_MIN_SIZE = 32
     DEFAULT_PY_KERNEL_SIZE = 5

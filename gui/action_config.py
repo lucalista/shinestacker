@@ -423,6 +423,7 @@ class NoiseDetectionConfigurator(DefaultActionConfigurator):
 class FocusStackBaseConfigurator(DefaultActionConfigurator):
     ENERGY_OPTIONS = ['Laplacian', 'Sobel']
     MAP_TYPE_OPTIONS = ['Average', 'Maximum']
+    FLOAT_OPTIONS = ['float 32 bits', 'float 64 bits']
 
     def create_form(self, layout, action):
         super().create_form(layout, action)
@@ -469,6 +470,10 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
         self.builder.add_field('pyramid_gen_kernel', FIELD_FLOAT, 'Gen. kernel',
                                required=False, add_to_layout=q_pyramid.layout(),
                                default=constants.DEFAULT_PY_GEN_KERNEL, min=0.0, max=2.0)
+        self.builder.add_field('float_type', FIELD_COMBO, 'Precision', required=False,
+                               add_to_layout=q_pyramid.layout(), options=self.FLOAT_OPTIONS, values=constants.VALID_FLOATS,
+                               default={k: v for k, v in
+                                        zip(constants.VALID_FLOATS, self.FLOAT_OPTIONS)}[constants.DEFAULT_PY_FLOAT])
         self.builder.add_field('depthmap_energy', FIELD_COMBO, 'Energy', required=False,
                                add_to_layout=q_depthmap.layout(),
                                options=self.ENERGY_OPTIONS, values=constants.VALID_DM_ENERGY,
@@ -488,6 +493,10 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
         self.builder.add_field('depthmap_smooth_size', FIELD_INT, 'Smooth size (px)',
                                required=False, add_to_layout=q_depthmap.layout(),
                                default=constants.DEFAULT_DM_SMOOTH_SIZE, min=1, max=256)
+        self.builder.add_field('float_type', FIELD_COMBO, 'Precision', required=False,
+                               add_to_layout=q_depthmap.layout(), options=self.FLOAT_OPTIONS, values=constants.VALID_FLOATS,
+                               default={k: v for k, v in
+                                        zip(constants.VALID_FLOATS, self.FLOAT_OPTIONS)}[constants.DEFAULT_DM_FLOAT])
         self.builder.layout.addRow(stacked)
         combo.currentIndexChanged.connect(change)
 
