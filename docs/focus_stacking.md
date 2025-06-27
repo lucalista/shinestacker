@@ -5,7 +5,7 @@ job.add_action(FocusStack(name, stacker, *options))
 ```
 Arguments for the constructor of ```FocusStack``` are:
 * ```name```: the name of the action, used for printout, and possibly for output path
-* ```stacker```: an object defining the focus stacking algorithm. Can be ```PyramidStack``` or ```DepthMapStack```, see below for possible algorithms. 
+* ```stacker```: an object defining the focus stacking algorithm. Can be ```PyramidStack```, ```PyramidBlock``` or ```DepthMapStack```, see below for possible algorithms. 
 * ```input_path``` (optional): the subdirectory within ```working_path``` that contains input images to be processed. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
 * ```output_path``` (optional): the subdirectory within ```working_path``` where aligned images are written. If not specified,  it is equal to  ```name```.
 * ```working_path```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_path```.
@@ -21,7 +21,7 @@ job.add_action(FocusStackBunch(name, stacker, *options))
 ```
 Arguments for the constructor of ```FocusStackBunch``` are:
 * ```name```: the name of the action, used for printout, and possibly for output path
-* ```stacker```: an object defining the focus stacking algorithm. Can be ```PyramidStack``` or ```DepthMapStack```, see below for possible algorithms. 
+* ```stacker```: an object defining the focus stacking algorithm. Can be ```PyramidStack```, ```PyramidStack``` or ```DepthMapStack```, see below for possible algorithms. 
 * ```input_path``` (optional): the subdirectory within ```working_path``` that contains input images to be processed. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
 * * ```output_path``` (optional): the subdirectory within ```working_path``` where aligned images are written. If not specified,  it is equal to  ```name```.
 * ```working_path```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_path```.
