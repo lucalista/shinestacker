@@ -123,13 +123,16 @@ class PyramidStack(PyramidBase):
         pyramid = [img.astype(self.float_type)]
         for _ in range(levels):
             next_layer = self.reduce_layer(pyramid[-1])
+            if min(next_layer.shape[:2]) < 4:
+                break            
             pyramid.append(next_layer)
         laplacian = [pyramid[-1]]
         for level in range(len(pyramid) - 1, 0, -1):
             expanded = self.expand_layer(pyramid[level])
-            if expanded.shape != pyramid[level - 1].shape:
-                expanded = expanded[:pyramid[level - 1].shape[0], :pyramid[level - 1].shape[1]]
-            laplacian.append(pyramid[level - 1] - expanded)
+            pyr = pyramid[level - 1]
+            h, w = pyr.shape[:2]
+            expanded = expanded[:h, :w]
+            laplacian.append(pyr - expanded)            
         return laplacian[::-1]
 
     def fuse_pyramids(self, all_laplacians):
@@ -164,7 +167,6 @@ class PyramidStack(PyramidBase):
         for img_path in filenames:
             self.print_message(': processing file {}'.format(img_path.split('/')[-1]))
             img = read_img(img_path)
-            img = img.astype(self.dtype)
             all_laplacians.append(self.process_single_image(img, levels))
         stacked_image = self.collapse(self.fuse_pyramids(all_laplacians))
         return stacked_image.astype(self.dtype)
