@@ -1,5 +1,4 @@
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QListWidget, QHBoxLayout, QTabWidget,
-                               QLabel, QDialog, QSplitter)
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QLabel, QSplitter
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication
 from config.constants import constants
@@ -33,11 +32,9 @@ class MainWindow(WindowMenu, LogManager):
         self.tab_widget = QTabWidget()
         self.tab_widget.resize(1000, 500)
         h_splitter.addWidget(self.tab_widget)
-        self.job_list = QListWidget()
         self.job_list.currentRowChanged.connect(self.on_job_selected)
-        self.job_list.itemDoubleClicked.connect(self.on_job_double_clicked)
-        self.action_list = QListWidget()
-        self.action_list.itemDoubleClicked.connect(self.on_action_double_clicked)
+        self.job_list.itemDoubleClicked.connect(self.on_job_edit)
+        self.action_list.itemDoubleClicked.connect(self.on_action_edit)
         vbox_left = QVBoxLayout()
         vbox_left.setSpacing(4)
         vbox_left.addWidget(QLabel("Jobs"))
@@ -52,16 +49,6 @@ class MainWindow(WindowMenu, LogManager):
         h_layout.addLayout(vbox_right)
         layout.addWidget(h_splitter)
         self.central_widget.setLayout(layout)
-
-    def on_job_double_clicked(self, item):
-        index = self.job_list.row(item)
-        if 0 <= index < len(self.project.jobs):
-            job = self.project.jobs[index]
-            dialog = ActionConfigDialog(job, self)
-            if dialog.exec() == QDialog.Accepted:
-                current_row = self.job_list.currentRow()
-                if current_row >= 0:
-                    self.job_list.item(current_row).setText(job.params['name'])
 
     def before_thread_begins(self):
         self.run_job_action.setEnabled(False)
@@ -156,44 +143,3 @@ class MainWindow(WindowMenu, LogManager):
             self.set_enabled_sub_actions_gui(enable_sub_actions)
         else:
             self.set_enabled_sub_actions_gui(False)
-
-    def on_job_selected(self, index):
-        self.action_list.clear()
-        if 0 <= index < len(self.project.jobs):
-            job = self.project.jobs[index]
-            for action in job.sub_actions:
-                self.action_list.addItem(self.list_item(self.action_text(action),
-                                                        action.enabled()))
-                if len(action.sub_actions) > 0:
-                    for sub_action in action.sub_actions:
-                        self.action_list.addItem(self.list_item(self.action_text(sub_action, is_sub_action=True),
-                                                                sub_action.enabled()))
-
-    def on_action_double_clicked(self, item):
-        job_index = self.job_list.currentRow()
-        if 0 <= job_index < len(self.project.jobs):
-            job = self.project.jobs[job_index]
-            action_index = self.action_list.row(item)
-            action_counter = -1
-            current_action = None
-            is_sub_action = False
-            for action in job.sub_actions:
-                action_counter += 1
-                if action_counter == action_index:
-                    current_action = action
-                    break
-                if len(action.type_name) > 0:
-                    for sub_action in action.sub_actions:
-                        action_counter += 1
-                        if action_counter == action_index:
-                            current_action = sub_action
-                            is_sub_action = True
-                            break
-                    if current_action:
-                        break
-            if current_action:
-                if is_sub_action:
-                    self.show_action_config_dialog(current_action)
-                else:
-                    self.set_enabled_sub_actions_gui(current_action.type_name == constants.ACTION_COMBO)
-                    self.show_action_config_dialog(current_action)

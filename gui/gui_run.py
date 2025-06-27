@@ -4,13 +4,11 @@ from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, Q
 from PySide6.QtGui import QColor
 from PySide6.QtCore import Qt
 from PySide6.QtCore import Signal, Slot
-from gui.project_converter import ProjectConverter
 from gui.gui_logging import LogWorker, QTextEditLogger, LOG_FONTS_STR
 from gui.gui_images import GuiPdfView, GuiImageView
 import time
 
 DISABLED_TAG = ""  # " <disabled>"
-INDENT_SPACE = "     "
 
 
 class ColorEntry:
@@ -380,25 +378,3 @@ class RunWorker(LogWorker):
     def stop(self):
         self.status = constants.STATUS_STOPPED
         self.wait()
-
-
-class JobLogWorker(RunWorker):
-    def __init__(self, job, id_str):
-        super().__init__(id_str)
-        self.job = job
-        self.tag = "Job"
-
-    def do_run(self):
-        converter = ProjectConverter()
-        return converter.run_job(self.job, self.id_str, self.callbacks)
-
-
-class ProjectLogWorker(RunWorker):
-    def __init__(self, project, id_str):
-        super().__init__(id_str)
-        self.project = project
-        self.tag = "Project"
-
-    def do_run(self):
-        converter = ProjectConverter()
-        return converter.run_project(self.project, self.id_str, self.callbacks)

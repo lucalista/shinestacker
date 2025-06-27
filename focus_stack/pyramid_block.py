@@ -29,20 +29,18 @@ class PyramidStack:
     def reduce_layer(self, layer):
         if len(layer.shape) == 2:
             return self.convolve(layer)[::2, ::2]
-        ch_layer = self.reduce_layer(layer[:, :, 0])
-        next_layer = np.zeros(list(ch_layer.shape) + [layer.shape[2]], dtype=ch_layer.dtype)
-        next_layer[:, :, 0] = ch_layer
-        for channel in range(1, layer.shape[2]):
-            next_layer[:, :, channel] = self.reduce_layer(layer[:, :, channel])
-        return next_layer
+        reduced_channels = [self.reduce_layer(layer[:, :, channel]) for channel in range(layer.shape[2])]
+        return np.stack(reduced_channels, axis=-1)
 
     def expand_layer(self, layer):
         if len(layer.shape) == 2:
-            expand = np.zeros((2 * layer.shape[0], 2 * layer.shape[1]), dtype=np.float32)
+            expand = np.empty((2 * layer.shape[0], 2 * layer.shape[1]), dtype=layer.dtype)
             expand[::2, ::2] = layer
+            expand[1::2, :] = 0
+            expand[:, 1::2] = 0
             return 4. * self.convolve(expand)
         ch_layer = self.expand_layer(layer[:, :, 0])
-        next_layer = np.zeros(list(ch_layer.shape) + [layer.shape[2]], dtype=ch_layer.dtype)
+        next_layer = np.zeros(list(ch_layer.shape) + [layer.shape[2]], dtype=layer.dtype)
         next_layer[:, :, 0] = ch_layer
         for channel in range(1, layer.shape[2]):
             next_layer[:, :, channel] = self.expand_layer(layer[:, :, channel])
