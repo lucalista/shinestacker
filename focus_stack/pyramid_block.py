@@ -1,5 +1,4 @@
 import numpy as np
-import cv2
 from config.constants import constants
 from focus_stack.exceptions import ImageLoadError
 from focus_stack.utils import read_img, get_img_metadata, validate_image
@@ -52,9 +51,7 @@ class PyramidBlock(PyramidBase):
         fused = [self.get_fused_base(pyramids[-1])]
         for layer in range(len(pyramids) - 2, -1, -1):
             laplacians = pyramids[layer]
-            layers = laplacians.shape[0]
             self.print_message(': fusing pyramids, layer: {}'.format(layer + 1))
-            region_energies = np.zeros(laplacians.shape[:3], dtype=self.float_type)
             fused.append(self.fuse_laplacian(laplacians))
         self.print_message(': pyramids fusion completed')
         return fused[::-1]

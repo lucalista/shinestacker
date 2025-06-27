@@ -477,7 +477,7 @@ class GuiActions(QMainWindow):
         self.connect_signals(worker, new_window)
         self.start_thread(worker)
         self._workers.append(worker)
-        
+
     def on_job_selected(self, index):
         self.action_list.clear()
         if 0 <= index < len(self.project.jobs):
@@ -489,11 +489,11 @@ class GuiActions(QMainWindow):
                     for sub_action in action.sub_actions:
                         self.action_list.addItem(self.list_item(self.action_text(sub_action, is_sub_action=True),
                                                                 sub_action.enabled()))
-                        
+
     def edit_action(self, action):
         if action is not None:
             self.show_action_config_dialog(action)
-                    
+
     def edit_current_action(self):
         current_action = None
         job_row = self.job_list.currentRow()
@@ -508,4 +508,3 @@ class GuiActions(QMainWindow):
                     action = actions[action_index]
                     current_action = action if sub_action_index == -1 else sub_actions[sub_action_index]
         self.edit_action(current_action)
-            

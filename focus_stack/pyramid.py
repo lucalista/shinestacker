@@ -65,7 +65,7 @@ class PyramidBase:
                 expanded = expanded[:layer.shape[0], :layer.shape[1]]
             img = expanded + layer
         return np.clip(np.abs(img), 0, self.n_values - 1)
-    
+
     def entropy(self, image):
         levels, counts = np.unique(image.astype(self.dtype), return_counts=True)
         probabilities = np.zeros((self.n_values), dtype=self.float_type)
@@ -84,7 +84,7 @@ class PyramidBase:
 
     def area_deviation(self, area):
         return np.square(area - np.average(area).astype(self.float_type)).sum() / area.size
-    
+
     def deviation(self, image):
         padded_image = cv2.copyMakeBorder(image, self.pad_amount, self.pad_amount, self.pad_amount,
                                           self.pad_amount, cv2.BORDER_REFLECT101)
@@ -107,9 +107,9 @@ class PyramidBase:
             img = images[layer]
             fused += np.where(best_e[:, :, np.newaxis] == layer, img, 0)
             fused += np.where(best_d[:, :, np.newaxis] == layer, img, 0)
-        return (fused / 2).astype(images.dtype)    
+        return (fused / 2).astype(images.dtype)
 
-    
+
 class PyramidStack(PyramidBase):
     def __init__(self, min_size=constants.DEFAULT_PY_MIN_SIZE, kernel_size=constants.DEFAULT_PY_KERNEL_SIZE,
                  gen_kernel=constants.DEFAULT_PY_GEN_KERNEL, float_type=constants.DEFAULT_PY_FLOAT):
@@ -124,7 +124,7 @@ class PyramidStack(PyramidBase):
         for _ in range(levels):
             next_layer = self.reduce_layer(pyramid[-1])
             if min(next_layer.shape[:2]) < 4:
-                break            
+                break
             pyramid.append(next_layer)
         laplacian = [pyramid[-1]]
         for level in range(len(pyramid) - 1, 0, -1):
@@ -132,7 +132,7 @@ class PyramidStack(PyramidBase):
             pyr = pyramid[level - 1]
             h, w = pyr.shape[:2]
             expanded = expanded[:h, :w]
-            laplacian.append(pyr - expanded)            
+            laplacian.append(pyr - expanded)
         return laplacian[::-1]
 
     def fuse_pyramids(self, all_laplacians):
@@ -143,7 +143,7 @@ class PyramidStack(PyramidBase):
             fused.append(self.fuse_laplacian(laplacians))
         self.print_message(': pyramids fusion completed')
         return fused[::-1]
-    
+
     def focus_stack(self, filenames):
         metadata = None
         all_laplacians = []

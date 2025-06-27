@@ -518,4 +518,3 @@ class WindowMenu(GuiActions):
                 if not is_sub_action:
                     self.set_enabled_sub_actions_gui(current_action.type_name == constants.ACTION_COMBO)
                 self.show_action_config_dialog(current_action)
-            
