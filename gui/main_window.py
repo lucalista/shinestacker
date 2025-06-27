@@ -1,7 +1,6 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QLabel, QSplitter
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication
-from config.constants import constants
 from gui.project_model import Project
 from gui.action_config import ActionConfigDialog
 from gui.menu import WindowMenu

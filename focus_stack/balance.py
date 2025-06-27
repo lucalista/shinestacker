@@ -8,17 +8,20 @@ from focus_stack.utils import read_img, save_plot
 from focus_stack.exceptions import InvalidOptionError
 from focus_stack.stack_framework import SubAction
 
+MAX_UINT8 = 256
+MAX_UINT16 = 65536
+
 
 class CorrectionMapBase:
     def __init__(self, dtype, ref_hist, intensity_interval=None):
         intensity_interval = {**constants.DEFAULT_INTENSITY_INTERVAL, **(intensity_interval or {})}
         self.dtype = dtype
-        self.two_n = 256 if dtype == np.uint8 else 65536
-        self.two_n_1 = self.two_n - 1
-        self.id_lut = np.array(list(range(self.two_n)))
+        self.max_pixel_value = MAX_UINT8 if dtype == np.uint8 else MAX_UINT16
+        self.pixel_range = self.max_pixel_value - 1
+        self.id_lut = np.array(list(range(self.max_pixel_value)))
         i_min, i_max = intensity_interval['min'], intensity_interval['max']
         self.i_min = i_min
-        self.i_end = i_max + 1 if i_max >= 0 else self.two_n
+        self.i_end = i_max + 1 if i_max >= 0 else self.max_pixel_value
         self.channels = len(ref_hist)
         self.reference = None
 
@@ -49,10 +52,10 @@ class MatchHist(CorrectionMapBase):
         CorrectionMapBase.__init__(self, dtype, ref_hist, intensity_interval)
         self.reference = self.cumsum(ref_hist)
         self.reference_mean = [r.mean() for r in self.reference]
-        self.values = [*range(self.two_n)]
+        self.values = [*range(self.max_pixel_value)]
 
     def cumsum(self, hist):
-        return [np.cumsum(h) / h.sum() * self.two_n_1 for h in hist]
+        return [np.cumsum(h) / h.sum() * self.pixel_range for h in hist]
 
     def lut(self, correction, reference):
         interp = interp1d(reference, self.values)
@@ -64,7 +67,7 @@ class MatchHist(CorrectionMapBase):
             i0, i1 = self.id_lut[lut == l0], self.id_lut[lut == l1]
             i0_max = i0.max()
             lut[lut == l0] = (i0 / i0_max * l_min) if i0_max > 0 else 0
-            lut[lut == l1] = i1 + (i1 - self.two_n_1) * (self.two_n_1 - l_max) / float(i1.size) if i1.size > 0 else self.two_n_1
+            lut[lut == l1] = i1 + (i1 - self.pixel_range) * (self.pixel_range - l_max) / float(i1.size) if i1.size > 0 else self.pixel_range
         return lut.astype(self.dtype)
 
     def correction(self, hist):
@@ -92,7 +95,7 @@ class GammaMap(CorrectionMap):
 
     def lut(self, correction, reference=None):
         gamma_inv = 1.0 / correction
-        return (((np.arange(0, self.two_n) / self.two_n_1) ** gamma_inv) * self.two_n_1).astype(self.dtype)
+        return (((np.arange(0, self.max_pixel_value) / self.pixel_range) ** gamma_inv) * self.pixel_range).astype(self.dtype)
 
 
 class LinearMap(CorrectionMap):
@@ -100,7 +103,7 @@ class LinearMap(CorrectionMap):
         CorrectionMap.__init__(self, dtype, ref_hist, intensity_interval)
 
     def lut(self, correction, reference=None):
-        return np.clip(np.arange(0, self.two_n) * correction, 0, self.two_n_1).astype(self.dtype)
+        return np.clip(np.arange(0, self.max_pixel_value) * correction, 0, self.pixel_range).astype(self.dtype)
 
     def correction(self, hist):
         return [r / self.mid_val(self.id_lut, h) for h, r in zip(hist, self.reference)]
@@ -119,7 +122,7 @@ class Correction:
 
     def begin(self, ref_image, size, ref_idx):
         self.dtype = ref_image.dtype
-        self.two_n = 256 if ref_image.dtype == np.uint8 else 65536
+        self.max_pixel_value = 256 if ref_image.dtype == np.uint8 else MAX_UINT16
         hist = self.get_hist(self.preprocess(ref_image), ref_idx)
         if self.corr_map == constants.BALANCE_LINEAR:
             self.corr_map = LinearMap(self.dtype, hist, self.intensity_interval)
@@ -141,7 +144,7 @@ class Correction:
             image_sel = image[(xv - width / 2) ** 2 + (yv - height / 2) ** 2 <= mask_radius ** 2]
         hist, bins = np.histogram((image_sel if self.img_scale == 1
                                    else image_sel[::self.img_scale][::self.img_scale]),
-                                  bins=np.linspace(-0.5, self.two_n - 0.5, self.two_n + 1))
+                                  bins=np.linspace(-0.5, self.max_pixel_value - 0.5, self.max_pixel_value + 1))
         return hist
 
     def balance(self, image, idx):
@@ -170,7 +173,7 @@ class Correction:
     def histo_plot(self, ax, hist, x_label, color, alpha=1):
         ax.set_ylabel("# of pixels")
         ax.set_xlabel(x_label)
-        ax.set_xlim([0, self.two_n])
+        ax.set_xlim([0, self.max_pixel_value])
         ax.set_yscale('log')
         ax.plot(hist, color=color, alpha=alpha)
 
@@ -202,7 +205,7 @@ class LumiCorrection(Correction):
             for (chan, color) in zip(chans, colors):
                 hist_col = self.calc_hist_1ch(chan)
                 self.histo_plot(axs[1], hist_col, "r,g,b luminosity", color, alpha=0.5)
-            plt.xlim(0, self.two_n)
+            plt.xlim(0, self.max_pixel_value)
             self.save_plot(idx)
         return [hist]
 
@@ -233,7 +236,7 @@ class RGBCorrection(Correction):
             fig, axs = plt.subplots(1, 3, figsize=(10, 5), sharey=True)
             for c in [2, 1, 0]:
                 self.histo_plot(axs[c], hist[c], colors[c] + " luminosity", colors[c])
-            plt.xlim(0, self.two_n)
+            plt.xlim(0, self.max_pixel_value)
             self.save_plot(idx)
         return hist
 
@@ -271,7 +274,7 @@ class Ch2Correction(Correction):
             fig, axs = plt.subplots(1, 3, figsize=(10, 5), sharey=True)
             for c in range(3):
                 self.histo_plot(axs[c], hist[c], self.labels[c], self.colors[c])
-            plt.xlim(0, self.two_n)
+            plt.xlim(0, self.max_pixel_value)
             self.save_plot(idx)
         return hist[1:]
 
