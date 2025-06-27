@@ -146,19 +146,15 @@ class DepthMapStack:
                 size = (gp_img[j - 1].shape[1], gp_img[j - 1].shape[0])
                 expanded = cv2.pyrUp(gp_img[j], dstsize=size)
                 lp_img.append(gp_img[j - 1] - expanded)
-            current_blend = []
-            for j in range(self.levels):
-                w = gp_weight[self.levels - 1 - j][..., np.newaxis]
-                current_blend.append(lp_img[j] * w)
-            if blended_pyramid is None:
-                blended_pyramid = current_blend
-            else:
-                for j in range(self.levels):
-                    blended_pyramid[j] += current_blend[j]
+            current_blend = [lp_img[j] * gp_weight[self.levels - 1 - j][..., np.newaxis] 
+                             for j in range(self.levels)]                
+            blended_pyramid = current_blend if blended_pyramid is None \
+                else [bp + cb for bp, cb in zip(blended_pyramid, current_blend)]                
             self.process.callback('after_step', self.process.id, self.process.name, i + len(filenames))
             if self.process.callback('check_running', self.process.id, self.process.name) is False:
                 raise RunStopException(self.name)
         result = blended_pyramid[0]
+        self.print_message(': blend levels')
         for j in range(1, self.levels):
             size = (blended_pyramid[j].shape[1], blended_pyramid[j].shape[0])
             result = cv2.pyrUp(result, dstsize=size) + blended_pyramid[j]
