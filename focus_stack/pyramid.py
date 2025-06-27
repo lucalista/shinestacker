@@ -48,57 +48,6 @@ class PyramidBase:
             next_layer[:, :, channel] = self.expand_layer(layer[:, :, channel])
         return next_layer
 
-
-class PyramidStack(PyramidBase):
-    def __init__(self, min_size=constants.DEFAULT_PY_MIN_SIZE, kernel_size=constants.DEFAULT_PY_KERNEL_SIZE,
-                 gen_kernel=constants.DEFAULT_PY_GEN_KERNEL, float_type=constants.DEFAULT_PY_FLOAT):
-        super().__init__(min_size, kernel_size, gen_kernel, float_type)
-
-    def name(self):
-        return "pyramid"
-
-    def compute_pyramids(self, image, levels):
-        self.print_message(': beginning gaussian pyramids')
-        gaussian = [image.astype(self.float_type)]
-        for _ in range(levels):
-            self.print_message(f': gaussian pyramids, level: {_}/{levels}')
-            reduced = self.reduce_layer(gaussian[-1])
-            if min(reduced.shape[:2]) < 4:
-                break
-            gaussian.append(reduced)
-        laplacian = [gaussian[-1]]
-        for level in range(len(gaussian) - 1, 0, -1):
-            expanded = self.expand_layer(gaussian[level])
-            h, w = gaussian[level - 1].shape[:2]
-            expanded = expanded[:h, :w]
-            laplacian.append(gaussian[level - 1] - expanded)
-        self.print_message(': gaussian pyramids completed')
-        return laplacian[::-1]
-
-    def calculate_entropy(self, image):
-        hist = cv2.calcHist([image.astype(self.dtype)], [0], None, [self.n_values], [0, self.n_values])
-        hist = np.maximum(hist / hist.sum(), 1e-10)
-        entropy = -np.sum(hist * np.log(hist))
-        return np.full(image.shape, entropy)
-
-    def calculate_deviation(self, image):
-        mean = cv2.boxFilter(image, -1, (self.kernel_size, self.kernel_size), normalize=True)
-        sq_diff = cv2.multiply(image - mean, image - mean)
-        variance = cv2.boxFilter(sq_diff, -1, (self.kernel_size, self.kernel_size), normalize=True)
-        return variance
-
-    def fuse_base(self, base_imgs):
-        gray_imgs = [cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2GRAY) for img in base_imgs]
-        entropies = [self.calculate_entropy(gray) for gray in gray_imgs]
-        deviations = [self.calculate_deviation(gray) for gray in gray_imgs]
-        best_e = np.argmax(entropies, axis=0)
-        best_d = np.argmax(deviations, axis=0)
-        fused = np.zeros_like(base_imgs[0])
-        for i, img in enumerate(base_imgs):
-            fused += np.where(best_e[:, :, np.newaxis] == i, img, 0)
-            fused += np.where(best_d[:, :, np.newaxis] == i, img, 0)
-        return (fused / 2)
-
     def fuse_laplacian(self, laplacians):
         gray_laps = [cv2.cvtColor(lap.astype(np.float32), cv2.COLOR_BGR2GRAY) for lap in laplacians]
         energies = [self.convolve(np.square(gray_lap)) for gray_lap in gray_laps]
@@ -108,40 +57,114 @@ class PyramidStack(PyramidBase):
             fused += np.where(best[:, :, np.newaxis] == i, lap, 0)
         return fused
 
-    def collapse_pyramid(self, pyramid):
-        img = pyramid[0]
-        for layer in pyramid[1:]:
+    def collapse(self, pyramid):
+        img = pyramid[-1]
+        for layer in pyramid[-2::-1]:
             expanded = self.expand_layer(img)
             if expanded.shape != layer.shape:
                 expanded = expanded[:layer.shape[0], :layer.shape[1]]
             img = expanded + layer
         return np.clip(np.abs(img), 0, self.n_values - 1)
+    
+    def entropy(self, image):
+        levels, counts = np.unique(image.astype(self.dtype), return_counts=True)
+        probabilities = np.zeros((self.n_values), dtype=self.float_type)
+        probabilities[levels] = counts.astype(self.float_type) / counts.sum()
+        padded_image = cv2.copyMakeBorder(image, self.pad_amount, self.pad_amount, self.pad_amount,
+                                          self.pad_amount, cv2.BORDER_REFLECT101)
+        return np.fromfunction(np.vectorize(lambda row, column: self.area_entropy(
+            self.get_pad(padded_image, row, column), probabilities)), image.shape[:2], dtype=int)
 
+    def area_entropy(self, area, probabilities):
+        levels = area.flatten()
+        return self.float_type(-1. * (levels * np.log(probabilities[levels])).sum())
+
+    def get_pad(self, padded_image, row, column):
+        return padded_image[row + self.pad_amount + self.offset[:, np.newaxis], column + self.pad_amount + self.offset]
+
+    def area_deviation(self, area):
+        return np.square(area - np.average(area).astype(self.float_type)).sum() / area.size
+    
+    def deviation(self, image):
+        padded_image = cv2.copyMakeBorder(image, self.pad_amount, self.pad_amount, self.pad_amount,
+                                          self.pad_amount, cv2.BORDER_REFLECT101)
+        return np.fromfunction(
+            np.vectorize(lambda row, column: self.area_deviation(self.get_pad(padded_image, row, column))),
+            image.shape[:2], dtype=int)
+
+    def get_fused_base(self, images):
+        layers, height, width, _ = images.shape
+        entropies = np.zeros(images.shape[:3], dtype=self.float_type)
+        deviations = np.copy(entropies)
+        gray_images = np.array([cv2.cvtColor(images[layer].astype(np.float32),
+                                             cv2.COLOR_BGR2GRAY).astype(self.dtype) for layer in range(layers)])
+        entropies = np.array([self.entropy(img) for img in gray_images])
+        deviations = np.array([self.deviation(img) for img in gray_images])
+        best_e = np.argmax(entropies, axis=0)
+        best_d = np.argmax(deviations, axis=0)
+        fused = np.zeros(images.shape[1:], dtype=self.float_type)
+        for layer in range(layers):
+            img = images[layer]
+            fused += np.where(best_e[:, :, np.newaxis] == layer, img, 0)
+            fused += np.where(best_d[:, :, np.newaxis] == layer, img, 0)
+        return (fused / 2).astype(images.dtype)    
+
+    
+class PyramidStack(PyramidBase):
+    def __init__(self, min_size=constants.DEFAULT_PY_MIN_SIZE, kernel_size=constants.DEFAULT_PY_KERNEL_SIZE,
+                 gen_kernel=constants.DEFAULT_PY_GEN_KERNEL, float_type=constants.DEFAULT_PY_FLOAT):
+        super().__init__(min_size, kernel_size, gen_kernel, float_type)
+        self.offset = np.arange(-self.pad_amount, self.pad_amount + 1)
+
+    def name(self):
+        return "pyramid-block"
+
+    def process_single_image(self, img, levels):
+        pyramid = [img.astype(self.float_type)]
+        for _ in range(levels):
+            next_layer = self.reduce_layer(pyramid[-1])
+            pyramid.append(next_layer)
+        laplacian = [pyramid[-1]]
+        for level in range(len(pyramid) - 1, 0, -1):
+            expanded = self.expand_layer(pyramid[level])
+            if expanded.shape != pyramid[level - 1].shape:
+                expanded = expanded[:pyramid[level - 1].shape[0], :pyramid[level - 1].shape[1]]
+            laplacian.append(pyramid[level - 1] - expanded)
+        return laplacian[::-1]
+
+    def fuse_pyramids(self, all_laplacians):
+        fused = [self.get_fused_base(np.stack([p[-1] for p in all_laplacians], axis=0))]
+        for layer in range(len(all_laplacians[0]) - 2, -1, -1):
+            self.print_message(': fusing pyramids, layer: {}'.format(layer + 1))
+            laplacians = np.stack([p[layer] for p in all_laplacians], axis=0)
+            fused.append(self.fuse_laplacian(laplacians))
+        self.print_message(': pyramids fusion completed')
+        return fused[::-1]
+    
     def focus_stack(self, filenames):
         metadata = None
-        pyramids = []
-        base_levels = []
+        all_laplacians = []
+        levels = None
         self.process.callback('step_counts', self.process.id, self.process.name, len(filenames))
         for i, img_path in enumerate(filenames):
-            self.print_message(': reading file {}'.format(img_path.split('/')[-1]))
+            self.print_message(': validating file {}'.format(img_path.split('/')[-1]))
             img = read_img(img_path)
             if img is None:
                 raise ImageLoadError(img_path)
             if metadata is None:
                 metadata = get_img_metadata(img)
-                shape, self.dtype = metadata
+                self.dtype = metadata[1]
                 self.n_values = 256 if self.dtype == np.uint8 else 65536
+                levels = int(np.log2(min(img.shape[:2]) / self.min_size))
             else:
                 validate_image(img, *metadata)
-            levels = max(1, int(np.log2(min(metadata[0][:2]) / self.min_size)))
-            pyramid = self.compute_pyramids(img, levels)
-            pyramids.append(pyramid)
-            base_levels.append(pyramid[-1])
             self.process.callback('after_step', self.process.id, self.process.name, i)
             if self.process.callback('check_running', self.process.id, self.process.name) is False:
                 raise RunStopException(self.name)
-        fused_pyramid = [self.fuse_base(base_levels)]
-        for level in range(levels - 1, -1, -1):
-            current_levels = [p[level] for p in pyramids]
-            fused_pyramid.append(self.fuse_laplacian(current_levels))
-        return self.collapse_pyramid(fused_pyramid).astype(self.dtype)
+        for img_path in filenames:
+            self.print_message(': processing file {}'.format(img_path.split('/')[-1]))
+            img = read_img(img_path)
+            img = img.astype(self.dtype)
+            all_laplacians.append(self.process_single_image(img, levels))
+        stacked_image = self.collapse(self.fuse_pyramids(all_laplacians))
+        return stacked_image.astype(self.dtype)

@@ -48,49 +48,6 @@ class PyramidBlock(PyramidBase):
         self.print_message(': laplacian pyramids completed')
         return pyramid[::-1]
 
-    def area_entropy(self, area, probabilities):
-        levels = area.flatten()
-        return self.float_type(-1. * (levels * np.log(probabilities[levels])).sum())
-
-    def get_pad(self, padded_image, row, column):
-        return padded_image[row + self.pad_amount + self.offset[:, np.newaxis], column + self.pad_amount + self.offset]
-
-    def entropy(self, image):
-        levels, counts = np.unique(image.astype(self.dtype), return_counts=True)
-        probabilities = np.zeros((self.n_values), dtype=self.float_type)
-        probabilities[levels] = counts.astype(self.float_type) / counts.sum()
-        padded_image = cv2.copyMakeBorder(image, self.pad_amount, self.pad_amount, self.pad_amount,
-                                          self.pad_amount, cv2.BORDER_REFLECT101)
-        return np.fromfunction(np.vectorize(lambda row, column: self.area_entropy(
-            self.get_pad(padded_image, row, column), probabilities)), image.shape[:2], dtype=int)
-
-    def area_deviation(self, area):
-        return np.square(area - np.average(area).astype(self.float_type)).sum() / area.size
-
-    def deviation(self, image):
-        padded_image = cv2.copyMakeBorder(image, self.pad_amount, self.pad_amount, self.pad_amount,
-                                          self.pad_amount, cv2.BORDER_REFLECT101)
-        return np.fromfunction(
-            np.vectorize(lambda row, column: self.area_deviation(self.get_pad(padded_image, row, column))),
-            image.shape[:2], dtype=int)
-
-    def get_fused_base(self, images):
-        layers, height, width, _ = images.shape
-        entropies = np.zeros(images.shape[:3], dtype=self.float_type)
-        deviations = np.copy(entropies)
-        gray_images = np.array([cv2.cvtColor(images[layer].astype(np.float32),
-                                             cv2.COLOR_BGR2GRAY).astype(self.dtype) for layer in range(layers)])
-        entropies = np.array([self.entropy(img) for img in gray_images])
-        deviations = np.array([self.deviation(img) for img in gray_images])
-        best_e = np.argmax(entropies, axis=0)
-        best_d = np.argmax(deviations, axis=0)
-        fused = np.zeros(images.shape[1:], dtype=self.float_type)
-        for layer in range(layers):
-            img = images[layer]
-            fused += np.where(best_e[:, :, np.newaxis] == layer, img, 0)
-            fused += np.where(best_d[:, :, np.newaxis] == layer, img, 0)
-        return (fused / 2).astype(images.dtype)
-
     def fuse_pyramids(self, pyramids):
         fused = [self.get_fused_base(pyramids[-1])]
         for layer in range(len(pyramids) - 2, -1, -1):
@@ -98,29 +55,9 @@ class PyramidBlock(PyramidBase):
             layers = laplacians.shape[0]
             self.print_message(': fusing pyramids, layer: {}'.format(layer + 1))
             region_energies = np.zeros(laplacians.shape[:3], dtype=self.float_type)
-            gray_laps = [cv2.cvtColor(laplacians[layer].astype(np.float32),
-                                      cv2.COLOR_BGR2GRAY) for layer in range(layers)]
-            region_energies = np.array([self.convolve(np.square(gray_lap)) for gray_lap in gray_laps])
-            best_re = np.argmax(region_energies, axis=0)
-            self.print_message(': computing fused laplacian: {}'.format(layer + 1))
-            fused_lapl = np.zeros(laplacians.shape[1:], dtype=laplacians.dtype)
-            for layer in range(layers):
-                fused_lapl += np.where(best_re[:, :, np.newaxis] == layer, laplacians[layer], 0)
-            # optimized, but requires more memory
-            # return np.array([np.where(best_re[:, :, np.newaxis]==layer,
-            #                 laplacians[layer], 0) for layer in range(layers)]).sum(axis=0)
-            fused.append(fused_lapl)
+            fused.append(self.fuse_laplacian(laplacians))
         self.print_message(': pyramids fusion completed')
         return fused[::-1]
-
-    def collapse(self, pyramid):
-        image = pyramid[-1]
-        for layer in pyramid[-2::-1]:
-            expanded = self.expand_layer(image)
-            if expanded.shape != layer.shape:
-                expanded = expanded[:layer.shape[0], :layer.shape[1]]
-            image = expanded + layer
-        return image
 
     def focus_stack(self, filenames):
         images = []
@@ -141,4 +78,4 @@ class PyramidBlock(PyramidBase):
         self.n_values = 256 if self.dtype == np.uint8 else 65536
         stacked_image = self.collapse(self.fuse_pyramids(
             self.laplacian_pyramid(int(np.log2(min(self.images[0].shape[:2]) / self.min_size)))))
-        return np.clip(np.absolute(stacked_image), 0, self.n_values - 1).astype(self.dtype)
+        return stacked_image.astype(self.dtype)
