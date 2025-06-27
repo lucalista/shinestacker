@@ -244,7 +244,7 @@ class GuiActions(QMainWindow):
             self.job_list.addItem(self.list_item(self.job_text(job_action), job_action.enabled()))
             self.job_list.setCurrentRow(self.job_list.count() - 1)
             self.job_list.item(self.job_list.count() - 1).setSelected(True)
-            self._refresch_ui()
+            self.refresh_ui()
 
     def add_action(self, type_name=False):
         current_index = self.job_list.currentRow()
@@ -489,6 +489,7 @@ class GuiActions(QMainWindow):
                     for sub_action in action.sub_actions:
                         self.action_list.addItem(self.list_item(self.action_text(sub_action, is_sub_action=True),
                                                                 sub_action.enabled()))
+            self.update_delete_action_state()
 
     def edit_action(self, action):
         if action is not None:
@@ -508,3 +509,36 @@ class GuiActions(QMainWindow):
                     action = actions[action_index]
                     current_action = action if sub_action_index == -1 else sub_actions[sub_action_index]
         self.edit_action(current_action)
+
+    def update_delete_action_state(self):
+        has_job_selected = len(self.job_list.selectedItems()) > 0
+        has_action_selected = len(self.action_list.selectedItems()) > 0
+        self.delete_element_action.setEnabled(has_job_selected or has_action_selected)
+        if has_action_selected and has_job_selected:
+            job_index = self.job_list.currentRow()
+            if job_index >= len(self.project.jobs):
+                job_index = len(self.project.jobs) - 1
+            action_index = self.action_list.currentRow()
+            job = self.project.jobs[job_index]
+            action_counter = -1
+            current_action = None
+            is_sub_action = False
+            for action in job.sub_actions:
+                action_counter += 1
+                if action_counter == action_index:
+                    current_action = action
+                    break
+                if len(action.sub_actions) > 0:
+                    for sub_action in action.sub_actions:
+                        action_counter += 1
+                        if action_counter == action_index:
+                            current_action = sub_action
+                            is_sub_action = True
+                            break
+                    if current_action:
+                        break
+            enable_sub_actions = current_action is not None and \
+                not is_sub_action and current_action.type_name == constants.ACTION_COMBO
+            self.set_enabled_sub_actions_gui(enable_sub_actions)
+        else:
+            self.set_enabled_sub_actions_gui(False)

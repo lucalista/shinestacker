@@ -15,7 +15,7 @@ class Vignetting(SubAction):
     def __init__(self, enabled=True, percentiles=(0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95), **kwargs):
         super().__init__(enabled)
         self.r_steps = kwargs.get('r_steps', constants.DEFAULT_R_STEPS)
-        self.black_threshold = kwargs.get('black_threshold', constants.DEFALUT_BLACK_THRESHOLD)
+        self.black_threshold = kwargs.get('black_threshold', constants.DEFAULT_BLACK_THRESHOLD)
         self.apply_correction = kwargs.get('apply_correction', True)
         self.plot_correction = kwargs.get('plot_correction', False)
         self.plot_summary = kwargs.get('plot_summary', False)

@@ -81,7 +81,7 @@ class _Constants:
     DEFAULT_INTENSITY_INTERVAL = {'min': 0, 'max': -1}
 
     DEFAULT_R_STEPS = 100
-    DEFALUT_BLACK_THRESHOLD = 1
+    DEFAULT_BLACK_THRESHOLD = 1
     DEFAULT_MAX_CORRECTION = 1
 
     FLOAT_32 = 'float-32'

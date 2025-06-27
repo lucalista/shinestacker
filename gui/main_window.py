@@ -110,36 +110,3 @@ class MainWindow(WindowMenu, LogManager):
         self.sub_action_selector.setEnabled(enabled)
         for a in self.sub_action_menu_entries:
             a.setEnabled(enabled)
-
-    def update_delete_action_state(self):
-        has_job_selected = len(self.job_list.selectedItems()) > 0
-        has_action_selected = len(self.action_list.selectedItems()) > 0
-        self.delete_element_action.setEnabled(has_job_selected or has_action_selected)
-        if has_action_selected and has_job_selected:
-            job_index = self.job_list.currentRow()
-            if job_index >= len(self.project.jobs):
-                job_index = len(self.project.jobs) - 1
-            action_index = self.action_list.currentRow()
-            job = self.project.jobs[job_index]
-            action_counter = -1
-            current_action = None
-            is_sub_action = False
-            for action in job.sub_actions:
-                action_counter += 1
-                if action_counter == action_index:
-                    current_action = action
-                    break
-                if len(action.sub_actions) > 0:
-                    for sub_action in action.sub_actions:
-                        action_counter += 1
-                        if action_counter == action_index:
-                            current_action = sub_action
-                            is_sub_action = True
-                            break
-                    if current_action:
-                        break
-            enable_sub_actions = current_action is not None and \
-                not is_sub_action and current_action.type_name == constants.ACTION_COMBO
-            self.set_enabled_sub_actions_gui(enable_sub_actions)
-        else:
-            self.set_enabled_sub_actions_gui(False)
