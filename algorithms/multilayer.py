@@ -96,7 +96,7 @@ class MultiLayer(FrameMultiDirectory, JobBase):
             psdformat=PsdFormat.LE32BIT,
             layers=PsdLayers(
                 key=PsdKey.LAYER,
-                has_transparency=True,
+                has_transparency=False,
                 layers=layers,
             ),
             usermask=PsdUserMask(
