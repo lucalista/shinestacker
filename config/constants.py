@@ -88,6 +88,9 @@ class _Constants:
     FLOAT_64 = 'float-64'
     VALID_FLOATS = [FLOAT_32, FLOAT_64]
 
+    DEFAULT_FRAMES = 10
+    DEFAULT_OVERLAP = 2
+    
     DEFAULT_DM_FLOAT = FLOAT_32
     DM_ENERGY_LAPLACIAN = "laplacian"
     DM_ENERGY_SOBEL = "sobel"

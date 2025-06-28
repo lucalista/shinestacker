@@ -3,14 +3,13 @@ import cv2
 import os
 from termcolor import colored
 from .exif import copy_exif
+from config.constants import constants
 from focus_stack.utils import write_img
 from focus_stack.framework import JobBase
 from focus_stack.stack_framework import FrameDirectory, ActionList
 from focus_stack.exceptions import InvalidOptionError
 
 EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
-DEFAULT_FRAMES = 10
-DEFAULT_OVERLAP = 2
 
 
 class FocusStackBase:
@@ -66,8 +65,8 @@ class FocusStackBunch(FocusStackBase, FrameDirectory, ActionList):
         FrameDirectory.__init__(self, name, **kwargs)
         ActionList.__init__(self, name, enabled)
         self.frame_count = 0
-        self.frames = kwargs.get('frames', DEFAULT_FRAMES)
-        self.overlap = kwargs.get('overlap', DEFAULT_OVERLAP)
+        self.frames = kwargs.get('frames', constants.DEFAULT_FRAMES)
+        self.overlap = kwargs.get('overlap', constants.DEFAULT_OVERLAP)
         self.denoise = kwargs.get('denoise', 0)
         if self.overlap >= self.frames:
             raise InvalidOptionError("overlap", self.overlap, "overlap must be smaller than batch size")

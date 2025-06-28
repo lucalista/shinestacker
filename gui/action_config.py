@@ -7,8 +7,6 @@ from gui.project_model import ActionConfig
 from abc import ABC, abstractmethod
 from typing import Dict, Any
 import os.path
-from focus_stack.stack import DEFAULT_FRAMES, DEFAULT_OVERLAP
-
 
 FIELD_TEXT = 'text'
 FIELD_ABS_PATH = 'abs_path'
@@ -526,9 +524,9 @@ class FocusStackBunchConfigurator(FocusStackBaseConfigurator):
     def create_form(self, layout, action):
         super().create_form(layout, action)
         self.builder.add_field('frames', FIELD_INT, 'Frames', required=False,
-                               default=DEFAULT_FRAMES, min=1, max=100)
+                               default=constants.DEFAULT_FRAMES, min=1, max=100)
         self.builder.add_field('overlap', FIELD_INT, 'Overlapping frames', required=False,
-                               default=DEFAULT_OVERLAP, min=0, max=100)
+                               default=constants.DEFAULT_OVERLAP, min=0, max=100)
         super().common_fields(layout, action)
 
 
