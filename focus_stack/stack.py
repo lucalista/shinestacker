@@ -9,8 +9,6 @@ from focus_stack.framework import JobBase
 from focus_stack.stack_framework import FrameDirectory, ActionList
 from focus_stack.exceptions import InvalidOptionError
 
-EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
-
 
 class FocusStackBase:
     def __init__(self, stack_algo, exif_path='', postfix='', denoise=0, plot_stack=False):
@@ -35,7 +33,7 @@ class FocusStackBase:
         if self.exif_path != '' and stacked_img.dtype == np.uint8:
             self.sub_message_r(': copy exif data')
             dirpath, _, fnames = next(os.walk(self.exif_path))
-            fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in EXTENSIONS]
+            fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in constants.EXTENSIONS]
             exif_filename = f"{self.exif_path}/{fnames[0]}"
             copy_exif(exif_filename, out_filename)
             self.sub_message_r(' ' * 60)

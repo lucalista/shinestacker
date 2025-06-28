@@ -1,3 +1,4 @@
+from config.constants import constants
 from focus_stack.stack_framework import FrameMultiDirectory
 from focus_stack.framework import JobBase
 from focus_stack.exif import exif_extra_tags, get_exif
@@ -12,8 +13,6 @@ from psdtags import (PsdBlendMode, PsdChannel, PsdChannelId, PsdClippingType, Ps
                      PsdCompressionType, PsdEmpty, PsdFilterMask, PsdFormat, PsdKey, PsdLayer,
                      PsdLayerFlag, PsdLayerMask, PsdLayers, PsdRectangle, PsdString, PsdUserMask,
                      TiffImageSourceData, overlay)
-
-EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
 
 class MultiLayer(FrameMultiDirectory, JobBase):
@@ -124,7 +123,7 @@ class MultiLayer(FrameMultiDirectory, JobBase):
         if self.exif_path != '':
             self.print_message(colored('copying exif data', 'blue'))
             dirpath, _, fnames = next(os.walk(self.exif_path))
-            fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in EXTENSIONS]
+            fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in constants.EXTENSIONS]
             exif_filename = self.exif_path + '/' + fnames[0]
             extra_tags, exif_tags = exif_extra_tags(get_exif(exif_filename))
             tiff_tags['extratags'] += extra_tags

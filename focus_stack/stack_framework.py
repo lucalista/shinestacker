@@ -23,8 +23,6 @@ class StackJob(Job):
 
 
 class FramePaths:
-    EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
-
     def __init__(self, name, input_path='', output_path='', working_path='', plot_path=constants.DEFAULT_PLOTS_PATH,
                  scratch_output_dir=True, resample=1, reverse_order=False, **kwargs):
         self.name = name
@@ -73,8 +71,6 @@ class FramePaths:
 
 
 class FrameDirectory(FramePaths):
-    EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
-
     def __init__(self, name, **kwargs):
         FramePaths.__init__(self, name, **kwargs)
 
@@ -88,7 +84,7 @@ class FrameDirectory(FramePaths):
     def folder_filelist(self, path):
         src_contents = os.walk(self.input_dir)
         dirpath, _, filenames = next(src_contents)
-        filelist = [name for name in filenames if os.path.splitext(name)[-1][1:].lower() in FrameDirectory.EXTENSIONS]
+        filelist = [name for name in filenames if os.path.splitext(name)[-1][1:].lower() in constants.EXTENSIONS]
         filelist.sort()
         if self.reverse_order:
             filelist.reverse()
@@ -104,8 +100,6 @@ class FrameDirectory(FramePaths):
 
 
 class FrameMultiDirectory:
-    EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
-
     def __init__(self, name, input_path='', output_path='', working_path='', plot_path=constants.DEFAULT_PLOTS_PATH,
                  scratch_output_dir=True, resample=1, reverse_order=False, **kwargs):
         FramePaths.__init__(self, name, input_path, output_path, working_path, plot_path, scratch_output_dir, resample, reverse_order, **kwargs)
@@ -130,7 +124,7 @@ class FrameMultiDirectory:
         for d, p in zip(dirs, paths):
             filelist = []
             for dirpath, _, filenames in os.walk(d):
-                filelist = [p + "/" + name for name in filenames if os.path.splitext(name)[-1][1:].lower() in FrameDirectory.EXTENSIONS]
+                filelist = [p + "/" + name for name in filenames if os.path.splitext(name)[-1][1:].lower() in constants.EXTENSIONS]
                 if self.reverse_order:
                     filelist.reverse()
                 if self.resample > 1:

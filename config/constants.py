@@ -1,4 +1,6 @@
 class _Constants:
+    EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
+    
     ACTION_JOB = "Job"
     ACTION_COMBO = "CombinedActions"
     ACTION_NOISEDETECTION = "NoiseDetection"
