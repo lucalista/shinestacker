@@ -4,7 +4,7 @@
 
 ## Quick Start
 ```python
-from focus_stack import *
+from algorithms import *
 
 job = StackJob("demo", "/path/to/images", input_path="src")
 job.add_action(CombinedActions("align", [AlignFrames()]))
@@ -15,7 +15,7 @@ job.run()
 ## Usage example
 
 ```python
-from focus_stack import *
+from algorithms import *
 
 job = StackJob("job", "E:/Focus stacking/My image directory/", input_path="src")
 job.add_action(NoiseDetection())
@@ -37,6 +37,13 @@ if some constants have to be used in the configuration, the set of predefined co
 ```python
 from config.constants import constants
 ```
+
+## Jupyter notebooks
+
+Examples in jupyter notebooks are provided.
+
+Running in jupyter notebook requires the following packages:
+* ipywidgets
 
 ## Graphical User Interface
 
