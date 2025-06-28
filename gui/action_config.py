@@ -411,7 +411,8 @@ class NoiseDetectionConfigurator(DefaultActionConfigurator):
         self.builder.add_field('blur_size', FIELD_INT, 'Blur size (px)', required=False,
                                default=constants.DEFAULT_BLUR_SIZE, min=1, max=50)
         self.builder.add_field('file_name', FIELD_TEXT, 'File name', required=False,
-                               default="hot", placeholder="hot")
+                               default=constants.DEFAULT_NOISE_MAP_FILENAME,
+                               placeholder=constants.DEFAULT_NOISE_MAP_FILENAME)
         self.add_bold_label("Miscellanea:")
         self.builder.add_field('plot_histograms', FIELD_BOOL, 'Plot histograms', required=False, default=False)
         self.builder.add_field('plot_path', FIELD_REL_PATH, 'Plots path', required=False, default=constants.DEFAULT_PLOTS_PATH,
