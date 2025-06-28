@@ -3,10 +3,10 @@ sys.path.append('../')
 from config.config import config
 import time
 from termcolor import colored
-from focus_stack.logging import setup_logging
-from focus_stack.utils import make_tqdm_bar
+from core.logging import setup_logging
+from core.core_utils import make_tqdm_bar
 import logging
-from focus_stack.exceptions import RunStopException
+from core.exceptions import RunStopException
 
 LINE_UP = "\r\033[A"
 trailing_spaces = " " * 30

@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../')
-from focus_stack.framework import Job, JobBase, ActionList
+from core.framework import Job, JobBase, ActionList
 from termcolor import colored
 import time
 

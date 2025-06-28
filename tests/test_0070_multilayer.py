@@ -1,6 +1,7 @@
 import sys
 sys.path.append('../')
-from focus_stack import StackJob, MultiLayer
+from algorithms.stack_framework import StackJob
+from algorithms.multilayer import MultiLayer
 
 
 def test_jpg():

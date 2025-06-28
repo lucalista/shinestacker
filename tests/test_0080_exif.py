@@ -4,8 +4,8 @@ import os
 import logging
 from PIL import Image
 from PIL.ExifTags import TAGS
-from focus_stack.exif import get_exif, copy_exif, print_exif
-from focus_stack.logging import setup_logging
+from core.logging import setup_logging
+from algorithms.exif import get_exif, copy_exif, print_exif
 
 
 NO_TEST_TIFF_TAGS = ["XMLPacket", "Compression", "StripOffsets", "RowsPerStrip", "StripByteCounts", "ImageResources", "ExifOffset", 34665]

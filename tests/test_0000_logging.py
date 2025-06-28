@@ -1,7 +1,7 @@
 import sys
 sys.path.append('../')
 from config.config import config
-from focus_stack.logging import setup_logging, console_logging_overwrite, console_logging_newline
+from core.logging import setup_logging, console_logging_overwrite, console_logging_newline
 import logging
 import time
 from tqdm import tqdm

@@ -48,6 +48,11 @@ To run the GUI, from the main package directory run:
 python -m gui.main
 ```
 
+The GUI requires the following python modules:
+* ansi2html
+* jsonpickle
+* PySide6
+
 ## Documentation
 - [Job creation and processing pipeline](../docs/job.md)
 - [Image alignment](../docs/alignment.md)
@@ -59,19 +64,19 @@ python -m gui.main
 
 ## Requirements
 
-* python version 3.10 or greater
+* python version 3.12 or greater
 
 The following python modules:
-* open cv (opencv-python)
-* numpy
-* scipy
-* matplotlib
-* termcolor
-* tqdm
-* PIL (pillow)
-* tifffile
 * imagecodecs
+* matplotlib
+* numpy
+* opencv-python
+* pillow
 * psdtags
+* scipy
+* termcolor
+* tifffile
+* tqdm
 
 ## Installation
 You can clone the pagkage from GitHub:

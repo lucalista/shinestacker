@@ -1,8 +1,8 @@
 import numpy as np
 from config.constants import constants
-from focus_stack.exceptions import ImageLoadError
-from focus_stack.utils import read_img, get_img_metadata, validate_image
-from focus_stack.pyramid import PyramidBase
+from core.exceptions import ImageLoadError
+from algorithms.utils import read_img, get_img_metadata, validate_image
+from algorithms.pyramid import PyramidBase
 
 
 class PyramidBlock(PyramidBase):

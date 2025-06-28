@@ -1,20 +1,19 @@
 import sys
 sys.path.append('../')
-from config.config import config
-# Debug mode: don't trap exception and show to console
-config.init(DISABLE_TQDM=True)
-from PySide6.QtWidgets import QApplication
-from PySide6.QtGui import QIcon
-from PySide6.QtCore import Qt
-from PySide6.QtCore import QCoreApplication, QProcess
-from gui.main_window import MainWindow
 import sys
-from focus_stack.logging import setup_logging
-from gui.menu import DONT_USE_NATIVE_MENU
 import logging
 import os
 import matplotlib
 matplotlib.use('agg')
+from PySide6.QtWidgets import QApplication
+from PySide6.QtGui import QIcon
+from PySide6.QtCore import Qt
+from PySide6.QtCore import QCoreApplication, QProcess
+from config.config import config
+config.init(DISABLE_TQDM=True)
+from core.logging import setup_logging
+from gui.main_window import MainWindow
+from gui.menu import DONT_USE_NATIVE_MENU
 
 
 def disable_macos_special_menu_items():

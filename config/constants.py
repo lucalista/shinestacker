@@ -1,6 +1,6 @@
 class _Constants:
     EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
-    
+
     ACTION_JOB = "Job"
     ACTION_COMBO = "CombinedActions"
     ACTION_NOISEDETECTION = "NoiseDetection"
@@ -92,7 +92,7 @@ class _Constants:
 
     DEFAULT_FRAMES = 10
     DEFAULT_OVERLAP = 2
-    
+
     DEFAULT_DM_FLOAT = FLOAT_32
     DM_ENERGY_LAPLACIAN = "laplacian"
     DM_ENERGY_SOBEL = "sobel"

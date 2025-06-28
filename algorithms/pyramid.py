@@ -2,9 +2,8 @@ import numpy as np
 import cv2
 from termcolor import colored
 from config.constants import constants
-from focus_stack.exceptions import ImageLoadError, InvalidOptionError
-from focus_stack.utils import read_img, get_img_metadata, validate_image
-from focus_stack.exceptions import RunStopException
+from core.exceptions import RunStopException, ImageLoadError, InvalidOptionError
+from algorithms.utils import read_img, get_img_metadata, validate_image
 
 
 class PyramidBase:

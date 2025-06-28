@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 from scipy.optimize import bisect
 from scipy.interpolate import interp1d
 from config.constants import constants
-from focus_stack.utils import read_img, save_plot
-from focus_stack.exceptions import InvalidOptionError
-from focus_stack.stack_framework import SubAction
+from core.exceptions import InvalidOptionError
+from algorithms.utils import read_img, save_plot
+from algorithms.stack_framework import SubAction
 
 MAX_UINT8 = 256
 MAX_UINT16 = 65536

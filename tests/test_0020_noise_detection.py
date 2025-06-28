@@ -1,10 +1,10 @@
 import sys
 sys.path.append('../')
-from focus_stack.stack_framework import StackJob, CombinedActions
-from focus_stack.noise_detection import mean_image, NoiseDetection, MaskNoise
-from focus_stack.exceptions import ShapeError, BitDepthError
-from focus_stack.logging import setup_logging
 import logging
+from core.logging import setup_logging
+from core.exceptions import ShapeError, BitDepthError
+from algorithms.stack_framework import StackJob, CombinedActions
+from algorithms.noise_detection import mean_image, NoiseDetection, MaskNoise
 
 
 def check_fail_size(extension, directory, ExepctionType, files):

@@ -1,9 +1,9 @@
 import sys
 sys.path.append('../')
 from config.constants import constants
-from focus_stack.utils import read_img
-from focus_stack.stack_framework import StackJob, CombinedActions
-from focus_stack.align import align_images, AlignFrames, RAISE_ORB_ORB_HAMMING
+from algorithms.utils import read_img
+from algorithms.stack_framework import StackJob, CombinedActions
+from algorithms.align import align_images, AlignFrames, RAISE_ORB_ORB_HAMMING
 
 
 def test_align():

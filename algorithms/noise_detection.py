@@ -1,9 +1,10 @@
 from config.config import config
 from config.constants import constants
-from focus_stack.framework import JobBase
-from focus_stack.stack_framework import FrameMultiDirectory, SubAction
-from focus_stack.utils import read_img, save_plot, make_tqdm_bar, get_img_metadata, validate_image
-from focus_stack.exceptions import ImageLoadError
+from core.exceptions import ImageLoadError
+from core.framework import JobBase
+from core.core_utils import make_tqdm_bar
+from algorithms.stack_framework import FrameMultiDirectory, SubAction
+from algorithms.utils import read_img, save_plot, get_img_metadata, validate_image
 from termcolor import colored
 import cv2
 import numpy as np
@@ -108,18 +109,19 @@ class MaskNoise(SubAction):
     def __init__(self, noise_mask=constants.DEFAULT_NOISE_MAP_FILENAME,
                  kernel_size=constants.DEFAULT_MN_KERNEL_SIZE, method=constants.INTERPOLATE_MEAN, **kwargs):
         super().__init__(**kwargs)
-        self.noise_mask = noise_mask
+        self.noise_mask = noise_mask if noise_mask != '' else constants.DEFAULT_NOISE_MAP_FILENAME
         self.kernel_size = kernel_size
         self.ks2 = self.kernel_size // 2
         self.ks2_1 = self.ks2 + 1
         self.method = method
-        self.noise_mask = noise_mask
 
     def begin(self, process):
         self.process = process
-        path = process.working_path + "/" + self.noise_mask
+        path = f"{process.working_path}/{self.noise_mask}"
         if os.path.exists(path):
-            self.noise_mask = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+            self.noise_mask_img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+            if self.noise_mask_img is None:
+                raise ImageLoadError(path, f"failed to load image file {self.noise_mask}.")
         else:
             raise ImageLoadError(path, "file not found.")
 
@@ -138,7 +140,7 @@ class MaskNoise(SubAction):
 
     def correct_channel(self, channel):
         corrected = channel.copy()
-        noise_coords = np.argwhere(self.noise_mask > 0)
+        noise_coords = np.argwhere(self.noise_mask_img > 0)
         for y, x in noise_coords:
             neighborhood = channel[
                 max(0, y - self.ks2):min(channel.shape[0], y + self.ks2_1),

@@ -4,10 +4,10 @@ import os
 from termcolor import colored
 from .exif import copy_exif
 from config.constants import constants
-from focus_stack.utils import write_img
-from focus_stack.framework import JobBase
-from focus_stack.stack_framework import FrameDirectory, ActionList
-from focus_stack.exceptions import InvalidOptionError
+from core.framework import JobBase
+from core.exceptions import InvalidOptionError
+from algorithms.utils import write_img
+from algorithms.stack_framework import FrameDirectory, ActionList
 
 
 class FocusStackBase:

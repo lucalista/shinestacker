@@ -2,8 +2,8 @@ import numpy as np
 import cv2
 from termcolor import colored
 from config.constants import constants
-from focus_stack.utils import read_img, get_img_metadata, validate_image, img_bw
-from focus_stack.exceptions import ImageLoadError, InvalidOptionError, RunStopException
+from core.exceptions import ImageLoadError, InvalidOptionError, RunStopException
+from algorithms.utils import read_img, get_img_metadata, validate_image, img_bw
 
 
 class DepthMapStack:

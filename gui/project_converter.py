@@ -1,19 +1,19 @@
-from config.constants import constants
-from gui.project_model import Project, ActionConfig
-from gui.action_config import FocusStackBaseConfigurator
-from focus_stack.stack_framework import StackJob, CombinedActions
-from focus_stack.noise_detection import NoiseDetection, MaskNoise
-from focus_stack.vignetting import Vignetting
-from focus_stack.align import AlignFrames
-from focus_stack.balance import BalanceFrames
-from focus_stack.stack import FocusStack, FocusStackBunch
-from focus_stack.pyramid import PyramidStack
-from focus_stack.pyramid_block import PyramidBlock
-from focus_stack.depth_map import DepthMapStack
-from focus_stack.multilayer import MultiLayer
-from focus_stack.exceptions import InvalidOptionError, RunStopException
 import logging
 import traceback
+from config.constants import constants
+from core.exceptions import InvalidOptionError, RunStopException
+from algorithms.stack_framework import StackJob, CombinedActions
+from algorithms.noise_detection import NoiseDetection, MaskNoise
+from algorithms.vignetting import Vignetting
+from algorithms.align import AlignFrames
+from algorithms.balance import BalanceFrames
+from algorithms.stack import FocusStack, FocusStackBunch
+from algorithms.pyramid import PyramidStack
+from algorithms.pyramid_block import PyramidBlock
+from algorithms.depth_map import DepthMapStack
+from algorithms.multilayer import MultiLayer
+from gui.project_model import Project, ActionConfig
+from gui.action_config import FocusStackBaseConfigurator
 
 
 class ProjectConverter:
