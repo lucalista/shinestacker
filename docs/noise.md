@@ -11,7 +11,7 @@ job.run()
 Arguments for the constructor of ```NoiseDetection``` are:
 * ```name``` (optional, default: ```noise-map```): name of the action and default name of the subdirectory within ```working_path``` where aligned noise map is written. 
 * ```input_path``` (optional): one or more subdirectory within ```working_path``` that contains input images to be combined. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
-* ```output_path``` (optional): the subdirectory within ```working_path``` where aligned noise map is written. If not specified,  it is equal to  ```name```.
+* ```output_path``` (optional): unused
 * ```working_path```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_path```.
 * ```plot_path``` (optional, default: ```plots```): the directory within ```working_path``` that contains plots produced by the different actions
 * ```plot_histograms```  (optional, default: ```False```): if ```True```, plot a summary of the number of hot pixel by channel as a function of the applied threshold. It may be useful to set the optimal threshold values.
