@@ -268,7 +268,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         brush_layout.addWidget(self.brush_size_slider)
         self.brush_preview = QtWidgets.QLabel()
         self.brush_preview.setAlignment(QtCore.Qt.AlignCenter)
-        self.brush_preview.setFixedSize(100, 100)
+        self.brush_preview.setFixedHeight(100)
         self.update_brush_preview()
         brush_layout.addWidget(self.brush_preview)
         side_layout.addWidget(brush_panel)
@@ -455,7 +455,8 @@ class ImageEditor(QtWidgets.QMainWindow):
     def save_file_as(self):
         if self.current_stack is None:
             return
-        path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save Image", "", "TIFF Files (*.tif *.tiff);;All Files (*)")
+        path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save Image", "",
+                                                        "TIFF Files (*.tif *.tiff);;All Files (*)")
         if path:
             if not path.lower().endswith(('.tif', '.tiff')):
                 path += '.tiff'
