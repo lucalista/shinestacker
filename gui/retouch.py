@@ -207,6 +207,8 @@ class ImageEditor(QtWidgets.QMainWindow):
         self.brush_size = 20
         self.view_mode = 'master'
         self.temp_view_individual = False
+        self.current_file_path = None
+        self.modified = False
         self.setup_ui()
         self.setup_menu()
         self.setup_shortcuts()
@@ -356,6 +358,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         file_menu = menubar.addMenu("File")
         file_menu.addAction("Open...", self.open_file, "Ctrl+O")
         file_menu.addAction("Save", self.save_file, "Ctrl+S")
+        file_menu.addAction("Save As...", self.save_file_as)
         view_menu = menubar.addMenu("View")
         zoom_in_action = QtGui.QAction("Zoom In", self)
         zoom_in_action.setShortcut("Ctrl++")
@@ -388,7 +391,6 @@ class ImageEditor(QtWidgets.QMainWindow):
         try:
             print(f"Loading file: {path}")
             psd_data = read_multilayer_tiff(path)
-            print(psd_data.layers.layers)
             layers = []
             labels = []
             for layer in psd_data.layers.layers:
@@ -421,7 +423,10 @@ class ImageEditor(QtWidgets.QMainWindow):
         path, _ = QtWidgets.QFileDialog.getOpenFileName(
             self, "Open Image", "", "Images (*.tif *.tiff *.png *.jpg)")
         if path:
+            self.current_file_path = path
             self.current_stack, self.current_labels = self.load_tiff_stack(path)
+            print(type(self.current_stack))
+            print(type(self.current_labels))
             if self.current_stack is not None and len(self.current_stack) > 0:
                 self.master_layer = self.current_stack[0].copy()
                 if self.current_labels is None:
@@ -432,9 +437,39 @@ class ImageEditor(QtWidgets.QMainWindow):
             self.statusBar().showMessage(f"Loaded: {path}")
             self.thumbnail_list.setFocus()
 
+    def mark_as_modified(self):
+        self.modified = True
+        self.setWindowTitle("Focus Stack Editor*")
+
     def save_file(self):
-        if not self.current_stack:
+        if self.current_stack is None:
             return
+        if self.current_file_path:
+            self._save_to_path(self.current_file_path)
+            self.modified = False
+            self.setWindowTitle("Focus Stack Editor")
+        else:
+            self.save_file_as()
+
+    def save_file_as(self):
+        if self.current_stack is None:
+            return
+        path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save Image", "", "TIFF Files (*.tif *.tiff);;All Files (*)")
+        if path:
+            if not path.lower().endswith(('.tif', '.tiff')):
+                path += '.tiff'
+            self._save_to_path(path)
+            self.current_file_path = path
+            self.statusBar().showMessage(f"Saved: {path}")
+
+    def _save_to_path(self, path):
+        try:
+            master_layer = {'Master': self.master_layer}
+            individual_layers = {label: image for label, image in zip(self.current_labels, self.current_stack)}
+            write_multilayer_tiff_from_images({**individual_layers, **master_layer}, path)
+            self.statusBar().showMessage(f"Saved: {path}")
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Save Error", f"Could not save file: {str(e)}")
 
     def set_view_master(self):
         self.view_mode = 'master'
