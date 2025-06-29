@@ -364,6 +364,13 @@ class ImageEditor(QtWidgets.QMainWindow):
         file_menu.addAction("Open...", self.open_file, "Ctrl+O")
         file_menu.addAction("Save", self.save_file, "Ctrl+S")
         file_menu.addAction("Save As...", self.save_file_as)
+        edit_menu = menubar.addMenu("Edit")
+        copy_action = QAction("Copy Layer to Master", self)
+        copy_action.setShortcut("Ctrl+M")
+        copy_action.triggered.connect(self.copy_layer_to_master)
+        edit_menu.addAction(copy_action)
+        copy_to_master = QShortcut(QKeySequence("Ctrl+M"), self)
+        copy_to_master.activated.connect(self.copy_layer_to_master)
         view_menu = menubar.addMenu("View")
         zoom_in_action = QAction("Zoom In", self)
         zoom_in_action.setShortcut("Ctrl++")
@@ -642,6 +649,25 @@ class ImageEditor(QtWidgets.QMainWindow):
         painter.drawEllipse(center, self.brush_size // 2, self.brush_size // 2)
         painter.end()
         self.brush_preview.setPixmap(pixmap)
+
+    def copy_layer_to_master(self):
+        if self.current_stack is None or self.master_layer is None:
+            return
+
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Confirm Copy",
+            "Warning: the current master layer will be erased\n\nDo you want to continue?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+            QtWidgets.QMessageBox.No
+        )
+
+        if reply == QtWidgets.QMessageBox.Yes:
+            self.master_layer = self.current_stack[self.current_layer].copy()
+            self.display_current_view()
+            self.update_thumbnails()
+            self.mark_as_modified()
+            self.statusBar().showMessage(f"Copied layer {self.current_layer + 1} to master")
 
 
 if __name__ == "__main__":
