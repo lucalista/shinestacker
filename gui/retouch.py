@@ -14,9 +14,46 @@ THUMB_WIDTH = 120
 THUMB_HEIGHT = 80
 IMG_WIDTH = 100
 IMG_HEIGHT = 80
-DEFAULT_BRUSH_SIZE = 20
 DEFAULT_BRUSH_HARDNESS = 50
 PAINT_REFRESH_TIMER = 200  # milliseconds
+
+BRUSH_COLORS = {
+    'outer': QColor(255, 0, 0, 200),
+    'inner': QColor(255, 0, 0, 200),
+    'gradient_end': QColor(255, 0, 0, 0),
+    'pen': QColor(255, 0, 0, 150),
+    'preview': QColor(255, 180, 180)
+}
+
+UI_SIZES = {
+    'brush_preview': (100, 80),
+    'thumbnail': (IMG_WIDTH, IMG_HEIGHT),
+    'master_thumb': (THUMB_WIDTH, THUMB_HEIGHT)
+}
+
+BRUSH_SIZES = {
+    'default': 20,
+    'min': 5,
+    'max': 250
+}
+
+
+def create_brush_gradient(center_x, center_y, radius, hardness):
+    gradient = QtGui.QRadialGradient(center_x, center_y, radius)
+    hardness_normalized = hardness / 100.0
+    gradient.setColorAt(0, BRUSH_COLORS['inner'])
+    gradient.setColorAt(hardness_normalized, BRUSH_COLORS['inner'])
+    gradient.setColorAt(1, BRUSH_COLORS['gradient_end'])
+    return gradient
+
+
+def calculate_brush_mask(radius, hardness_percent):
+    y, x = np.ogrid[-radius:radius + 1, -radius:radius + 1]
+    distance = np.sqrt(x * x + y * y)
+    hardness_radius = radius * (hardness_percent / 100.0)
+    if hardness_radius > 0:
+        return np.clip(1 - (distance - hardness_radius) / (radius - hardness_radius), 0, 1)
+    return (distance <= radius).astype(float)
 
 
 class ImageViewer(QGraphicsView):
@@ -144,10 +181,9 @@ class ImageViewer(QGraphicsView):
         self.update_brush_cursor(self.image_editor.brush_size)
 
     def setup_brush_cursor(self):
-        self.brush_cursor = self.scene.addEllipse(0, 0, DEFAULT_BRUSH_SIZE / 2, DEFAULT_BRUSH_SIZE / 2,
-                                                  QPen(QColor(255, 0, 0), 2), QBrush(QColor(255, 0, 0, 100)))
-        self.brush_cursor.setPen(QPen(QColor(255, 0, 0, 200), 1))
-        self.brush_cursor.setBrush(QBrush(QColor(255, 0, 0, 50)))
+        pen = QPen(BRUSH_COLORS['pen'], 1)
+        brush = QBrush(BRUSH_COLORS['inner'])
+        self.brush_cursor = self.scene.addEllipse(0, 0, BRUSH_SIZES['default'] / 2, BRUSH_SIZES['default'] / 2, pen, brush)
         self.brush_cursor.hide()
 
     def update_brush_cursor(self, size):
@@ -156,14 +192,10 @@ class ImageViewer(QGraphicsView):
             scene_pos = self.mapToScene(mouse_pos)
             center_x = scene_pos.x()
             center_y = scene_pos.y()
-            gradient = QtGui.QRadialGradient(center_x, center_y, size / 2)
-            hardness = self.image_editor.brush_hardness / 100.0
-            gradient.setColorAt(0, QColor(255, 0, 0, 200))
-            gradient.setColorAt(hardness, QColor(255, 0, 0, 200))
-            gradient.setColorAt(1, QColor(255, 0, 0, 0))
+            gradient = create_brush_gradient(center_x, center_y, size / 2, self.image_editor.brush_hardness)
             self.brush_cursor.setRect(center_x - size / 2, center_y - size / 2, size, size)
             self.brush_cursor.setBrush(QBrush(gradient))
-            self.brush_cursor.setPen(QPen(QColor(255, 0, 0, 150), 1))
+            self.brush_cursor.setPen(QPen(BRUSH_COLORS['pen'], 1))
 
     def enterEvent(self, event):
         self.setCursor(Qt.BlankCursor)
@@ -227,7 +259,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         self.current_stack = None
         self.master_layer = None
         self.current_layer = 0
-        self.brush_size = DEFAULT_BRUSH_SIZE
+        self.brush_size = BRUSH_SIZES['default']
         self.brush_hardness = DEFAULT_BRUSH_HARDNESS
         self.view_mode = 'master'
         self.temp_view_individual = False
@@ -298,7 +330,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         brush_layout.addWidget(brush_label)
 
         self.brush_size_slider = QtWidgets.QSlider(Qt.Horizontal)
-        self.brush_size_slider.setRange(5, 250)
+        self.brush_size_slider.setRange(BRUSH_SIZES['min'], BRUSH_SIZES['max'])
         self.brush_size_slider.setValue(self.brush_size)
         self.brush_size_slider.valueChanged.connect(self.update_brush_size)
         brush_layout.addWidget(self.brush_size_slider)
@@ -617,7 +649,7 @@ class ImageEditor(QtWidgets.QMainWindow):
             layer = (layer // 256).astype(np.uint8)
         height, width, _ = layer.shape
         qimg = QImage(layer.data, width, height, 3 * width, QtGui.QImage.Format_RGB888)
-        return QPixmap.fromImage(qimg.scaled(IMG_WIDTH, IMG_HEIGHT, QtCore.Qt.KeepAspectRatio))
+        return QPixmap.fromImage(qimg.scaled(*UI_SIZES['thumbnail'], QtCore.Qt.KeepAspectRatio))
 
     def create_grayscale_thumbnail(self, layer):
         if layer.dtype == np.uint16:
@@ -625,7 +657,7 @@ class ImageEditor(QtWidgets.QMainWindow):
             layer = np.clip((layer - p2) * 255.0 / (p98 - p2), 0, 255).astype(np.uint8)
         height, width = layer.shape
         qimg = QImage(layer.data, width, height, width, QtGui.QImage.Format_Grayscale8)
-        return QPixmap.fromImage(qimg.scaled(IMG_WIDTH, IMG_HEIGHT, QtCore.Qt.KeepAspectRatio))
+        return QPixmap.fromImage(qimg.scaled(*UI_SIZES['thumbnail'], QtCore.Qt.KeepAspectRatio))
 
     def change_layer(self, layer_idx):
         if 0 <= layer_idx < len(self.current_stack):
@@ -689,23 +721,22 @@ class ImageEditor(QtWidgets.QMainWindow):
         self.image_viewer.update_brush_cursor(size)
 
     def update_brush_hardness(self, hardness):
-        self.brush_hardness = hardness
+        self.brush_hardness = max(0, min(100, hardness))
         self.update_brush_preview()
         self.image_viewer.update_brush_cursor(self.brush_size)
 
     def update_brush_preview(self):
-        pixmap = QPixmap(100, 80)
+        width, height = UI_SIZES['brush_preview']
+        pixmap = QPixmap(width, height)
         pixmap.fill(Qt.transparent)
         painter = QPainter(pixmap)
         painter.setRenderHint(QPainter.Antialiasing)
-        gradient = QtGui.QRadialGradient(50, 50, self.brush_size // 2)
-        hardness = self.brush_hardness / 100.0
-        gradient.setColorAt(0, QColor(255, 0, 0, 200))
-        gradient.setColorAt(hardness, QColor(255, 0, 0, 200))
-        gradient.setColorAt(1, QColor(255, 0, 0, 0))
-        painter.setPen(QPen(QColor(255, 0, 0), 1))
+        preview_size = min(self.brush_size, width - 10, height - 10)
+        center_x, center_y = width // 2, height // 2
+        gradient = create_brush_gradient(center_x, center_y, preview_size // 2, self.brush_hardness)
+        painter.setPen(QPen(BRUSH_COLORS['outer'], 1))
         painter.setBrush(QBrush(gradient))
-        painter.drawEllipse(QtCore.QPoint(50, 50), self.brush_size // 2, self.brush_size // 2)
+        painter.drawEllipse(QtCore.QPoint(center_x, center_y), preview_size // 2, preview_size // 2)
         painter.end()
         self.brush_preview.setPixmap(pixmap)
 
@@ -740,13 +771,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         y_start = max(0, y_center - radius)
         x_end = min(w, x_center + radius + 1)
         y_end = min(h, y_center + radius + 1)
-        y, x = np.ogrid[-radius:radius + 1, -radius:radius + 1]
-        distance = np.sqrt(x * x + y * y)
-        hardness_radius = radius * (self.brush_hardness / 100.0)
-        if hardness_radius > 0:
-            mask = np.clip(1 - (distance - hardness_radius) / (radius - hardness_radius), 0, 1)
-        else:
-            mask = (distance <= radius).astype(float)
+        mask = calculate_brush_mask(radius, self.brush_hardness)
         for dy in range(y_start - y_center, y_end - y_center):
             for dx in range(x_start - x_center, x_end - x_center):
                 if mask[dy + radius, dx + radius] > 0:
