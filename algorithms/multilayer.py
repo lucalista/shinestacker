@@ -34,27 +34,30 @@ def write_multilayer_tiff(input_files, output_file, exif_path='', callbacks=None
     elif extension == 'png':
         images = [cv2.imread(p, cv2.IMREAD_UNCHANGED) for p in input_files]
         images = [cv2.cvtColor(i, cv2.COLOR_BGR2RGB) for i in images]
-    write_multilayer_tiff_from_images(images, output_file, exif_path='', callbacks=None)
+    image_dict = {file.split('/')[-1].split('.')[0]: image for file, image in zip(input_files, images)}
+    write_multilayer_tiff_from_images(image_dict, output_file, exif_path='', callbacks=None)
 
-def write_multilayer_tiff_from_images(images, output_file, exif_path='', callbacks=None):
-    shapes = list(set([image.shape[:2] for image in images]))
+def write_multilayer_tiff_from_images(image_dict, output_file, exif_path='', callbacks=None):
+    if isinstance(image_dict, (list, tuple, np.ndarray)):
+        fmt = 'Layer {:03d}'
+        image_dict = {fmt.format(i + 1): img for i, img in enumerate(image_dict)}
+    shapes = list(set([image.shape[:2] for image in image_dict.values()]))
     if len(shapes) > 1:
         msg = ", ".join(extensions)
         raise Exception("All input files must have the same dimensions.")
     shape = shapes[0]
-    dtypes = list(set([image.dtype for image in images]))
+    dtypes = list(set([image.dtype for image in image_dict.values()]))
     if len(dtypes) > 1:
         msg = ", ".join(extensions)
         raise Exception("All input files must all have 8 bit or 16 bit depth.")
     dtype = dtypes[0]
     max_pixel_value = constants.MAX_UINT16 if dtype == np.uint16 else constants.MAX_UINT8
-    transp = np.full_like(images[0][..., 0], max_pixel_value)
-    fmt = 'Layer {:03d}'
+    transp = np.full_like(list(image_dict.values())[0][..., 0], max_pixel_value)
     compression_type = PsdCompressionType.ZIP_PREDICTED
     psdformat = PsdFormat.LE32BIT
     key = PsdKey.LAYER_16 if dtype == np.uint16 else PsdKey.LAYER
     layers = [PsdLayer(
-        name=fmt.format(i + 1),
+        name=label,
         rectangle=PsdRectangle(0, 0, *shape),
         channels=[
             PsdChannel(
@@ -81,8 +84,8 @@ def write_multilayer_tiff_from_images(images, output_file, exif_path='', callbac
         mask=PsdLayerMask(), opacity=255,
         blendmode=PsdBlendMode.NORMAL, blending_ranges=(),
         clipping=PsdClippingType.BASE, flags=PsdLayerFlag.PHOTOSHOP5,
-        info=[PsdString(PsdKey.UNICODE_LAYER_NAME, fmt.format(i + 1))],
-    ) for i, image in enumerate(images)]
+        info=[PsdString(PsdKey.UNICODE_LAYER_NAME, label)],
+    ) for label, image in image_dict.items()]
     image_source_data = TiffImageSourceData(
         name='Layered TIFF',
         psdformat=psdformat,
@@ -128,7 +131,7 @@ def write_multilayer_tiff_from_images(images, output_file, exif_path='', callbac
         if callback:
             callback(output_file.split('/')[-1])
     compression = 'adobe_deflate'
-    overlayed_images = overlay(*((np.concatenate((image, np.expand_dims(transp, axis=-1)), axis=-1), (0, 0)) for image in images), shape=shape)
+    overlayed_images = overlay(*((np.concatenate((image, np.expand_dims(transp, axis=-1)), axis=-1), (0, 0)) for image in image_dict.values()), shape=shape)
     tifffile.imwrite(output_file, overlayed_images, compression=compression, metadata=None, **tiff_tags)
 
 
