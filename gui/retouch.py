@@ -36,6 +36,7 @@ class ImageViewer(QGraphicsView):
         self.setMouseTracking(True)
         self.space_pressed = False
         self.setDragMode(QGraphicsView.NoDrag)
+        self.setCursor(Qt.BlankCursor)
         self.scrolling = False
         self.dragging = False
         self.setup_brush_cursor()
@@ -51,7 +52,7 @@ class ImageViewer(QGraphicsView):
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Space and not self.scrolling:
             self.space_pressed = True
-            self.setCursor(Qt.OpenHandCursor)
+            self.setCursor(Qt.OpenHandCursor)  # Mostra la mano aperta per lo scrolling
             if self.brush_cursor:
                 self.brush_cursor.hide()
         elif event.key() == Qt.Key_X:
@@ -63,7 +64,7 @@ class ImageViewer(QGraphicsView):
         if event.key() == Qt.Key_Space:
             self.space_pressed = False
             if not self.scrolling:
-                self.setCursor(Qt.ArrowCursor)
+                self.setCursor(Qt.BlankCursor)  # Torna al cursore vuoto
                 if self.brush_cursor:
                     self.brush_cursor.show()
         elif event.key() == Qt.Key_X:
@@ -109,7 +110,7 @@ class ImageViewer(QGraphicsView):
                 if self.space_pressed:
                     self.setCursor(Qt.OpenHandCursor)
                 else:
-                    self.setCursor(Qt.BlankCursor)
+                    self.setCursor(Qt.BlankCursor)  # Torna al cursore vuoto
                     if self.brush_cursor:
                         self.brush_cursor.show()
                 self.last_mouse_pos = None
@@ -152,15 +153,16 @@ class ImageViewer(QGraphicsView):
             else:
                 self.brush_cursor.setBrush(QBrush(QColor(255, 0, 0, 50)))
 
+    def enterEvent(self, event):
+        self.setCursor(Qt.BlankCursor)
+        if self.brush_cursor:
+            self.brush_cursor.show()
+        super().enterEvent(event)
+
     def leaveEvent(self, event):
         if self.brush_cursor:
             self.brush_cursor.hide()
         super().leaveEvent(event)
-
-    def enterEvent(self, event):
-        if self.brush_cursor:
-            self.brush_cursor.show()
-        super().enterEvent(event)
 
     def setup_shortcuts(self):
         zoom_in = QShortcut(QKeySequence("Ctrl+="), self)
