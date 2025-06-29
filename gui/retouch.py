@@ -14,7 +14,7 @@ THUMB_WIDTH = 120
 THUMB_HEIGHT = 80
 IMG_WIDTH = 100
 IMG_HEIGHT = 80
-DEFAULT_BRUSH_HARDNESS = 50
+DEFAULT_BRUSH_HARDNESS = 25
 PAINT_REFRESH_TIMER = 200  # milliseconds
 
 BRUSH_COLORS = {
@@ -44,18 +44,9 @@ def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None
     hardness_normalized = hardness / 100.0
     inner = inner_color if inner_color is not None else BRUSH_COLORS['inner']
     outer = outer_color if outer_color is not None else BRUSH_COLORS['gradient_end']
-    if radius <= 10:
-        if hardness > 50:
-            gradient.setColorAt(0, inner)
-            gradient.setColorAt(1, inner)
-        else:
-            gradient.setColorAt(0, inner)
-            gradient.setColorAt(0.8, inner)
-            gradient.setColorAt(1, outer)
-    else:
-        gradient.setColorAt(0, inner)
-        gradient.setColorAt(hardness_normalized, inner)
-        gradient.setColorAt(1, outer)
+    gradient.setColorAt(0, inner)
+    gradient.setColorAt(hardness_normalized, inner)
+    gradient.setColorAt(1, outer)
     return gradient
 
 
@@ -801,9 +792,8 @@ class ImageEditor(QtWidgets.QMainWindow):
                     if 0 <= x_pos < w and 0 <= y_pos < h:
                         alpha = mask[dy + radius, dx + radius]
                         self.master_layer[y_pos, x_pos] = (
-                            self.master_layer[y_pos, x_pos] * (1 - alpha) + self.current_stack[self.current_layer][y_pos, x_pos] * alpha
+                            self.master_layer[y_pos, x_pos] * (1.0 - alpha) + self.current_stack[self.current_layer][y_pos, x_pos] * alpha
                         ).astype(self.master_layer.dtype)
-
         if not continuous:
             self.display_current_view()
             self.mark_as_modified()
