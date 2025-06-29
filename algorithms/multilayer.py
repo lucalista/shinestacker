@@ -18,9 +18,9 @@ from algorithms.exif import exif_extra_tags, get_exif
 def read_multilayer_tiff(input_file):
     print(f"reading file {input_file}")
     return TiffImageSourceData.fromtiff(input_file)
-    
 
-def write_multilayer_tiff(input_files, output_file, exif_path='', callbacks=None):
+
+def write_multilayer_tiff(input_files, output_file, labels=None, exif_path='', callbacks=None):
     extensions = list(set([file.split(".")[-1] for file in input_files]))
     if len(extensions) > 1:
         msg = ", ".join(extensions)
@@ -34,8 +34,14 @@ def write_multilayer_tiff(input_files, output_file, exif_path='', callbacks=None
     elif extension == 'png':
         images = [cv2.imread(p, cv2.IMREAD_UNCHANGED) for p in input_files]
         images = [cv2.cvtColor(i, cv2.COLOR_BGR2RGB) for i in images]
-    image_dict = {file.split('/')[-1].split('.')[0]: image for file, image in zip(input_files, images)}
+    if labels is None:
+        image_dict = {file.split('/')[-1].split('.')[0]: image for file, image in zip(input_files, images)}
+    else:
+        if len(labels) != len(input_files):
+            raise Exception("input_files and labels must have the same length if labels are provided.")
+        image_dict = {label: image for label, image in zip(labels, images)}
     write_multilayer_tiff_from_images(image_dict, output_file, exif_path='', callbacks=callbacks)
+
 
 def write_multilayer_tiff_from_images(image_dict, output_file, exif_path='', callbacks=None):
     if isinstance(image_dict, (list, tuple, np.ndarray)):
@@ -43,12 +49,10 @@ def write_multilayer_tiff_from_images(image_dict, output_file, exif_path='', cal
         image_dict = {fmt.format(i + 1): img for i, img in enumerate(image_dict)}
     shapes = list(set([image.shape[:2] for image in image_dict.values()]))
     if len(shapes) > 1:
-        msg = ", ".join(extensions)
         raise Exception("All input files must have the same dimensions.")
     shape = shapes[0]
     dtypes = list(set([image.dtype for image in image_dict.values()]))
     if len(dtypes) > 1:
-        msg = ", ".join(extensions)
         raise Exception("All input files must all have 8 bit or 16 bit depth.")
     dtype = dtypes[0]
     max_pixel_value = constants.MAX_UINT16 if dtype == np.uint16 else constants.MAX_UINT8
@@ -85,7 +89,7 @@ def write_multilayer_tiff_from_images(image_dict, output_file, exif_path='', cal
         blendmode=PsdBlendMode.NORMAL, blending_ranges=(),
         clipping=PsdClippingType.BASE, flags=PsdLayerFlag.PHOTOSHOP5,
         info=[PsdString(PsdKey.UNICODE_LAYER_NAME, label)],
-    ) for label, image in image_dict.items()]
+    ) for label, image in reversed(list(image_dict.items()))]
     image_source_data = TiffImageSourceData(
         name='Layered TIFF',
         psdformat=psdformat,
@@ -172,5 +176,4 @@ class MultiLayer(FrameMultiDirectory, JobBase):
         output_file = f"{self.working_path}/{self.output_path}/{filename}.tif"
         callbacks = {'exif_msg': lambda: self.print_message(colored('copying exif data', 'blue')),
                      'write_msg': lambda path: self.print_message(colored(f"writing multilayer tiff file: {path}", "blue"))}
-        write_multilayer_tiff(input_files, output_file, self.exif_path, callbacks=callbacks)
-
+        write_multilayer_tiff(input_files, output_file, exif_path=self.exif_path, callbacks=callbacks)

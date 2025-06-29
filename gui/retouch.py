@@ -9,8 +9,10 @@ from PySide6.QtGui import QImage, QPixmap, QPainter
 from PySide6.QtCore import Qt, QRectF
 from algorithms.multilayer import read_multilayer_tiff, write_multilayer_tiff_from_images
 
-THUMB_SHAPE = (80, 60)
 LABEL_HEIGHT = 20
+THUMB_WIDTH = 120
+THUMB_HEIGHT = 80
+
 
 class ImageViewer(QGraphicsView):
     def __init__(self, parent=None):
@@ -251,7 +253,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         side_panel = QtWidgets.QWidget()
         side_layout = QtWidgets.QVBoxLayout(side_panel)
         side_layout.setContentsMargins(0, 0, 0, 0)
-        side_layout.setSpacing(5)
+        side_layout.setSpacing(2)
         brush_panel = QtWidgets.QFrame()
         brush_panel.setFrameShape(QtWidgets.QFrame.StyledPanel)
         brush_layout = QtWidgets.QVBoxLayout(brush_panel)
@@ -266,7 +268,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         brush_layout.addWidget(self.brush_size_slider)
         self.brush_preview = QtWidgets.QLabel()
         self.brush_preview.setAlignment(QtCore.Qt.AlignCenter)
-        self.brush_preview.setFixedSize(*THUMB_SHAPE)
+        self.brush_preview.setFixedSize(100, 100)
         self.update_brush_preview()
         brush_layout.addWidget(self.brush_preview)
         side_layout.addWidget(brush_panel)
@@ -291,7 +293,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         master_thumbnail_layout.setContentsMargins(2, 2, 2, 2)
         self.master_thumbnail_label = QtWidgets.QLabel()
         self.master_thumbnail_label.setAlignment(QtCore.Qt.AlignCenter)
-        self.master_thumbnail_label.setFixedSize(*THUMB_SHAPE)
+        self.master_thumbnail_label.setFixedSize(THUMB_WIDTH, THUMB_HEIGHT)
         self.master_thumbnail_label.mousePressEvent = lambda e: self.set_view_master()
         master_thumbnail_layout.addWidget(self.master_thumbnail_label)
         side_layout.addWidget(self.master_thumbnail_frame)
@@ -317,7 +319,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         self.thumbnail_list.setResizeMode(QtWidgets.QListWidget.Adjust)
         self.thumbnail_list.setFlow(QtWidgets.QListWidget.TopToBottom)
         self.thumbnail_list.setMovement(QtWidgets.QListWidget.Static)
-        self.thumbnail_list.setFixedWidth(120)
+        self.thumbnail_list.setFixedWidth(THUMB_WIDTH)
         self.thumbnail_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.thumbnail_list.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.thumbnail_list.itemClicked.connect(self.change_layer_item)
@@ -337,7 +339,7 @@ class ImageEditor(QtWidgets.QMainWindow):
             QScrollBar:vertical {
                 border: none;
                 background: #f5f5f5;
-                width: 12px;
+                width: 10px;
                 margin: 0px 0px 0px 0px;
             }
             QScrollBar::handle:vertical {
@@ -348,12 +350,11 @@ class ImageEditor(QtWidgets.QMainWindow):
         """)
         side_layout.addWidget(self.thumbnail_list, 1)
         control_panel = QtWidgets.QWidget()
-#        control_layout = QtWidgets.QVBoxLayout(control_panel)
         layout.addWidget(self.image_viewer, 1)
         layout.addWidget(side_panel, 0)
         layout.addWidget(control_panel, 0)
-        layout.setContentsMargins(2, 2, 2, 2)
-        layout.setSpacing(5)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
 
     def setup_menu(self):
         menubar = self.menuBar()
@@ -395,7 +396,7 @@ class ImageEditor(QtWidgets.QMainWindow):
             psd_data = read_multilayer_tiff(path)
             layers = []
             labels = []
-            for layer in psd_data.layers.layers:
+            for layer in reversed(psd_data.layers.layers):
                 channels = {}
                 for channel in layer.channels:
                     channels[channel.channelid] = channel.data

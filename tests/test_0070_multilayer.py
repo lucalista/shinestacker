@@ -14,9 +14,9 @@ def test_write():
         output_dir = test_path
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        write_multilayer_tiff([f"input/img-tif/000{i}.tif" for i in range(N_LAYERS)],
-                              output_dir + test_file,
-                              exif_path="input/img-tif")
+        filenames = ["output/img-tif-stack/0000_pyr.tif"] + [f"input/img-tif/000{i}.tif" for i in range(N_LAYERS)]
+        labels = ['Pyramid'] + [f'Layer {i + 1}' for i in range(N_LAYERS)]
+        write_multilayer_tiff(filenames, output_dir + test_file, labels=labels, exif_path="input/img-tif")
     except Exception:
         assert False
 
@@ -26,7 +26,7 @@ def test_read():
         input_dir = test_path
         isd = read_multilayer_tiff(input_dir + test_file)
         assert isd is not None
-        assert len(isd.layers.layers) == N_LAYERS
+        assert len(isd.layers.layers) == N_LAYERS + 1
     except Exception:
         assert False
 
