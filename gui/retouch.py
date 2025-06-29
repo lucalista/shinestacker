@@ -22,7 +22,8 @@ BRUSH_COLORS = {
     'inner': QColor(255, 0, 0, 200),
     'gradient_end': QColor(255, 0, 0, 0),
     'pen': QColor(255, 0, 0, 150),
-    'preview': QColor(255, 180, 180)
+    'preview': QColor(255, 180, 180),
+    'cursor_inner': QColor(255, 0, 0, 120)
 }
 
 UI_SIZES = {
@@ -38,12 +39,14 @@ BRUSH_SIZES = {
 }
 
 
-def create_brush_gradient(center_x, center_y, radius, hardness):
+def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None, outer_color=None):
     gradient = QtGui.QRadialGradient(center_x, center_y, radius)
     hardness_normalized = hardness / 100.0
-    gradient.setColorAt(0, BRUSH_COLORS['inner'])
-    gradient.setColorAt(hardness_normalized, BRUSH_COLORS['inner'])
-    gradient.setColorAt(1, BRUSH_COLORS['gradient_end'])
+    inner = inner_color if inner_color is not None else BRUSH_COLORS['inner']
+    outer = outer_color if outer_color is not None else BRUSH_COLORS['gradient_end']
+    gradient.setColorAt(0, inner)
+    gradient.setColorAt(hardness_normalized, inner)
+    gradient.setColorAt(1, outer)
     return gradient
 
 
@@ -182,7 +185,7 @@ class ImageViewer(QGraphicsView):
 
     def setup_brush_cursor(self):
         pen = QPen(BRUSH_COLORS['pen'], 1)
-        brush = QBrush(BRUSH_COLORS['inner'])
+        brush = QBrush(BRUSH_COLORS['cursor_inner'])
         self.brush_cursor = self.scene.addEllipse(0, 0, BRUSH_SIZES['default'] / 2, BRUSH_SIZES['default'] / 2, pen, brush)
         self.brush_cursor.hide()
 
@@ -192,7 +195,9 @@ class ImageViewer(QGraphicsView):
             scene_pos = self.mapToScene(mouse_pos)
             center_x = scene_pos.x()
             center_y = scene_pos.y()
-            gradient = create_brush_gradient(center_x, center_y, size / 2, self.image_editor.brush_hardness)
+            gradient = create_brush_gradient(
+                center_x, center_y, size / 2, self.image_editor.brush_hardness,
+                inner_color=BRUSH_COLORS['cursor_inner'], outer_color=BRUSH_COLORS['gradient_end'])
             self.brush_cursor.setRect(center_x - size / 2, center_y - size / 2, size, size)
             self.brush_cursor.setBrush(QBrush(gradient))
             self.brush_cursor.setPen(QPen(BRUSH_COLORS['pen'], 1))
@@ -738,7 +743,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         pixmap.fill(Qt.transparent)
         painter = QPainter(pixmap)
         painter.setRenderHint(QPainter.Antialiasing)
-        preview_size = min(self.brush_size, width - 10, height - 10)
+        preview_size = min(self.brush_size, width - 2, height - 2)
         center_x, center_y = width // 2, height // 2
         gradient = create_brush_gradient(center_x, center_y, preview_size // 2, self.brush_hardness)
         painter.setPen(QPen(BRUSH_COLORS['outer'], 1))
