@@ -52,7 +52,7 @@ class ImageViewer(QGraphicsView):
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Space and not self.scrolling:
             self.space_pressed = True
-            self.setCursor(Qt.OpenHandCursor)  # Mostra la mano aperta per lo scrolling
+            self.setCursor(Qt.OpenHandCursor)
             if self.brush_cursor:
                 self.brush_cursor.hide()
         elif event.key() == Qt.Key_X:
@@ -64,7 +64,7 @@ class ImageViewer(QGraphicsView):
         if event.key() == Qt.Key_Space:
             self.space_pressed = False
             if not self.scrolling:
-                self.setCursor(Qt.BlankCursor)  # Torna al cursore vuoto
+                self.setCursor(Qt.BlankCursor)
                 if self.brush_cursor:
                     self.brush_cursor.show()
         elif event.key() == Qt.Key_X:
@@ -83,7 +83,7 @@ class ImageViewer(QGraphicsView):
             else:
                 if self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual:
                     self.image_editor.copy_brush_area_to_master(event.position().toPoint())
-                    self.dragging = True  # Nuovo flag per drag continuo
+                    self.dragging = True
                 if self.brush_cursor:
                     self.brush_cursor.show()
         super().mousePressEvent(event)
@@ -110,7 +110,7 @@ class ImageViewer(QGraphicsView):
                 if self.space_pressed:
                     self.setCursor(Qt.OpenHandCursor)
                 else:
-                    self.setCursor(Qt.BlankCursor)  # Torna al cursore vuoto
+                    self.setCursor(Qt.BlankCursor)
                     if self.brush_cursor:
                         self.brush_cursor.show()
                 self.last_mouse_pos = None
