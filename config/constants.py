@@ -97,6 +97,7 @@ class _Constants:
 
     DEFAULT_FRAMES = 10
     DEFAULT_OVERLAP = 2
+    DEFAULT_STACK_POSTFIX = "_stack"
 
     DEFAULT_DM_FLOAT = FLOAT_32
     DM_ENERGY_LAPLACIAN = "laplacian"

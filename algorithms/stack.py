@@ -11,10 +11,10 @@ from algorithms.stack_framework import FrameDirectory, ActionList
 
 
 class FocusStackBase:
-    def __init__(self, stack_algo, exif_path='', postfix='', denoise=0, plot_stack=False):
+    def __init__(self, stack_algo, exif_path='', postfix=constants.DEFAULT_STACK_POSTFIX, denoise=0, plot_stack=False):
         self.stack_algo = stack_algo
         self.exif_path = exif_path
-        self.postfix = postfix
+        self.postfix = postfix if postfix != '' else constants.DEFAULT_STACK_POSTFIX
         self.denoise = denoise
         self.plot_stack = plot_stack
         self.stack_algo.process = self
@@ -25,7 +25,7 @@ class FocusStackBase:
         img_files = sorted([os.path.join(self.input_full_path, name) for name in filenames])
         stacked_img = self.stack_algo.focus_stack(img_files)
         in_filename = filenames[0].split(".")
-        out_filename = self.output_dir + "/" + in_filename[0] + self.postfix + '.' + '.'.join(in_filename[1:])
+        out_filename = f"{self.output_dir}/{in_filename[0]}{self.postfix}." + '.'.join(in_filename[1:])
         if self.denoise > 0:
             self.sub_message_r(': denoise image')
             stacked_img = cv2.fastNlMeansDenoisingColored(stacked_img, None, self.denoise, self.denoise, 7, 21)
@@ -57,9 +57,9 @@ class FocusStackBunch(FocusStackBase, FrameDirectory, ActionList):
     def __init__(self, name, stack_algo, enabled=True, **kwargs):
         FocusStackBase.__init__(self, stack_algo,
                                 exif_path=kwargs.pop('exif_path', ''),
-                                postfix=kwargs.pop('postfix', ''),
+                                postfix=kwargs.pop('postfix', constants.DEFAUlT_STACK_POSTFIX),
                                 denoise=kwargs.pop('denoise', 0),
-                                plot_stack=kwargs.pop('plot_stack', ''))
+                                plot_stack=kwargs.pop('plot_stack', False))
         FrameDirectory.__init__(self, name, **kwargs)
         ActionList.__init__(self, name, enabled)
         self.frame_count = 0
@@ -87,15 +87,15 @@ class FocusStackBunch(FocusStackBase, FrameDirectory, ActionList):
         FocusStackBase.init(self, job, self.working_path)
 
 
-class FocusStack(FrameDirectory, JobBase, FocusStackBase):
+class FocusStack(FocusStackBase, FrameDirectory, JobBase):
     def __init__(self, name, stack_algo, enabled=True, **kwargs):
-        FrameDirectory.__init__(self, name, **kwargs)
-        JobBase.__init__(self, name, enabled)
         FocusStackBase.__init__(self, stack_algo,
                                 exif_path=kwargs.pop('exif_path', ''),
-                                postfix=kwargs.pop('postfix', ''),
+                                postfix=kwargs.pop('postfix', constants.DEFAULT_STACK_POSTFIX),
                                 denoise=kwargs.pop('denoise', 0),
-                                plot_stack=kwargs.pop('plot_stack', ''))
+                                plot_stack=kwargs.pop('plot_stack', False))
+        FrameDirectory.__init__(self, name, **kwargs)
+        JobBase.__init__(self, name, enabled)
 
     def run_core(self):
         self.set_filelist()
