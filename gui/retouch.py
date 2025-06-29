@@ -133,6 +133,7 @@ class ImageViewer(QGraphicsView):
                     self.image_editor.update_timer.stop()
                     self.image_editor.display_current_view()
                     self.image_editor.mark_as_modified()
+                    self.image_editor.save_undo_state()                    
         super().mouseReleaseEvent(event)
 
     def wheelEvent(self, event):
@@ -240,6 +241,8 @@ class ImageEditor(QtWidgets.QMainWindow):
         self.temp_view_individual = False
         self.current_file_path = None
         self.modified = False
+        self.undo_stack = []
+        self.max_undo_steps = 10
         self.setup_ui()
         self.setup_menu()
         self.setup_shortcuts()
@@ -416,6 +419,12 @@ class ImageEditor(QtWidgets.QMainWindow):
         file_menu.addAction("Save", self.save_file, "Ctrl+S")
         file_menu.addAction("Save As...", self.save_file_as)
         edit_menu = menubar.addMenu("Edit")
+        undo_action = QAction("Undo Brush", self)
+        undo_action.setShortcut("Ctrl+Z")
+        undo_action.triggered.connect(self.undo_last_brush)
+        edit_menu.addAction(undo_action)
+        undo_shortcut = QShortcut(QKeySequence("Ctrl+Z"), self)
+        undo_shortcut.activated.connect(self.undo_last_brush)        
         copy_action = QAction("Copy Layer to Master", self)
         copy_action.setShortcut("Ctrl+M")
         copy_action.triggered.connect(self.copy_layer_to_master)
@@ -452,7 +461,6 @@ class ImageEditor(QtWidgets.QMainWindow):
 
     def load_tiff_stack(self, path):
         try:
-            print(f"Loading file: {path}")
             psd_data = read_multilayer_tiff(path)
             layers = []
             labels = []
@@ -469,17 +477,14 @@ class ImageEditor(QtWidgets.QMainWindow):
                     layers.append(img)
                     labels.append(layer.name)
             if layers:
-                print(f"Found {len(layers)} layers")
                 return np.array(layers), labels
         except Exception as e:
-            print(f"Error loading PSD data: {str(e)}")
             try:
                 stack = tifffile.imread(path)
                 if stack.ndim == 3:
                     return stack, None
                 return None, None
             except Exception as e:
-                print(f"Error loading TIFF: {str(e)}")
                 return None, None
 
     def open_file(self):
@@ -732,6 +737,8 @@ class ImageEditor(QtWidgets.QMainWindow):
     def copy_brush_area_to_master(self, view_pos, continuous=False):
         if self.current_stack is None or self.master_layer is None or self.view_mode != 'master' or self.temp_view_individual:
             return
+        if not continuous and not self.image_viewer.dragging:
+            self.save_undo_state()
         scene_pos = self.image_viewer.mapToScene(view_pos)
         x_center = int(scene_pos.x())
         y_center = int(scene_pos.y())
@@ -767,6 +774,25 @@ class ImageEditor(QtWidgets.QMainWindow):
             if not self.update_timer.isActive():
                 self.update_timer.start()
 
+    def save_undo_state(self):
+        if self.master_layer is not None:
+            if self.undo_stack and np.array_equal(self.undo_stack[-1]['master'], self.master_layer):
+                return
+            undo_state = {
+                'master': self.master_layer.copy(),
+                'timestamp': QtCore.QDateTime.currentDateTime()
+            }
+            if len(self.undo_stack) >= self.max_undo_steps:
+                self.undo_stack.pop(0)
+            self.undo_stack.append(undo_state)
+
+    def undo_last_brush(self):
+        if self.undo_stack and self.master_layer is not None:
+            undo_state = self.undo_stack.pop()
+            self.master_layer = undo_state['master']
+            self.display_current_view()
+            self.mark_as_modified()
+            self.statusBar().showMessage("Undo applied", 2000)                
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
