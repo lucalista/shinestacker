@@ -44,9 +44,18 @@ def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None
     hardness_normalized = hardness / 100.0
     inner = inner_color if inner_color is not None else BRUSH_COLORS['inner']
     outer = outer_color if outer_color is not None else BRUSH_COLORS['gradient_end']
-    gradient.setColorAt(0, inner)
-    gradient.setColorAt(hardness_normalized, inner)
-    gradient.setColorAt(1, outer)
+    if radius <= 3:
+        if hardness > 50:
+            gradient.setColorAt(0, inner)
+            gradient.setColorAt(1, inner)
+        else:
+            gradient.setColorAt(0, inner)
+            gradient.setColorAt(0.8, inner)
+            gradient.setColorAt(1, outer)
+    else:
+        gradient.setColorAt(0, inner)
+        gradient.setColorAt(hardness_normalized, inner)
+        gradient.setColorAt(1, outer)
     return gradient
 
 
