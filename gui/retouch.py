@@ -2,10 +2,10 @@ import sys
 sys.path.append('../')
 import numpy as np
 import tifffile
-from psdtags import PsdChannelId, TiffImageSourceData
+from psdtags import PsdChannelId
 from PySide6 import QtWidgets, QtCore, QtGui
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
-from PySide6.QtGui import QImage, QPixmap, QPainter, QWheelEvent, QMouseEvent
+from PySide6.QtGui import QImage, QPixmap, QPainter
 from PySide6.QtCore import Qt, QRectF
 from algorithms.multilayer import read_multilayer_tiff, write_multilayer_tiff_from_images
 
@@ -17,11 +17,8 @@ class ImageViewer(QGraphicsView):
         self.setScene(self.scene)
         self.pixmap_item = QGraphicsPixmapItem()
         self.scene.addItem(self.pixmap_item)
-        
         self.zoom_factor = 1.0
         self.last_mouse_pos = None
-        
-        # Configurazione view
         self.setRenderHint(QPainter.Antialiasing)
         self.setRenderHint(QPainter.SmoothPixmapTransform)
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
@@ -32,8 +29,6 @@ class ImageViewer(QGraphicsView):
         pixmap = QPixmap.fromImage(qimage)
         self.pixmap_item.setPixmap(pixmap)
         self.setSceneRect(QRectF(pixmap.rect()))
-        
-        # Non fare più auto-fit qui, verrà gestito dai comandi appositi
         if self.zoom_factor == 1.0:  # Solo se è il primo setup
             self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
             self.zoom_factor = self.get_current_scale()
@@ -41,14 +36,13 @@ class ImageViewer(QGraphicsView):
     def wheelEvent(self, event):
         zoom_in_factor = 1.25
         zoom_out_factor = 1 / zoom_in_factor
-        
         if event.angleDelta().y() > 0:
             self.scale(zoom_in_factor, zoom_in_factor)
             self.zoom_factor *= zoom_in_factor
         else:
             self.scale(zoom_out_factor, zoom_out_factor)
             self.zoom_factor *= zoom_out_factor
-    
+
     def mouseMoveEvent(self, event):
         if self.last_mouse_pos and event.buttons() & Qt.LeftButton:
             delta = event.position() - self.last_mouse_pos
@@ -56,126 +50,96 @@ class ImageViewer(QGraphicsView):
             self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - delta.x())
             self.verticalScrollBar().setValue(self.verticalScrollBar().value() - delta.y())
         else:
-            super().mouseMoveEvent(event)            
-    
+            super().mouseMoveEvent(event)
+
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.last_mouse_pos = event.position()
         super().mousePressEvent(event)
-    
+
     def mouseReleaseEvent(self, event):
         self.last_mouse_pos = None
         super().mouseReleaseEvent(event)
 
     def setup_shortcuts(self):
-        # Zoom in (Ctrl++)
         zoom_in = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+="), self)
         zoom_in.activated.connect(self.zoom_in)
-        
-        # Zoom in (Ctrl+) - alternativo poiché alcuni tastierini usano Ctrl++ per Ctrl+=)
         zoom_in_alt = QtGui.QShortcut(QtGui.QKeySequence("Ctrl++"), self)
         zoom_in_alt.activated.connect(self.zoom_in)
-        
-        # Zoom out (Ctrl+-)
         zoom_out = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+-"), self)
         zoom_out.activated.connect(self.zoom_out)
-        
-        # Reset zoom (Ctrl+0)
         reset_zoom = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+0"), self)
         reset_zoom.activated.connect(self.reset_zoom)
-        
+
     def zoom_in(self):
         self.scale(1.25, 1.25)
         self.zoom_factor *= 1.25
-    
+
     def zoom_out(self):
         self.scale(0.8, 0.8)
         self.zoom_factor *= 0.8
-    
+
     def reset_zoom(self):
-        """Fit image to view while keeping aspect ratio (Adapt to Screen)"""
         self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
         self.zoom_factor = self.get_current_scale()
-    
+
     def actual_size(self):
-        """Reset zoom to 1:1 pixel ratio (Actual Size)"""
         self.resetTransform()
         self.zoom_factor = 1.0
-    
+
     def get_current_scale(self):
-        """Helper to get current scale factor"""
         return self.transform().m11()  # Using horizontal scale factor
 
     def get_view_state(self):
-        """Return current zoom and scroll position"""
         return {
             'zoom': self.zoom_factor,
             'h_scroll': self.horizontalScrollBar().value(),
             'v_scroll': self.verticalScrollBar().value()
         }
-    
+
     def set_view_state(self, state):
-        """Restore zoom and scroll position"""
         if state:
             self.resetTransform()
             self.scale(state['zoom'], state['zoom'])
             self.horizontalScrollBar().setValue(state['h_scroll'])
             self.verticalScrollBar().setValue(state['v_scroll'])
-            self.zoom_factor = state['zoom']    
+            self.zoom_factor = state['zoom']
+
 
 class ImageEditor(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         self.current_stack = None
         self.current_layer = 0
-        
         self.setup_ui()
         self.setup_menu()
         self.setup_shortcuts()
 
     def setup_shortcuts(self):
-        # Zoom in (Ctrl++)
         zoom_in = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+="), self)
         zoom_in.activated.connect(self.image_viewer.zoom_in)
-        
-        # Zoom in alternativo
         zoom_in_alt = QtGui.QShortcut(QtGui.QKeySequence("Ctrl++"), self)
         zoom_in_alt.activated.connect(self.image_viewer.zoom_in)
-        
-        # Zoom out (Ctrl+-)
         zoom_out = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+-"), self)
         zoom_out.activated.connect(self.image_viewer.zoom_out)
-        
-        # Reset zoom (Ctrl+0)
         reset_zoom = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+0"), self)
         reset_zoom.activated.connect(self.image_viewer.reset_zoom)
-
-        # Modifica i tasti freccia così:
         prev_layer = QtGui.QShortcut(QtGui.QKeySequence(Qt.Key_Up), self, context=Qt.ApplicationShortcut)
         prev_layer.activated.connect(self.prev_layer)
-        
         next_layer = QtGui.QShortcut(QtGui.QKeySequence(Qt.Key_Down), self, context=Qt.ApplicationShortcut)
-        next_layer.activated.connect(self.next_layer)        
+        next_layer.activated.connect(self.next_layer)
 
     def setup_ui(self):
         self.setWindowTitle("Focus Stack Editor - PySide6")
         self.resize(1400, 900)
-
-        # Layout principale
         central_widget = QtWidgets.QWidget()
         self.setCentralWidget(central_widget)
         layout = QtWidgets.QHBoxLayout(central_widget)
-
-        # Area visualizzazione immagine
         self.image_viewer = ImageViewer()
-
-        # Creazione pannello laterale per i layer
         side_panel = QtWidgets.QWidget()
         side_layout = QtWidgets.QVBoxLayout(side_panel)
         side_layout.setContentsMargins(0, 0, 0, 0)
-        side_layout.setSpacing(5)        
-
-        # Aggiunta titolo "Layers"
+        side_layout.setSpacing(5)
         layers_label = QtWidgets.QLabel("Layers")
         layers_label.setStyleSheet("""
             QLabel {
@@ -186,74 +150,53 @@ class ImageEditor(QtWidgets.QMainWindow):
                 border-bottom: 1px solid #ddd;
                 background: #f5f5f5;
             }
-        """)        
+        """)
         layers_label.setAlignment(QtCore.Qt.AlignCenter)
-        layers_label.setFixedHeight(24)  # Altezza fissa        
-        side_layout.addWidget(layers_label)        
-
-        # Lista thumbnail - MODIFICATO per singola colonna
+        layers_label.setFixedHeight(24)
+        side_layout.addWidget(layers_label)
         self.thumbnail_list = QtWidgets.QListWidget()
-        self.thumbnail_list.setFocusPolicy(Qt.StrongFocus)  # Permette il focus con click/tasti
+        self.thumbnail_list.setFocusPolicy(Qt.StrongFocus)
         self.thumbnail_list.setViewMode(QtWidgets.QListWidget.IconMode)
         self.thumbnail_list.setIconSize(QtCore.QSize(100, 100))
         self.thumbnail_list.setResizeMode(QtWidgets.QListWidget.Adjust)
-        self.thumbnail_list.setFlow(QtWidgets.QListWidget.TopToBottom)  # Aggiunto per flusso verticale
-        self.thumbnail_list.setMovement(QtWidgets.QListWidget.Static)   # Aggiunto per layout fisso
-        self.thumbnail_list.setFixedWidth(120)  # Larghezza fissa basata su iconSize + margini
-        self.thumbnail_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)  # Disabilita scroll orizzontale        
+        self.thumbnail_list.setFlow(QtWidgets.QListWidget.TopToBottom)
+        self.thumbnail_list.setMovement(QtWidgets.QListWidget.Static)
+        self.thumbnail_list.setFixedWidth(120)
+        self.thumbnail_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.thumbnail_list.itemClicked.connect(self.change_layer_item)
-        side_layout.addWidget(self.thumbnail_list, 1)  # Il parametro 1 fa espandere la lista
-        
-        # Pannello controlli
+        side_layout.addWidget(self.thumbnail_list, 1)
         control_panel = QtWidgets.QWidget()
-        control_layout = QtWidgets.QVBoxLayout(control_panel)
-
-        # Aggiunta widget al layout
-
-        # Aggiunta widget al layout
+#        control_layout = QtWidgets.QVBoxLayout(control_panel)
         layout.addWidget(self.image_viewer, 1)
-        layout.addWidget(side_panel, 0)  # Ora aggiungiamo il pannello laterale completo        
+        layout.addWidget(side_panel, 0)
         layout.addWidget(control_panel, 0)
-        layout.setContentsMargins(2, 2, 2, 2)  # Riduci i margini generali
-        layout.setSpacing(5)  # Riduci lo spazio tra i widget
-        
+        layout.setContentsMargins(2, 2, 2, 2)
+        layout.setSpacing(5)
+
     def setup_menu(self):
         menubar = self.menuBar()
         file_menu = menubar.addMenu("File")
         file_menu.addAction("Open...", self.open_file, "Ctrl+O")
         file_menu.addAction("Save", self.save_file, "Ctrl+S")
-
-# View menu - NUOVO MENU
         view_menu = menubar.addMenu("View")
-        
-        # Zoom In action
         zoom_in_action = QtGui.QAction("Zoom In", self)
         zoom_in_action.setShortcut("Ctrl++")
         zoom_in_action.triggered.connect(self.image_viewer.zoom_in)
         view_menu.addAction(zoom_in_action)
-        
-        # Zoom Out action
         zoom_out_action = QtGui.QAction("Zoom Out", self)
         zoom_out_action.setShortcut("Ctrl+-")
         zoom_out_action.triggered.connect(self.image_viewer.zoom_out)
         view_menu.addAction(zoom_out_action)
-        
-        # Adapt to screen action
         adapt_action = QtGui.QAction("Adapt to Screen", self)
         adapt_action.setShortcut("Ctrl+0")
         adapt_action.triggered.connect(self.image_viewer.reset_zoom)
         view_menu.addAction(adapt_action)
-        
-        # Separator
         view_menu.addSeparator()
-        
-        # Actual size action (1:1)
         actual_size_action = QtGui.QAction("Actual Size", self)
         actual_size_action.triggered.connect(self.image_viewer.actual_size)
         view_menu.addAction(actual_size_action)
-        
+
     def load_tiff_stack(self, path):
-        """Load TIFF using the corrected method"""
         try:
             print(f"Loading file: {path}")
             psd_data = read_multilayer_tiff(path)
@@ -262,7 +205,6 @@ class ImageEditor(QtWidgets.QMainWindow):
                 channels = {}
                 for channel in layer.channels:
                     channels[channel.channelid] = channel.data
-                
                 if PsdChannelId.CHANNEL0 in channels:
                     img = np.stack([
                         channels[PsdChannelId.CHANNEL0],
@@ -270,15 +212,12 @@ class ImageEditor(QtWidgets.QMainWindow):
                         channels[PsdChannelId.CHANNEL2]
                     ], axis=-1)
                     layers.append(img)
-            
             if layers:
                 print(f"Found {len(layers)} layers")
                 return np.array(layers), None
-            
         except Exception as e:
             print(f"Error loading PSD data: {str(e)}")
             try:
-                # Fallback to standard TIFF reading
                 stack = tifffile.imread(path)
                 if stack.ndim == 3:
                     return stack, None
@@ -286,100 +225,75 @@ class ImageEditor(QtWidgets.QMainWindow):
             except Exception as e:
                 print(f"Error loading TIFF: {str(e)}")
                 return None, None
-            
+
     def open_file(self):
         path, _ = QtWidgets.QFileDialog.getOpenFileName(
             self, "Open Image", "", "Images (*.tif *.tiff *.png *.jpg)")
-        
         if path:
-            
-            # Qui dovresti usare la tua funzione read_multilayer_tiff
-            # Per esempio:
-            self.current_stack, _ =  self.load_tiff_stack(path)
-            
-            print("\n=== File Info ===")
-            print(f"Number of layers: {len(self.current_stack)}")
-            print(f"Stack shape: {self.current_stack.shape}")
-            print(f"Data type: {self.current_stack.dtype}")
-        
+            self.current_stack, _ = self.load_tiff_stack(path)
             self.update_thumbnails()
             self.change_layer(0)
             self.image_viewer.reset_zoom()
             self.statusBar().showMessage(f"Loaded: {path}")
-            self.thumbnail_list.setFocus()  # Focus esplicito            
-                
+            self.thumbnail_list.setFocus()
+
     def save_file(self):
         if not self.current_stack:
             return
-        # Implementa il salvataggio usando write_multilayer_tiff_from_images
 
     def update_thumbnails(self):
         self.thumbnail_list.clear()
-        
         if self.current_stack is None:
             return
-            
         for i in range(len(self.current_stack)):
             layer = self.current_stack[i]
-            
-            if layer.ndim == 3 and layer.shape[-1] == 3:  # RGB
+            if layer.ndim == 3 and layer.shape[-1] == 3:
                 thumbnail = self.create_rgb_thumbnail(layer)
-            else:  # Grayscale
+            else:
                 thumbnail = self.create_grayscale_thumbnail(layer)
-            
-            item = QtWidgets.QListWidgetItem(f"Layer {i+1}")
+            item = QtWidgets.QListWidgetItem(f"Layer {i + 1}")
             item.setIcon(QtGui.QIcon(thumbnail))
             self.thumbnail_list.addItem(item)
 
     def create_rgb_thumbnail(self, layer):
-        """Create thumbnail for RGB images"""
         if layer.dtype == np.uint16:
             layer = (layer // 256).astype(np.uint8)
-        
         height, width, _ = layer.shape
-        qimg = QtGui.QImage(layer.data, width, height, 3*width, QtGui.QImage.Format_RGB888)
+        qimg = QtGui.QImage(layer.data, width, height, 3 * width, QtGui.QImage.Format_RGB888)
         return QtGui.QPixmap.fromImage(qimg.scaled(100, 100, QtCore.Qt.KeepAspectRatio))
 
     def create_grayscale_thumbnail(self, layer):
-        """Create thumbnail for grayscale images"""
         if layer.dtype == np.uint16:
             p2, p98 = np.percentile(layer, (2, 98))
             layer = np.clip((layer - p2) * 255.0 / (p98 - p2), 0, 255).astype(np.uint8)
-        
         height, width = layer.shape
         qimg = QtGui.QImage(layer.data, width, height, width, QtGui.QImage.Format_Grayscale8)
         return QtGui.QPixmap.fromImage(qimg.scaled(100, 100, QtCore.Qt.KeepAspectRatio))
 
     def change_layer(self, layer_idx):
         if 0 <= layer_idx < len(self.current_stack):
-            # Salva lo stato corrente della view
             view_state = self.image_viewer.get_view_state()
-            
             self.current_layer = layer_idx
             self.display_current_layer()
-            
-            # Ripristina lo stato della view
             self.image_viewer.set_view_state(view_state)
-            self.thumbnail_list.setCurrentRow(layer_idx)  # Aggiungi questa linea
-            self.thumbnail_list.setFocus()  # E questa            
-    
+            self.thumbnail_list.setCurrentRow(layer_idx)
+            self.thumbnail_list.setFocus()
+
     def change_layer_item(self, item):
         layer_idx = self.thumbnail_list.row(item)
         self.change_layer(layer_idx)
-    
+
     def display_current_layer(self):
         if self.current_stack is None:
             return
-            
         layer = self.current_stack[self.current_layer]
         qimage = self.numpy_to_qimage(layer)
         self.image_viewer.set_image(qimage)
-    
+
     def numpy_to_qimage(self, array):
         """Converte un array numpy in QImage"""
         if array.dtype == np.uint16:
             array = (array / 256).astype(np.uint8)
-        
         if array.ndim == 2:  # Grayscale
             height, width = array.shape
             bytes_per_line = width
@@ -409,11 +323,10 @@ class ImageEditor(QtWidgets.QMainWindow):
         self.thumbnail_list.setCurrentRow(index)
         # Scorri la lista per mostrare l'elemento se è fuori dalla vista
         self.thumbnail_list.scrollToItem(
-            self.thumbnail_list.item(index), 
+            self.thumbnail_list.item(index),
             QtWidgets.QAbstractItemView.PositionAtCenter
-        )        
-    
-                
+        )
+
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
