@@ -22,7 +22,7 @@ class FocusStackBase:
 
     def focus_stack(self, filenames):
         self.sub_message_r(': reading input files')
-        img_files = sorted([os.path.join(self.input_dir, name) for name in filenames])
+        img_files = sorted([os.path.join(self.input_full_path, name) for name in filenames])
         stacked_img = self.stack_algo.focus_stack(img_files)
         in_filename = filenames[0].split(".")
         out_filename = self.output_dir + "/" + in_filename[0] + self.postfix + '.' + '.'.join(in_filename[1:])
@@ -71,7 +71,7 @@ class FocusStackBunch(FocusStackBase, FrameDirectory, ActionList):
 
     def begin(self):
         ActionList.begin(self)
-        fnames = self.folder_filelist(self.input_dir)
+        fnames = self.folder_filelist(self.input_full_path)
         self.__chunks = [fnames[x:x + self.frames] for x in range(0, len(fnames) - self.overlap, self.frames - self.overlap)]
         self.set_counts(len(self.__chunks))
 

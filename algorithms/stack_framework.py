@@ -35,8 +35,8 @@ class FramePaths:
         self.scratch_output_dir = scratch_output_dir
 
     def set_filelist(self):
-        self.filenames = self.folder_filelist(self.input_dir)
-        file_list = self.input_dir.replace(self.working_path, '').lstrip('/')
+        self.filenames = self.folder_filelist(self.input_full_path)
+        file_list = self.input_full_path.replace(self.working_path, '').lstrip('/')
         self.print_message(colored(": {} files ".format(len(self.filenames)) + "in folder: " + file_list, 'blue'))
         self.print_message(colored("focus stacking", 'blue'))
 
@@ -75,14 +75,14 @@ class FrameDirectory(FramePaths):
         FramePaths.__init__(self, name, **kwargs)
 
     def folder_list_str(self):
-        if isinstance(self.input_dir, list):
-            file_list = ", ".join([i for i in self.input_dir.replace(self.working_path, '').lstrip('/')])
-            return "folder{}: ".format('s' if len(self.input_dir) > 1 else '') + file_list
+        if isinstance(self.input_full_path, list):
+            file_list = ", ".join([i for i in self.input_full_path.replace(self.working_path, '').lstrip('/')])
+            return "folder{}: ".format('s' if len(self.input_full_path) > 1 else '') + file_list
         else:
-            return "folder: " + self.input_dir.replace(self.working_path, '').lstrip('/')
+            return "folder: " + self.input_full_path.replace(self.working_path, '').lstrip('/')
 
     def folder_filelist(self, path):
-        src_contents = os.walk(self.input_dir)
+        src_contents = os.walk(self.input_full_path)
         dirpath, _, filenames = next(src_contents)
         filelist = [name for name in filenames if os.path.splitext(name)[-1][1:].lower() in constants.EXTENSIONS]
         filelist.sort()
@@ -94,8 +94,8 @@ class FrameDirectory(FramePaths):
 
     def init(self, job):
         FramePaths.init(self, job)
-        self.input_dir = self.working_path + ('' if self.working_path[-1] == '/' else '/') + self.input_path
-        check_path_exists(self.input_dir)
+        self.input_full_path = self.working_path + ('' if self.working_path[-1] == '/' else '/') + self.input_path
+        check_path_exists(self.input_full_path)
         job.paths.append(self.output_path)
 
 
@@ -105,21 +105,21 @@ class FrameMultiDirectory:
         FramePaths.__init__(self, name, input_path, output_path, working_path, plot_path, scratch_output_dir, resample, reverse_order, **kwargs)
 
     def folder_list_str(self):
-        if isinstance(self.input_dir, list):
-            file_list = ", ".join([d.replace(self.working_path, '').lstrip('/') for d in self.input_dir])
-            return "folder{}: ".format('s' if len(self.input_dir) > 1 else '') + file_list
+        if isinstance(self.input_full_path, list):
+            file_list = ", ".join([d.replace(self.working_path, '').lstrip('/') for d in self.input_full_path])
+            return "folder{}: ".format('s' if len(self.input_full_path) > 1 else '') + file_list
         else:
-            return "folder: " + self.input_dir.replace(self.working_path, '').lstrip('/')
+            return "folder: " + self.input_full_path.replace(self.working_path, '').lstrip('/')
 
     def folder_filelist(self):
-        if isinstance(self.input_dir, str):
-            dirs = [self.input_dir]
+        if isinstance(self.input_full_path, str):
+            dirs = [self.input_full_path]
             paths = [self.input_path]
-        elif hasattr(self.input_dir, "__len__"):
-            dirs = self.input_dir
+        elif hasattr(self.input_full_path, "__len__"):
+            dirs = self.input_full_path
             paths = self.input_path
         else:
-            raise Exception("input_dir option must contain a path or an array of paths")
+            raise Exception("input_full_path option must contain a path or an array of paths")
         files = []
         for d, p in zip(dirs, paths):
             filelist = []
@@ -131,18 +131,18 @@ class FrameMultiDirectory:
                     filelist = filelist[0::self.resample]
                 files += filelist
             if len(filelist) == 0:
-                self.print_message(colored("input folder {} does not contain any image".format(p), "red"), level=logging.WARNING)
+                self.print_message(colored(f"input folder {p} does not contain any image", "red"), level=logging.WARNING)
         return files
 
     def init(self, job):
         FramePaths.init(self, job)
         if isinstance(self.input_path, str):
-            self.input_dir = self.working_path + ('' if self.working_path[-1] == '/' else '/') + self.input_path
-            check_path_exists(self.input_dir)
+            self.input_full_path = self.working_path + ('' if self.working_path[-1] == '/' else '/') + self.input_path
+            check_path_exists(self.input_full_path)
         elif hasattr(self.input_path, "__len__"):
-            self.input_dir = []
+            self.input_full_path = []
             for path in self.input_path:
-                self.input_dir.append(self.working_path + ('' if self.working_path[-1] == '/' else '/') + path)
+                self.input_full_path.append(self.working_path + ('' if self.working_path[-1] == '/' else '/') + path)
         job.paths.append(self.output_path)
 
 
@@ -205,23 +205,23 @@ class CombinedActions(FramesRefActions):
 
     def img_ref(self, idx):
         filename = self.filenames[idx]
-        img = read_img((self.output_dir if self.step_process else self.input_dir) + "/" + filename)
+        img = read_img((self.output_dir if self.step_process else self.input_full_path) + "/" + filename)
         self.dtype = img.dtype
         self.shape = img.shape
         if img is None:
-            raise Exception("Invalid file: " + self.input_dir + "/" + filename)
+            raise Exception("Invalid file: " + self.input_full_path + "/" + filename)
         return img
 
     def run_frame(self, idx, ref_idx):
         filename = self.filenames[idx]
         self.sub_message_r(': read imput image')
-        img = read_img(self.input_dir + "/" + filename)
+        img = read_img(self.input_full_path + "/" + filename)
         if hasattr(self, 'dtype') and img.dtype != self.dtype:
             raise BitDepthError(img.dtype, self.dtype)
         if hasattr(self, 'shape') and img.shape != self.shape:
             raise ShapeError(img.shape, self.shape)
         if img is None:
-            raise Exception("Invalid file: " + self.input_dir + "/" + filename)
+            raise Exception("Invalid file: " + self.input_full_path + "/" + filename)
         if len(self.__actions) == 0:
             self.sub_message(colored(": no actions specified.", "red"), level=logging.WARNING)
         for a in self.__actions:
@@ -235,7 +235,7 @@ class CombinedActions(FramesRefActions):
         if img is not None:
             write_img(self.output_dir + "/" + filename, img)
         else:
-            self.print_message("No output file resulted from processing input file: " + self.input_dir + "/" + filename, level=logging.WARNING)
+            self.print_message("No output file resulted from processing input file: " + self.input_full_path + "/" + filename, level=logging.WARNING)
 
     def end(self):
         for a in self.__actions:

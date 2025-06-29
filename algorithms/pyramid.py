@@ -63,11 +63,11 @@ class PyramidBase:
             if expanded.shape != layer.shape:
                 expanded = expanded[:layer.shape[0], :layer.shape[1]]
             img = expanded + layer
-        return np.clip(np.abs(img), 0, self.n_values - 1)
+        return np.clip(np.abs(img), 0, self.max_pixel_value)
 
     def entropy(self, image):
         levels, counts = np.unique(image.astype(self.dtype), return_counts=True)
-        probabilities = np.zeros((self.n_values), dtype=self.float_type)
+        probabilities = np.zeros((self.num_pixel_values), dtype=self.float_type)
         probabilities[levels] = counts.astype(self.float_type) / counts.sum()
         padded_image = cv2.copyMakeBorder(image, self.pad_amount, self.pad_amount, self.pad_amount,
                                           self.pad_amount, cv2.BORDER_REFLECT101)
@@ -156,7 +156,8 @@ class PyramidStack(PyramidBase):
             if metadata is None:
                 metadata = get_img_metadata(img)
                 self.dtype = metadata[1]
-                self.n_values = 256 if self.dtype == np.uint8 else 65536
+                self.num_pixel_values = constants.NUM_UINT8 if self.dtype == np.uint8 else constants.NUM_UINT16
+                self.max_pixel_value = constants.MAX_UINT8 if self.dtype == np.uint8 else constants.MAX_UINT16
                 levels = int(np.log2(min(img.shape[:2]) / self.min_size))
             else:
                 validate_image(img, *metadata)

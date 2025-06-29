@@ -1,7 +1,19 @@
 import sys
+import os
 sys.path.append('../')
 from algorithms.stack_framework import StackJob
-from algorithms.multilayer import MultiLayer
+from algorithms.multilayer import MultiLayer, write_multilayer_tiff
+
+def test_function():
+    try:
+        output_dir = "output/img-tif-multi"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        write_multilayer_tiff([f"input/img-tif/000{i}.tif" for i in range(5)],
+                              output_dir + "/multi-out.tif",
+                              exif_path="input/img-tif")
+    except Exception:
+        assert False
 
 
 def test_jpg():
@@ -28,5 +40,6 @@ def test_tif():
 
 
 if __name__ == '__main__':
+    test_function()
     test_jpg()
     test_tif()

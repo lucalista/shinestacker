@@ -1,6 +1,11 @@
 class _Constants:
     EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
+    NUM_UINT8 = 256
+    NUM_UINT16 = 65536
+    MAX_UINT8 = 255
+    MAX_UINT16 = 65535
+
     ACTION_JOB = "Job"
     ACTION_COMBO = "CombinedActions"
     ACTION_NOISEDETECTION = "NoiseDetection"

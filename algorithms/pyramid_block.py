@@ -72,7 +72,8 @@ class PyramidBlock(PyramidBase):
             images.append(img)
         self.images = np.array(images, dtype=self.dtype)
         self.num_images = self.images.shape[0]
-        self.n_values = 256 if self.dtype == np.uint8 else 65536
+        self.num_pixel_values = constants.NUM_UINT8 if self.dtype == np.uint8 else constants.NUM_UINT16
+        self.max_pixel_value = constants.MAX_UINT8 if self.dtype == np.uint8 else constants.MAX_UINT16
         stacked_image = self.collapse(self.fuse_pyramids(
             self.laplacian_pyramid(int(np.log2(min(self.images[0].shape[:2]) / self.min_size)))))
         return stacked_image.astype(self.dtype)

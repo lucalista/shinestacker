@@ -14,6 +14,112 @@ from core.framework import JobBase
 from algorithms.stack_framework import FrameMultiDirectory
 from algorithms.exif import exif_extra_tags, get_exif
 
+def write_multilayer_tiff(input_files, output_file, exif_path='', callbacks=None):
+    extensions = list(set([file.split(".")[-1] for file in input_files]))
+    if len(extensions) > 1:
+        msg = ", ".join(extensions)
+        raise Exception(f"All input files must have the same extension. Input list has the following extensions: {msg}.")
+    extension = extensions[0]
+    if extension == 'tif' or extension == 'tiff':
+        images = [tifffile.imread(p) for p in input_files]
+    elif extension == 'jpg' or extension == 'jpeg':
+        images = [cv2.imread(p) for p in input_files]
+        images = [cv2.cvtColor(i, cv2.COLOR_BGR2RGB) for i in images]
+    elif extension == 'png':
+        images = [cv2.imread(p, cv2.IMREAD_UNCHANGED) for p in input_files]
+        images = [cv2.cvtColor(i, cv2.COLOR_BGR2RGB) for i in images]
+    shapes = list(set([image.shape[:2] for image in images]))
+    if len(shapes) > 1:
+        msg = ", ".join(extensions)
+        raise Exception("All input files must have the same dimensions.")
+    shape = shapes[0]
+    dtypes = list(set([image.dtype for image in images]))
+    if len(dtypes) > 1:
+        msg = ", ".join(extensions)
+        raise Exception("All input files must all have 8 bit or 16 bit depth.")
+    dtype = dtypes[0]
+    transp = np.full_like(images[0][..., 0], constants.MAX_UINT16 if dtype == np.uint16 else constants.MAX_UINT8)
+    fmt = 'Layer {:03d}'
+    layers = [PsdLayer(
+        name=fmt.format(i + 1),
+        rectangle=PsdRectangle(0, 0, *shape),
+        channels=[
+            PsdChannel(
+                channelid=PsdChannelId.TRANSPARENCY_MASK,
+                compression=PsdCompressionType.ZIP_PREDICTED,
+                data=transp,
+            ),
+            PsdChannel(
+                channelid=PsdChannelId.CHANNEL0,
+                compression=PsdCompressionType.ZIP_PREDICTED,
+                data=image[..., 0],
+            ),
+            PsdChannel(
+                channelid=PsdChannelId.CHANNEL1,
+                compression=PsdCompressionType.ZIP_PREDICTED,
+                data=image[..., 1],
+            ),
+            PsdChannel(
+                channelid=PsdChannelId.CHANNEL2,
+                compression=PsdCompressionType.ZIP_PREDICTED,
+                data=image[..., 2],
+            ),
+        ],
+        mask=PsdLayerMask(), opacity=255,
+        blendmode=PsdBlendMode.NORMAL, blending_ranges=(),
+        clipping=PsdClippingType.BASE, flags=PsdLayerFlag.PHOTOSHOP5,
+        info=[PsdString(PsdKey.UNICODE_LAYER_NAME, fmt.format(i + 1))],
+    ) for i, image in enumerate(images)]
+    image_source_data = TiffImageSourceData(
+        name='Layered TIFF',
+        psdformat=PsdFormat.LE32BIT,
+        layers=PsdLayers(
+            key=PsdKey.LAYER,
+            has_transparency=False,
+            layers=layers,
+        ),
+        usermask=PsdUserMask(
+            colorspace=PsdColorSpaceType.RGB,
+            components=(65535, 0, 0, 0),
+            opacity=50,
+        ),
+        info=[
+            PsdEmpty(PsdKey.PATTERNS),
+            PsdFilterMask(
+                colorspace=PsdColorSpaceType.RGB,
+                components=(65535, 0, 0, 0),
+                opacity=50,
+            ),
+        ],
+    )
+    tiff_tags = {
+        'photometric': 'rgb',
+        'resolution': ((720000, 10000), (720000, 10000)),
+        'resolutionunit': 'inch',
+        'extratags': [image_source_data.tifftag(maxworkers=4),
+                      (34675, 7, None, imagecodecs.cms_profile('srgb'), True)]
+    }
+    if exif_path != '':
+        if callbacks:
+            callback = callbacks,get('exif_msg', None)
+            if callback:
+                callback()
+        dirpath, _, fnames = next(os.walk(exif_path))
+        fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in constants.EXTENSIONS]
+        exif_filename = exif_path + '/' + fnames[0]
+        extra_tags, exif_tags = exif_extra_tags(get_exif(exif_filename))
+        tiff_tags['extratags'] += extra_tags
+        tiff_tags = {**tiff_tags, **exif_tags}
+    if callbacks:
+        callback = callbacks,get('exif_msg', None)
+        if callback:
+            callback(output_file.split('/')[-1])
+    tifffile.imwrite(output_file,
+        overlay(*((np.concatenate((image, np.expand_dims(transp, axis=-1)), axis=-1), (0, 0)) for image in images),
+                shape=shape),
+        compression='adobe_deflate',
+        metadata=None, **tiff_tags)
+
 
 class MultiLayer(FrameMultiDirectory, JobBase):
     def __init__(self, name, enabled=True, exif_path='', **kwargs):
@@ -29,12 +135,12 @@ class MultiLayer(FrameMultiDirectory, JobBase):
             self.exif_path = self.working_path + "/" + self.exif_path
 
     def run_core(self):
-        if isinstance(self.input_dir, str):
+        if isinstance(self.input_full_path, str):
             paths = [self.input_path]
-        elif hasattr(self.input_dir, "__len__"):
+        elif hasattr(self.input_full_path, "__len__"):
             paths = self.input_path
         else:
-            raise Exception("input_dir option must contain a path or an array of paths")
+            raise Exception("input_path option must contain a path or an array of paths")
         if len(paths) == 0:
             self.print_message(colored("no input paths specified", "red"), level=logging.WARNING)
             return
@@ -45,94 +151,12 @@ class MultiLayer(FrameMultiDirectory, JobBase):
                                        "red"), level=logging.WARNING)
             return
         self.print_message(colored("merging frames in " + self.folder_list_str(), "blue"))
-        in_paths = [self.working_path + "/" + f for f in files]
+        input_files = [f"{self.working_path}/{f}" for f in files]
         self.print_message(colored("frames: " + ", ".join([i.split("/")[-1] for i in files]), "blue"))
         self.print_message(colored("reading files", "blue"))
-        extension = files[0].split(".")[-1]
-        if extension == 'tif' or extension == 'tiff':
-            images = [tifffile.imread(p) for p in in_paths]
-        elif extension == 'jpg' or extension == 'jpeg':
-            images = [cv2.imread(p) for p in in_paths]
-            images = [cv2.cvtColor(i, cv2.COLOR_BGR2RGB) for i in images]
-        elif extension == 'png':
-            images = [cv2.imread(p, cv2.IMREAD_UNCHANGED) for p in in_paths]
-            images = [cv2.cvtColor(i, cv2.COLOR_BGR2RGB) for i in images]
-        shape = images[0].shape[:2]
-        dtype = images[0].dtype
-        transp = np.full_like(images[0][..., 0], 65535 if dtype == np.uint16 else 255)
-        fmt = 'Layer {:03d}'
-        layers = [PsdLayer(
-            name=fmt.format(i + 1),
-            rectangle=PsdRectangle(0, 0, *shape),
-            channels=[
-                PsdChannel(
-                    channelid=PsdChannelId.TRANSPARENCY_MASK,
-                    compression=PsdCompressionType.ZIP_PREDICTED,
-                    data=transp,
-                ),
-                PsdChannel(
-                    channelid=PsdChannelId.CHANNEL0,
-                    compression=PsdCompressionType.ZIP_PREDICTED,
-                    data=image[..., 0],
-                ),
-                PsdChannel(
-                    channelid=PsdChannelId.CHANNEL1,
-                    compression=PsdCompressionType.ZIP_PREDICTED,
-                    data=image[..., 1],
-                ),
-                PsdChannel(
-                    channelid=PsdChannelId.CHANNEL2,
-                    compression=PsdCompressionType.ZIP_PREDICTED,
-                    data=image[..., 2],
-                ),
-            ],
-            mask=PsdLayerMask(), opacity=255,
-            blendmode=PsdBlendMode.NORMAL, blending_ranges=(),
-            clipping=PsdClippingType.BASE, flags=PsdLayerFlag.PHOTOSHOP5,
-            info=[PsdString(PsdKey.UNICODE_LAYER_NAME, fmt.format(i + 1))],
-        ) for i, image in enumerate(images)]
-        image_source_data = TiffImageSourceData(
-            name='Layered TIFF',
-            psdformat=PsdFormat.LE32BIT,
-            layers=PsdLayers(
-                key=PsdKey.LAYER,
-                has_transparency=False,
-                layers=layers,
-            ),
-            usermask=PsdUserMask(
-                colorspace=PsdColorSpaceType.RGB,
-                components=(65535, 0, 0, 0),
-                opacity=50,
-            ),
-            info=[
-                PsdEmpty(PsdKey.PATTERNS),
-                PsdFilterMask(
-                    colorspace=PsdColorSpaceType.RGB,
-                    components=(65535, 0, 0, 0),
-                    opacity=50,
-                ),
-            ],
-        )
-        tiff_tags = {
-            'photometric': 'rgb',
-            'resolution': ((720000, 10000), (720000, 10000)),
-            'resolutionunit': 'inch',
-            'extratags': [image_source_data.tifftag(maxworkers=4),
-                          (34675, 7, None, imagecodecs.cms_profile('srgb'), True)]
-        }
-        if self.exif_path != '':
-            self.print_message(colored('copying exif data', 'blue'))
-            dirpath, _, fnames = next(os.walk(self.exif_path))
-            fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in constants.EXTENSIONS]
-            exif_filename = self.exif_path + '/' + fnames[0]
-            extra_tags, exif_tags = exif_extra_tags(get_exif(exif_filename))
-            tiff_tags['extratags'] += extra_tags
-            tiff_tags = {**tiff_tags, **exif_tags}
         filename = ".".join(files[-1].split("/")[-1].split(".")[:-1])
-        self.print_message(colored("writing multilayer tiff " + self.output_path + '/' + filename + '.tif', "blue"))
-        tifffile.imwrite(
-            self.working_path + '/' + self.output_path + '/' + filename + '.tif',
-            overlay(*((np.concatenate((image, np.expand_dims(transp, axis=-1)), axis=-1), (0, 0)) for image in images),
-                    shape=shape),
-            compression='adobe_deflate',
-            metadata=None, **tiff_tags)
+        output_file = f"{self.working_path}/{self.output_path}/{filename}.tif"
+        callbacks = {'exif_msg': lambda: self.print_message(colored('copying exif data', 'blue')),
+                     'write_msg': lambda path: self.print_message(colored(f"writing multilayer tiff file: {path}", "blue"))}
+        write_multilayer_tiff(input_files, output_file, self.exif_path)
+                        
