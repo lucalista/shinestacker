@@ -5,7 +5,7 @@ import tifffile
 from psdtags import PsdChannelId
 from PySide6 import QtWidgets, QtCore, QtGui
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
-from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QCursor, QShortcut, QKeySequence, QAction
+from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QCursor, QShortcut, QKeySequence, QAction, QIcon
 from PySide6.QtCore import Qt, QRectF
 from algorithms.multilayer import read_multilayer_tiff, write_multilayer_tiff_from_images
 
@@ -15,6 +15,7 @@ THUMB_HEIGHT = 80
 IMG_WIDTH = 100
 IMG_HEIGHT = 80
 DEFAULT_BRUSH_SIZE = 20
+DEFAULT_BRUSH_HARDNESS = 50
 PAINT_REFRESH_TIMER = 200  # milliseconds
 
 
@@ -161,11 +162,15 @@ class ImageViewer(QGraphicsView):
             rect = self.brush_cursor.rect()
             center_x = rect.x() + rect.width() / 2
             center_y = rect.y() + rect.height() / 2
+            gradient = QtGui.QRadialGradient(center_x, center_y, size / 2)
+            hardness = self.image_editor.brush_hardness / 100.0
+            gradient.setColorAt(0, QColor(255, 0, 0, 200))
+            gradient.setColorAt(hardness, QColor(255, 0, 0, 200))
+            gradient.setColorAt(1, QColor(255, 0, 0, 0))
+
             self.brush_cursor.setRect(center_x - size / 2, center_y - size / 2, size, size)
-            if self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual:
-                self.brush_cursor.setBrush(QBrush(QColor(255, 0, 0, 100)))
-            else:
-                self.brush_cursor.setBrush(QBrush(QColor(255, 0, 0, 50)))
+            self.brush_cursor.setBrush(QBrush(gradient))
+            self.brush_cursor.setPen(QPen(QColor(255, 0, 0, 150), 1))
 
     def enterEvent(self, event):
         self.setCursor(Qt.BlankCursor)
@@ -230,6 +235,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         self.master_layer = None
         self.current_layer = 0
         self.brush_size = DEFAULT_BRUSH_SIZE
+        self.brush_hardness = DEFAULT_BRUSH_HARDNESS
         self.view_mode = 'master'
         self.temp_view_individual = False
         self.current_file_path = None
@@ -285,20 +291,34 @@ class ImageEditor(QtWidgets.QMainWindow):
         side_layout = QtWidgets.QVBoxLayout(side_panel)
         side_layout.setContentsMargins(0, 0, 0, 0)
         side_layout.setSpacing(2)
+
         brush_panel = QtWidgets.QFrame()
         brush_panel.setFrameShape(QtWidgets.QFrame.StyledPanel)
         brush_layout = QtWidgets.QVBoxLayout(brush_panel)
-        brush_layout.setContentsMargins(2, 2, 2, 2)
+        brush_layout.setContentsMargins(0, 0, 0, 0)
+        brush_layout.setSpacing(2)
+
         brush_label = QtWidgets.QLabel("Brush Size")
         brush_label.setAlignment(QtCore.Qt.AlignCenter)
         brush_layout.addWidget(brush_label)
+
         self.brush_size_slider = QtWidgets.QSlider(Qt.Horizontal)
         self.brush_size_slider.setRange(5, 250)
         self.brush_size_slider.setValue(self.brush_size)
         self.brush_size_slider.valueChanged.connect(self.update_brush_size)
         brush_layout.addWidget(self.brush_size_slider)
-        brush_layout.setContentsMargins(0, 0, 0, 0)
-        brush_layout.setSpacing(2)
+
+        hardness_label = QtWidgets.QLabel("Brush Hardness")
+        hardness_label.setAlignment(QtCore.Qt.AlignCenter)
+        brush_layout.addWidget(hardness_label)
+
+        self.hardness_slider = QtWidgets.QSlider(Qt.Horizontal)
+        self.hardness_slider.setRange(0, 100)
+        self.hardness_slider.setValue(self.brush_hardness)
+        self.hardness_slider.valueChanged.connect(self.update_brush_hardness)
+        brush_layout.addWidget(self.hardness_slider)
+
+        side_layout.addWidget(brush_panel)
         self.brush_preview = QtWidgets.QLabel()
         self.brush_preview.setAlignment(QtCore.Qt.AlignCenter)
         self.brush_preview.setFixedHeight(100)
@@ -671,22 +691,30 @@ class ImageEditor(QtWidgets.QMainWindow):
         self.update_brush_preview()
         self.image_viewer.update_brush_cursor(size)
 
+    def update_brush_hardness(self, hardness):
+        self.brush_hardness = hardness
+        self.update_brush_preview()
+        self.image_viewer.update_brush_cursor(self.brush_size)
+
     def update_brush_preview(self):
         pixmap = QPixmap(100, 80)
         pixmap.fill(Qt.transparent)
         painter = QPainter(pixmap)
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.setPen(QPen(Qt.red, 2))
-        painter.setBrush(QtGui.QBrush(QColor(255, 180, 180)))
-        center = QtCore.QPoint(50, 50)
-        painter.drawEllipse(center, self.brush_size // 2, self.brush_size // 2)
+        gradient = QtGui.QRadialGradient(50, 50, self.brush_size // 2)
+        hardness = self.brush_hardness / 100.0
+        gradient.setColorAt(0, QColor(255, 0, 0, 200))
+        gradient.setColorAt(hardness, QColor(255, 0, 0, 200))
+        gradient.setColorAt(1, QColor(255, 0, 0, 0))
+        painter.setPen(QPen(QColor(255, 0, 0), 1))
+        painter.setBrush(QBrush(gradient))
+        painter.drawEllipse(QtCore.QPoint(50, 50), self.brush_size // 2, self.brush_size // 2)
         painter.end()
         self.brush_preview.setPixmap(pixmap)
 
     def copy_layer_to_master(self):
         if self.current_stack is None or self.master_layer is None:
             return
-
         reply = QtWidgets.QMessageBox.question(
             self,
             "Confirm Copy",
@@ -694,7 +722,6 @@ class ImageEditor(QtWidgets.QMainWindow):
             QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
             QtWidgets.QMessageBox.No
         )
-
         if reply == QtWidgets.QMessageBox.Yes:
             self.master_layer = self.current_stack[self.current_layer].copy()
             self.display_current_view()
@@ -715,14 +742,23 @@ class ImageEditor(QtWidgets.QMainWindow):
         x_end = min(w, x_center + radius + 1)
         y_end = min(h, y_center + radius + 1)
         y, x = np.ogrid[-radius:radius + 1, -radius:radius + 1]
-        mask = x * x + y * y <= radius * radius
+        distance = np.sqrt(x * x + y * y)
+        hardness_radius = radius * (self.brush_hardness / 100.0)
+        if hardness_radius > 0:
+            mask = np.clip(1 - (distance - hardness_radius) / (radius - hardness_radius), 0, 1)
+        else:
+            mask = (distance <= radius).astype(float)
         for dy in range(y_start - y_center, y_end - y_center):
             for dx in range(x_start - x_center, x_end - x_center):
-                if mask[dy + radius, dx + radius]:
+                if mask[dy + radius, dx + radius] > 0:
                     x_pos = x_center + dx
                     y_pos = y_center + dy
                     if 0 <= x_pos < w and 0 <= y_pos < h:
-                        self.master_layer[y_pos, x_pos] = self.current_stack[self.current_layer][y_pos, x_pos]
+                        alpha = mask[dy + radius, dx + radius]
+                        self.master_layer[y_pos, x_pos] = (
+                            self.master_layer[y_pos, x_pos] * (1 - alpha) + self.current_stack[self.current_layer][y_pos, x_pos] * alpha
+                        ).astype(self.master_layer.dtype)
+
         if not continuous:
             self.display_current_view()
             self.mark_as_modified()
@@ -734,6 +770,7 @@ class ImageEditor(QtWidgets.QMainWindow):
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
+    app.setWindowIcon(QIcon('ico/focus_stack.png'))
     editor = ImageEditor()
     editor.show()
     sys.exit(app.exec())
