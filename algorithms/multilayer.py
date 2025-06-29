@@ -172,7 +172,7 @@ class MultiLayer(FrameMultiDirectory, JobBase):
         input_files = [f"{self.working_path}/{f}" for f in files]
         self.print_message(colored("frames: " + ", ".join([i.split("/")[-1] for i in files]), "blue"))
         self.print_message(colored("reading files", "blue"))
-        filename = ".".join(files[-1].split("/")[-1].split(".")[:-1])
+        filename = ".".join(files[0].split("/")[-1].split(".")[:-1])
         output_file = f"{self.working_path}/{self.output_path}/{filename}.tif"
         callbacks = {'exif_msg': lambda: self.print_message(colored('copying exif data', 'blue')),
                      'write_msg': lambda path: self.print_message(colored(f"writing multilayer tiff file: {path}", "blue"))}
