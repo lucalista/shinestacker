@@ -432,7 +432,16 @@ class ImageEditor(QtWidgets.QMainWindow):
             self.current_file_path = path
             self.current_stack, self.current_labels = self.load_tiff_stack(path)
             if self.current_stack is not None and len(self.current_stack) > 0:
-                self.master_layer = self.current_stack[0].copy()
+                master_indices = [i for i, label in enumerate(self.current_labels) if label.lower() == "master"]
+                master_index = -1 if len(master_indices) == 0 else master_indices[0]
+                if master_index == -1:
+                    self.master_layer = self.current_stack[0].copy()
+                else:
+                    self.current_labels.pop(master_index)
+                    self.master_layer = self.current_stack[master_index].copy()
+                    indices = list(range(len(self.current_stack)))
+                    indices.remove(master_index)
+                    self.current_stack = self.current_stack[indices]
                 if self.current_labels is None:
                     self.current_labels = [f"Layer {i + 1}" for i in range(len(self.current_stack))]
             self.update_thumbnails()
