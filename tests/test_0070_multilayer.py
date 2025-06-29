@@ -8,6 +8,7 @@ test_path = "output/img-tif-multi"
 test_file = "/multi-out.tif"
 N_LAYERS = 6
 
+
 def test_write():
     try:
         output_dir = test_path
@@ -28,8 +29,8 @@ def test_read():
         assert len(isd.layers.layers) == N_LAYERS
     except Exception:
         assert False
-    
-        
+
+
 def test_jpg():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg")

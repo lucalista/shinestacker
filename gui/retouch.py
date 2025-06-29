@@ -13,6 +13,7 @@ from algorithms.multilayer import read_multilayer_tiff, write_multilayer_tiff_fr
 class ImageViewer(QGraphicsView):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.image_editor = None
         self.scene = QGraphicsScene(self)
         self.setScene(self.scene)
         self.pixmap_item = QGraphicsPixmapItem()
@@ -24,6 +25,12 @@ class ImageViewer(QGraphicsView):
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
         self.setDragMode(QGraphicsView.ScrollHandDrag)
+        self.brush_cursor = None
+        self.setMouseTracking(True)
+        self.space_pressed = False
+        self.setDragMode(QGraphicsView.NoDrag)
+        self.setCursor(Qt.BlankCursor)
+        self.scrolling = False
 
     def set_image(self, qimage):
         pixmap = QPixmap.fromImage(qimage)
@@ -32,6 +39,74 @@ class ImageViewer(QGraphicsView):
         if self.zoom_factor == 1.0:
             self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
             self.zoom_factor = self.get_current_scale()
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Space and not self.scrolling:
+            self.space_pressed = True
+            self.setCursor(Qt.OpenHandCursor)
+            if self.brush_cursor:
+                self.brush_cursor.hide()
+        super().keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        if event.key() == Qt.Key_Space:
+            self.space_pressed = False
+            if not self.scrolling:
+                self.setCursor(Qt.BlankCursor)
+                if self.brush_cursor:
+                    self.brush_cursor.show()
+        super().keyReleaseEvent(event)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            if self.space_pressed:
+                self.scrolling = True
+                self.last_mouse_pos = event.position()
+                self.setCursor(Qt.ClosedHandCursor)
+                if self.brush_cursor:
+                    self.brush_cursor.hide()
+            else:
+                # drawing will be implemented here
+                if self.brush_cursor:
+                    self.brush_cursor.show()
+        super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.LeftButton and self.scrolling:
+            self.scrolling = False
+            if self.space_pressed:
+                self.setCursor(Qt.OpenHandCursor)
+            else:
+                self.setCursor(Qt.BlankCursor)
+                if self.brush_cursor:
+                    self.brush_cursor.show()
+            self.last_mouse_pos = None
+        super().mouseReleaseEvent(event)
+
+    def mouseMoveEvent(self, event):
+        scene_pos = self.mapToScene(event.position().toPoint())
+        brush_size = self.image_editor.brush_size
+        if self.brush_cursor:
+            self.brush_cursor.setRect(
+                scene_pos.x() - brush_size / 2,
+                scene_pos.y() - brush_size / 2,
+                brush_size, brush_size
+            )
+        else:
+            self.brush_cursor = self.scene.addEllipse(
+                scene_pos.x() - brush_size / 2,
+                scene_pos.y() - brush_size / 2,
+                brush_size, brush_size,
+                QtGui.QPen(QtGui.QColor(255, 0, 0), 2),
+                QtGui.QBrush(QtGui.QColor(255, 0, 0, 150))
+            )
+        if self.scrolling and event.buttons() & Qt.LeftButton:
+            delta = event.position() - self.last_mouse_pos
+            self.last_mouse_pos = event.position()
+            self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - delta.x())
+            self.verticalScrollBar().setValue(self.verticalScrollBar().value() - delta.y())
+        else:
+            super().mouseMoveEvent(event)
 
     def wheelEvent(self, event):
         zoom_in_factor = 1.25
@@ -42,24 +117,36 @@ class ImageViewer(QGraphicsView):
         else:
             self.scale(zoom_out_factor, zoom_out_factor)
             self.zoom_factor *= zoom_out_factor
+        if self.brush_cursor:
+            mouse_pos = self.mapFromGlobal(QtGui.QCursor.pos())
+            scene_pos = self.mapToScene(mouse_pos)
+            brush_size = self.image_editor.brush_size
+            self.brush_cursor.setRect(
+                scene_pos.x() - brush_size / 2,
+                scene_pos.y() - brush_size / 2,
+                brush_size, brush_size
+            )
 
-    def mouseMoveEvent(self, event):
-        if self.last_mouse_pos and event.buttons() & Qt.LeftButton:
-            delta = event.position() - self.last_mouse_pos
-            self.last_mouse_pos = event.position()
-            self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - delta.x())
-            self.verticalScrollBar().setValue(self.verticalScrollBar().value() - delta.y())
-        else:
-            super().mouseMoveEvent(event)
+    def update_brush_cursor(self, size):
+        if self.brush_cursor:
+            rect = self.brush_cursor.rect()
+            center_x = rect.x() + rect.width() / 2
+            center_y = rect.y() + rect.height() / 2
+            self.brush_cursor.setRect(
+                center_x - size / 2,
+                center_y - size / 2,
+                size, size
+            )
 
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.last_mouse_pos = event.position()
-        super().mousePressEvent(event)
+    def leaveEvent(self, event):
+        if self.brush_cursor:
+            self.brush_cursor.hide()
+        super().leaveEvent(event)
 
-    def mouseReleaseEvent(self, event):
-        self.last_mouse_pos = None
-        super().mouseReleaseEvent(event)
+    def enterEvent(self, event):
+        if self.brush_cursor:
+            self.brush_cursor.show()
+        super().enterEvent(event)
 
     def setup_shortcuts(self):
         zoom_in = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+="), self)
@@ -111,6 +198,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         super().__init__()
         self.current_stack = None
         self.current_layer = 0
+        self.brush_size = 20
         self.setup_ui()
         self.setup_menu()
         self.setup_shortcuts()
@@ -136,10 +224,29 @@ class ImageEditor(QtWidgets.QMainWindow):
         self.setCentralWidget(central_widget)
         layout = QtWidgets.QHBoxLayout(central_widget)
         self.image_viewer = ImageViewer()
+        self.image_viewer.image_editor = self
         side_panel = QtWidgets.QWidget()
         side_layout = QtWidgets.QVBoxLayout(side_panel)
         side_layout.setContentsMargins(0, 0, 0, 0)
         side_layout.setSpacing(5)
+        brush_panel = QtWidgets.QFrame()
+        brush_panel.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        brush_layout = QtWidgets.QVBoxLayout(brush_panel)
+        brush_layout.setContentsMargins(5, 5, 5, 5)
+        brush_label = QtWidgets.QLabel("Brush Size")
+        brush_label.setAlignment(QtCore.Qt.AlignCenter)
+        brush_layout.addWidget(brush_label)
+        self.brush_size_slider = QtWidgets.QSlider(Qt.Horizontal)
+        self.brush_size_slider.setRange(5, 100)
+        self.brush_size_slider.setValue(self.brush_size)
+        self.brush_size_slider.valueChanged.connect(self.update_brush_size)
+        brush_layout.addWidget(self.brush_size_slider)
+        self.brush_preview = QtWidgets.QLabel()
+        self.brush_preview.setAlignment(QtCore.Qt.AlignCenter)
+        self.brush_preview.setFixedSize(100, 100)
+        self.update_brush_preview()
+        brush_layout.addWidget(self.brush_preview)
+        side_layout.addWidget(brush_panel)
         layers_label = QtWidgets.QLabel("Layers")
         layers_label.setStyleSheet("""
             QLabel {
@@ -278,6 +385,7 @@ class ImageEditor(QtWidgets.QMainWindow):
             self.image_viewer.set_view_state(view_state)
             self.thumbnail_list.setCurrentRow(layer_idx)
             self.thumbnail_list.setFocus()
+            self.image_viewer.update_brush_cursor(self.brush_size)
 
     def change_layer_item(self, item):
         layer_idx = self.thumbnail_list.row(item)
@@ -318,12 +426,28 @@ class ImageEditor(QtWidgets.QMainWindow):
                 self.highlight_thumbnail(new_idx)
 
     def highlight_thumbnail(self, index):
-        """Evidenzia il thumbnail selezionato"""
         self.thumbnail_list.setCurrentRow(index)
         self.thumbnail_list.scrollToItem(
             self.thumbnail_list.item(index),
             QtWidgets.QAbstractItemView.PositionAtCenter
         )
+
+    def update_brush_size(self, size):
+        self.brush_size = size
+        self.update_brush_preview()
+        self.image_viewer.update_brush_cursor(size)
+
+    def update_brush_preview(self):
+        pixmap = QtGui.QPixmap(100, 100)
+        pixmap.fill(Qt.transparent)
+        painter = QtGui.QPainter(pixmap)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+        painter.setPen(QtGui.QPen(Qt.red, 1))
+        painter.setBrush(QtGui.QBrush(Qt.red))
+        center = QtCore.QPoint(50, 50)
+        painter.drawEllipse(center, self.brush_size // 2, self.brush_size // 2)
+        painter.end()
+        self.brush_preview.setPixmap(pixmap)
 
 
 if __name__ == "__main__":
