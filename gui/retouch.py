@@ -34,7 +34,7 @@ UI_SIZES = {
 BRUSH_SIZES = {
     'default': 20,
     'min': 5,
-    'max': 250
+    'max': 400
 }
 
 
@@ -347,6 +347,13 @@ class ImageEditor(QtWidgets.QMainWindow):
 
         side_layout.addWidget(brush_panel)
         self.brush_preview = QtWidgets.QLabel()
+        self.brush_preview.setStyleSheet("""
+            QLabel {
+                background-color: #f0f0f0;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+            }
+        """)
         self.brush_preview.setAlignment(QtCore.Qt.AlignCenter)
         self.brush_preview.setFixedHeight(100)
         self.update_brush_preview()
