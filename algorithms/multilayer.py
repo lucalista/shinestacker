@@ -14,6 +14,9 @@ from core.framework import JobBase
 from algorithms.stack_framework import FrameMultiDirectory
 from algorithms.exif import exif_extra_tags, get_exif
 
+def read_multilayer_tiff(input_file):
+    pass
+
 def write_multilayer_tiff(input_files, output_file, exif_path='', callbacks=None):
     extensions = list(set([file.split(".")[-1] for file in input_files]))
     if len(extensions) > 1:

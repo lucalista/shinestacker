@@ -130,7 +130,7 @@ class FrameMultiDirectory:
                 if self.resample > 1:
                     filelist = filelist[0::self.resample]
                 files += filelist
-            if len(filelist) == 0:
+            if len(files) == 0:
                 self.print_message(colored(f"input folder {p} does not contain any image", "red"), level=logging.WARNING)
         return files
 

@@ -4,7 +4,7 @@ sys.path.append('../')
 from algorithms.stack_framework import StackJob
 from algorithms.multilayer import MultiLayer, write_multilayer_tiff
 
-def test_function():
+def test_write():
     try:
         output_dir = "output/img-tif-multi"
         if not os.path.exists(output_dir):
@@ -16,6 +16,14 @@ def test_function():
         assert False
 
 
+def test_read():
+    try:
+        input_dir = "output/img-tif-multi"
+        read_multilayer_tiff(input_dir + "input/img.tif")
+    except Exception:
+        assert False
+    
+        
 def test_jpg():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg")
@@ -40,6 +48,6 @@ def test_tif():
 
 
 if __name__ == '__main__':
-    test_function()
+    test_write()
     test_jpg()
     test_tif()
