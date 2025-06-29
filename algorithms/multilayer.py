@@ -35,7 +35,7 @@ def write_multilayer_tiff(input_files, output_file, exif_path='', callbacks=None
         images = [cv2.imread(p, cv2.IMREAD_UNCHANGED) for p in input_files]
         images = [cv2.cvtColor(i, cv2.COLOR_BGR2RGB) for i in images]
     image_dict = {file.split('/')[-1].split('.')[0]: image for file, image in zip(input_files, images)}
-    write_multilayer_tiff_from_images(image_dict, output_file, exif_path='', callbacks=None)
+    write_multilayer_tiff_from_images(image_dict, output_file, exif_path='', callbacks=callbacks)
 
 def write_multilayer_tiff_from_images(image_dict, output_file, exif_path='', callbacks=None):
     if isinstance(image_dict, (list, tuple, np.ndarray)):
@@ -117,7 +117,7 @@ def write_multilayer_tiff_from_images(image_dict, output_file, exif_path='', cal
     }
     if exif_path != '':
         if callbacks:
-            callback = callbacks,get('exif_msg', None)
+            callback = callbacks.get('exif_msg', None)
             if callback:
                 callback()
         dirpath, _, fnames = next(os.walk(exif_path))
@@ -127,7 +127,7 @@ def write_multilayer_tiff_from_images(image_dict, output_file, exif_path='', cal
         tiff_tags['extratags'] += extra_tags
         tiff_tags = {**tiff_tags, **exif_tags}
     if callbacks:
-        callback = callbacks,get('exif_msg', None)
+        callback = callbacks.get('write_msg', None)
         if callback:
             callback(output_file.split('/')[-1])
     compression = 'adobe_deflate'
@@ -172,5 +172,5 @@ class MultiLayer(FrameMultiDirectory, JobBase):
         output_file = f"{self.working_path}/{self.output_path}/{filename}.tif"
         callbacks = {'exif_msg': lambda: self.print_message(colored('copying exif data', 'blue')),
                      'write_msg': lambda path: self.print_message(colored(f"writing multilayer tiff file: {path}", "blue"))}
-        write_multilayer_tiff(input_files, output_file, self.exif_path)
-                        
+        write_multilayer_tiff(input_files, output_file, self.exif_path, callbacks=callbacks)
+
