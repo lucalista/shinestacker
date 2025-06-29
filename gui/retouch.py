@@ -15,6 +15,7 @@ THUMB_HEIGHT = 80
 IMG_WIDTH = 100
 IMG_HEIGHT = 80
 DEFAULT_BRUSH_SIZE = 20
+PAINT_REFRESH_TIMER = 200  # milliseconds
 
 
 class ImageViewer(QGraphicsView):
@@ -39,6 +40,9 @@ class ImageViewer(QGraphicsView):
         self.setCursor(Qt.BlankCursor)
         self.scrolling = False
         self.dragging = False
+        self.last_update_time = QtCore.QTime.currentTime()
+        self.update_interval = PAINT_REFRESH_TIMER
+        self.pending_update = False
         self.setup_brush_cursor()
 
     def set_image(self, qimage):
@@ -91,10 +95,18 @@ class ImageViewer(QGraphicsView):
     def mouseMoveEvent(self, event):
         scene_pos = self.mapToScene(event.position().toPoint())
         brush_size = self.image_editor.brush_size
+
         if self.brush_cursor:
             self.brush_cursor.setRect(scene_pos.x() - brush_size / 2, scene_pos.y() - brush_size / 2, brush_size, brush_size)
         if self.dragging and self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual and event.buttons() & Qt.LeftButton:
-            self.image_editor.copy_brush_area_to_master(event.position().toPoint(), continuous=True)
+            current_time = QtCore.QTime.currentTime()
+            if self.last_update_time.msecsTo(current_time) >= self.update_interval or not self.pending_update:
+                self.image_editor.copy_brush_area_to_master(event.position().toPoint(), continuous=True)
+                self.last_update_time = current_time
+                self.pending_update = False
+            else:
+                self.pending_update = True
+
         if self.scrolling and event.buttons() & Qt.LeftButton:
             delta = event.position() - self.last_mouse_pos
             self.last_mouse_pos = event.position()
@@ -116,8 +128,10 @@ class ImageViewer(QGraphicsView):
                 self.last_mouse_pos = None
             elif hasattr(self, 'dragging') and self.dragging:
                 self.dragging = False
-                self.image_editor.display_current_view()
-                self.image_editor.mark_as_modified()
+                if self.image_editor.update_timer.isActive():
+                    self.image_editor.update_timer.stop()
+                    self.image_editor.display_current_view()
+                    self.image_editor.mark_as_modified()
         super().mouseReleaseEvent(event)
 
     def wheelEvent(self, event):
@@ -224,6 +238,16 @@ class ImageEditor(QtWidgets.QMainWindow):
         self.setup_menu()
         self.setup_shortcuts()
         self.installEventFilter(self)
+        self.update_timer = QtCore.QTimer(self)
+        self.update_timer.setInterval(PAINT_REFRESH_TIMER)
+        self.update_timer.timeout.connect(self.process_pending_updates)
+        self.needs_update = False
+
+    def process_pending_updates(self):
+        if self.needs_update:
+            self.display_current_view()
+            self.mark_as_modified()
+            self.needs_update = False
 
     def eventFilter(self, obj, event):
         if event.type() == QtCore.QEvent.KeyPress and event.key() == Qt.Key_X:
@@ -702,6 +726,10 @@ class ImageEditor(QtWidgets.QMainWindow):
         if not continuous:
             self.display_current_view()
             self.mark_as_modified()
+        else:
+            self.needs_update = True
+            if not self.update_timer.isActive():
+                self.update_timer.start()
 
 
 if __name__ == "__main__":
