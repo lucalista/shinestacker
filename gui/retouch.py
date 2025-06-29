@@ -74,7 +74,6 @@ class ImageViewer(QGraphicsView):
             else:
                 if self.brush_cursor:
                     self.brush_cursor.show()
-        self.image_viewer.setFocus()
         super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event):
@@ -309,14 +308,40 @@ class ImageEditor(QtWidgets.QMainWindow):
         side_layout.addWidget(layers_label)
         self.thumbnail_list = QtWidgets.QListWidget()
         self.thumbnail_list.setFocusPolicy(Qt.StrongFocus)
-        self.thumbnail_list.setViewMode(QtWidgets.QListWidget.IconMode)
-        self.thumbnail_list.setIconSize(QtCore.QSize(100, 100))
+        self.thumbnail_list.setViewMode(QtWidgets.QListWidget.ListMode)
+        self.thumbnail_list.setUniformItemSizes(True)
         self.thumbnail_list.setResizeMode(QtWidgets.QListWidget.Adjust)
         self.thumbnail_list.setFlow(QtWidgets.QListWidget.TopToBottom)
         self.thumbnail_list.setMovement(QtWidgets.QListWidget.Static)
         self.thumbnail_list.setFixedWidth(120)
         self.thumbnail_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.thumbnail_list.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.thumbnail_list.itemClicked.connect(self.change_layer_item)
+        self.thumbnail_list.setStyleSheet("""
+            QListWidget {
+                background-color: #f5f5f5;
+                border: 1px solid #ddd;
+            }
+            QListWidget::item {
+                height: 130px;
+                width: 110px;
+            }
+            QListWidget::item:selected {
+                background-color: #e0e0e0;
+                border: 1px solid #aaa;
+            }
+            QScrollBar:vertical {
+                border: none;
+                background: #f5f5f5;
+                width: 12px;
+                margin: 0px 0px 0px 0px;
+            }
+            QScrollBar::handle:vertical {
+                background: #ccc;
+                min-height: 20px;
+                border-radius: 6px;
+            }
+        """)
         side_layout.addWidget(self.thumbnail_list, 1)
         control_panel = QtWidgets.QWidget()
 #        control_layout = QtWidgets.QVBoxLayout(control_panel)
@@ -363,7 +388,9 @@ class ImageEditor(QtWidgets.QMainWindow):
         try:
             print(f"Loading file: {path}")
             psd_data = read_multilayer_tiff(path)
+            print(psd_data.layers.layers)
             layers = []
+            labels = []
             for layer in psd_data.layers.layers:
                 channels = {}
                 for channel in layer.channels:
@@ -375,9 +402,10 @@ class ImageEditor(QtWidgets.QMainWindow):
                         channels[PsdChannelId.CHANNEL2]
                     ], axis=-1)
                     layers.append(img)
+                    labels.append(layer.name)
             if layers:
                 print(f"Found {len(layers)} layers")
-                return np.array(layers), None
+                return np.array(layers), labels
         except Exception as e:
             print(f"Error loading PSD data: {str(e)}")
             try:
@@ -393,9 +421,11 @@ class ImageEditor(QtWidgets.QMainWindow):
         path, _ = QtWidgets.QFileDialog.getOpenFileName(
             self, "Open Image", "", "Images (*.tif *.tiff *.png *.jpg)")
         if path:
-            self.current_stack, _ = self.load_tiff_stack(path)
+            self.current_stack, self.current_labels = self.load_tiff_stack(path)
             if self.current_stack is not None and len(self.current_stack) > 0:
                 self.master_layer = self.current_stack[0].copy()
+                if self.current_labels is None:
+                    self.current_labels = [f"Layer {i + 1}" for i in range(len(self.current_stack))]
             self.update_thumbnails()
             self.change_layer(0)
             self.image_viewer.reset_zoom()
@@ -451,18 +481,40 @@ class ImageEditor(QtWidgets.QMainWindow):
             else:
                 master_thumbnail = self.create_grayscale_thumbnail(self.master_layer)
         self.master_thumbnail_label.setPixmap(master_thumbnail)
+
         self.thumbnail_list.clear()
         if self.current_stack is None:
             return
+
         for i in range(len(self.current_stack)):
             layer = self.current_stack[i]
             if layer.ndim == 3 and layer.shape[-1] == 3:
                 thumbnail = self.create_rgb_thumbnail(layer)
             else:
                 thumbnail = self.create_grayscale_thumbnail(layer)
-            item = QtWidgets.QListWidgetItem(f"Layer {i + 1}")
-            item.setIcon(QtGui.QIcon(thumbnail))
+
+            # Crea un widget personalizzato per ogni elemento
+            item_widget = QtWidgets.QWidget()
+            layout = QtWidgets.QVBoxLayout(item_widget)
+            layout.setContentsMargins(0, 0, 0, 0)
+            layout.setSpacing(0)
+
+            # Aggiungi la miniatura
+            thumbnail_label = QtWidgets.QLabel()
+            thumbnail_label.setPixmap(thumbnail)
+            thumbnail_label.setAlignment(Qt.AlignCenter)
+            layout.addWidget(thumbnail_label)
+
+            # Aggiungi l'etichetta del layer
+            label = QtWidgets.QLabel(self.current_labels[i])
+            label.setAlignment(Qt.AlignCenter)
+            layout.addWidget(label)
+
+            # Crea l'item della lista e imposta il widget
+            item = QtWidgets.QListWidgetItem()
+            item.setSizeHint(QtCore.QSize(100, 100))  # Larghezza e altezza fisse
             self.thumbnail_list.addItem(item)
+            self.thumbnail_list.setItemWidget(item, item_widget)
 
     def create_rgb_thumbnail(self, layer):
         if layer.dtype == np.uint16:
