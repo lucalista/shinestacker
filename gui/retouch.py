@@ -5,7 +5,7 @@ import tifffile
 from psdtags import PsdChannelId
 from PySide6 import QtWidgets, QtCore, QtGui
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
-from PySide6.QtGui import QImage, QPixmap, QPainter
+from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QCursor, QShortcut, QKeySequence, QAction
 from PySide6.QtCore import Qt, QRectF
 from algorithms.multilayer import read_multilayer_tiff, write_multilayer_tiff_from_images
 
@@ -106,8 +106,8 @@ class ImageViewer(QGraphicsView):
                 scene_pos.x() - brush_size / 2,
                 scene_pos.y() - brush_size / 2,
                 brush_size, brush_size,
-                QtGui.QPen(QtGui.QColor(255, 0, 0), 2),
-                QtGui.QBrush(QtGui.QColor(255, 0, 0, 150))
+                QPen(QColor(255, 0, 0), 2),
+                QBrush(QColor(255, 0, 0, 100))
             )
         if self.scrolling and event.buttons() & Qt.LeftButton:
             delta = event.position() - self.last_mouse_pos
@@ -127,7 +127,7 @@ class ImageViewer(QGraphicsView):
             self.scale(zoom_out_factor, zoom_out_factor)
             self.zoom_factor *= zoom_out_factor
         if self.brush_cursor:
-            mouse_pos = self.mapFromGlobal(QtGui.QCursor.pos())
+            mouse_pos = self.mapFromGlobal(QCursor.pos())
             scene_pos = self.mapToScene(mouse_pos)
             brush_size = self.image_editor.brush_size
             self.brush_cursor.setRect(
@@ -158,13 +158,13 @@ class ImageViewer(QGraphicsView):
         super().enterEvent(event)
 
     def setup_shortcuts(self):
-        zoom_in = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+="), self)
+        zoom_in = QShortcut(QKeySequence("Ctrl+="), self)
         zoom_in.activated.connect(self.zoom_in)
-        zoom_in_alt = QtGui.QShortcut(QtGui.QKeySequence("Ctrl++"), self)
+        zoom_in_alt = QShortcut(QKeySequence("Ctrl++"), self)
         zoom_in_alt.activated.connect(self.zoom_in)
-        zoom_out = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+-"), self)
+        zoom_out = QShortcut(QKeySequence("Ctrl+-"), self)
         zoom_out.activated.connect(self.zoom_out)
-        reset_zoom = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+0"), self)
+        reset_zoom = QShortcut(QKeySequence("Ctrl+0"), self)
         reset_zoom.activated.connect(self.reset_zoom)
 
     def zoom_in(self):
@@ -228,17 +228,17 @@ class ImageEditor(QtWidgets.QMainWindow):
         return super().eventFilter(obj, event)
 
     def setup_shortcuts(self):
-        zoom_in = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+="), self)
+        zoom_in = QShortcut(QKeySequence("Ctrl+="), self)
         zoom_in.activated.connect(self.image_viewer.zoom_in)
-        zoom_in_alt = QtGui.QShortcut(QtGui.QKeySequence("Ctrl++"), self)
+        zoom_in_alt = QShortcut(QKeySequence("Ctrl++"), self)
         zoom_in_alt.activated.connect(self.image_viewer.zoom_in)
-        zoom_out = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+-"), self)
+        zoom_out = QShortcut(QKeySequence("Ctrl+-"), self)
         zoom_out.activated.connect(self.image_viewer.zoom_out)
-        reset_zoom = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+0"), self)
+        reset_zoom = QShortcut(QKeySequence("Ctrl+0"), self)
         reset_zoom.activated.connect(self.image_viewer.reset_zoom)
-        prev_layer = QtGui.QShortcut(QtGui.QKeySequence(Qt.Key_Up), self, context=Qt.ApplicationShortcut)
+        prev_layer = QShortcut(QKeySequence(Qt.Key_Up), self, context=Qt.ApplicationShortcut)
         prev_layer.activated.connect(self.prev_layer)
-        next_layer = QtGui.QShortcut(QtGui.QKeySequence(Qt.Key_Down), self, context=Qt.ApplicationShortcut)
+        next_layer = QShortcut(QKeySequence(Qt.Key_Down), self, context=Qt.ApplicationShortcut)
         next_layer.activated.connect(self.next_layer)
 
     def setup_ui(self):
@@ -262,10 +262,12 @@ class ImageEditor(QtWidgets.QMainWindow):
         brush_label.setAlignment(QtCore.Qt.AlignCenter)
         brush_layout.addWidget(brush_label)
         self.brush_size_slider = QtWidgets.QSlider(Qt.Horizontal)
-        self.brush_size_slider.setRange(5, 100)
+        self.brush_size_slider.setRange(5, 250)
         self.brush_size_slider.setValue(self.brush_size)
         self.brush_size_slider.valueChanged.connect(self.update_brush_size)
         brush_layout.addWidget(self.brush_size_slider)
+        brush_layout.setContentsMargins(0, 0, 0, 0)
+        brush_layout.setSpacing(2)
         self.brush_preview = QtWidgets.QLabel()
         self.brush_preview.setAlignment(QtCore.Qt.AlignCenter)
         self.brush_preview.setFixedHeight(100)
@@ -363,28 +365,28 @@ class ImageEditor(QtWidgets.QMainWindow):
         file_menu.addAction("Save", self.save_file, "Ctrl+S")
         file_menu.addAction("Save As...", self.save_file_as)
         view_menu = menubar.addMenu("View")
-        zoom_in_action = QtGui.QAction("Zoom In", self)
+        zoom_in_action = QAction("Zoom In", self)
         zoom_in_action.setShortcut("Ctrl++")
         zoom_in_action.triggered.connect(self.image_viewer.zoom_in)
         view_menu.addAction(zoom_in_action)
-        zoom_out_action = QtGui.QAction("Zoom Out", self)
+        zoom_out_action = QAction("Zoom Out", self)
         zoom_out_action.setShortcut("Ctrl+-")
         zoom_out_action.triggered.connect(self.image_viewer.zoom_out)
         view_menu.addAction(zoom_out_action)
-        adapt_action = QtGui.QAction("Adapt to Screen", self)
+        adapt_action = QAction("Adapt to Screen", self)
         adapt_action.setShortcut("Ctrl+0")
         adapt_action.triggered.connect(self.image_viewer.reset_zoom)
         view_menu.addAction(adapt_action)
         view_menu.addSeparator()
-        actual_size_action = QtGui.QAction("Actual Size", self)
+        actual_size_action = QAction("Actual Size", self)
         actual_size_action.triggered.connect(self.image_viewer.actual_size)
         view_menu.addAction(actual_size_action)
         view_menu.addSeparator()
-        view_master_action = QtGui.QAction("View Master", self)
+        view_master_action = QAction("View Master", self)
         view_master_action.setShortcut("M")
         view_master_action.triggered.connect(self.set_view_master)
         view_menu.addAction(view_master_action)
-        view_individual_action = QtGui.QAction("View Individual", self)
+        view_individual_action = QAction("View Individual", self)
         view_individual_action.setShortcut("L")
         view_individual_action.triggered.connect(self.set_view_individual)
         view_menu.addAction(view_individual_action)
@@ -557,16 +559,16 @@ class ImageEditor(QtWidgets.QMainWindow):
         if layer.dtype == np.uint16:
             layer = (layer // 256).astype(np.uint8)
         height, width, _ = layer.shape
-        qimg = QtGui.QImage(layer.data, width, height, 3 * width, QtGui.QImage.Format_RGB888)
-        return QtGui.QPixmap.fromImage(qimg.scaled(100, 100, QtCore.Qt.KeepAspectRatio))
+        qimg = QImage(layer.data, width, height, 3 * width, QtGui.QImage.Format_RGB888)
+        return QPixmap.fromImage(qimg.scaled(100, 100, QtCore.Qt.KeepAspectRatio))
 
     def create_grayscale_thumbnail(self, layer):
         if layer.dtype == np.uint16:
             p2, p98 = np.percentile(layer, (2, 98))
             layer = np.clip((layer - p2) * 255.0 / (p98 - p2), 0, 255).astype(np.uint8)
         height, width = layer.shape
-        qimg = QtGui.QImage(layer.data, width, height, width, QtGui.QImage.Format_Grayscale8)
-        return QtGui.QPixmap.fromImage(qimg.scaled(100, 100, QtCore.Qt.KeepAspectRatio))
+        qimg = QImage(layer.data, width, height, width, QtGui.QImage.Format_Grayscale8)
+        return QPixmap.fromImage(qimg.scaled(100, 100, QtCore.Qt.KeepAspectRatio))
 
     def change_layer(self, layer_idx):
         if 0 <= layer_idx < len(self.current_stack):
@@ -630,12 +632,12 @@ class ImageEditor(QtWidgets.QMainWindow):
         self.image_viewer.update_brush_cursor(size)
 
     def update_brush_preview(self):
-        pixmap = QtGui.QPixmap(100, 100)
+        pixmap = QPixmap(100, 100)
         pixmap.fill(Qt.transparent)
-        painter = QtGui.QPainter(pixmap)
-        painter.setRenderHint(QtGui.QPainter.Antialiasing)
-        painter.setPen(QtGui.QPen(Qt.red, 1))
-        painter.setBrush(QtGui.QBrush(Qt.red))
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setPen(QPen(Qt.red, 2))
+        painter.setBrush(QtGui.QBrush(QColor(255, 180, 180)))
         center = QtCore.QPoint(50, 50)
         painter.drawEllipse(center, self.brush_size // 2, self.brush_size // 2)
         painter.end()
