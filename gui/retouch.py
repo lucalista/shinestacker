@@ -12,6 +12,8 @@ from algorithms.multilayer import read_multilayer_tiff, write_multilayer_tiff_fr
 LABEL_HEIGHT = 20
 THUMB_WIDTH = 120
 THUMB_HEIGHT = 80
+IMG_WIDTH = 100
+IMG_HEIGHT = 80
 
 
 class ImageViewer(QGraphicsView):
@@ -76,6 +78,8 @@ class ImageViewer(QGraphicsView):
                 if self.brush_cursor:
                     self.brush_cursor.hide()
             else:
+                if self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual:
+                    self.image_editor.copy_brush_area_to_master(event.position().toPoint())
                 if self.brush_cursor:
                     self.brush_cursor.show()
         super().mousePressEvent(event)
@@ -96,19 +100,13 @@ class ImageViewer(QGraphicsView):
         scene_pos = self.mapToScene(event.position().toPoint())
         brush_size = self.image_editor.brush_size
         if self.brush_cursor:
-            self.brush_cursor.setRect(
-                scene_pos.x() - brush_size / 2,
-                scene_pos.y() - brush_size / 2,
-                brush_size, brush_size
-            )
+            self.brush_cursor.setRect(scene_pos.x() - brush_size / 2, scene_pos.y() - brush_size / 2, brush_size, brush_size)
         else:
-            self.brush_cursor = self.scene.addEllipse(
-                scene_pos.x() - brush_size / 2,
-                scene_pos.y() - brush_size / 2,
-                brush_size, brush_size,
-                QPen(QColor(255, 0, 0), 2),
-                QBrush(QColor(255, 0, 0, 100))
-            )
+            self.brush_cursor = self.scene.addEllipse(scene_pos.x() - brush_size / 2, scene_pos.y() - brush_size / 2,
+                                                      brush_size, brush_size,
+                                                      QPen(QColor(255, 0, 0), 2), QBrush(QColor(255, 0, 0, 100)))
+        if self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual and event.buttons() & Qt.LeftButton:
+            self.brush_cursor.setBrush(QBrush(QColor(0, 255, 0, 100)))
         if self.scrolling and event.buttons() & Qt.LeftButton:
             delta = event.position() - self.last_mouse_pos
             self.last_mouse_pos = event.position()
@@ -118,7 +116,7 @@ class ImageViewer(QGraphicsView):
             super().mouseMoveEvent(event)
 
     def wheelEvent(self, event):
-        zoom_in_factor = 1.25
+        zoom_in_factor = 1.10
         zoom_out_factor = 1 / zoom_in_factor
         if event.angleDelta().y() > 0:
             self.scale(zoom_in_factor, zoom_in_factor)
@@ -130,22 +128,18 @@ class ImageViewer(QGraphicsView):
             mouse_pos = self.mapFromGlobal(QCursor.pos())
             scene_pos = self.mapToScene(mouse_pos)
             brush_size = self.image_editor.brush_size
-            self.brush_cursor.setRect(
-                scene_pos.x() - brush_size / 2,
-                scene_pos.y() - brush_size / 2,
-                brush_size, brush_size
-            )
+            self.brush_cursor.setRect(scene_pos.x() - brush_size / 2, scene_pos.y() - brush_size / 2, brush_size, brush_size)
 
     def update_brush_cursor(self, size):
         if self.brush_cursor:
             rect = self.brush_cursor.rect()
             center_x = rect.x() + rect.width() / 2
             center_y = rect.y() + rect.height() / 2
-            self.brush_cursor.setRect(
-                center_x - size / 2,
-                center_y - size / 2,
-                size, size
-            )
+            self.brush_cursor.setRect(center_x - size / 2, center_y - size / 2, size, size)
+            if self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual:
+                self.brush_cursor.setBrush(QBrush(QColor(255, 0, 0, 100)))
+            else:
+                self.brush_cursor.setBrush(QBrush(QColor(255, 0, 0, 50)))
 
     def leaveEvent(self, event):
         if self.brush_cursor:
@@ -449,7 +443,10 @@ class ImageEditor(QtWidgets.QMainWindow):
 
     def mark_as_modified(self):
         self.modified = True
-        self.setWindowTitle("Focus Stack Editor*")
+        title = "Focus Stack Editor"
+        if self.current_file_path:
+            title += f" - {self.current_file_path}"
+        self.setWindowTitle(title + "*")
 
     def save_file(self):
         if self.current_stack is None:
@@ -538,27 +535,19 @@ class ImageEditor(QtWidgets.QMainWindow):
                 thumbnail = self.create_rgb_thumbnail(layer)
             else:
                 thumbnail = self.create_grayscale_thumbnail(layer)
-
-            # Crea un widget personalizzato per ogni elemento
             item_widget = QtWidgets.QWidget()
             layout = QtWidgets.QVBoxLayout(item_widget)
             layout.setContentsMargins(0, 0, 0, 0)
             layout.setSpacing(0)
-
-            # Aggiungi la miniatura
             thumbnail_label = QtWidgets.QLabel()
             thumbnail_label.setPixmap(thumbnail)
             thumbnail_label.setAlignment(Qt.AlignCenter)
             layout.addWidget(thumbnail_label)
-
-            # Aggiungi l'etichetta del layer
             label = QtWidgets.QLabel(self.current_labels[i])
             label.setAlignment(Qt.AlignCenter)
             layout.addWidget(label)
-
-            # Crea l'item della lista e imposta il widget
             item = QtWidgets.QListWidgetItem()
-            item.setSizeHint(QtCore.QSize(100, 100))  # Larghezza e altezza fisse
+            item.setSizeHint(QtCore.QSize(IMG_WIDTH, IMG_HEIGHT))
             self.thumbnail_list.addItem(item)
             self.thumbnail_list.setItemWidget(item, item_widget)
 
@@ -567,7 +556,7 @@ class ImageEditor(QtWidgets.QMainWindow):
             layer = (layer // 256).astype(np.uint8)
         height, width, _ = layer.shape
         qimg = QImage(layer.data, width, height, 3 * width, QtGui.QImage.Format_RGB888)
-        return QPixmap.fromImage(qimg.scaled(100, 100, QtCore.Qt.KeepAspectRatio))
+        return QPixmap.fromImage(qimg.scaled(IMG_WIDTH, IMG_HEIGHT, QtCore.Qt.KeepAspectRatio))
 
     def create_grayscale_thumbnail(self, layer):
         if layer.dtype == np.uint16:
@@ -575,7 +564,7 @@ class ImageEditor(QtWidgets.QMainWindow):
             layer = np.clip((layer - p2) * 255.0 / (p98 - p2), 0, 255).astype(np.uint8)
         height, width = layer.shape
         qimg = QImage(layer.data, width, height, width, QtGui.QImage.Format_Grayscale8)
-        return QPixmap.fromImage(qimg.scaled(100, 100, QtCore.Qt.KeepAspectRatio))
+        return QPixmap.fromImage(qimg.scaled(IMG_WIDTH, IMG_HEIGHT, QtCore.Qt.KeepAspectRatio))
 
     def change_layer(self, layer_idx):
         if 0 <= layer_idx < len(self.current_stack):
@@ -639,7 +628,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         self.image_viewer.update_brush_cursor(size)
 
     def update_brush_preview(self):
-        pixmap = QPixmap(100, 100)
+        pixmap = QPixmap(100, 80)
         pixmap.fill(Qt.transparent)
         painter = QPainter(pixmap)
         painter.setRenderHint(QPainter.Antialiasing)
@@ -668,6 +657,27 @@ class ImageEditor(QtWidgets.QMainWindow):
             self.update_thumbnails()
             self.mark_as_modified()
             self.statusBar().showMessage(f"Copied layer {self.current_layer + 1} to master")
+
+    def copy_brush_area_to_master(self, view_pos):
+        if self.current_stack is None or self.master_layer is None or self.view_mode != 'master' or self.temp_view_individual:
+            return
+        scene_pos = self.image_viewer.mapToScene(view_pos)
+        x = int(scene_pos.x())
+        y = int(scene_pos.y())
+        radius = self.brush_size // 2
+        h, w = self.master_layer.shape[:2]
+        x1 = max(0, x - radius)
+        y1 = max(0, y - radius)
+        x2 = min(w, x + radius + 1)
+        y2 = min(h, y + radius + 1)
+        if x1 >= x2 or y1 >= y2:
+            return
+        try:
+            self.master_layer[y1:y2, x1:x2] = self.current_stack[self.current_layer][y1:y2, x1:x2]
+            self.display_current_view()
+            self.mark_as_modified()
+        except Exception as e:
+            print(f"Error copying brush area: {str(e)}")
 
 
 if __name__ == "__main__":
