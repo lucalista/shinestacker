@@ -9,6 +9,8 @@ from PySide6.QtGui import QImage, QPixmap, QPainter
 from PySide6.QtCore import Qt, QRectF
 from algorithms.multilayer import read_multilayer_tiff, write_multilayer_tiff_from_images
 
+THUMB_SHAPE = (80, 60)
+LABEL_HEIGHT = 20
 
 class ImageViewer(QGraphicsView):
     def __init__(self, parent=None):
@@ -253,7 +255,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         brush_panel = QtWidgets.QFrame()
         brush_panel.setFrameShape(QtWidgets.QFrame.StyledPanel)
         brush_layout = QtWidgets.QVBoxLayout(brush_panel)
-        brush_layout.setContentsMargins(5, 5, 5, 5)
+        brush_layout.setContentsMargins(2, 2, 2, 2)
         brush_label = QtWidgets.QLabel("Brush Size")
         brush_label.setAlignment(QtCore.Qt.AlignCenter)
         brush_layout.addWidget(brush_label)
@@ -264,7 +266,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         brush_layout.addWidget(self.brush_size_slider)
         self.brush_preview = QtWidgets.QLabel()
         self.brush_preview.setAlignment(QtCore.Qt.AlignCenter)
-        self.brush_preview.setFixedSize(100, 100)
+        self.brush_preview.setFixedSize(*THUMB_SHAPE)
         self.update_brush_preview()
         brush_layout.addWidget(self.brush_preview)
         side_layout.addWidget(brush_panel)
@@ -274,22 +276,22 @@ class ImageEditor(QtWidgets.QMainWindow):
             QLabel {
                 font-weight: bold;
                 font-size: 11px;
-                padding: 4px;
+                padding: 2px;
                 color: #444;
                 border-bottom: 1px solid #ddd;
                 background: #f5f5f5;
             }
         """)
         master_label.setAlignment(QtCore.Qt.AlignCenter)
-        master_label.setFixedHeight(24)
+        master_label.setFixedHeight(LABEL_HEIGHT)
         side_layout.addWidget(master_label)
         self.master_thumbnail_frame = QtWidgets.QFrame()
         self.master_thumbnail_frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
         master_thumbnail_layout = QtWidgets.QVBoxLayout(self.master_thumbnail_frame)
-        master_thumbnail_layout.setContentsMargins(5, 5, 5, 5)
+        master_thumbnail_layout.setContentsMargins(2, 2, 2, 2)
         self.master_thumbnail_label = QtWidgets.QLabel()
         self.master_thumbnail_label.setAlignment(QtCore.Qt.AlignCenter)
-        self.master_thumbnail_label.setFixedSize(100, 100)
+        self.master_thumbnail_label.setFixedSize(*THUMB_SHAPE)
         self.master_thumbnail_label.mousePressEvent = lambda e: self.set_view_master()
         master_thumbnail_layout.addWidget(self.master_thumbnail_label)
         side_layout.addWidget(self.master_thumbnail_frame)
@@ -299,14 +301,14 @@ class ImageEditor(QtWidgets.QMainWindow):
             QLabel {
                 font-weight: bold;
                 font-size: 11px;
-                padding: 4px;
+                padding: 2px;
                 color: #444;
                 border-bottom: 1px solid #ddd;
                 background: #f5f5f5;
             }
         """)
         layers_label.setAlignment(QtCore.Qt.AlignCenter)
-        layers_label.setFixedHeight(24)
+        layers_label.setFixedHeight(LABEL_HEIGHT)
         side_layout.addWidget(layers_label)
         self.thumbnail_list = QtWidgets.QListWidget()
         self.thumbnail_list.setFocusPolicy(Qt.StrongFocus)
@@ -425,8 +427,6 @@ class ImageEditor(QtWidgets.QMainWindow):
         if path:
             self.current_file_path = path
             self.current_stack, self.current_labels = self.load_tiff_stack(path)
-            print(type(self.current_stack))
-            print(type(self.current_labels))
             if self.current_stack is not None and len(self.current_stack) > 0:
                 self.master_layer = self.current_stack[0].copy()
                 if self.current_labels is None:
