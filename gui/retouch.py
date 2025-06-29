@@ -94,11 +94,8 @@ class ImageViewer(QGraphicsView):
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
-        scene_pos = self.mapToScene(event.position().toPoint())
         brush_size = self.image_editor.brush_size
-
-        if self.brush_cursor:
-            self.brush_cursor.setRect(scene_pos.x() - brush_size / 2, scene_pos.y() - brush_size / 2, brush_size, brush_size)
+        self.update_brush_cursor(brush_size)
         if self.dragging and self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual and event.buttons() & Qt.LeftButton:
             current_time = QtCore.QTime.currentTime()
             if self.last_update_time.msecsTo(current_time) >= self.update_interval or not self.pending_update:
@@ -107,7 +104,6 @@ class ImageViewer(QGraphicsView):
                 self.pending_update = False
             else:
                 self.pending_update = True
-
         if self.scrolling and event.buttons() & Qt.LeftButton:
             delta = event.position() - self.last_mouse_pos
             self.last_mouse_pos = event.position()
@@ -133,7 +129,7 @@ class ImageViewer(QGraphicsView):
                     self.image_editor.update_timer.stop()
                     self.image_editor.display_current_view()
                     self.image_editor.mark_as_modified()
-                    self.image_editor.save_undo_state()                    
+                    self.image_editor.save_undo_state()
         super().mouseReleaseEvent(event)
 
     def wheelEvent(self, event):
@@ -145,11 +141,7 @@ class ImageViewer(QGraphicsView):
         else:
             self.scale(zoom_out_factor, zoom_out_factor)
             self.zoom_factor *= zoom_out_factor
-        if self.brush_cursor:
-            mouse_pos = self.mapFromGlobal(QCursor.pos())
-            scene_pos = self.mapToScene(mouse_pos)
-            brush_size = self.image_editor.brush_size
-            self.brush_cursor.setRect(scene_pos.x() - brush_size / 2, scene_pos.y() - brush_size / 2, brush_size, brush_size)
+        self.update_brush_cursor(self.image_editor.brush_size)
 
     def setup_brush_cursor(self):
         self.brush_cursor = self.scene.addEllipse(0, 0, DEFAULT_BRUSH_SIZE / 2, DEFAULT_BRUSH_SIZE / 2,
@@ -160,15 +152,15 @@ class ImageViewer(QGraphicsView):
 
     def update_brush_cursor(self, size):
         if self.brush_cursor:
-            rect = self.brush_cursor.rect()
-            center_x = rect.x() + rect.width() / 2
-            center_y = rect.y() + rect.height() / 2
+            mouse_pos = self.mapFromGlobal(QCursor.pos())
+            scene_pos = self.mapToScene(mouse_pos)
+            center_x = scene_pos.x()
+            center_y = scene_pos.y()
             gradient = QtGui.QRadialGradient(center_x, center_y, size / 2)
             hardness = self.image_editor.brush_hardness / 100.0
             gradient.setColorAt(0, QColor(255, 0, 0, 200))
             gradient.setColorAt(hardness, QColor(255, 0, 0, 200))
             gradient.setColorAt(1, QColor(255, 0, 0, 0))
-
             self.brush_cursor.setRect(center_x - size / 2, center_y - size / 2, size, size)
             self.brush_cursor.setBrush(QBrush(gradient))
             self.brush_cursor.setPen(QPen(QColor(255, 0, 0, 150), 1))
@@ -242,7 +234,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         self.current_file_path = None
         self.modified = False
         self.undo_stack = []
-        self.max_undo_steps = 10
+        self.max_undo_steps = 50
         self.setup_ui()
         self.setup_menu()
         self.setup_shortcuts()
@@ -424,7 +416,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         undo_action.triggered.connect(self.undo_last_brush)
         edit_menu.addAction(undo_action)
         undo_shortcut = QShortcut(QKeySequence("Ctrl+Z"), self)
-        undo_shortcut.activated.connect(self.undo_last_brush)        
+        undo_shortcut.activated.connect(self.undo_last_brush)
         copy_action = QAction("Copy Layer to Master", self)
         copy_action.setShortcut("Ctrl+M")
         copy_action.triggered.connect(self.copy_layer_to_master)
@@ -478,13 +470,13 @@ class ImageEditor(QtWidgets.QMainWindow):
                     labels.append(layer.name)
             if layers:
                 return np.array(layers), labels
-        except Exception as e:
+        except Exception:
             try:
                 stack = tifffile.imread(path)
                 if stack.ndim == 3:
                     return stack, None
                 return None, None
-            except Exception as e:
+            except Exception:
                 return None, None
 
     def open_file(self):
@@ -792,7 +784,8 @@ class ImageEditor(QtWidgets.QMainWindow):
             self.master_layer = undo_state['master']
             self.display_current_view()
             self.mark_as_modified()
-            self.statusBar().showMessage("Undo applied", 2000)                
+            self.statusBar().showMessage("Undo applied", 2000)
+
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
