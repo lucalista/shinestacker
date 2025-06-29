@@ -14,6 +14,7 @@ THUMB_WIDTH = 120
 THUMB_HEIGHT = 80
 IMG_WIDTH = 100
 IMG_HEIGHT = 80
+DEFAULT_BRUSH_SIZE = 20
 
 
 class ImageViewer(QGraphicsView):
@@ -35,8 +36,9 @@ class ImageViewer(QGraphicsView):
         self.setMouseTracking(True)
         self.space_pressed = False
         self.setDragMode(QGraphicsView.NoDrag)
-        self.setCursor(Qt.BlankCursor)
         self.scrolling = False
+        self.dragging = False
+        self.setup_brush_cursor()
 
     def set_image(self, qimage):
         pixmap = QPixmap.fromImage(qimage)
@@ -61,7 +63,7 @@ class ImageViewer(QGraphicsView):
         if event.key() == Qt.Key_Space:
             self.space_pressed = False
             if not self.scrolling:
-                self.setCursor(Qt.BlankCursor)
+                self.setCursor(Qt.ArrowCursor)
                 if self.brush_cursor:
                     self.brush_cursor.show()
         elif event.key() == Qt.Key_X:
@@ -80,33 +82,18 @@ class ImageViewer(QGraphicsView):
             else:
                 if self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual:
                     self.image_editor.copy_brush_area_to_master(event.position().toPoint())
+                    self.dragging = True  # Nuovo flag per drag continuo
                 if self.brush_cursor:
                     self.brush_cursor.show()
         super().mousePressEvent(event)
-
-    def mouseReleaseEvent(self, event):
-        if event.button() == Qt.LeftButton and self.scrolling:
-            self.scrolling = False
-            if self.space_pressed:
-                self.setCursor(Qt.OpenHandCursor)
-            else:
-                self.setCursor(Qt.BlankCursor)
-                if self.brush_cursor:
-                    self.brush_cursor.show()
-            self.last_mouse_pos = None
-        super().mouseReleaseEvent(event)
 
     def mouseMoveEvent(self, event):
         scene_pos = self.mapToScene(event.position().toPoint())
         brush_size = self.image_editor.brush_size
         if self.brush_cursor:
             self.brush_cursor.setRect(scene_pos.x() - brush_size / 2, scene_pos.y() - brush_size / 2, brush_size, brush_size)
-        else:
-            self.brush_cursor = self.scene.addEllipse(scene_pos.x() - brush_size / 2, scene_pos.y() - brush_size / 2,
-                                                      brush_size, brush_size,
-                                                      QPen(QColor(255, 0, 0), 2), QBrush(QColor(255, 0, 0, 100)))
-        if self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual and event.buttons() & Qt.LeftButton:
-            self.brush_cursor.setBrush(QBrush(QColor(0, 255, 0, 100)))
+        if self.dragging and self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual and event.buttons() & Qt.LeftButton:
+            self.image_editor.copy_brush_area_to_master(event.position().toPoint(), continuous=True)
         if self.scrolling and event.buttons() & Qt.LeftButton:
             delta = event.position() - self.last_mouse_pos
             self.last_mouse_pos = event.position()
@@ -114,6 +101,23 @@ class ImageViewer(QGraphicsView):
             self.verticalScrollBar().setValue(self.verticalScrollBar().value() - delta.y())
         else:
             super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            if self.scrolling:
+                self.scrolling = False
+                if self.space_pressed:
+                    self.setCursor(Qt.OpenHandCursor)
+                else:
+                    self.setCursor(Qt.BlankCursor)
+                    if self.brush_cursor:
+                        self.brush_cursor.show()
+                self.last_mouse_pos = None
+            elif hasattr(self, 'dragging') and self.dragging:
+                self.dragging = False
+                self.image_editor.display_current_view()
+                self.image_editor.mark_as_modified()
+        super().mouseReleaseEvent(event)
 
     def wheelEvent(self, event):
         zoom_in_factor = 1.10
@@ -129,6 +133,13 @@ class ImageViewer(QGraphicsView):
             scene_pos = self.mapToScene(mouse_pos)
             brush_size = self.image_editor.brush_size
             self.brush_cursor.setRect(scene_pos.x() - brush_size / 2, scene_pos.y() - brush_size / 2, brush_size, brush_size)
+
+    def setup_brush_cursor(self):
+        self.brush_cursor = self.scene.addEllipse(0, 0, DEFAULT_BRUSH_SIZE / 2, DEFAULT_BRUSH_SIZE / 2,
+                                                  QPen(QColor(255, 0, 0), 2), QBrush(QColor(255, 0, 0, 100)))
+        self.brush_cursor.setPen(QPen(QColor(255, 0, 0, 200), 1))
+        self.brush_cursor.setBrush(QBrush(QColor(255, 0, 0, 50)))
+        self.brush_cursor.hide()
 
     def update_brush_cursor(self, size):
         if self.brush_cursor:
@@ -202,7 +213,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         self.current_stack = None
         self.master_layer = None
         self.current_layer = 0
-        self.brush_size = 20
+        self.brush_size = DEFAULT_BRUSH_SIZE
         self.view_mode = 'master'
         self.temp_view_individual = False
         self.current_file_path = None
@@ -533,11 +544,9 @@ class ImageEditor(QtWidgets.QMainWindow):
             else:
                 master_thumbnail = self.create_grayscale_thumbnail(self.master_layer)
         self.master_thumbnail_label.setPixmap(master_thumbnail)
-
         self.thumbnail_list.clear()
         if self.current_stack is None:
             return
-
         for i in range(len(self.current_stack)):
             layer = self.current_stack[i]
             if layer.ndim == 3 and layer.shape[-1] == 3:
@@ -667,26 +676,30 @@ class ImageEditor(QtWidgets.QMainWindow):
             self.mark_as_modified()
             self.statusBar().showMessage(f"Copied layer {self.current_layer + 1} to master")
 
-    def copy_brush_area_to_master(self, view_pos):
+    def copy_brush_area_to_master(self, view_pos, continuous=False):
         if self.current_stack is None or self.master_layer is None or self.view_mode != 'master' or self.temp_view_individual:
             return
         scene_pos = self.image_viewer.mapToScene(view_pos)
-        x = int(scene_pos.x())
-        y = int(scene_pos.y())
+        x_center = int(scene_pos.x())
+        y_center = int(scene_pos.y())
         radius = self.brush_size // 2
         h, w = self.master_layer.shape[:2]
-        x1 = max(0, x - radius)
-        y1 = max(0, y - radius)
-        x2 = min(w, x + radius + 1)
-        y2 = min(h, y + radius + 1)
-        if x1 >= x2 or y1 >= y2:
-            return
-        try:
-            self.master_layer[y1:y2, x1:x2] = self.current_stack[self.current_layer][y1:y2, x1:x2]
+        x_start = max(0, x_center - radius)
+        y_start = max(0, y_center - radius)
+        x_end = min(w, x_center + radius + 1)
+        y_end = min(h, y_center + radius + 1)
+        y, x = np.ogrid[-radius:radius + 1, -radius:radius + 1]
+        mask = x * x + y * y <= radius * radius
+        for dy in range(y_start - y_center, y_end - y_center):
+            for dx in range(x_start - x_center, x_end - x_center):
+                if mask[dy + radius, dx + radius]:
+                    x_pos = x_center + dx
+                    y_pos = y_center + dy
+                    if 0 <= x_pos < w and 0 <= y_pos < h:
+                        self.master_layer[y_pos, x_pos] = self.current_stack[self.current_layer][y_pos, x_pos]
+        if not continuous:
             self.display_current_view()
             self.mark_as_modified()
-        except Exception as e:
-            print(f"Error copying brush area: {str(e)}")
 
 
 if __name__ == "__main__":
