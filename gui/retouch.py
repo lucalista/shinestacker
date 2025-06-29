@@ -29,7 +29,7 @@ class ImageViewer(QGraphicsView):
         pixmap = QPixmap.fromImage(qimage)
         self.pixmap_item.setPixmap(pixmap)
         self.setSceneRect(QRectF(pixmap.rect()))
-        if self.zoom_factor == 1.0:  # Solo se è il primo setup
+        if self.zoom_factor == 1.0:
             self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
             self.zoom_factor = self.get_current_scale()
 
@@ -88,7 +88,7 @@ class ImageViewer(QGraphicsView):
         self.zoom_factor = 1.0
 
     def get_current_scale(self):
-        return self.transform().m11()  # Using horizontal scale factor
+        return self.transform().m11()
 
     def get_view_state(self):
         return {
@@ -291,14 +291,13 @@ class ImageEditor(QtWidgets.QMainWindow):
         self.image_viewer.set_image(qimage)
 
     def numpy_to_qimage(self, array):
-        """Converte un array numpy in QImage"""
         if array.dtype == np.uint16:
             array = (array / 256).astype(np.uint8)
-        if array.ndim == 2:  # Grayscale
+        if array.ndim == 2:
             height, width = array.shape
             bytes_per_line = width
             return QImage(array.data, width, height, bytes_per_line, QImage.Format_Grayscale8)
-        elif array.ndim == 3:  # RGB
+        elif array.ndim == 3:
             height, width, _ = array.shape
             bytes_per_line = 3 * width
             return QImage(array.data, width, height, bytes_per_line, QImage.Format_RGB888)
@@ -321,7 +320,6 @@ class ImageEditor(QtWidgets.QMainWindow):
     def highlight_thumbnail(self, index):
         """Evidenzia il thumbnail selezionato"""
         self.thumbnail_list.setCurrentRow(index)
-        # Scorri la lista per mostrare l'elemento se è fuori dalla vista
         self.thumbnail_list.scrollToItem(
             self.thumbnail_list.item(index),
             QtWidgets.QAbstractItemView.PositionAtCenter
