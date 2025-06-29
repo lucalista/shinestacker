@@ -2,15 +2,19 @@ import sys
 import os
 sys.path.append('../')
 from algorithms.stack_framework import StackJob
-from algorithms.multilayer import MultiLayer, write_multilayer_tiff
+from algorithms.multilayer import MultiLayer, write_multilayer_tiff, read_multilayer_tiff
+
+test_path = "output/img-tif-multi"
+test_file = "/multi-out.tif"
+N_LAYERS = 6
 
 def test_write():
     try:
-        output_dir = "output/img-tif-multi"
+        output_dir = test_path
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        write_multilayer_tiff([f"input/img-tif/000{i}.tif" for i in range(5)],
-                              output_dir + "/multi-out.tif",
+        write_multilayer_tiff([f"input/img-tif/000{i}.tif" for i in range(N_LAYERS)],
+                              output_dir + test_file,
                               exif_path="input/img-tif")
     except Exception:
         assert False
@@ -18,8 +22,10 @@ def test_write():
 
 def test_read():
     try:
-        input_dir = "output/img-tif-multi"
-        read_multilayer_tiff(input_dir + "input/img.tif")
+        input_dir = test_path
+        isd = read_multilayer_tiff(input_dir + test_file)
+        assert isd is not None
+        assert len(isd.layers.layers) == N_LAYERS
     except Exception:
         assert False
     
@@ -49,5 +55,6 @@ def test_tif():
 
 if __name__ == '__main__':
     test_write()
+    test_read()
     test_jpg()
     test_tif()

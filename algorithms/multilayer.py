@@ -14,8 +14,11 @@ from core.framework import JobBase
 from algorithms.stack_framework import FrameMultiDirectory
 from algorithms.exif import exif_extra_tags, get_exif
 
+
 def read_multilayer_tiff(input_file):
-    pass
+    print(f"reading file {input_file}")
+    return TiffImageSourceData.fromtiff(input_file)
+    
 
 def write_multilayer_tiff(input_files, output_file, exif_path='', callbacks=None):
     extensions = list(set([file.split(".")[-1] for file in input_files]))
@@ -31,6 +34,9 @@ def write_multilayer_tiff(input_files, output_file, exif_path='', callbacks=None
     elif extension == 'png':
         images = [cv2.imread(p, cv2.IMREAD_UNCHANGED) for p in input_files]
         images = [cv2.cvtColor(i, cv2.COLOR_BGR2RGB) for i in images]
+    write_multilayer_tiff_from_images(images, output_file, exif_path='', callbacks=None)
+
+def write_multilayer_tiff_from_images(images, output_file, exif_path='', callbacks=None):
     shapes = list(set([image.shape[:2] for image in images]))
     if len(shapes) > 1:
         msg = ", ".join(extensions)
@@ -41,30 +47,34 @@ def write_multilayer_tiff(input_files, output_file, exif_path='', callbacks=None
         msg = ", ".join(extensions)
         raise Exception("All input files must all have 8 bit or 16 bit depth.")
     dtype = dtypes[0]
-    transp = np.full_like(images[0][..., 0], constants.MAX_UINT16 if dtype == np.uint16 else constants.MAX_UINT8)
+    max_pixel_value = constants.MAX_UINT16 if dtype == np.uint16 else constants.MAX_UINT8
+    transp = np.full_like(images[0][..., 0], max_pixel_value)
     fmt = 'Layer {:03d}'
+    compression_type = PsdCompressionType.ZIP_PREDICTED
+    psdformat = PsdFormat.LE32BIT
+    key = PsdKey.LAYER_16 if dtype == np.uint16 else PsdKey.LAYER
     layers = [PsdLayer(
         name=fmt.format(i + 1),
         rectangle=PsdRectangle(0, 0, *shape),
         channels=[
             PsdChannel(
                 channelid=PsdChannelId.TRANSPARENCY_MASK,
-                compression=PsdCompressionType.ZIP_PREDICTED,
+                compression=compression_type,
                 data=transp,
             ),
             PsdChannel(
                 channelid=PsdChannelId.CHANNEL0,
-                compression=PsdCompressionType.ZIP_PREDICTED,
+                compression=compression_type,
                 data=image[..., 0],
             ),
             PsdChannel(
                 channelid=PsdChannelId.CHANNEL1,
-                compression=PsdCompressionType.ZIP_PREDICTED,
+                compression=compression_type,
                 data=image[..., 1],
             ),
             PsdChannel(
                 channelid=PsdChannelId.CHANNEL2,
-                compression=PsdCompressionType.ZIP_PREDICTED,
+                compression=compression_type,
                 data=image[..., 2],
             ),
         ],
@@ -75,9 +85,9 @@ def write_multilayer_tiff(input_files, output_file, exif_path='', callbacks=None
     ) for i, image in enumerate(images)]
     image_source_data = TiffImageSourceData(
         name='Layered TIFF',
-        psdformat=PsdFormat.LE32BIT,
+        psdformat=psdformat,
         layers=PsdLayers(
-            key=PsdKey.LAYER,
+            key=key,
             has_transparency=False,
             layers=layers,
         ),
@@ -117,11 +127,9 @@ def write_multilayer_tiff(input_files, output_file, exif_path='', callbacks=None
         callback = callbacks,get('exif_msg', None)
         if callback:
             callback(output_file.split('/')[-1])
-    tifffile.imwrite(output_file,
-        overlay(*((np.concatenate((image, np.expand_dims(transp, axis=-1)), axis=-1), (0, 0)) for image in images),
-                shape=shape),
-        compression='adobe_deflate',
-        metadata=None, **tiff_tags)
+    compression = 'adobe_deflate'
+    overlayed_images = overlay(*((np.concatenate((image, np.expand_dims(transp, axis=-1)), axis=-1), (0, 0)) for image in images), shape=shape)
+    tifffile.imwrite(output_file, overlayed_images, compression=compression, metadata=None, **tiff_tags)
 
 
 class MultiLayer(FrameMultiDirectory, JobBase):
