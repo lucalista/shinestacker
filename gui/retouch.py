@@ -46,6 +46,9 @@ class ImageViewer(QGraphicsView):
             self.setCursor(Qt.OpenHandCursor)
             if self.brush_cursor:
                 self.brush_cursor.hide()
+        elif event.key() == Qt.Key_X:
+            self.image_editor.start_temp_view()
+            return
         super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event):
@@ -55,6 +58,9 @@ class ImageViewer(QGraphicsView):
                 self.setCursor(Qt.BlankCursor)
                 if self.brush_cursor:
                     self.brush_cursor.show()
+        elif event.key() == Qt.Key_X:
+            self.image_editor.end_temp_view()
+            return
         super().keyReleaseEvent(event)
 
     def mousePressEvent(self, event):
@@ -66,9 +72,9 @@ class ImageViewer(QGraphicsView):
                 if self.brush_cursor:
                     self.brush_cursor.hide()
             else:
-                # drawing will be implemented here
                 if self.brush_cursor:
                     self.brush_cursor.show()
+        self.image_viewer.setFocus()
         super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event):
@@ -197,11 +203,24 @@ class ImageEditor(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         self.current_stack = None
+        self.master_layer = None
         self.current_layer = 0
         self.brush_size = 20
+        self.view_mode = 'master'
+        self.temp_view_individual = False
         self.setup_ui()
         self.setup_menu()
         self.setup_shortcuts()
+        self.installEventFilter(self)
+
+    def eventFilter(self, obj, event):
+        if event.type() == QtCore.QEvent.KeyPress and event.key() == Qt.Key_X:
+            self.start_temp_view()
+            return True
+        elif event.type() == QtCore.QEvent.KeyRelease and event.key() == Qt.Key_X:
+            self.end_temp_view()
+            return True
+        return super().eventFilter(obj, event)
 
     def setup_shortcuts(self):
         zoom_in = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+="), self)
@@ -218,13 +237,14 @@ class ImageEditor(QtWidgets.QMainWindow):
         next_layer.activated.connect(self.next_layer)
 
     def setup_ui(self):
-        self.setWindowTitle("Focus Stack Editor - PySide6")
+        self.setWindowTitle("Focus Stack Editor")
         self.resize(1400, 900)
         central_widget = QtWidgets.QWidget()
         self.setCentralWidget(central_widget)
         layout = QtWidgets.QHBoxLayout(central_widget)
         self.image_viewer = ImageViewer()
         self.image_viewer.image_editor = self
+        self.image_viewer.setFocusPolicy(Qt.StrongFocus)
         side_panel = QtWidgets.QWidget()
         side_layout = QtWidgets.QVBoxLayout(side_panel)
         side_layout.setContentsMargins(0, 0, 0, 0)
@@ -247,6 +267,32 @@ class ImageEditor(QtWidgets.QMainWindow):
         self.update_brush_preview()
         brush_layout.addWidget(self.brush_preview)
         side_layout.addWidget(brush_panel)
+
+        master_label = QtWidgets.QLabel("Master")
+        master_label.setStyleSheet("""
+            QLabel {
+                font-weight: bold;
+                font-size: 11px;
+                padding: 4px;
+                color: #444;
+                border-bottom: 1px solid #ddd;
+                background: #f5f5f5;
+            }
+        """)
+        master_label.setAlignment(QtCore.Qt.AlignCenter)
+        master_label.setFixedHeight(24)
+        side_layout.addWidget(master_label)
+        self.master_thumbnail_frame = QtWidgets.QFrame()
+        self.master_thumbnail_frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        master_thumbnail_layout = QtWidgets.QVBoxLayout(self.master_thumbnail_frame)
+        master_thumbnail_layout.setContentsMargins(5, 5, 5, 5)
+        self.master_thumbnail_label = QtWidgets.QLabel()
+        self.master_thumbnail_label.setAlignment(QtCore.Qt.AlignCenter)
+        self.master_thumbnail_label.setFixedSize(100, 100)
+        self.master_thumbnail_label.mousePressEvent = lambda e: self.set_view_master()
+        master_thumbnail_layout.addWidget(self.master_thumbnail_label)
+        side_layout.addWidget(self.master_thumbnail_frame)
+        side_layout.addSpacing(10)
         layers_label = QtWidgets.QLabel("Layers")
         layers_label.setStyleSheet("""
             QLabel {
@@ -302,6 +348,16 @@ class ImageEditor(QtWidgets.QMainWindow):
         actual_size_action = QtGui.QAction("Actual Size", self)
         actual_size_action.triggered.connect(self.image_viewer.actual_size)
         view_menu.addAction(actual_size_action)
+        view_menu.addSeparator()
+        view_master_action = QtGui.QAction("View Master", self)
+        view_master_action.setShortcut("M")
+        view_master_action.triggered.connect(self.set_view_master)
+        view_menu.addAction(view_master_action)
+        view_individual_action = QtGui.QAction("View Individual", self)
+        view_individual_action.setShortcut("L")
+        view_individual_action.triggered.connect(self.set_view_individual)
+        view_menu.addAction(view_individual_action)
+        view_menu.addSeparator()
 
     def load_tiff_stack(self, path):
         try:
@@ -338,6 +394,8 @@ class ImageEditor(QtWidgets.QMainWindow):
             self, "Open Image", "", "Images (*.tif *.tiff *.png *.jpg)")
         if path:
             self.current_stack, _ = self.load_tiff_stack(path)
+            if self.current_stack is not None and len(self.current_stack) > 0:
+                self.master_layer = self.current_stack[0].copy()
             self.update_thumbnails()
             self.change_layer(0)
             self.image_viewer.reset_zoom()
@@ -348,7 +406,51 @@ class ImageEditor(QtWidgets.QMainWindow):
         if not self.current_stack:
             return
 
+    def set_view_master(self):
+        self.view_mode = 'master'
+        self.temp_view_individual = False
+        self.display_current_view()
+        self.statusBar().showMessage("View mode: Master")
+
+    def set_view_individual(self):
+        self.view_mode = 'individual'
+        self.temp_view_individual = False
+        self.display_current_view()
+        self.statusBar().showMessage("View mode: Individual layers")
+
+    def start_temp_view(self):
+        if not self.temp_view_individual and self.view_mode == 'master':
+            self.temp_view_individual = True
+            self.display_current_view()
+            self.statusBar().showMessage("Temporary view: Individual layer (hold X)")
+
+    def end_temp_view(self):
+        if self.temp_view_individual:
+            self.temp_view_individual = False
+            self.display_current_view()
+            self.statusBar().showMessage("View mode: Master")
+
+    def display_current_view(self):
+        """Mostra l'immagine corretta in base alla modalità di visualizzazione"""
+        if self.temp_view_individual or self.view_mode == 'individual':
+            self.display_current_layer()
+        else:
+            self.display_master_layer()
+
+    def display_master_layer(self):
+        """Mostra il layer master"""
+        if self.master_layer is not None:
+            qimage = self.numpy_to_qimage(self.master_layer)
+            self.image_viewer.set_image(qimage)
+            self.update_thumbnails()
+
     def update_thumbnails(self):
+        if self.master_layer is not None:
+            if self.master_layer.ndim == 3 and self.master_layer.shape[-1] == 3:
+                master_thumbnail = self.create_rgb_thumbnail(self.master_layer)
+            else:
+                master_thumbnail = self.create_grayscale_thumbnail(self.master_layer)
+        self.master_thumbnail_label.setPixmap(master_thumbnail)
         self.thumbnail_list.clear()
         if self.current_stack is None:
             return
@@ -381,11 +483,12 @@ class ImageEditor(QtWidgets.QMainWindow):
         if 0 <= layer_idx < len(self.current_stack):
             view_state = self.image_viewer.get_view_state()
             self.current_layer = layer_idx
-            self.display_current_layer()
+            self.display_current_view()
             self.image_viewer.set_view_state(view_state)
             self.thumbnail_list.setCurrentRow(layer_idx)
             self.thumbnail_list.setFocus()
             self.image_viewer.update_brush_cursor(self.brush_size)
+            self.image_viewer.setFocus()
 
     def change_layer_item(self, item):
         layer_idx = self.thumbnail_list.row(item)
