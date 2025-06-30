@@ -403,6 +403,7 @@ class ImageEditor(QtWidgets.QMainWindow):
 
         brush_panel = QtWidgets.QFrame()
         brush_panel.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        brush_panel.setContentsMargins(0, 0, 0, 0)
         brush_layout = QtWidgets.QVBoxLayout(brush_panel)
         brush_layout.setContentsMargins(0, 0, 0, 0)
         brush_layout.setSpacing(2)
@@ -416,7 +417,6 @@ class ImageEditor(QtWidgets.QMainWindow):
         self.brush_size_slider.setValue(brush_size_to_slider(self.brush_size))
         self.brush_size_slider.valueChanged.connect(self.update_brush_size)
         brush_layout.addWidget(self.brush_size_slider)
-
         hardness_label = QtWidgets.QLabel("Brush Hardness")
         hardness_label.setAlignment(QtCore.Qt.AlignCenter)
         brush_layout.addWidget(hardness_label)
@@ -439,11 +439,14 @@ class ImageEditor(QtWidgets.QMainWindow):
 
         side_layout.addWidget(brush_panel)
         self.brush_preview = QtWidgets.QLabel()
+        self.brush_preview.setContentsMargins(0, 0, 0, 0)
         self.brush_preview.setStyleSheet("""
             QLabel {
                 background-color: #f0f0f0;
                 border: 1px solid #ccc;
                 border-radius: 4px;
+                padding: 0px;
+                margin: 0px;
             }
         """)
         self.brush_preview.setAlignment(QtCore.Qt.AlignCenter)
@@ -909,7 +912,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         pixmap.fill(Qt.transparent)
         painter = QPainter(pixmap)
         painter.setRenderHint(QPainter.Antialiasing)
-        preview_size = min(self.brush_size, width - 2, height - 2)
+        preview_size = min(self.brush_size, width + 30, height + 30)
         center_x, center_y = width // 2, height // 2
         gradient = create_brush_gradient(
             center_x, center_y, preview_size // 2,
@@ -921,10 +924,10 @@ class ImageEditor(QtWidgets.QMainWindow):
         painter.setPen(QPen(BRUSH_COLORS['outer'], 1))
         painter.setBrush(QBrush(gradient))
         painter.drawEllipse(QtCore.QPoint(center_x, center_y), preview_size // 2, preview_size // 2)
-        painter.setPen(QPen(Qt.black))
-        painter.drawText(5, 15, f"Size: {int(self.brush_size)}px")
-        painter.drawText(5, 30, f"Hardness: {self.brush_hardness}%")
-        painter.drawText(5, 45, f"Opacity: {self.brush_opacity}%")
+        painter.setPen(QPen(QColor(0, 0, 160)))
+        painter.drawText(0, 10, f"Size: {int(self.brush_size)}px")
+        painter.drawText(0, 25, f"Hardness: {self.brush_hardness}%")
+        painter.drawText(0, 40, f"Opacity: {self.brush_opacity}%")
         painter.end()
         self.brush_preview.setPixmap(pixmap)
 
