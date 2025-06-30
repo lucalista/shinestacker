@@ -991,36 +991,28 @@ class ImageEditor(QMainWindow):
         y_start = max(0, y_center - radius)
         x_end = min(w, x_center + radius + 1)
         y_end = min(h, y_center + radius + 1)
+        if x_start >= x_end or y_start >= y_end:
+            return
         if self.brush_hardness <= 0:
             y, x = np.ogrid[-radius:radius + 1, -radius:radius + 1]
-            distance = np.sqrt(x**2 + y**2)
-            mask = (distance <= radius).astype(float)
+            mask = (x**2 + y**2 <= radius**2).astype(float)
         else:
             mask = calculate_brush_mask(radius, self.brush_hardness)
+        mask = mask[
+            y_start - (y_center - radius):y_end - (y_center - radius),
+            x_start - (x_center - radius):x_end - (x_center - radius)
+        ]
         opacity_factor = float(self.brush_opacity) / 100.0
-        for dy in range(y_start - y_center, y_end - y_center):
-            for dx in range(x_start - x_center, x_end - x_center):
-                mask_value = mask[dy + radius, dx + radius]
-                if mask_value > 0:
-                    x_pos = x_center + dx
-                    y_pos = y_center + dy
-                    if 0 <= x_pos < w and 0 <= y_pos < h:
-                        alpha = min(1.0, max(0.0, mask_value * opacity_factor))
-#                        if alpha >= 1.0 or alpha <= 0.0:
-#                            print(f"Anomalous value: mask={mask_value}, opacity={opacity_factor}, alpha={alpha}")
-                        alpha = max(0.0, min(1.0, alpha))
-                        if self.master_layer.dtype == np.uint16:
-                            self.master_layer[y_pos, x_pos] = np.clip(
-                                self.master_layer[y_pos, x_pos] * (1.0 - alpha) + # noqa
-                                self.current_stack[self.current_layer][y_pos, x_pos] * alpha,
-                                0, 65535
-                            ).astype(np.uint16)
-                        elif self.master_layer.dtype == np.uint8:
-                            self.master_layer[y_pos, x_pos] = np.clip(
-                                self.master_layer[y_pos, x_pos] * (1.0 - alpha) + # noqa
-                                self.current_stack[self.current_layer][y_pos, x_pos] * alpha,
-                                0, 255
-                            ).astype(np.uint8)
+        mask = np.clip(mask * opacity_factor, 0, 1)
+        master_area = self.master_layer[y_start:y_end, x_start:x_end]
+        layer_area = self.current_stack[self.current_layer][y_start:y_end, x_start:x_end]
+        dtype = self.master_layer.dtype
+        max_px_value = 65535 if dtype == np.uint16 else 255
+        self.master_layer[y_start:y_end, x_start:x_end] = np.clip(
+            master_area * (1 - mask[..., None] if master_area.ndim == 3 else 1 - mask) + # noqa
+            layer_area * (mask[..., None] if master_area.ndim == 3 else mask),
+            0, max_px_value
+        ).astype(dtype)
         if not continuous:
             self.display_current_view()
             self.mark_as_modified()
