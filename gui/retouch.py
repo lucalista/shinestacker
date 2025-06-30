@@ -16,6 +16,8 @@ IMG_WIDTH = 100
 IMG_HEIGHT = 80
 DEFAULT_BRUSH_HARDNESS = 25
 PAINT_REFRESH_TIMER = 200  # milliseconds
+MIN_ZOOMED_IMG_WIDTH = 400
+MAX_ZOOMED_IMG_PX_SIZE = 50
 
 BRUSH_COLORS = {
     'outer': QColor(255, 0, 0, 200),
@@ -68,6 +70,8 @@ class ImageViewer(QGraphicsView):
         self.pixmap_item = QGraphicsPixmapItem()
         self.scene.addItem(self.pixmap_item)
         self.zoom_factor = 1.0
+        self.min_scale = 0.0
+        self.max_scale = 0.0
         self.last_mouse_pos = None
         self.setRenderHint(QPainter.Antialiasing)
         self.setRenderHint(QPainter.SmoothPixmapTransform)
@@ -90,9 +94,15 @@ class ImageViewer(QGraphicsView):
         pixmap = QPixmap.fromImage(qimage)
         self.pixmap_item.setPixmap(pixmap)
         self.setSceneRect(QRectF(pixmap.rect()))
+        img_width = pixmap.width()
+        self.min_scale = MIN_ZOOMED_IMG_WIDTH / img_width
+        self.max_scale = MAX_ZOOMED_IMG_PX_SIZE
         if self.zoom_factor == 1.0:
             self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
             self.zoom_factor = self.get_current_scale()
+            self.zoom_factor = max(self.min_scale, min(self.max_scale, self.zoom_factor))
+            self.resetTransform()
+            self.scale(self.zoom_factor, self.zoom_factor)
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Space and not self.scrolling:
@@ -175,12 +185,18 @@ class ImageViewer(QGraphicsView):
     def wheelEvent(self, event):
         zoom_in_factor = 1.10
         zoom_out_factor = 1 / zoom_in_factor
-        if event.angleDelta().y() > 0:
-            self.scale(zoom_in_factor, zoom_in_factor)
-            self.zoom_factor *= zoom_in_factor
-        else:
-            self.scale(zoom_out_factor, zoom_out_factor)
-            self.zoom_factor *= zoom_out_factor
+        current_scale = self.get_current_scale()
+        if event.angleDelta().y() > 0:  # Zoom in
+            new_scale = current_scale * zoom_in_factor
+            if new_scale <= self.max_scale:
+                self.scale(zoom_in_factor, zoom_in_factor)
+                self.zoom_factor = new_scale
+        else:  # Zoom out
+            new_scale = current_scale * zoom_out_factor
+            if new_scale >= self.min_scale:
+                self.scale(zoom_out_factor, zoom_out_factor)
+                self.zoom_factor = new_scale
+
         self.update_brush_cursor(self.image_editor.brush_size)
 
     def setup_brush_cursor(self):
@@ -224,20 +240,30 @@ class ImageViewer(QGraphicsView):
         reset_zoom.activated.connect(self.reset_zoom)
 
     def zoom_in(self):
-        self.scale(1.25, 1.25)
-        self.zoom_factor *= 1.25
+        current_scale = self.get_current_scale()
+        new_scale = current_scale * 1.25
+        if new_scale <= self.max_scale:
+            self.scale(1.25, 1.25)
+            self.zoom_factor = new_scale
 
     def zoom_out(self):
-        self.scale(0.8, 0.8)
-        self.zoom_factor *= 0.8
+        current_scale = self.get_current_scale()
+        new_scale = current_scale * 0.8
+        if new_scale >= self.min_scale:
+            self.scale(0.8, 0.8)
+            self.zoom_factor = new_scale
 
     def reset_zoom(self):
         self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
         self.zoom_factor = self.get_current_scale()
+        self.zoom_factor = max(self.min_scale, min(self.max_scale, self.zoom_factor))
+        self.resetTransform()
+        self.scale(self.zoom_factor, self.zoom_factor)
 
     def actual_size(self):
+        self.zoom_factor = max(self.min_scale, min(self.max_scale, 1.0))
         self.resetTransform()
-        self.zoom_factor = 1.0
+        self.scale(self.zoom_factor, self.zoom_factor)
 
     def get_current_scale(self):
         return self.transform().m11()
