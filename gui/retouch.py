@@ -89,25 +89,18 @@ def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None
     gradient.setColorAt(1.0, outer)
     return gradient
 
+
 def calculate_brush_mask(radius, hardness_percent):
     y, x = np.ogrid[-radius:radius + 1, -radius:radius + 1]
     distance = np.sqrt(x**2.0 + y**2.0)
-    
-    # Gestione esplicita del caso hardness = 0
     if hardness_percent <= 0:
         return (distance <= radius).astype(float)
-    
     hardness_radius = radius * (hardness_percent / 100.0)
-    
-    # Protezione contro hardness_radius >= radius
     if hardness_radius >= radius:
         return np.ones_like(distance, dtype=float)
-    
-    # Calcolo normale della maschera con protezione divisione zero
     with np.errstate(divide='ignore', invalid='ignore'):
         mask = np.clip(1.0 - (distance - hardness_radius) / max(1e-10, (radius - hardness_radius)), 0.0, 1.0)
         mask[np.isnan(mask)] = 1.0
-    
     return mask
 
 
@@ -930,7 +923,8 @@ class ImageEditor(QtWidgets.QMainWindow):
         painter.drawEllipse(QtCore.QPoint(center_x, center_y), preview_size // 2, preview_size // 2)
         painter.setPen(QPen(Qt.black))
         painter.drawText(5, 15, f"Size: {int(self.brush_size)}px")
-        painter.drawText(5, 30, f"Opacity: {self.brush_opacity}%")
+        painter.drawText(5, 30, f"Hardness: {self.brush_hardness}%")
+        painter.drawText(5, 45, f"Opacity: {self.brush_opacity}%")
         painter.end()
         self.brush_preview.setPixmap(pixmap)
 
