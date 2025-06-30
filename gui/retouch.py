@@ -77,7 +77,7 @@ def brush_size_to_slider(size):
 
 def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None, outer_color=None, opacity=100):
     gradient = QtGui.QRadialGradient(center_x, center_y, float(radius))
-    hardness_normalized = float(hardness) / 100.0
+    hardness_normalized = min(0.9999999, float(hardness) / 100.0)
     inner = inner_color if inner_color is not None else BRUSH_COLORS['inner']
     outer = outer_color if outer_color is not None else BRUSH_COLORS['gradient_end']
     
@@ -422,7 +422,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         brush_layout.addWidget(hardness_label)
 
         self.hardness_slider = QtWidgets.QSlider(Qt.Horizontal)
-        self.hardness_slider.setRange(0, 100)
+        self.hardness_slider.setRange(1, 100)
         self.hardness_slider.setValue(self.brush_hardness)
         self.hardness_slider.valueChanged.connect(self.update_brush_hardness)
         brush_layout.addWidget(self.hardness_slider)
