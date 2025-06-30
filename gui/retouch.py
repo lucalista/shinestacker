@@ -287,14 +287,10 @@ class ImageViewer(QGraphicsView):
         super().leaveEvent(event)
 
     def setup_shortcuts(self):
-        zoom_in = QShortcut(QKeySequence("Ctrl+="), self)
-        zoom_in.activated.connect(self.zoom_in)
-        zoom_in_alt = QShortcut(QKeySequence("Ctrl++"), self)
-        zoom_in_alt.activated.connect(self.zoom_in)
-        zoom_out = QShortcut(QKeySequence("Ctrl+-"), self)
-        zoom_out.activated.connect(self.zoom_out)
-        reset_zoom = QShortcut(QKeySequence("Ctrl+0"), self)
-        reset_zoom.activated.connect(self.reset_zoom)
+        prev_layer = QShortcut(QKeySequence(Qt.Key_Up), self, context=Qt.ApplicationShortcut)
+        prev_layer.activated.connect(self.prev_layer)
+        next_layer = QShortcut(QKeySequence(Qt.Key_Down), self, context=Qt.ApplicationShortcut)
+        next_layer.activated.connect(self.next_layer)
 
     def zoom_in(self):
         current_scale = self.get_current_scale()
@@ -382,14 +378,6 @@ class ImageEditor(QMainWindow):
         return super().eventFilter(obj, event)
 
     def setup_shortcuts(self):
-        zoom_in = QShortcut(QKeySequence("Ctrl+="), self)
-        zoom_in.activated.connect(self.image_viewer.zoom_in)
-        zoom_in_alt = QShortcut(QKeySequence("Ctrl++"), self)
-        zoom_in_alt.activated.connect(self.image_viewer.zoom_in)
-        zoom_out = QShortcut(QKeySequence("Ctrl+-"), self)
-        zoom_out.activated.connect(self.image_viewer.zoom_out)
-        reset_zoom = QShortcut(QKeySequence("Ctrl+0"), self)
-        reset_zoom.activated.connect(self.image_viewer.reset_zoom)
         prev_layer = QShortcut(QKeySequence(Qt.Key_Up), self, context=Qt.ApplicationShortcut)
         prev_layer.activated.connect(self.prev_layer)
         next_layer = QShortcut(QKeySequence(Qt.Key_Down), self, context=Qt.ApplicationShortcut)
@@ -556,61 +544,69 @@ class ImageEditor(QMainWindow):
         if DONT_USE_NATIVE_MENU:
             quit_txt, quit_short = "&Quit", "Ctrl+Q"
         else:
-            quit_txt. quit_short = "Shut dw&wn", "Ctrl+W"
+            quit_txt, quit_short = "Shut dw&wn", "Ctrl+W"
         exit_action = QAction(quit_txt, self)
         exit_action.setShortcut(quit_short)
         exit_action.triggered.connect(self.quit)
         file_menu.addAction(exit_action)
+
         edit_menu = menubar.addMenu("&Edit")
         undo_action = QAction("Undo Brush", self)
         undo_action.setShortcut("Ctrl+Z")
         undo_action.triggered.connect(self.undo_last_brush)
         edit_menu.addAction(undo_action)
         edit_menu.addSeparator()
-        undo_shortcut = QShortcut(QKeySequence("Ctrl+Z"), self)
-        undo_shortcut.activated.connect(self.undo_last_brush)
+
         copy_action = QAction("Copy Layer to Master", self)
         copy_action.setShortcut("Ctrl+M")
         copy_action.triggered.connect(self.copy_layer_to_master)
         edit_menu.addAction(copy_action)
-        copy_to_master = QShortcut(QKeySequence("Ctrl+M"), self)
-        copy_to_master.activated.connect(self.copy_layer_to_master)
+
         view_menu = menubar.addMenu("&View")
         zoom_in_action = QAction("Zoom In", self)
         zoom_in_action.setShortcut("Ctrl++")
         zoom_in_action.triggered.connect(self.image_viewer.zoom_in)
         view_menu.addAction(zoom_in_action)
+
         zoom_out_action = QAction("Zoom Out", self)
-        zoom_out_action.setShortcut("Ctrl+-")
+        zoom_out_action.setShortcut("Ctrl+-")  # Usa solo Ctrl+- per zoom out
         zoom_out_action.triggered.connect(self.image_viewer.zoom_out)
         view_menu.addAction(zoom_out_action)
+
         adapt_action = QAction("Adapt to Screen", self)
         adapt_action.setShortcut("Ctrl+0")
         adapt_action.triggered.connect(self.image_viewer.reset_zoom)
         view_menu.addAction(adapt_action)
+
         actual_size_action = QAction("Actual Size", self)
         actual_size_action.triggered.connect(self.image_viewer.actual_size)
         view_menu.addAction(actual_size_action)
         view_menu.addSeparator()
+
         view_master_action = QAction("View Master", self)
         view_master_action.setShortcut("M")
         view_master_action.triggered.connect(self.set_view_master)
         view_menu.addAction(view_master_action)
+
         view_individual_action = QAction("View Individual", self)
         view_individual_action.setShortcut("L")
         view_individual_action.triggered.connect(self.set_view_individual)
         view_menu.addAction(view_individual_action)
         view_menu.addSeparator()
+
         sort_asc_action = QAction("Sort Layers A-Z", self)
         sort_asc_action.triggered.connect(lambda: self.sort_layers('asc'))
         view_menu.addAction(sort_asc_action)
+
         sort_desc_action = QAction("Sort Layers Z-A", self)
         sort_desc_action.triggered.connect(lambda: self.sort_layers('desc'))
         view_menu.addAction(sort_desc_action)
+
         sort_original_action = QAction("Original Order", self)
         sort_original_action.triggered.connect(lambda: self.sort_layers('original'))
         view_menu.addAction(sort_original_action)
         view_menu.addSeparator()
+
         help_menu = menubar.addMenu("&Help")
         help_action = QAction("Online Help", self)
         help_action.triggered.connect(self.website)
@@ -1011,7 +1007,7 @@ class ImageEditor(QMainWindow):
                     if 0 <= x_pos < w and 0 <= y_pos < h:
                         alpha = min(1.0, max(0.0, mask_value * opacity_factor))
                         if alpha >= 1.0 or alpha <= 0.0:
-                            print(f"Anomalous value: mask={mask_value}, opacity={opacity_factor}, alpha={alpha}")
+#                            print(f"Anomalous value: mask={mask_value}, opacity={opacity_factor}, alpha={alpha}")
                         alpha = max(0.0, min(1.0, alpha))
                         if self.master_layer.dtype == np.uint16:
                             self.master_layer[y_pos, x_pos] = np.clip(
