@@ -583,7 +583,7 @@ class ImageEditor(QMainWindow):
         zoom_out_action.setShortcut("Ctrl+-")
         zoom_out_action.triggered.connect(self.image_viewer.zoom_out)
         view_menu.addAction(zoom_out_action)
-        adapt_action = QAction("Adapt to Screen  ", self)
+        adapt_action = QAction("Adapt to Screen", self)
         adapt_action.setShortcut("Ctrl+0")
         adapt_action.triggered.connect(self.image_viewer.reset_zoom)
         view_menu.addAction(adapt_action)
