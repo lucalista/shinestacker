@@ -1,5 +1,6 @@
 import sys
 sys.path.append('../')
+import webbrowser
 import numpy as np
 import tifffile
 from psdtags import PsdChannelId
@@ -10,6 +11,9 @@ from PySide6.QtGui import (QPixmap, QPainter, QColor, QImage, QPen, QBrush, QCur
                            QAction, QIcon, QRadialGradient)
 from PySide6.QtCore import Qt, QRectF, QTime, QTimer, QEvent, QSize, QDateTime, QPoint
 from algorithms.multilayer import read_multilayer_tiff, write_multilayer_tiff_from_images
+from gui.gui_utils import disable_macos_special_menu_items
+
+DONT_USE_NATIVE_MENU = True
 
 LABEL_HEIGHT = 20
 THUMB_WIDTH = 120
@@ -544,11 +548,20 @@ class ImageEditor(QMainWindow):
 
     def setup_menu(self):
         menubar = self.menuBar()
-        file_menu = menubar.addMenu("File")
+        file_menu = menubar.addMenu("&File")
         file_menu.addAction("Open...", self.open_file, "Ctrl+O")
         file_menu.addAction("Save", self.save_file, "Ctrl+S")
         file_menu.addAction("Save As...", self.save_file_as)
-        edit_menu = menubar.addMenu("Edit")
+        file_menu.addSeparator()
+        if DONT_USE_NATIVE_MENU:
+            quit_txt, quit_short = "&Quit", "Ctrl+Q"
+        else:
+            quit_txt. quit_short = "Shut dw&wn", "Ctrl+W"
+        exit_action = QAction(quit_txt, self)
+        exit_action.setShortcut(quit_short)
+        exit_action.triggered.connect(self.quit)
+        file_menu.addAction(exit_action)
+        edit_menu = menubar.addMenu("&Edit")
         undo_action = QAction("Undo Brush", self)
         undo_action.setShortcut("Ctrl+Z")
         undo_action.triggered.connect(self.undo_last_brush)
@@ -561,7 +574,7 @@ class ImageEditor(QMainWindow):
         edit_menu.addAction(copy_action)
         copy_to_master = QShortcut(QKeySequence("Ctrl+M"), self)
         copy_to_master.activated.connect(self.copy_layer_to_master)
-        view_menu = menubar.addMenu("View")
+        view_menu = menubar.addMenu("&View")
         zoom_in_action = QAction("Zoom In", self)
         zoom_in_action.setShortcut("Ctrl++")
         zoom_in_action.triggered.connect(self.image_viewer.zoom_in)
@@ -598,6 +611,34 @@ class ImageEditor(QMainWindow):
         sort_original_action.triggered.connect(lambda: self.sort_layers('original'))
         view_menu.addAction(sort_original_action)
         view_menu.addSeparator()
+        help_menu = menubar.addMenu("&Help")
+        help_action = QAction("Online Help", self)
+        help_action.triggered.connect(self.website)
+        help_menu.addAction(help_action)
+
+    def quit(self):
+        if self._check_unsaved_changes():
+            self.close()
+
+    def _check_unsaved_changes(self) -> bool:
+        if self.modified:
+            reply = QMessageBox.question(
+                self, "Unsaved Changes",
+                "The image stack has unsaved changes. Do you want to continue?",
+                QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel
+            )
+            if reply == QMessageBox.Save:
+                self._save_file()
+                return True
+            elif reply == QMessageBox.Discard:
+                return True
+            else:
+                return False
+        else:
+            return True
+
+    def website(self):
+        webbrowser.open("https://github.com/lucalista/focusstack/blob/main/docs/main.md")
 
     def sort_layers(self, order):
         if not hasattr(self, 'current_stack') or not hasattr(self, 'current_labels'):
@@ -1015,6 +1056,10 @@ class ImageEditor(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    if DONT_USE_NATIVE_MENU:
+        app.setAttribute(Qt.AA_DontUseNativeMenuBar)
+    else:
+        disable_macos_special_menu_items()
     app.setWindowIcon(QIcon('ico/focus_stack.png'))
     file_to_open = None
     if len(sys.argv) > 1:

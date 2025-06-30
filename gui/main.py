@@ -7,35 +7,13 @@ import matplotlib
 matplotlib.use('agg')
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
-from PySide6.QtCore import Qt, QTimer, QCoreApplication, QProcess
+from PySide6.QtCore import Qt, QTimer
 from config.config import config
 config.init(DISABLE_TQDM=True)
 from core.logging import setup_logging
 from gui.main_window import MainWindow
 from gui.menu import DONT_USE_NATIVE_MENU
-
-
-def disable_macos_special_menu_items():
-    if QCoreApplication.instance().platformName() != "cocoa":
-        return
-    prefs = [
-        ("NSDisabledCharacterPaletteMenuItem", "YES"),
-        ("NSDisabledDictationMenuItem", "YES"),
-        ("NSDisabledInputMenu", "YES"),
-        ("NSDisabledServicesMenu", "YES"),
-        ("WebAutomaticTextReplacementEnabled", "NO"),
-        ("WebAutomaticSpellingCorrectionEnabled", "NO"),
-        ("WebContinuousSpellCheckingEnabled", "NO"),
-        ("NSTextReplacementEnabled", "NO"),
-        ("NSAllowCharacterPalette", "NO")
-    ]
-    for key, value in prefs:
-        QProcess.execute("defaults", ["write", "-g", key, "-bool", value])
-    QProcess.execute("defaults", ["write", "-g", "NSAutomaticTextCompletionEnabled", "-bool", "NO"])
-    user = os.getenv('USER')
-    if user:
-        QProcess.startDetached("pkill", ["-u", user, "-f", "cfprefsd"])
-        QProcess.startDetached("pkill", ["-u", user, "-f", "SystemUIServer"])
+from gui.gui_utils import disable_macos_special_menu_items
 
 
 def main():
