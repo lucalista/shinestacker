@@ -24,7 +24,7 @@ class StackJob(Job):
 
 class FramePaths:
     def __init__(self, name, input_path='', output_path='', working_path='', plot_path=constants.DEFAULT_PLOTS_PATH,
-                 scratch_output_dir=True, resample=1, reverse_order=False, **kwargs):
+                 scratch_output_dir=True, resample=1, reverse_order=constants.DEFAULT_FILE_REVERSE_ORDER, **kwargs):
         self.name = name
         self.working_path = working_path
         self.plot_path = plot_path
@@ -101,7 +101,7 @@ class FrameDirectory(FramePaths):
 
 class FrameMultiDirectory:
     def __init__(self, name, input_path='', output_path='', working_path='', plot_path=constants.DEFAULT_PLOTS_PATH,
-                 scratch_output_dir=True, resample=1, reverse_order=False, **kwargs):
+                 scratch_output_dir=True, resample=1, reverse_order=constants.DEFAULT_FILE_REVERSE_ORDER, **kwargs):
         FramePaths.__init__(self, name, input_path, output_path, working_path, plot_path, scratch_output_dir, resample, reverse_order, **kwargs)
 
     def folder_list_str(self):

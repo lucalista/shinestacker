@@ -542,6 +542,8 @@ class MultiLayerConfigurator(DefaultActionConfigurator):
                                placeholder='relative to working path')
         self.builder.add_field('scratch_output_dir', FIELD_BOOL, 'Scratch output dir.',
                                required=False, default=True)
+        self.builder.add_field('reverse_order', FIELD_BOOL, 'Reverse file order',
+                               required=False, default=constants.DEFAULT_MULTILAYER_FILE_REVERSE_ORDER)
 
 
 class CombinedActionsConfigurator(DefaultActionConfigurator):

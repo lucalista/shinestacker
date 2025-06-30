@@ -144,6 +144,7 @@ class MultiLayer(FrameMultiDirectory, JobBase):
         FrameMultiDirectory.__init__(self, name, **kwargs)
         JobBase.__init__(self, name, enabled)
         self.exif_path = exif_path
+        self.reverse_order = kwargs.get('reverse_order', constants.DEFAULT_MULTILAYER_FILE_REVERSE_ORDER)
 
     def init(self, job):
         FrameMultiDirectory.init(self, job)

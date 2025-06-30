@@ -341,6 +341,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         self.modified = False
         self.undo_stack = []
         self.max_undo_steps = 50
+        self.sort_order = 'asc'
         self.setup_ui()
         self.setup_menu()
         self.setup_shortcuts()
@@ -573,6 +574,45 @@ class ImageEditor(QtWidgets.QMainWindow):
         view_individual_action.triggered.connect(self.set_view_individual)
         view_menu.addAction(view_individual_action)
         view_menu.addSeparator()
+        sort_asc_action = QAction("Sort Layers A-Z", self)
+        sort_asc_action.triggered.connect(lambda: self.sort_layers('asc'))
+        view_menu.addAction(sort_asc_action)
+        sort_desc_action = QAction("Sort Layers Z-A", self)
+        sort_desc_action.triggered.connect(lambda: self.sort_layers('desc'))
+        view_menu.addAction(sort_desc_action)
+        view_menu.addSeparator()
+
+    def sort_layers(self, order):
+        if not hasattr(self, 'current_stack') or not hasattr(self, 'current_labels'):
+            return
+        self.sort_order = order
+        master_index = -1
+        master_label = None
+        master_layer = None
+        for i, label in enumerate(self.current_labels):
+            if label.lower() == "master":
+                master_index = i
+                master_label = self.current_labels.pop(i)
+                master_layer = self.current_stack[i]
+                self.current_stack = np.delete(self.current_stack, i, axis=0)
+                break
+        if order == 'asc':
+            sorted_indices = sorted(range(len(self.current_labels)),
+                                    key=lambda i: self.current_labels[i].lower())
+        else:
+            sorted_indices = sorted(range(len(self.current_labels)),
+                                    key=lambda i: self.current_labels[i].lower(),
+                                    reverse=True)
+        self.current_labels = [self.current_labels[i] for i in sorted_indices]
+        self.current_stack = self.current_stack[sorted_indices]
+        if master_index != -1:
+            self.current_labels.insert(0, master_label)
+            self.current_stack = np.insert(self.current_stack, 0, master_layer, axis=0)
+            self.master_layer = master_layer.copy()
+        self.update_thumbnails()
+        if self.current_layer >= len(self.current_stack):
+            self.current_layer = len(self.current_stack) - 1
+        self.change_layer(self.current_layer)
 
     def load_tiff_stack(self, path):
         try:
@@ -592,6 +632,34 @@ class ImageEditor(QtWidgets.QMainWindow):
                     layers.append(img)
                     labels.append(layer.name)
             if layers:
+                stack = np.array(layers)
+                if labels:
+                    master_indices = [i for i, label in enumerate(labels) if label.lower() == "master"]
+                    if master_indices:
+                        master_index = master_indices[0]
+                        master_label = labels.pop(master_index)
+                        master_layer = stack[master_index]
+                        stack = np.delete(stack, master_index, axis=0)
+                        sorted_indices = sorted(range(len(labels)), key=lambda i: labels[i].lower())
+                        labels = [labels[i] for i in sorted_indices]
+                        stack = stack[sorted_indices]
+                        labels.insert(0, master_label)
+                        stack = np.insert(stack, 0, master_layer, axis=0)
+                        return stack, labels
+                    else:
+                        sorted_indices = sorted(range(len(labels)), key=lambda i: labels[i].lower())
+                        labels = [labels[i] for i in sorted_indices]
+                        stack = stack[sorted_indices]
+                        return stack, labels
+                return stack, labels
+        except Exception:
+            try:
+                stack = tifffile.imread(path)
+                if stack.ndim == 3:
+                    return stack, None
+                return None, None
+            except Exception:
+                return None, None
                 return np.array(layers), labels
         except Exception:
             try:

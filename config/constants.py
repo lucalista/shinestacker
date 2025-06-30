@@ -26,6 +26,9 @@ class _Constants:
 
     PATH_SEPARATOR = ';'
 
+    DEFAULT_FILE_REVERSE_ORDER = False
+    DEFAULT_MULTILAYER_FILE_REVERSE_ORDER = True
+
     DEFAULT_NOISE_MAP_FILENAME = "noise-map/hot_pixels.png"
     DEFAULT_MN_KERNEL_SIZE = 3
     INTERPOLATE_MEAN = 'MEAN'
