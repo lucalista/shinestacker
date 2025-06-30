@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (QGraphicsView, QGraphicsScene, QGraphicsPixmapIte
                                QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QListWidgetItem, QListWidget,
                                QSlider, QFileDialog, QMessageBox, QAbstractItemView)
 from PySide6.QtGui import (QPixmap, QPainter, QColor, QImage, QPen, QBrush, QCursor, QShortcut, QKeySequence,
-                           QAction, QIcon, QRadialGradient)
+                           QAction, QIcon, QRadialGradient, QActionGroup)
 from PySide6.QtCore import Qt, QRectF, QTime, QTimer, QEvent, QSize, QDateTime, QPoint
 from algorithms.multilayer import read_multilayer_tiff, write_multilayer_tiff_from_images
 from gui.gui_utils import disable_macos_special_menu_items
@@ -257,13 +257,19 @@ class ImageViewer(QGraphicsView):
         self.brush_cursor.hide()
 
     def update_brush_cursor(self, size):
-        if self.brush_cursor:
-            mouse_pos = self.mapFromGlobal(QCursor.pos())
-            scene_pos = self.mapToScene(mouse_pos)
-            center_x = scene_pos.x()
-            center_y = scene_pos.y()
-            effective_opacity = max(MIN_BRUSH_OPACITY,
-                                    self.image_editor.brush_opacity)
+        if not self.brush_cursor:
+            return
+        mouse_pos = self.mapFromGlobal(QCursor.pos())
+        scene_pos = self.mapToScene(mouse_pos)
+        center_x = scene_pos.x()
+        center_y = scene_pos.y()
+        if self.image_editor.cursor_style == 'circle':
+            pen = QPen(BRUSH_COLORS['pen'], 1)
+            self.brush_cursor.setRect(center_x - size / 2, center_y - size / 2, size, size)
+            self.brush_cursor.setPen(pen)
+            self.brush_cursor.setBrush(Qt.NoBrush)
+        else:
+            effective_opacity = max(MIN_BRUSH_OPACITY, self.image_editor.brush_opacity)
             gradient = create_brush_gradient(
                 center_x, center_y, size / 2,
                 self.image_editor.brush_hardness,
@@ -346,6 +352,7 @@ class ImageEditor(QMainWindow):
         self.brush_size = BRUSH_SIZES['default']
         self.brush_hardness = DEFAULT_BRUSH_HARDNESS
         self.brush_opacity = DEFAULT_BRUSH_OPACITY
+        self.cursor_style = 'brush'
         self.view_mode = 'master'
         self.temp_view_individual = False
         self.current_file_path = None
@@ -569,7 +576,7 @@ class ImageEditor(QMainWindow):
         view_menu.addAction(zoom_in_action)
 
         zoom_out_action = QAction("Zoom Out", self)
-        zoom_out_action.setShortcut("Ctrl+-")  # Usa solo Ctrl+- per zoom out
+        zoom_out_action.setShortcut("Ctrl+-")
         zoom_out_action.triggered.connect(self.image_viewer.zoom_out)
         view_menu.addAction(zoom_out_action)
 
@@ -606,6 +613,25 @@ class ImageEditor(QMainWindow):
         sort_original_action.triggered.connect(lambda: self.sort_layers('original'))
         view_menu.addAction(sort_original_action)
         view_menu.addSeparator()
+
+        cursor_menu = view_menu.addMenu("Cursor Style")
+
+        circle_action = QAction("Circle Cursor", self)
+        circle_action.setCheckable(True)
+        circle_action.setChecked(self.cursor_style == 'circle')
+        circle_action.triggered.connect(lambda: self.set_cursor_style('circle'))
+        cursor_menu.addAction(circle_action)
+
+        brush_action = QAction("Brush Cursor", self)
+        brush_action.setCheckable(True)
+        brush_action.setChecked(self.cursor_style == 'brush')
+        brush_action.triggered.connect(lambda: self.set_cursor_style('brush'))
+        cursor_menu.addAction(brush_action)
+
+        cursor_group = QActionGroup(self)
+        cursor_group.addAction(circle_action)
+        cursor_group.addAction(brush_action)
+        cursor_group.setExclusive(True)
 
         help_menu = menubar.addMenu("&Help")
         help_action = QAction("Online Help", self)
@@ -696,11 +722,9 @@ class ImageEditor(QMainWindow):
             if layers:
                 stack = np.array(layers)
                 if labels:
-                    # Cerca il master e spostalo in cima se esiste
                     master_indices = [i for i, label in enumerate(labels) if label.lower() == "master"]
                     if master_indices:
                         master_index = master_indices[0]
-                        # Sposta il master in prima posizione
                         master_label = labels.pop(master_index)
                         master_layer = stack[master_index]
                         stack = np.delete(stack, master_index, axis=0)
@@ -1040,6 +1064,11 @@ class ImageEditor(QMainWindow):
             self.display_current_view()
             self.mark_as_modified()
             self.statusBar().showMessage("Undo applied", 2000)
+
+    def set_cursor_style(self, style):
+        self.cursor_style = style
+        if self.image_viewer.brush_cursor:
+            self.image_viewer.update_brush_cursor(self.brush_size)
 
 
 if __name__ == "__main__":
