@@ -3,10 +3,12 @@ sys.path.append('../')
 import numpy as np
 import tifffile
 from psdtags import PsdChannelId
-from PySide6 import QtWidgets, QtCore, QtGui
-from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
-from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QCursor, QShortcut, QKeySequence, QAction, QIcon
-from PySide6.QtCore import Qt, QRectF
+from PySide6.QtWidgets import (QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QMainWindow, QApplication,
+                               QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QListWidgetItem, QListWidget,
+                               QSlider, QFileDialog, QMessageBox, QAbstractItemView)
+from PySide6.QtGui import (QPixmap, QPainter, QColor, QImage, QPen, QBrush, QCursor, QShortcut, QKeySequence,
+                           QAction, QIcon, QRadialGradient)
+from PySide6.QtCore import Qt, QRectF, QTime, QTimer, QEvent, QSize, QDateTime, QPoint
 from algorithms.multilayer import read_multilayer_tiff, write_multilayer_tiff_from_images
 
 LABEL_HEIGHT = 20
@@ -76,7 +78,7 @@ def brush_size_to_slider(size):
 
 
 def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None, outer_color=None, opacity=100):
-    gradient = QtGui.QRadialGradient(center_x, center_y, float(radius))
+    gradient = QRadialGradient(center_x, center_y, float(radius))
     inner = inner_color if inner_color is not None else BRUSH_COLORS['inner']
     outer = outer_color if outer_color is not None else BRUSH_COLORS['gradient_end']
     inner_with_opacity = QColor(inner)
@@ -130,7 +132,7 @@ class ImageViewer(QGraphicsView):
         self.setCursor(Qt.BlankCursor)
         self.scrolling = False
         self.dragging = False
-        self.last_update_time = QtCore.QTime.currentTime()
+        self.last_update_time = QTime.currentTime()
         self.update_interval = PAINT_REFRESH_TIMER
         self.pending_update = False
         self.setup_brush_cursor()
@@ -192,7 +194,7 @@ class ImageViewer(QGraphicsView):
         brush_size = self.image_editor.brush_size
         self.update_brush_cursor(brush_size)
         if self.dragging and self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual and event.buttons() & Qt.LeftButton:
-            current_time = QtCore.QTime.currentTime()
+            current_time = QTime.currentTime()
             if self.last_update_time.msecsTo(current_time) >= self.update_interval or not self.pending_update:
                 self.image_editor.copy_brush_area_to_master(event.position().toPoint(), continuous=True)
                 self.last_update_time = current_time
@@ -335,7 +337,7 @@ class ImageViewer(QGraphicsView):
             self.zoom_factor = state['zoom']
 
 
-class ImageEditor(QtWidgets.QMainWindow):
+class ImageEditor(QMainWindow):
     def __init__(self):
         super().__init__()
         self.current_stack = None
@@ -355,7 +357,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         self.setup_menu()
         self.setup_shortcuts()
         self.installEventFilter(self)
-        self.update_timer = QtCore.QTimer(self)
+        self.update_timer = QTimer(self)
         self.update_timer.setInterval(PAINT_REFRESH_TIMER)
         self.update_timer.timeout.connect(self.process_pending_updates)
         self.needs_update = False
@@ -367,10 +369,10 @@ class ImageEditor(QtWidgets.QMainWindow):
             self.needs_update = False
 
     def eventFilter(self, obj, event):
-        if event.type() == QtCore.QEvent.KeyPress and event.key() == Qt.Key_X:
+        if event.type() == QEvent.KeyPress and event.key() == Qt.Key_X:
             self.start_temp_view()
             return True
-        elif event.type() == QtCore.QEvent.KeyRelease and event.key() == Qt.Key_X:
+        elif event.type() == QEvent.KeyRelease and event.key() == Qt.Key_X:
             self.end_temp_view()
             return True
         return super().eventFilter(obj, event)
@@ -392,55 +394,55 @@ class ImageEditor(QtWidgets.QMainWindow):
     def setup_ui(self):
         self.setWindowTitle("Focus Stack Editor")
         self.resize(1400, 900)
-        central_widget = QtWidgets.QWidget()
+        central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        layout = QtWidgets.QHBoxLayout(central_widget)
+        layout = QHBoxLayout(central_widget)
         self.image_viewer = ImageViewer()
         self.image_viewer.image_editor = self
         self.image_viewer.setFocusPolicy(Qt.StrongFocus)
-        side_panel = QtWidgets.QWidget()
-        side_layout = QtWidgets.QVBoxLayout(side_panel)
+        side_panel = QWidget()
+        side_layout = QVBoxLayout(side_panel)
         side_layout.setContentsMargins(0, 0, 0, 0)
         side_layout.setSpacing(2)
 
-        brush_panel = QtWidgets.QFrame()
-        brush_panel.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        brush_panel = QFrame()
+        brush_panel.setFrameShape(QFrame.StyledPanel)
         brush_panel.setContentsMargins(0, 0, 0, 0)
-        brush_layout = QtWidgets.QVBoxLayout(brush_panel)
+        brush_layout = QVBoxLayout(brush_panel)
         brush_layout.setContentsMargins(0, 0, 0, 0)
         brush_layout.setSpacing(2)
 
-        brush_label = QtWidgets.QLabel("Brush Size")
-        brush_label.setAlignment(QtCore.Qt.AlignCenter)
+        brush_label = QLabel("Brush Size")
+        brush_label.setAlignment(Qt.AlignCenter)
         brush_layout.addWidget(brush_label)
 
-        self.brush_size_slider = QtWidgets.QSlider(Qt.Horizontal)
+        self.brush_size_slider = QSlider(Qt.Horizontal)
         self.brush_size_slider.setRange(0, BRUSH_SIZE_SLIDER_MAX)
         self.brush_size_slider.setValue(brush_size_to_slider(self.brush_size))
         self.brush_size_slider.valueChanged.connect(self.update_brush_size)
         brush_layout.addWidget(self.brush_size_slider)
-        hardness_label = QtWidgets.QLabel("Brush Hardness")
-        hardness_label.setAlignment(QtCore.Qt.AlignCenter)
+        hardness_label = QLabel("Brush Hardness")
+        hardness_label.setAlignment(Qt.AlignCenter)
         brush_layout.addWidget(hardness_label)
 
-        self.hardness_slider = QtWidgets.QSlider(Qt.Horizontal)
+        self.hardness_slider = QSlider(Qt.Horizontal)
         self.hardness_slider.setRange(1, 100)
         self.hardness_slider.setValue(self.brush_hardness)
         self.hardness_slider.valueChanged.connect(self.update_brush_hardness)
         brush_layout.addWidget(self.hardness_slider)
 
-        opacity_label = QtWidgets.QLabel("Brush Opacity")
-        opacity_label.setAlignment(QtCore.Qt.AlignCenter)
+        opacity_label = QLabel("Brush Opacity")
+        opacity_label.setAlignment(Qt.AlignCenter)
         brush_layout.addWidget(opacity_label)
 
-        self.opacity_slider = QtWidgets.QSlider(Qt.Horizontal)
+        self.opacity_slider = QSlider(Qt.Horizontal)
         self.opacity_slider.setRange(0, 100)
         self.opacity_slider.setValue(self.brush_opacity)
         self.opacity_slider.valueChanged.connect(self.update_brush_opacity)
         brush_layout.addWidget(self.opacity_slider)
 
         side_layout.addWidget(brush_panel)
-        self.brush_preview = QtWidgets.QLabel()
+        self.brush_preview = QLabel()
         self.brush_preview.setContentsMargins(0, 0, 0, 0)
         self.brush_preview.setStyleSheet("""
             QLabel {
@@ -451,13 +453,13 @@ class ImageEditor(QtWidgets.QMainWindow):
                 margin: 0px;
             }
         """)
-        self.brush_preview.setAlignment(QtCore.Qt.AlignCenter)
+        self.brush_preview.setAlignment(Qt.AlignCenter)
         self.brush_preview.setFixedHeight(100)
         self.update_brush_preview()
         brush_layout.addWidget(self.brush_preview)
         side_layout.addWidget(brush_panel)
 
-        master_label = QtWidgets.QLabel("Master")
+        master_label = QLabel("Master")
         master_label.setStyleSheet("""
             QLabel {
                 font-weight: bold;
@@ -468,21 +470,21 @@ class ImageEditor(QtWidgets.QMainWindow):
                 background: #f5f5f5;
             }
         """)
-        master_label.setAlignment(QtCore.Qt.AlignCenter)
+        master_label.setAlignment(Qt.AlignCenter)
         master_label.setFixedHeight(LABEL_HEIGHT)
         side_layout.addWidget(master_label)
-        self.master_thumbnail_frame = QtWidgets.QFrame()
-        self.master_thumbnail_frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        master_thumbnail_layout = QtWidgets.QVBoxLayout(self.master_thumbnail_frame)
+        self.master_thumbnail_frame = QFrame()
+        self.master_thumbnail_frame.setFrameShape(QFrame.StyledPanel)
+        master_thumbnail_layout = QVBoxLayout(self.master_thumbnail_frame)
         master_thumbnail_layout.setContentsMargins(2, 2, 2, 2)
-        self.master_thumbnail_label = QtWidgets.QLabel()
-        self.master_thumbnail_label.setAlignment(QtCore.Qt.AlignCenter)
+        self.master_thumbnail_label = QLabel()
+        self.master_thumbnail_label.setAlignment(Qt.AlignCenter)
         self.master_thumbnail_label.setFixedSize(THUMB_WIDTH, THUMB_HEIGHT)
         self.master_thumbnail_label.mousePressEvent = lambda e: self.set_view_master()
         master_thumbnail_layout.addWidget(self.master_thumbnail_label)
         side_layout.addWidget(self.master_thumbnail_frame)
         side_layout.addSpacing(10)
-        layers_label = QtWidgets.QLabel("Layers")
+        layers_label = QLabel("Layers")
         layers_label.setStyleSheet("""
             QLabel {
                 font-weight: bold;
@@ -493,16 +495,16 @@ class ImageEditor(QtWidgets.QMainWindow):
                 background: #f5f5f5;
             }
         """)
-        layers_label.setAlignment(QtCore.Qt.AlignCenter)
+        layers_label.setAlignment(Qt.AlignCenter)
         layers_label.setFixedHeight(LABEL_HEIGHT)
         side_layout.addWidget(layers_label)
-        self.thumbnail_list = QtWidgets.QListWidget()
+        self.thumbnail_list = QListWidget()
         self.thumbnail_list.setFocusPolicy(Qt.StrongFocus)
-        self.thumbnail_list.setViewMode(QtWidgets.QListWidget.ListMode)
+        self.thumbnail_list.setViewMode(QListWidget.ListMode)
         self.thumbnail_list.setUniformItemSizes(True)
-        self.thumbnail_list.setResizeMode(QtWidgets.QListWidget.Adjust)
-        self.thumbnail_list.setFlow(QtWidgets.QListWidget.TopToBottom)
-        self.thumbnail_list.setMovement(QtWidgets.QListWidget.Static)
+        self.thumbnail_list.setResizeMode(QListWidget.Adjust)
+        self.thumbnail_list.setFlow(QListWidget.TopToBottom)
+        self.thumbnail_list.setMovement(QListWidget.Static)
         self.thumbnail_list.setFixedWidth(THUMB_WIDTH)
         self.thumbnail_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.thumbnail_list.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
@@ -533,7 +535,7 @@ class ImageEditor(QtWidgets.QMainWindow):
             }
         """)
         side_layout.addWidget(self.thumbnail_list, 1)
-        control_panel = QtWidgets.QWidget()
+        control_panel = QWidget()
         layout.addWidget(self.image_viewer, 1)
         layout.addWidget(side_panel, 0)
         layout.addWidget(control_panel, 0)
@@ -680,7 +682,7 @@ class ImageEditor(QtWidgets.QMainWindow):
 
     def open_file(self, path=None):
         if path is None:
-            path, _ = QtWidgets.QFileDialog.getOpenFileName(
+            path, _ = QFileDialog.getOpenFileName(
                 self, "Open Image", "", "Images (*.tif *.tiff *.png *.jpg)")
         if path:
             self.current_file_path = path
@@ -724,8 +726,8 @@ class ImageEditor(QtWidgets.QMainWindow):
     def save_file_as(self):
         if self.current_stack is None:
             return
-        path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save Image", "",
-                                                        "TIFF Files (*.tif *.tiff);;All Files (*)")
+        path, _ = QFileDialog.getSaveFileName(self, "Save Image", "",
+                                              "TIFF Files (*.tif *.tiff);;All Files (*)")
         if path:
             if not path.lower().endswith(('.tif', '.tiff')):
                 path += '.tiff'
@@ -740,7 +742,7 @@ class ImageEditor(QtWidgets.QMainWindow):
             write_multilayer_tiff_from_images({**individual_layers, **master_layer}, path)
             self.statusBar().showMessage(f"Saved: {path}")
         except Exception as e:
-            QtWidgets.QMessageBox.critical(self, "Save Error", f"Could not save file: {str(e)}")
+            QMessageBox.critical(self, "Save Error", f"Could not save file: {str(e)}")
 
     def set_view_master(self):
         self.view_mode = 'master'
@@ -796,19 +798,19 @@ class ImageEditor(QtWidgets.QMainWindow):
                 thumbnail = self.create_rgb_thumbnail(layer)
             else:
                 thumbnail = self.create_grayscale_thumbnail(layer)
-            item_widget = QtWidgets.QWidget()
-            layout = QtWidgets.QVBoxLayout(item_widget)
+            item_widget = QWidget()
+            layout = QVBoxLayout(item_widget)
             layout.setContentsMargins(0, 0, 0, 0)
             layout.setSpacing(0)
-            thumbnail_label = QtWidgets.QLabel()
+            thumbnail_label = QLabel()
             thumbnail_label.setPixmap(thumbnail)
             thumbnail_label.setAlignment(Qt.AlignCenter)
             layout.addWidget(thumbnail_label)
-            label = QtWidgets.QLabel(self.current_labels[i])
+            label = QLabel(self.current_labels[i])
             label.setAlignment(Qt.AlignCenter)
             layout.addWidget(label)
-            item = QtWidgets.QListWidgetItem()
-            item.setSizeHint(QtCore.QSize(IMG_WIDTH, IMG_HEIGHT))
+            item = QListWidgetItem()
+            item.setSizeHint(QSize(IMG_WIDTH, IMG_HEIGHT))
             self.thumbnail_list.addItem(item)
             self.thumbnail_list.setItemWidget(item, item_widget)
 
@@ -816,16 +818,16 @@ class ImageEditor(QtWidgets.QMainWindow):
         if layer.dtype == np.uint16:
             layer = (layer // 256).astype(np.uint8)
         height, width, _ = layer.shape
-        qimg = QImage(layer.data, width, height, 3 * width, QtGui.QImage.Format_RGB888)
-        return QPixmap.fromImage(qimg.scaled(*UI_SIZES['thumbnail'], QtCore.Qt.KeepAspectRatio))
+        qimg = QImage(layer.data, width, height, 3 * width, QImage.Format_RGB888)
+        return QPixmap.fromImage(qimg.scaled(*UI_SIZES['thumbnail'], Qt.KeepAspectRatio))
 
     def create_grayscale_thumbnail(self, layer):
         if layer.dtype == np.uint16:
             p2, p98 = np.percentile(layer, (2, 98))
             layer = np.clip((layer - p2) * 255.0 / (p98 - p2), 0, 255).astype(np.uint8)
         height, width = layer.shape
-        qimg = QImage(layer.data, width, height, width, QtGui.QImage.Format_Grayscale8)
-        return QPixmap.fromImage(qimg.scaled(*UI_SIZES['thumbnail'], QtCore.Qt.KeepAspectRatio))
+        qimg = QImage(layer.data, width, height, width, QImage.Format_Grayscale8)
+        return QPixmap.fromImage(qimg.scaled(*UI_SIZES['thumbnail'], Qt.KeepAspectRatio))
 
     def change_layer(self, layer_idx):
         if 0 <= layer_idx < len(self.current_stack):
@@ -879,7 +881,7 @@ class ImageEditor(QtWidgets.QMainWindow):
     def highlight_thumbnail(self, index):
         self.thumbnail_list.setCurrentRow(index)
         self.thumbnail_list.scrollToItem(self.thumbnail_list.item(index),
-                                         QtWidgets.QAbstractItemView.PositionAtCenter)
+                                         QAbstractItemView.PositionAtCenter)
 
     def update_brush_size(self, slider_val):
         self.brush_size = slider_to_brush_size(slider_val)
@@ -913,7 +915,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         )
         painter.setPen(QPen(BRUSH_COLORS['outer'], 1))
         painter.setBrush(QBrush(gradient))
-        painter.drawEllipse(QtCore.QPoint(center_x, center_y), preview_size // 2, preview_size // 2)
+        painter.drawEllipse(QPoint(center_x, center_y), preview_size // 2, preview_size // 2)
         painter.setPen(QPen(QColor(0, 0, 160)))
         painter.drawText(0, 10, f"Size: {int(self.brush_size)}px")
         painter.drawText(0, 25, f"Hardness: {self.brush_hardness}%")
@@ -924,14 +926,14 @@ class ImageEditor(QtWidgets.QMainWindow):
     def copy_layer_to_master(self):
         if self.current_stack is None or self.master_layer is None:
             return
-        reply = QtWidgets.QMessageBox.question(
+        reply = QMessageBox.question(
             self,
             "Confirm Copy",
             "Warning: the current master layer will be erased\n\nDo you want to continue?",
-            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-            QtWidgets.QMessageBox.No
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
         )
-        if reply == QtWidgets.QMessageBox.Yes:
+        if reply == QMessageBox.Yes:
             self.master_layer = self.current_stack[self.current_layer].copy()
             self.display_current_view()
             self.update_thumbnails()
@@ -996,7 +998,7 @@ class ImageEditor(QtWidgets.QMainWindow):
                 return
             undo_state = {
                 'master': self.master_layer.copy(),
-                'timestamp': QtCore.QDateTime.currentDateTime()
+                'timestamp': QDateTime.currentDateTime()
             }
             if len(self.undo_stack) >= self.max_undo_steps:
                 self.undo_stack.pop(0)
@@ -1012,13 +1014,13 @@ class ImageEditor(QtWidgets.QMainWindow):
 
 
 if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
+    app = QApplication(sys.argv)
     app.setWindowIcon(QIcon('ico/focus_stack.png'))
     file_to_open = None
     if len(sys.argv) > 1:
-        file_to_open = sys.argv[1]    
+        file_to_open = sys.argv[1]
     editor = ImageEditor()
     editor.show()
     if file_to_open:
-        QtCore.QTimer.singleShot(100, lambda: editor.open_file(file_to_open))    
+        QTimer.singleShot(100, lambda: editor.open_file(file_to_open))
     sys.exit(app.exec())

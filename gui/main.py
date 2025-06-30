@@ -7,8 +7,7 @@ import matplotlib
 matplotlib.use('agg')
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
-from PySide6.QtCore import Qt
-from PySide6.QtCore import QCoreApplication, QProcess
+from PySide6.QtCore import Qt, QTimer, QCoreApplication, QProcess
 from config.config import config
 config.init(DISABLE_TQDM=True)
 from core.logging import setup_logging
@@ -48,8 +47,16 @@ def main():
     else:
         disable_macos_special_menu_items()
     app.setWindowIcon(QIcon('ico/focus_stack.png'))
+    file_to_open = None
+    if len(sys.argv) > 1:
+        file_to_open = sys.argv[1]
+        if not os.path.isfile(file_to_open):
+            print(f"File not found: {file_to_open}")
+            file_to_open = None
     window = MainWindow()
     window.show()
+    if file_to_open:
+        QTimer.singleShot(100, lambda: window.open_project(file_to_open))
     sys.exit(app.exec())
 
 
