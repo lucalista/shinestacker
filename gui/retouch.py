@@ -76,25 +76,39 @@ def brush_size_to_slider(size):
 
 
 def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None, outer_color=None, opacity=100):
-    gradient = QtGui.QRadialGradient(center_x, center_y, radius)
-    hardness_normalized = hardness / 100.0
+    gradient = QtGui.QRadialGradient(center_x, center_y, float(radius))
+    hardness_normalized = float(hardness) / 100.0
     inner = inner_color if inner_color is not None else BRUSH_COLORS['inner']
     outer = outer_color if outer_color is not None else BRUSH_COLORS['gradient_end']
+    
     inner_with_opacity = QColor(inner)
-    inner_with_opacity.setAlpha(int(inner.alpha() * opacity / 100))
-    gradient.setColorAt(0, inner_with_opacity)
+    inner_with_opacity.setAlpha(int(float(inner.alpha()) * float(opacity) / 100.0))
+    
+    gradient.setColorAt(0.0, inner_with_opacity)
     gradient.setColorAt(hardness_normalized, inner_with_opacity)
-    gradient.setColorAt(1, outer)
+    gradient.setColorAt(1.0, outer)
     return gradient
-
 
 def calculate_brush_mask(radius, hardness_percent):
     y, x = np.ogrid[-radius:radius + 1, -radius:radius + 1]
-    distance = np.sqrt(x * x + y * y)
+    distance = np.sqrt(x**2.0 + y**2.0)
+    
+    # Gestione esplicita del caso hardness = 0
+    if hardness_percent <= 0:
+        return (distance <= radius).astype(float)
+    
     hardness_radius = radius * (hardness_percent / 100.0)
-    if hardness_radius > 0:
-        return np.clip(1 - (distance - hardness_radius) / (radius - hardness_radius), 0, 1)
-    return (distance <= radius).astype(float)
+    
+    # Protezione contro hardness_radius >= radius
+    if hardness_radius >= radius:
+        return np.ones_like(distance, dtype=float)
+    
+    # Calcolo normale della maschera con protezione divisione zero
+    with np.errstate(divide='ignore', invalid='ignore'):
+        mask = np.clip(1.0 - (distance - hardness_radius) / max(1e-10, (radius - hardness_radius)), 0.0, 1.0)
+        mask[np.isnan(mask)] = 1.0
+    
+    return mask
 
 
 class ImageViewer(QGraphicsView):
@@ -341,7 +355,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         self.modified = False
         self.undo_stack = []
         self.max_undo_steps = 50
-        self.sort_order = 'asc'
+        self.sort_order = 'original'
         self.setup_ui()
         self.setup_menu()
         self.setup_shortcuts()
@@ -580,15 +594,33 @@ class ImageEditor(QtWidgets.QMainWindow):
         sort_desc_action = QAction("Sort Layers Z-A", self)
         sort_desc_action.triggered.connect(lambda: self.sort_layers('desc'))
         view_menu.addAction(sort_desc_action)
+        sort_original_action = QAction("Original Order", self)
+        sort_original_action.triggered.connect(lambda: self.sort_layers('original'))
+        view_menu.addAction(sort_original_action)
         view_menu.addSeparator()
 
     def sort_layers(self, order):
+        """Ordina i layer mantenendo eventuale master in cima"""
         if not hasattr(self, 'current_stack') or not hasattr(self, 'current_labels'):
             return
+            
         self.sort_order = order
+        
+        # Se l'ordine è originale, ricarichiamo il file per ripristinare l'ordine iniziale
+        if order == 'original':
+            if self.current_file_path:
+                self.current_stack, self.current_labels = self.load_tiff_stack(self.current_file_path)
+                self.update_thumbnails()
+                if self.current_layer >= len(self.current_stack):
+                    self.current_layer = len(self.current_stack) - 1
+                self.change_layer(self.current_layer)
+            return
+            
+        # Separa il master (se presente) dagli altri layer
         master_index = -1
         master_label = None
         master_layer = None
+        
         for i, label in enumerate(self.current_labels):
             if label.lower() == "master":
                 master_index = i
@@ -596,23 +628,29 @@ class ImageEditor(QtWidgets.QMainWindow):
                 master_layer = self.current_stack[i]
                 self.current_stack = np.delete(self.current_stack, i, axis=0)
                 break
+        
+        # Ordina gli altri layer
         if order == 'asc':
-            sorted_indices = sorted(range(len(self.current_labels)),
-                                    key=lambda i: self.current_labels[i].lower())
+            sorted_indices = sorted(range(len(self.current_labels)), 
+                              key=lambda i: self.current_labels[i].lower())
         else:
-            sorted_indices = sorted(range(len(self.current_labels)),
-                                    key=lambda i: self.current_labels[i].lower(),
-                                    reverse=True)
+            sorted_indices = sorted(range(len(self.current_labels)), 
+                              key=lambda i: self.current_labels[i].lower(), 
+                              reverse=True)
+        
         self.current_labels = [self.current_labels[i] for i in sorted_indices]
         self.current_stack = self.current_stack[sorted_indices]
+        
+        # Reinserisci il master in cima se esiste
         if master_index != -1:
             self.current_labels.insert(0, master_label)
             self.current_stack = np.insert(self.current_stack, 0, master_layer, axis=0)
             self.master_layer = master_layer.copy()
+        
         self.update_thumbnails()
         if self.current_layer >= len(self.current_stack):
             self.current_layer = len(self.current_stack) - 1
-        self.change_layer(self.current_layer)
+        self.change_layer(self.current_layer)        
 
     def load_tiff_stack(self, path):
         try:
@@ -634,33 +672,18 @@ class ImageEditor(QtWidgets.QMainWindow):
             if layers:
                 stack = np.array(layers)
                 if labels:
+                    # Cerca il master e spostalo in cima se esiste
                     master_indices = [i for i, label in enumerate(labels) if label.lower() == "master"]
                     if master_indices:
                         master_index = master_indices[0]
+                        # Sposta il master in prima posizione
                         master_label = labels.pop(master_index)
                         master_layer = stack[master_index]
                         stack = np.delete(stack, master_index, axis=0)
-                        sorted_indices = sorted(range(len(labels)), key=lambda i: labels[i].lower())
-                        labels = [labels[i] for i in sorted_indices]
-                        stack = stack[sorted_indices]
                         labels.insert(0, master_label)
                         stack = np.insert(stack, 0, master_layer, axis=0)
-                        return stack, labels
-                    else:
-                        sorted_indices = sorted(range(len(labels)), key=lambda i: labels[i].lower())
-                        labels = [labels[i] for i in sorted_indices]
-                        stack = stack[sorted_indices]
-                        return stack, labels
+                    return stack, labels
                 return stack, labels
-        except Exception:
-            try:
-                stack = tifffile.imread(path)
-                if stack.ndim == 3:
-                    return stack, None
-                return None, None
-            except Exception:
-                return None, None
-                return np.array(layers), labels
         except Exception:
             try:
                 stack = tifffile.imread(path)
@@ -878,7 +901,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         self.image_viewer.update_brush_cursor(self.brush_size)
 
     def update_brush_hardness(self, hardness):
-        self.brush_hardness = max(0, min(100, hardness))
+        self.brush_hardness = max(1, min(100, hardness))
         self.update_brush_preview()
         self.image_viewer.update_brush_cursor(self.brush_size)
 
@@ -927,7 +950,7 @@ class ImageEditor(QtWidgets.QMainWindow):
             self.update_thumbnails()
             self.mark_as_modified()
             self.statusBar().showMessage(f"Copied layer {self.current_layer + 1} to master")
-
+            
     def copy_brush_area_to_master(self, view_pos, continuous=False):
         if self.current_stack is None or self.master_layer is None or self.view_mode != 'master' or self.temp_view_individual:
             return
@@ -942,18 +965,34 @@ class ImageEditor(QtWidgets.QMainWindow):
         y_start = max(0, y_center - radius)
         x_end = min(w, x_center + radius + 1)
         y_end = min(h, y_center + radius + 1)
-        mask = calculate_brush_mask(radius, self.brush_hardness)
-        opacity_factor = self.brush_opacity / 100.0
+        if self.brush_hardness <= 0:
+            mask = (distance <= radius).astype(float)
+        else:
+            mask = calculate_brush_mask(radius, self.brush_hardness)        
+        opacity_factor = float(self.brush_opacity) / 100.0
         for dy in range(y_start - y_center, y_end - y_center):
             for dx in range(x_start - x_center, x_end - x_center):
-                if mask[dy + radius, dx + radius] > 0:
+                mask_value = mask[dy + radius, dx + radius]
+                if mask_value > 0:
                     x_pos = x_center + dx
                     y_pos = y_center + dy
                     if 0 <= x_pos < w and 0 <= y_pos < h:
-                        alpha = mask[dy + radius, dx + radius] * opacity_factor
-                        self.master_layer[y_pos, x_pos] = (self.master_layer[y_pos, x_pos] * (1.0 - alpha) + # noqa
-                                                           self.current_stack[self.current_layer][y_pos, x_pos] * # noqa
-                                                           alpha).astype(self.master_layer.dtype)
+                        alpha = min(1.0, max(0.0, mask_value * opacity_factor))
+                        if alpha >= 1.0 or alpha <= 0.0:
+                            print(f"Anomalous value: mask={mask_value}, opacity={opacity_factor}, alpha={alpha}")
+                        alpha = max(0.0, min(1.0, alpha))
+                        if self.master_layer.dtype == np.uint16:
+                            self.master_layer[y_pos, x_pos] = np.clip(
+                                self.master_layer[y_pos, x_pos] * (1.0 - alpha) + 
+                                self.current_stack[self.current_layer][y_pos, x_pos] * alpha,
+                                0, 65535
+                            ).astype(np.uint16)
+                        elif self.master_layer.dtype == np.uint8:
+                            self.master_layer[y_pos, x_pos] = np.clip(
+                                self.master_layer[y_pos, x_pos] * (1.0 - alpha) + 
+                                self.current_stack[self.current_layer][y_pos, x_pos] * alpha,
+                                0, 255
+                            ).astype(np.uint8)
         if not continuous:
             self.display_current_view()
             self.mark_as_modified()

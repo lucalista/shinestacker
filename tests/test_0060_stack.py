@@ -11,7 +11,7 @@ def test_jpg():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg")
         job.add_action(FocusStack("stack-pyramid", PyramidStack(),
-                                  output_path="output/img-jpg-stack", postfix='_pyr'))
+                                  output_path="output/img-jpg-stack", prefix='pyr_'))
         job.run()
     except Exception:
         assert False
@@ -21,7 +21,7 @@ def test_jpg_block():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg")
         job.add_action(FocusStack("stack-pyramid-block", PyramidBlock(),
-                                  output_path="output/img-jpg-block", postfix='_pyr'))
+                                  output_path="output/img-jpg-block", prefix='pyr_'))
         job.run()
     except Exception:
         assert False
@@ -31,7 +31,7 @@ def test_tif():
     try:
         job = StackJob("job", "./", input_path="input/img-tif")
         job.add_action(FocusStack("stack-pyramid-tiff", PyramidStack(),
-                                  output_path="output/img-tif-stack", postfix='_pyr'))
+                                  output_path="output/img-tif-stack", prefix='pyr_'))
         job.run()
     except Exception:
         assert False
@@ -41,7 +41,7 @@ def test_jpg_dm():
     try:
         job = StackJob("job", "./", input_path="input/img-jpg")
         job.add_action(FocusStack("stack-depthmap", DepthMapStack(),
-                                  output_path="output/img-jpg-stack", postfix='_dm'))
+                                  output_path="output/img-jpg-stack", prefix='dm_'))
         job.run()
     except Exception:
         assert False

@@ -515,8 +515,8 @@ class FocusStackConfigurator(FocusStackBaseConfigurator):
         super().create_form(layout, action)
         self.builder.add_field('exif_path', FIELD_REL_PATH, 'Exif data path', required=False,
                                placeholder='relative to working path')
-        self.builder.add_field('postfix', FIELD_TEXT, 'Ouptut filename postfix', required=False,
-                               default=constants.DEFAULT_STACK_POSTFIX, placeholder="_stack")
+        self.builder.add_field('prefix', FIELD_TEXT, 'Ouptut filename prefix', required=False,
+                               default=constants.DEFAULT_STACK_PREFIX, placeholder="_stack")
         super().common_fields(layout, action)
 
 
