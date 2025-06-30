@@ -678,9 +678,10 @@ class ImageEditor(QtWidgets.QMainWindow):
             except Exception:
                 return None, None
 
-    def open_file(self):
-        path, _ = QtWidgets.QFileDialog.getOpenFileName(
-            self, "Open Image", "", "Images (*.tif *.tiff *.png *.jpg)")
+    def open_file(self, path=None):
+        if path is None:
+            path, _ = QtWidgets.QFileDialog.getOpenFileName(
+                self, "Open Image", "", "Images (*.tif *.tiff *.png *.jpg)")
         if path:
             self.current_file_path = path
             self.current_stack, self.current_labels = self.load_tiff_stack(path)
@@ -1013,6 +1014,11 @@ class ImageEditor(QtWidgets.QMainWindow):
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     app.setWindowIcon(QIcon('ico/focus_stack.png'))
+    file_to_open = None
+    if len(sys.argv) > 1:
+        file_to_open = sys.argv[1]    
     editor = ImageEditor()
     editor.show()
+    if file_to_open:
+        QtCore.QTimer.singleShot(100, lambda: editor.open_file(file_to_open))    
     sys.exit(app.exec())
