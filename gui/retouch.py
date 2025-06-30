@@ -34,11 +34,42 @@ UI_SIZES = {
     'master_thumb': (THUMB_WIDTH, THUMB_HEIGHT)
 }
 
+BRUSH_SIZE_SLIDER_MAX = 1000
 BRUSH_SIZES = {
-    'default': 20,
-    'min': 5,
-    'max': 400
+    'default': 50,
+    'min': 4,
+    'mid': 50,
+    'max': 1000
 }
+
+
+def calculate_gamma():
+    if BRUSH_SIZES['mid'] <= BRUSH_SIZES['min'] or BRUSH_SIZES['max'] <= 0:
+        return 1.0
+    ratio = (BRUSH_SIZES['mid'] - BRUSH_SIZES['min']) / BRUSH_SIZES['max']
+    half_point = BRUSH_SIZE_SLIDER_MAX / 2
+    if ratio <= 0:
+        return 1.0
+    gamma = np.log(ratio) / np.log(half_point / BRUSH_SIZE_SLIDER_MAX)
+    return gamma
+
+
+BRUSH_GAMMA = calculate_gamma()
+
+
+def slider_to_brush_size(slider_val):
+    normalized = slider_val / BRUSH_SIZE_SLIDER_MAX
+    size = BRUSH_SIZES['min'] + BRUSH_SIZES['max'] * (normalized ** BRUSH_GAMMA)
+    return max(BRUSH_SIZES['min'], min(BRUSH_SIZES['max'], size))
+
+
+def brush_size_to_slider(size):
+    if size <= BRUSH_SIZES['min']:
+        return 0
+    if size >= BRUSH_SIZES['max']:
+        return BRUSH_SIZE_SLIDER_MAX
+    normalized = ((size - BRUSH_SIZES['min']) / BRUSH_SIZES['max']) ** (1 / BRUSH_GAMMA)
+    return int(normalized * BRUSH_SIZE_SLIDER_MAX)
 
 
 def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None, outer_color=None):
@@ -361,8 +392,8 @@ class ImageEditor(QtWidgets.QMainWindow):
         brush_layout.addWidget(brush_label)
 
         self.brush_size_slider = QtWidgets.QSlider(Qt.Horizontal)
-        self.brush_size_slider.setRange(BRUSH_SIZES['min'], BRUSH_SIZES['max'])
-        self.brush_size_slider.setValue(self.brush_size)
+        self.brush_size_slider.setRange(0, BRUSH_SIZE_SLIDER_MAX)
+        self.brush_size_slider.setValue(brush_size_to_slider(self.brush_size))
         self.brush_size_slider.valueChanged.connect(self.update_brush_size)
         brush_layout.addWidget(self.brush_size_slider)
 
@@ -748,15 +779,13 @@ class ImageEditor(QtWidgets.QMainWindow):
 
     def highlight_thumbnail(self, index):
         self.thumbnail_list.setCurrentRow(index)
-        self.thumbnail_list.scrollToItem(
-            self.thumbnail_list.item(index),
-            QtWidgets.QAbstractItemView.PositionAtCenter
-        )
+        self.thumbnail_list.scrollToItem(self.thumbnail_list.item(index),
+                                         QtWidgets.QAbstractItemView.PositionAtCenter)
 
-    def update_brush_size(self, size):
-        self.brush_size = size
+    def update_brush_size(self, slider_val):
+        self.brush_size = slider_to_brush_size(slider_val)
         self.update_brush_preview()
-        self.image_viewer.update_brush_cursor(size)
+        self.image_viewer.update_brush_cursor(self.brush_size)
 
     def update_brush_hardness(self, hardness):
         self.brush_hardness = max(0, min(100, hardness))
@@ -775,6 +804,8 @@ class ImageEditor(QtWidgets.QMainWindow):
         painter.setPen(QPen(BRUSH_COLORS['outer'], 1))
         painter.setBrush(QBrush(gradient))
         painter.drawEllipse(QtCore.QPoint(center_x, center_y), preview_size // 2, preview_size // 2)
+        painter.setPen(QPen(Qt.black))
+        painter.drawText(5, 15, f"Size: {int(self.brush_size)}px")
         painter.end()
         self.brush_preview.setPixmap(pixmap)
 
