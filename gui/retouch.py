@@ -77,16 +77,18 @@ def brush_size_to_slider(size):
 
 def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None, outer_color=None, opacity=100):
     gradient = QtGui.QRadialGradient(center_x, center_y, float(radius))
-    hardness_normalized = min(0.9999999, float(hardness) / 100.0)
     inner = inner_color if inner_color is not None else BRUSH_COLORS['inner']
     outer = outer_color if outer_color is not None else BRUSH_COLORS['gradient_end']
-    
     inner_with_opacity = QColor(inner)
     inner_with_opacity.setAlpha(int(float(inner.alpha()) * float(opacity) / 100.0))
-    
-    gradient.setColorAt(0.0, inner_with_opacity)
-    gradient.setColorAt(hardness_normalized, inner_with_opacity)
-    gradient.setColorAt(1.0, outer)
+    if hardness < 100:
+        hardness_normalized = float(hardness) / 100.0
+        gradient.setColorAt(0.0, inner_with_opacity)
+        gradient.setColorAt(hardness_normalized, inner_with_opacity)
+        gradient.setColorAt(1.0, outer)
+    else:
+        gradient.setColorAt(0.0, inner_with_opacity)
+        gradient.setColorAt(1.0, inner_with_opacity)
     return gradient
 
 
@@ -596,13 +598,9 @@ class ImageEditor(QtWidgets.QMainWindow):
         view_menu.addSeparator()
 
     def sort_layers(self, order):
-        """Ordina i layer mantenendo eventuale master in cima"""
         if not hasattr(self, 'current_stack') or not hasattr(self, 'current_labels'):
             return
-            
         self.sort_order = order
-        
-        # Se l'ordine è originale, ricarichiamo il file per ripristinare l'ordine iniziale
         if order == 'original':
             if self.current_file_path:
                 self.current_stack, self.current_labels = self.load_tiff_stack(self.current_file_path)
@@ -611,12 +609,9 @@ class ImageEditor(QtWidgets.QMainWindow):
                     self.current_layer = len(self.current_stack) - 1
                 self.change_layer(self.current_layer)
             return
-            
-        # Separa il master (se presente) dagli altri layer
         master_index = -1
         master_label = None
         master_layer = None
-        
         for i, label in enumerate(self.current_labels):
             if label.lower() == "master":
                 master_index = i
@@ -624,29 +619,23 @@ class ImageEditor(QtWidgets.QMainWindow):
                 master_layer = self.current_stack[i]
                 self.current_stack = np.delete(self.current_stack, i, axis=0)
                 break
-        
-        # Ordina gli altri layer
         if order == 'asc':
-            sorted_indices = sorted(range(len(self.current_labels)), 
-                              key=lambda i: self.current_labels[i].lower())
+            sorted_indices = sorted(range(len(self.current_labels)),
+                                    key=lambda i: self.current_labels[i].lower())
         else:
-            sorted_indices = sorted(range(len(self.current_labels)), 
-                              key=lambda i: self.current_labels[i].lower(), 
-                              reverse=True)
-        
+            sorted_indices = sorted(range(len(self.current_labels)),
+                                    key=lambda i: self.current_labels[i].lower(),
+                                    reverse=True)
         self.current_labels = [self.current_labels[i] for i in sorted_indices]
         self.current_stack = self.current_stack[sorted_indices]
-        
-        # Reinserisci il master in cima se esiste
         if master_index != -1:
             self.current_labels.insert(0, master_label)
             self.current_stack = np.insert(self.current_stack, 0, master_layer, axis=0)
             self.master_layer = master_layer.copy()
-        
         self.update_thumbnails()
         if self.current_layer >= len(self.current_stack):
             self.current_layer = len(self.current_stack) - 1
-        self.change_layer(self.current_layer)        
+        self.change_layer(self.current_layer)
 
     def load_tiff_stack(self, path):
         try:
@@ -947,7 +936,7 @@ class ImageEditor(QtWidgets.QMainWindow):
             self.update_thumbnails()
             self.mark_as_modified()
             self.statusBar().showMessage(f"Copied layer {self.current_layer + 1} to master")
-            
+
     def copy_brush_area_to_master(self, view_pos, continuous=False):
         if self.current_stack is None or self.master_layer is None or self.view_mode != 'master' or self.temp_view_individual:
             return
@@ -963,9 +952,11 @@ class ImageEditor(QtWidgets.QMainWindow):
         x_end = min(w, x_center + radius + 1)
         y_end = min(h, y_center + radius + 1)
         if self.brush_hardness <= 0:
+            y, x = np.ogrid[-radius:radius + 1, -radius:radius + 1]
+            distance = np.sqrt(x**2 + y**2)
             mask = (distance <= radius).astype(float)
         else:
-            mask = calculate_brush_mask(radius, self.brush_hardness)        
+            mask = calculate_brush_mask(radius, self.brush_hardness)
         opacity_factor = float(self.brush_opacity) / 100.0
         for dy in range(y_start - y_center, y_end - y_center):
             for dx in range(x_start - x_center, x_end - x_center):
@@ -980,13 +971,13 @@ class ImageEditor(QtWidgets.QMainWindow):
                         alpha = max(0.0, min(1.0, alpha))
                         if self.master_layer.dtype == np.uint16:
                             self.master_layer[y_pos, x_pos] = np.clip(
-                                self.master_layer[y_pos, x_pos] * (1.0 - alpha) + 
+                                self.master_layer[y_pos, x_pos] * (1.0 - alpha) + # noqa
                                 self.current_stack[self.current_layer][y_pos, x_pos] * alpha,
                                 0, 65535
                             ).astype(np.uint16)
                         elif self.master_layer.dtype == np.uint8:
                             self.master_layer[y_pos, x_pos] = np.clip(
-                                self.master_layer[y_pos, x_pos] * (1.0 - alpha) + 
+                                self.master_layer[y_pos, x_pos] * (1.0 - alpha) + # noqa
                                 self.current_stack[self.current_layer][y_pos, x_pos] * alpha,
                                 0, 255
                             ).astype(np.uint8)
