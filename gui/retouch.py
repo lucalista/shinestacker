@@ -1006,7 +1006,7 @@ class ImageEditor(QMainWindow):
                     y_pos = y_center + dy
                     if 0 <= x_pos < w and 0 <= y_pos < h:
                         alpha = min(1.0, max(0.0, mask_value * opacity_factor))
-                        if alpha >= 1.0 or alpha <= 0.0:
+#                        if alpha >= 1.0 or alpha <= 0.0:
 #                            print(f"Anomalous value: mask={mask_value}, opacity={opacity_factor}, alpha={alpha}")
                         alpha = max(0.0, min(1.0, alpha))
                         if self.master_layer.dtype == np.uint16:
