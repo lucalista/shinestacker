@@ -566,6 +566,7 @@ class ImageEditor(QMainWindow):
         undo_action.setShortcut("Ctrl+Z")
         undo_action.triggered.connect(self.undo_last_brush)
         edit_menu.addAction(undo_action)
+        edit_menu.addSeparator()
         undo_shortcut = QShortcut(QKeySequence("Ctrl+Z"), self)
         undo_shortcut.activated.connect(self.undo_last_brush)
         copy_action = QAction("Copy Layer to Master", self)
