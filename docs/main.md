@@ -92,6 +92,8 @@ The following python modules:
 * tqdm
 
 ## Installation
+The package lacks a real installation setup. It will be possibly developed at a later stage.
+
 You can clone the pagkage from GitHub:
 
 ```bash
