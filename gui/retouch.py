@@ -42,6 +42,9 @@ BRUSH_SIZES = {
     'max': 1000
 }
 
+DEFAULT_BRUSH_OPACITY = 100
+MIN_BRUSH_OPACITY = 20
+
 
 def calculate_gamma():
     if BRUSH_SIZES['mid'] <= BRUSH_SIZES['min'] or BRUSH_SIZES['max'] <= 0:
@@ -72,13 +75,15 @@ def brush_size_to_slider(size):
     return int(normalized * BRUSH_SIZE_SLIDER_MAX)
 
 
-def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None, outer_color=None):
+def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None, outer_color=None, opacity=100):
     gradient = QtGui.QRadialGradient(center_x, center_y, radius)
     hardness_normalized = hardness / 100.0
     inner = inner_color if inner_color is not None else BRUSH_COLORS['inner']
     outer = outer_color if outer_color is not None else BRUSH_COLORS['gradient_end']
-    gradient.setColorAt(0, inner)
-    gradient.setColorAt(hardness_normalized, inner)
+    inner_with_opacity = QColor(inner)
+    inner_with_opacity.setAlpha(int(inner.alpha() * opacity / 100))
+    gradient.setColorAt(0, inner_with_opacity)
+    gradient.setColorAt(hardness_normalized, inner_with_opacity)
     gradient.setColorAt(1, outer)
     return gradient
 
@@ -242,9 +247,15 @@ class ImageViewer(QGraphicsView):
             scene_pos = self.mapToScene(mouse_pos)
             center_x = scene_pos.x()
             center_y = scene_pos.y()
+            effective_opacity = max(MIN_BRUSH_OPACITY,
+                                    self.image_editor.brush_opacity)
             gradient = create_brush_gradient(
-                center_x, center_y, size / 2, self.image_editor.brush_hardness,
-                inner_color=BRUSH_COLORS['cursor_inner'], outer_color=BRUSH_COLORS['gradient_end'])
+                center_x, center_y, size / 2,
+                self.image_editor.brush_hardness,
+                inner_color=BRUSH_COLORS['cursor_inner'],
+                outer_color=BRUSH_COLORS['gradient_end'],
+                opacity=effective_opacity
+            )
             self.brush_cursor.setRect(center_x - size / 2, center_y - size / 2, size, size)
             self.brush_cursor.setBrush(QBrush(gradient))
             self.brush_cursor.setPen(QPen(BRUSH_COLORS['pen'], 1))
@@ -323,6 +334,7 @@ class ImageEditor(QtWidgets.QMainWindow):
         self.current_layer = 0
         self.brush_size = BRUSH_SIZES['default']
         self.brush_hardness = DEFAULT_BRUSH_HARDNESS
+        self.brush_opacity = DEFAULT_BRUSH_OPACITY
         self.view_mode = 'master'
         self.temp_view_individual = False
         self.current_file_path = None
@@ -406,6 +418,16 @@ class ImageEditor(QtWidgets.QMainWindow):
         self.hardness_slider.setValue(self.brush_hardness)
         self.hardness_slider.valueChanged.connect(self.update_brush_hardness)
         brush_layout.addWidget(self.hardness_slider)
+
+        opacity_label = QtWidgets.QLabel("Brush Opacity")
+        opacity_label.setAlignment(QtCore.Qt.AlignCenter)
+        brush_layout.addWidget(opacity_label)
+
+        self.opacity_slider = QtWidgets.QSlider(Qt.Horizontal)
+        self.opacity_slider.setRange(0, 100)
+        self.opacity_slider.setValue(self.brush_opacity)
+        self.opacity_slider.valueChanged.connect(self.update_brush_opacity)
+        brush_layout.addWidget(self.opacity_slider)
 
         side_layout.addWidget(brush_panel)
         self.brush_preview = QtWidgets.QLabel()
@@ -792,6 +814,11 @@ class ImageEditor(QtWidgets.QMainWindow):
         self.update_brush_preview()
         self.image_viewer.update_brush_cursor(self.brush_size)
 
+    def update_brush_opacity(self, opacity):
+        self.brush_opacity = opacity
+        self.update_brush_preview()
+        self.image_viewer.update_brush_cursor(self.brush_size)
+
     def update_brush_preview(self):
         width, height = UI_SIZES['brush_preview']
         pixmap = QPixmap(width, height)
@@ -800,12 +827,19 @@ class ImageEditor(QtWidgets.QMainWindow):
         painter.setRenderHint(QPainter.Antialiasing)
         preview_size = min(self.brush_size, width - 2, height - 2)
         center_x, center_y = width // 2, height // 2
-        gradient = create_brush_gradient(center_x, center_y, preview_size // 2, self.brush_hardness)
+        gradient = create_brush_gradient(
+            center_x, center_y, preview_size // 2,
+            self.brush_hardness,
+            inner_color=BRUSH_COLORS['inner'],
+            outer_color=BRUSH_COLORS['gradient_end'],
+            opacity=self.brush_opacity
+        )
         painter.setPen(QPen(BRUSH_COLORS['outer'], 1))
         painter.setBrush(QBrush(gradient))
         painter.drawEllipse(QtCore.QPoint(center_x, center_y), preview_size // 2, preview_size // 2)
         painter.setPen(QPen(Qt.black))
         painter.drawText(5, 15, f"Size: {int(self.brush_size)}px")
+        painter.drawText(5, 30, f"Opacity: {self.brush_opacity}%")
         painter.end()
         self.brush_preview.setPixmap(pixmap)
 
@@ -832,25 +866,26 @@ class ImageEditor(QtWidgets.QMainWindow):
         if not continuous and not self.image_viewer.dragging:
             self.save_undo_state()
         scene_pos = self.image_viewer.mapToScene(view_pos)
-        x_center = int(scene_pos.x())
-        y_center = int(scene_pos.y())
-        radius = self.brush_size // 2
+        x_center = int(round(scene_pos.x()))
+        y_center = int(round(scene_pos.y()))
+        radius = int(round(self.brush_size // 2))
         h, w = self.master_layer.shape[:2]
         x_start = max(0, x_center - radius)
         y_start = max(0, y_center - radius)
         x_end = min(w, x_center + radius + 1)
         y_end = min(h, y_center + radius + 1)
         mask = calculate_brush_mask(radius, self.brush_hardness)
+        opacity_factor = self.brush_opacity / 100.0
         for dy in range(y_start - y_center, y_end - y_center):
             for dx in range(x_start - x_center, x_end - x_center):
                 if mask[dy + radius, dx + radius] > 0:
                     x_pos = x_center + dx
                     y_pos = y_center + dy
                     if 0 <= x_pos < w and 0 <= y_pos < h:
-                        alpha = mask[dy + radius, dx + radius]
-                        self.master_layer[y_pos, x_pos] = (
-                            self.master_layer[y_pos, x_pos] * (1.0 - alpha) + self.current_stack[self.current_layer][y_pos, x_pos] * alpha
-                        ).astype(self.master_layer.dtype)
+                        alpha = mask[dy + radius, dx + radius] * opacity_factor
+                        self.master_layer[y_pos, x_pos] = (self.master_layer[y_pos, x_pos] * (1.0 - alpha) + # noqa
+                                                           self.current_stack[self.current_layer][y_pos, x_pos] * # noqa
+                                                           alpha).astype(self.master_layer.dtype)
         if not continuous:
             self.display_current_view()
             self.mark_as_modified()
