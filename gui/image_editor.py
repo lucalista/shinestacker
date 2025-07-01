@@ -19,22 +19,22 @@ THUMB_WIDTH = 120
 THUMB_HEIGHT = 80
 IMG_WIDTH = 100
 IMG_HEIGHT = 80
-DEFAULT_BRUSH_HARDNESS = 25
+DEFAULT_BRUSH_HARDNESS = 50
 PAINT_REFRESH_TIMER = 200  # milliseconds
 MIN_ZOOMED_IMG_WIDTH = 400
 MAX_ZOOMED_IMG_PX_SIZE = 50
 
 BRUSH_COLORS = {
-    'outer': QColor(255, 0, 0, 200),  # Bordo esterno rosso
-    'inner': QColor(255, 0, 0, 150),  # Rosso semi-trasparente
-    'gradient_end': QColor(255, 0, 0, 0),  # Rosso completamente trasparente
-    'pen': QColor(255, 0, 0, 150),  # Colore della penna
-    'preview': QColor(255, 180, 180),  # Colore di preview
-    'cursor_inner': QColor(255, 0, 0, 120),  # Rosso per il cursore
-    'preview_inner': QColor(255, 255, 255, 150)  # Bianco per l'anteprima reale
+    'outer': QColor(255, 0, 0, 200),
+    'inner': QColor(255, 0, 0, 150),
+    'gradient_end': QColor(255, 0, 0, 0),
+    'pen': QColor(255, 0, 0, 150),
+    'preview': QColor(255, 180, 180),
+    'cursor_inner': QColor(255, 0, 0, 120),
+    'preview_inner': QColor(255, 255, 255, 150)
 }
 
-PREVIEW_OPACITY = 180  # Opacità per l'anteprima del layer
+PREVIEW_OPACITY = 180
 
 UI_SIZES = {
     'brush_preview': (100, 80),
@@ -66,6 +66,7 @@ def calculate_gamma():
 
 
 BRUSH_GAMMA = calculate_gamma()
+
 
 def slider_to_brush_size(slider_val):
     normalized = slider_val / BRUSH_SIZE_SLIDER_MAX
@@ -387,7 +388,6 @@ class ImageEditor(QMainWindow):
 
         cursor_menu = view_menu.addMenu("Cursor Style")
 
-        # Nel setup_menu:
         brush_action = QAction("Simple Brush", self)
         brush_action.setCheckable(True)
         brush_action.setChecked(self.cursor_style == 'brush')
@@ -701,15 +701,13 @@ class ImageEditor(QMainWindow):
 
     def numpy_to_qimage(self, array):
         if array.dtype == np.uint16:
-            array = np.right_shift(array, 8).astype(np.uint8)  # Più efficiente di divisione
+            array = np.right_shift(array, 8).astype(np.uint8)
 
         if array.ndim == 2:
             height, width = array.shape
-            # Usare memoryview per evitare copie
             return QImage(memoryview(array), width, height, width, QImage.Format_Grayscale8)
         elif array.ndim == 3:
             height, width, _ = array.shape
-            # Assicurarsi che l'array sia contiguous
             if not array.flags['C_CONTIGUOUS']:
                 array = np.ascontiguousarray(array)
             return QImage(memoryview(array), width, height, 3 * width, QImage.Format_RGB888)
@@ -759,20 +757,32 @@ class ImageEditor(QMainWindow):
         painter.setRenderHint(QPainter.Antialiasing)
         preview_size = min(self.brush_size, width + 30, height + 30)
         center_x, center_y = width // 2, height // 2
-        gradient = create_brush_gradient(
-            center_x, center_y, preview_size // 2,
-            self.brush_hardness,
-            inner_color=BRUSH_COLORS['inner'],
-            outer_color=BRUSH_COLORS['gradient_end'],
-            opacity=self.brush_opacity
-        )
-        painter.setPen(QPen(BRUSH_COLORS['outer'], 1))
-        painter.setBrush(QBrush(gradient))
-        painter.drawEllipse(QPoint(center_x, center_y), preview_size // 2, preview_size // 2)
-        painter.setPen(QPen(QColor(0, 0, 160)))
-        painter.drawText(0, 10, f"Size: {int(self.brush_size)}px")
-        painter.drawText(0, 25, f"Hardness: {self.brush_hardness}%")
-        painter.drawText(0, 40, f"Opacity: {self.brush_opacity}%")
+        radius = preview_size // 2
+        if self.cursor_style == 'preview':
+            gradient = create_brush_gradient(
+                center_x, center_y, radius,
+                self.brush_hardness,
+                inner_color=BRUSH_COLORS['inner'],
+                outer_color=BRUSH_COLORS['gradient_end'],
+                opacity=self.brush_opacity
+            )
+            painter.setBrush(QBrush(gradient))
+            painter.setPen(QPen(BRUSH_COLORS['outer'], 1))
+        elif self.cursor_style == 'outline':
+            painter.setBrush(Qt.NoBrush)
+            painter.setPen(QPen(BRUSH_COLORS['outer'], 1))
+        else:
+            painter.setBrush(QBrush(BRUSH_COLORS['cursor_inner']))
+            painter.setPen(QPen(BRUSH_COLORS['pen'], 1))
+
+        painter.drawEllipse(QPoint(center_x, center_y), radius, radius)
+
+        if self.cursor_style == 'preview':
+            painter.setPen(QPen(QColor(0, 0, 160)))
+            painter.drawText(0, 10, f"Size: {int(self.brush_size)}px")
+            painter.drawText(0, 25, f"Hardness: {self.brush_hardness}%")
+            painter.drawText(0, 40, f"Opacity: {self.brush_opacity}%")
+
         painter.end()
         self.brush_preview.setPixmap(pixmap)
 
@@ -844,15 +854,10 @@ class ImageEditor(QMainWindow):
     def save_undo_state(self):
         if self.master_layer is None:
             return
-
-        # Usare la compressione zlib per ridurre l'uso di memoria
         current_state = zlib.compress(self.master_layer.tobytes())
-
         if self.undo_stack:
-            # Evitare duplicati consecutivi
             if zlib.decompress(self.undo_stack[-1]['master']) == self.master_layer.tobytes():
                 return
-
         undo_state = {
             'master': current_state,
             'shape': self.master_layer.shape,

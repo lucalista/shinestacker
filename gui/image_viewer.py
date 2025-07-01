@@ -15,16 +15,16 @@ MIN_ZOOMED_IMG_WIDTH = 400
 MAX_ZOOMED_IMG_PX_SIZE = 50
 
 BRUSH_COLORS = {
-    'outer': QColor(255, 0, 0, 200),  # Bordo esterno rosso
-    'inner': QColor(255, 0, 0, 150),  # Rosso semi-trasparente
-    'gradient_end': QColor(255, 0, 0, 0),  # Rosso completamente trasparente
-    'pen': QColor(255, 0, 0, 150),  # Colore della penna
-    'preview': QColor(255, 180, 180),  # Colore di preview
-    'cursor_inner': QColor(255, 0, 0, 120),  # Rosso per il cursore
-    'preview_inner': QColor(255, 255, 255, 150)  # Bianco per l'anteprima reale
+    'outer': QColor(255, 0, 0, 200),
+    'inner': QColor(255, 0, 0, 150),
+    'gradient_end': QColor(255, 0, 0, 0),
+    'pen': QColor(255, 0, 0, 150),
+    'preview': QColor(255, 180, 180),
+    'cursor_inner': QColor(255, 0, 0, 120),
+    'preview_inner': QColor(255, 255, 255, 150)
 }
 
-PREVIEW_OPACITY = 180  # Opacità per l'anteprima del layer
+PREVIEW_OPACITY = 180
 
 UI_SIZES = {
     'brush_preview': (100, 80),
@@ -248,6 +248,7 @@ class ImageViewer(QGraphicsView):
         pen = QPen(BRUSH_COLORS['pen'], 1)
         brush = QBrush(BRUSH_COLORS['cursor_inner'])
         self.brush_cursor = self.scene.addEllipse(0, 0, BRUSH_SIZES['default'], BRUSH_SIZES['default'], pen, brush)
+        self.brush_cursor.setZValue(1000)
         self.brush_cursor.hide()
 
     def update_brush_cursor(self, size):
@@ -263,25 +264,23 @@ class ImageViewer(QGraphicsView):
         radius = size / 2
         self.brush_cursor.setRect(center_x - radius, center_y - radius, size, size)
         if self.image_editor.cursor_style == 'preview':
+            self._setup_outline_style()
             self.brush_cursor.hide()
             self.brush_preview.update_preview(self.image_editor, QCursor.pos(), int(size))
         else:
             self.brush_preview.setVisible(False)
             if self.image_editor.cursor_style == 'outline':
                 self._setup_outline_style()
-            else:  # Simple Brush
+            else:
                 self._setup_simple_brush_style(center_x, center_y, radius)
-
         if not self.brush_cursor.isVisible():
             self.brush_cursor.show()
 
     def _setup_outline_style(self):
-        """Configura lo stile Outline"""
         self.brush_cursor.setPen(QPen(BRUSH_COLORS['pen'], 1))
         self.brush_cursor.setBrush(Qt.NoBrush)
 
     def _setup_simple_brush_style(self, center_x, center_y, radius):
-        """Configura lo stile Simple Brush con gradiente"""
         gradient = create_brush_gradient(
             center_x, center_y, radius,
             self.image_editor.brush_hardness,
@@ -293,14 +292,12 @@ class ImageViewer(QGraphicsView):
         self.brush_cursor.setBrush(QBrush(gradient))
 
     def enterEvent(self, event):
-        """Gestione evento enter semplificata"""
         self.setCursor(Qt.BlankCursor)
         if self.brush_cursor:
             self.brush_cursor.show()
         super().enterEvent(event)
 
     def leaveEvent(self, event):
-        """Gestione evento leave semplificata"""
         if self.brush_cursor:
             self.brush_cursor.hide()
         super().leaveEvent(event)

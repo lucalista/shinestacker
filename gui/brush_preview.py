@@ -1,21 +1,24 @@
 import numpy as np
 from PySide6.QtWidgets import QGraphicsPixmapItem
 from PySide6.QtCore import Qt, QPointF
-from PySide6.QtGui import QPixmap, QPainter, QImage, QColor
+from PySide6.QtGui import QPixmap, QPainter, QImage
 
+#
+# at zero hardness this has still null derivative at r=0. Negative hadrness would result in negative derivative
+#
+# def brush_profile_1(r, hardness):
+#    x = np.clip(r, 0, 1)
+#    if hardness >= 1.0:
+#        return np.where(r < 1.0, 1.0, 0.0)
+#    return np.where(r < 1.0, 0.5 * (np.cos(np.pi * np.power(r, 1.0 / (1.0 - hardness))) + 1.0), 0.0)
 
-def brush_profile_1(r, hardness):
-    x = np.clip(r, 0, 1)
-    if hardness >= 1.0:
-        return np.where(r < 1.0, 1.0, 0.0)
-    return np.where(r < 1.0, 0.5 * (np.cos(np.pi * np.power(r, 1.0 / (1.0 - hardness))) + 1.0), 0.0)
 
 def brush_profile(r, hardness):
-    x = np.clip(r, 0, 1)
     if hardness >= 1.0:
         return np.where(r < 1.0, 1.0, 0.0)
-    k =  0.5 + hardness/(1.0 - hardness)
+    k = 0.5 + hardness / (1.0 - hardness)
     return np.where(r < 1.0, 0.5 * (np.cos(np.pi * np.power(r, k)) + 1.0), 0.0)
+
 
 def create_brush_mask(size, hardness_percent, opacity_percent):
     radius = size / 2.0
@@ -26,11 +29,12 @@ def create_brush_mask(size, hardness_percent, opacity_percent):
     mask = np.clip(brush_profile(r, h), 0.0, 1.0) * o
     return mask
 
+
 class BrushPreviewItem(QGraphicsPixmapItem):
     def __init__(self):
         super().__init__()
         self.setVisible(False)
-        self.setZValue(1000)
+        self.setZValue(500)
         self.setTransformationMode(Qt.SmoothTransformation)
 
     def get_layer_area(self, layer, x, y, w, h):
@@ -45,7 +49,7 @@ class BrushPreviewItem(QGraphicsPixmapItem):
             return None
         area = np.ascontiguousarray(layer[y_start:y_end, x_start:x_end])
         if area.ndim == 2:  # grayscale
-            area = np.ascontiguousarray(np.stack([area]*3, axis=-1))
+            area = np.ascontiguousarray(np.stack([area] * 3, axis=-1))
         elif area.shape[2] == 4:  # RGBA
             area = np.ascontiguousarray(area[..., :3])  # RGB
         if area.dtype == np.uint8:
@@ -53,7 +57,7 @@ class BrushPreviewItem(QGraphicsPixmapItem):
         elif area.dtype == np.uint16:
             return area.astype(np.float32) / 65536.0
         else:
-            raise Expection("Bitmas is neither 8 bit nor 16, but of type " + area.dtype)
+            raise Exception("Bitmas is neither 8 bit nor 16, but of type " + area.dtype)
 
     def update_preview(self, editor, pos, size):
         try:
@@ -75,7 +79,7 @@ class BrushPreviewItem(QGraphicsPixmapItem):
             layer_area = self.get_layer_area(editor.current_stack[editor.current_layer], x, y, w, h)
             master_area = self.get_layer_area(editor.master_layer, x, y, w, h)
             mask_area = create_brush_mask(size=size, hardness_percent=editor.brush_hardness,
-                                     opacity_percent=editor.brush_opacity)[:, :, np.newaxis]
+                                          opacity_percent=editor.brush_opacity)[:, :, np.newaxis]
             if mask_area is not None:
                 area = ((layer_area * mask_area + master_area * (1 - mask_area)) * 255.0).astype(np.uint8)
             else:
@@ -99,7 +103,7 @@ class BrushPreviewItem(QGraphicsPixmapItem):
             painter.drawPixmap(0, 0, mask)
             painter.end()
             self.setPixmap(final_pixmap)
-            x_start, y_start = max(0, x), max(0, y)            
+            x_start, y_start = max(0, x), max(0, y)
             self.setPos(x_start, y_start)
             self.setVisible(True)
         except Exception as e:
