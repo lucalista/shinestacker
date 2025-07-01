@@ -20,11 +20,18 @@ class BrushPreviewItem(QGraphicsPixmapItem):
                 self.setVisible(False)
                 return
 
-            # Calcolo posizione
+            # Calcolo posizione con offset corretto
             radius = size // 2
-            scene_pos = pos if isinstance(pos, QPointF) else editor.image_viewer.mapToScene(pos)
-            x = round(scene_pos.x()) - radius
-            y = round(scene_pos.y()) - radius
+            if isinstance(pos, QPointF):
+                scene_pos = pos
+            else:
+                # Correzione chiave: aggiustiamo l'offset del cursore
+                cursor_pos = editor.image_viewer.mapFromGlobal(pos)
+                scene_pos = editor.image_viewer.mapToScene(cursor_pos)
+            
+            # Coordinate intere per il ritaglio
+            x = int(scene_pos.x() - radius)
+            y = int(scene_pos.y() - radius)
             w = h = size
 
             # Verifica layer
@@ -46,7 +53,7 @@ class BrushPreviewItem(QGraphicsPixmapItem):
                 self.setVisible(False)
                 return
 
-            # MODIFICA CHIAVE: crea una copia contigua C-ordered
+            # Area dell'immagine (assicurati che sia contigua)
             area = np.ascontiguousarray(layer[y_start:y_end, x_start:x_end])
             
             # Conversione immagine
@@ -71,7 +78,7 @@ class BrushPreviewItem(QGraphicsPixmapItem):
                 QImage.Format_RGB888
             )
 
-            # Creazione maschera
+            # Creazione maschera circolare
             mask = QPixmap(w, h)
             mask.fill(Qt.transparent)
             painter = QPainter(mask)
@@ -87,11 +94,13 @@ class BrushPreviewItem(QGraphicsPixmapItem):
             final_pixmap.fill(Qt.transparent)
             
             painter = QPainter(final_pixmap)
+            painter.setRenderHint(QPainter.Antialiasing)
             painter.drawPixmap(0, 0, pixmap)
             painter.setCompositionMode(QPainter.CompositionMode_DestinationIn)
             painter.drawPixmap(0, 0, mask)
             painter.end()
 
+            # Impostazione posizione con offset corretto
             self.setPixmap(final_pixmap)
             self.setPos(x_start, y_start)
             self.setVisible(True)
@@ -101,3 +110,4 @@ class BrushPreviewItem(QGraphicsPixmapItem):
             import traceback
             traceback.print_exc()
             self.setVisible(False)
+
