@@ -3,14 +3,39 @@ from PySide6.QtWidgets import QGraphicsPixmapItem
 from PySide6.QtCore import Qt, QPointF
 from PySide6.QtGui import QPixmap, QPainter, QImage, QColor
 
-PREVIEW_SCALE_FACTOR = 0.90
-
 class BrushPreviewItem(QGraphicsPixmapItem):
     def __init__(self):
         super().__init__()
         self.setVisible(False)
         self.setZValue(1000)
         self.setTransformationMode(Qt.SmoothTransformation)
+
+    def get_layer_area(self, layer, x, y, w, h):
+        if not isinstance(layer, np.ndarray):
+            self.setVisible(False)
+            return None
+        height, width = layer.shape[:2]
+        x_start, y_start = max(0, x), max(0, y)
+        x_end, y_end = min(width, x + w), min(height, y + h)
+        if x_end <= x_start or y_end <= y_start:
+            self.setVisible(False)
+            return None
+        area = np.ascontiguousarray(layer[y_start:y_end, x_start:x_end])
+        if area.ndim == 2:  # grayscale
+            area = np.ascontiguousarray(np.stack([area]*3, axis=-1))
+        elif area.shape[2] == 4:  # RGBA
+            area = np.ascontiguousarray(area[..., :3])  # RGB
+        if area.min() < 0 or area.max() > 65535:
+            print(">>> area min, max: ", area.min(), area.max())
+        if area.dtype != np.uint8:
+            if area.dtype.kind == 'f':
+                if np.max(area) <= 1.0:
+                    area = (area * 255).clip(0, 255).astype(np.uint8)
+                else:
+                    area = area.clip(0, 255).astype(np.uint8)
+            else:
+                area = (area // 256).astype(np.uint8)
+        return area
 
     def update_preview(self, editor, pos, size):
         try:
@@ -30,30 +55,7 @@ class BrushPreviewItem(QGraphicsPixmapItem):
                 self.setVisible(False)
                 return
             layer = editor.current_stack[editor.current_layer]
-            if not isinstance(layer, np.ndarray):
-                self.setVisible(False)
-                return
-            height, width = layer.shape[:2]
-            x_start, y_start = max(0, x), max(0, y)
-            x_end, y_end = min(width, x + w), min(height, y + h)
-            if x_end <= x_start or y_end <= y_start:
-                self.setVisible(False)
-                return
-            area = np.ascontiguousarray(layer[y_start:y_end, x_start:x_end])
-            if area.ndim == 2:  # grayscale
-                area = np.ascontiguousarray(np.stack([area]*3, axis=-1))
-            elif area.shape[2] == 4:  # RGBA
-                area = np.ascontiguousarray(area[..., :3])  # RGB
-            if area.min() < 0 or area.max() > 65535:
-                print(">>> area min, max: ", area.min(), area.max())
-            if area.dtype != np.uint8:
-                if area.dtype.kind == 'f':
-                    if np.max(area) <= 1.0:
-                        area = (area * 255).clip(0, 255).astype(np.uint8)
-                    else:
-                        area = area.clip(0, 255).astype(np.uint8)
-                else:
-                    area = (area // 256).astype(np.uint8)
+            area = self.get_layer_area(layer, x, y, w, h)
             qimage = QImage(area.data, area.shape[1], area.shape[0], area.strides[0], QImage.Format_RGB888)
             mask = QPixmap(w, h)
             mask.fill(Qt.transparent)
@@ -73,6 +75,7 @@ class BrushPreviewItem(QGraphicsPixmapItem):
             painter.drawPixmap(0, 0, mask)
             painter.end()
             self.setPixmap(final_pixmap)
+            x_start, y_start = max(0, x), max(0, y)            
             self.setPos(x_start, y_start)
             self.setVisible(True)
         except Exception as e:
