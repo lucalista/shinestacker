@@ -3,20 +3,14 @@ from PySide6.QtWidgets import QGraphicsPixmapItem
 from PySide6.QtCore import Qt, QPointF
 from PySide6.QtGui import QPixmap, QPainter, QImage
 
-#
-# at zero hardness this has still null derivative at r=0. Negative hadrness would result in negative derivative
-#
-# def brush_profile_1(r, hardness):
-#    x = np.clip(r, 0, 1)
-#    if hardness >= 1.0:
-#        return np.where(r < 1.0, 1.0, 0.0)
-#    return np.where(r < 1.0, 0.5 * (np.cos(np.pi * np.power(r, 1.0 / (1.0 - hardness))) + 1.0), 0.0)
-
 
 def brush_profile(r, hardness):
     if hardness >= 1.0:
         return np.where(r < 1.0, 1.0, 0.0)
     k = 0.5 + hardness / (1.0 - hardness)
+    #
+    # another option is to use np.power(r, 1.0 / (1.0 - hardness)))
+    #
     return np.where(r < 1.0, 0.5 * (np.cos(np.pi * np.power(r, k)) + 1.0), 0.0)
 
 

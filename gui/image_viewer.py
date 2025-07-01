@@ -4,11 +4,6 @@ from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QCursor, QSho
 from PySide6.QtCore import Qt, QRectF, QTime
 from gui.brush_preview import BrushPreviewItem
 
-LABEL_HEIGHT = 20
-THUMB_WIDTH = 120
-THUMB_HEIGHT = 80
-IMG_WIDTH = 100
-IMG_HEIGHT = 80
 DEFAULT_BRUSH_HARDNESS = 25
 PAINT_REFRESH_TIMER = 200  # milliseconds
 MIN_ZOOMED_IMG_WIDTH = 400
@@ -24,53 +19,12 @@ BRUSH_COLORS = {
     'preview_inner': QColor(255, 255, 255, 150)
 }
 
-PREVIEW_OPACITY = 180
-
-UI_SIZES = {
-    'brush_preview': (100, 80),
-    'thumbnail': (IMG_WIDTH, IMG_HEIGHT),
-    'master_thumb': (THUMB_WIDTH, THUMB_HEIGHT)
-}
-
-BRUSH_SIZE_SLIDER_MAX = 1000
 BRUSH_SIZES = {
     'default': 50,
     'min': 4,
     'mid': 50,
     'max': 1000
 }
-
-DEFAULT_BRUSH_OPACITY = 100
-MIN_BRUSH_OPACITY = 20
-
-
-def calculate_gamma():
-    if BRUSH_SIZES['mid'] <= BRUSH_SIZES['min'] or BRUSH_SIZES['max'] <= 0:
-        return 1.0
-    ratio = (BRUSH_SIZES['mid'] - BRUSH_SIZES['min']) / BRUSH_SIZES['max']
-    half_point = BRUSH_SIZE_SLIDER_MAX / 2
-    if ratio <= 0:
-        return 1.0
-    gamma = np.log(ratio) / np.log(half_point / BRUSH_SIZE_SLIDER_MAX)
-    return gamma
-
-
-BRUSH_GAMMA = calculate_gamma()
-
-
-def slider_to_brush_size(slider_val):
-    normalized = slider_val / BRUSH_SIZE_SLIDER_MAX
-    size = BRUSH_SIZES['min'] + BRUSH_SIZES['max'] * (normalized ** BRUSH_GAMMA)
-    return max(BRUSH_SIZES['min'], min(BRUSH_SIZES['max'], size))
-
-
-def brush_size_to_slider(size):
-    if size <= BRUSH_SIZES['min']:
-        return 0
-    if size >= BRUSH_SIZES['max']:
-        return BRUSH_SIZE_SLIDER_MAX
-    normalized = ((size - BRUSH_SIZES['min']) / BRUSH_SIZES['max']) ** (1 / BRUSH_GAMMA)
-    return int(normalized * BRUSH_SIZE_SLIDER_MAX)
 
 
 def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None, outer_color=None, opacity=100):

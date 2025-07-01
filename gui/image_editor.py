@@ -9,7 +9,7 @@ from PySide6.QtGui import (QPixmap, QPainter, QColor, QImage, QPen, QBrush, QSho
                            QAction, QRadialGradient, QActionGroup)
 from PySide6.QtCore import Qt, QTimer, QEvent, QSize, QDateTime, QPoint
 from algorithms.multilayer import read_multilayer_tiff, write_multilayer_tiff_from_images
-from gui.image_viewer import ImageViewer
+from gui.image_viewer import ImageViewer, BRUSH_COLORS, BRUSH_SIZES, PAINT_REFRESH_TIMER
 from gui.brush_preview import create_brush_mask
 
 DONT_USE_NATIVE_MENU = True
@@ -20,21 +20,7 @@ THUMB_HEIGHT = 80
 IMG_WIDTH = 100
 IMG_HEIGHT = 80
 DEFAULT_BRUSH_HARDNESS = 50
-PAINT_REFRESH_TIMER = 200  # milliseconds
-MIN_ZOOMED_IMG_WIDTH = 400
-MAX_ZOOMED_IMG_PX_SIZE = 50
-
-BRUSH_COLORS = {
-    'outer': QColor(255, 0, 0, 200),
-    'inner': QColor(255, 0, 0, 150),
-    'gradient_end': QColor(255, 0, 0, 0),
-    'pen': QColor(255, 0, 0, 150),
-    'preview': QColor(255, 180, 180),
-    'cursor_inner': QColor(255, 0, 0, 120),
-    'preview_inner': QColor(255, 255, 255, 150)
-}
-
-PREVIEW_OPACITY = 180
+DEFAULT_BRUSH_OPACITY = 100
 
 UI_SIZES = {
     'brush_preview': (100, 80),
@@ -43,15 +29,6 @@ UI_SIZES = {
 }
 
 BRUSH_SIZE_SLIDER_MAX = 1000
-BRUSH_SIZES = {
-    'default': 50,
-    'min': 4,
-    'mid': 50,
-    'max': 1000
-}
-
-DEFAULT_BRUSH_OPACITY = 100
-MIN_BRUSH_OPACITY = 20
 
 
 def calculate_gamma():
