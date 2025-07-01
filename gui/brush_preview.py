@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QGraphicsPixmapItem
 from PySide6.QtCore import Qt, QPointF
 from PySide6.QtGui import QPixmap, QPainter, QImage, QColor
 
+PREVIEW_SCALE_FACTOR = 0.90
 
 class BrushPreviewItem(QGraphicsPixmapItem):
     def __init__(self):
@@ -13,9 +14,7 @@ class BrushPreviewItem(QGraphicsPixmapItem):
 
     def update_preview(self, editor, pos, size):
         try:
-            if (editor.current_stack is None or 
-                not hasattr(editor, 'image_viewer') or 
-                size <= 0):
+            if editor.current_stack is None or not hasattr(editor, 'image_viewer') or size <= 0:
                 self.setVisible(False)
                 return
             radius = size // 2
@@ -27,8 +26,7 @@ class BrushPreviewItem(QGraphicsPixmapItem):
             x = int(scene_pos.x() - radius + 0.5)
             y = int(scene_pos.y() - radius)
             w = h = size
-            if (editor.current_layer < 0 or 
-                editor.current_layer >= len(editor.current_stack)):
+            if editor.current_layer < 0 or editor.current_layer >= len(editor.current_stack):
                 self.setVisible(False)
                 return
             layer = editor.current_stack[editor.current_layer]
@@ -42,30 +40,21 @@ class BrushPreviewItem(QGraphicsPixmapItem):
                 self.setVisible(False)
                 return
             area = np.ascontiguousarray(layer[y_start:y_end, x_start:x_end])
-            if area.ndim == 2:  # Scala di grigi
+            if area.ndim == 2:  # grayscale
                 area = np.ascontiguousarray(np.stack([area]*3, axis=-1))
             elif area.shape[2] == 4:  # RGBA
-                if editor.current_layer == len(editor.current_stack) - 1:  # Layer più alto
-                    # Correzione speciale per il layer superiore: preserva i colori
-                    alpha = area[..., 3:] / 255.0
-                    area = (area[..., :3] * alpha).astype(np.uint8)
-                else:
-                    area = np.ascontiguousarray(area[..., :3])  # RGB
+                area = np.ascontiguousarray(area[..., :3])  # RGB
+            if area.min() < 0 or area.max() > 65535:
+                print(">>> area min, max: ", area.min(), area.max())
             if area.dtype != np.uint8:
                 if area.dtype.kind == 'f':
-                    if np.max(area) <= 1.0:  # Valori 0-1
+                    if np.max(area) <= 1.0:
                         area = (area * 255).clip(0, 255).astype(np.uint8)
-                    else:  # Valori 0-255 in float
+                    else:
                         area = area.clip(0, 255).astype(np.uint8)
                 else:
-                    area = area.astype(np.uint8)
-            qimage = QImage(
-                area.data, 
-                area.shape[1], 
-                area.shape[0], 
-                area.strides[0], 
-                QImage.Format_RGB888
-            )
+                    area = (area.astype(np.float32) / 256.0).astype(np.uint8)
+            qimage = QImage(area.data, area.shape[1], area.shape[0], area.strides[0], QImage.Format_RGB888)
             mask = QPixmap(w, h)
             mask.fill(Qt.transparent)
             painter = QPainter(mask)
