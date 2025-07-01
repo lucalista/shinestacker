@@ -253,28 +253,18 @@ class ImageViewer(QGraphicsView):
     def update_brush_cursor(self, size):
         if not self.brush_cursor or not self.isVisible():
             return
-
         mouse_pos = self.mapFromGlobal(QCursor.pos())
         if not self.rect().contains(mouse_pos):
             self.brush_cursor.hide()
             return
-
         scene_pos = self.mapToScene(mouse_pos)
         center_x = scene_pos.x()
         center_y = scene_pos.y()
         radius = size / 2
-
-        # Aggiorna posizione e dimensione
         self.brush_cursor.setRect(center_x - radius, center_y - radius, size, size)
-
-        # Applica lo stile in base alla modalità
         if self.image_editor.cursor_style == 'preview':
             self.brush_cursor.hide()
-            self.brush_preview.update_preview(
-                self.image_editor,
-                QCursor.pos(),
-                int(size)
-            )
+            self.brush_preview.update_preview(self.image_editor, QCursor.pos(), int(size))
         else:
             self.brush_preview.setVisible(False)
             if self.image_editor.cursor_style == 'outline':

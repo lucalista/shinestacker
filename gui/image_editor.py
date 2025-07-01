@@ -10,6 +10,7 @@ from PySide6.QtGui import (QPixmap, QPainter, QColor, QImage, QPen, QBrush, QSho
 from PySide6.QtCore import Qt, QTimer, QEvent, QSize, QDateTime, QPoint
 from algorithms.multilayer import read_multilayer_tiff, write_multilayer_tiff_from_images
 from gui.image_viewer import ImageViewer
+from gui.brush_preview import create_brush_mask
 
 DONT_USE_NATIVE_MENU = True
 
@@ -65,7 +66,6 @@ def calculate_gamma():
 
 
 BRUSH_GAMMA = calculate_gamma()
-
 
 def slider_to_brush_size(slider_val):
     normalized = slider_val / BRUSH_SIZE_SLIDER_MAX
@@ -609,21 +609,18 @@ class ImageEditor(QMainWindow):
             self.statusBar().showMessage("View mode: Master")
 
     def display_current_view(self):
-        """Mostra l'immagine corretta in base alla modalità di visualizzazione"""
         if self.temp_view_individual or self.view_mode == 'individual':
             self.display_current_layer()
         else:
             self.display_master_layer()
 
     def display_master_layer(self):
-        """Mostra il layer master"""
         if self.master_layer is not None:
             qimage = self.numpy_to_qimage(self.master_layer)
             self.image_viewer.set_image(qimage)
             self.update_thumbnails()
 
     def create_thumbnail(self, layer, size):
-        """Crea una miniatura automaticamente rilevando se è RGB o scala di grigi"""
         if layer.ndim == 3 and layer.shape[-1] == 3:
             return self.create_rgb_thumbnail(layer)
         else:
@@ -817,12 +814,9 @@ class ImageEditor(QMainWindow):
             return
         mask_key = (radius, self.brush_hardness)
         if mask_key not in self._brush_mask_cache:
-            if self.brush_hardness <= 0:
-                y, x = np.ogrid[-radius:radius + 1, -radius:radius + 1]
-                mask = (x**2 + y**2 <= radius**2).astype(float)
-            else:
-                mask = calculate_brush_mask(radius, self.brush_hardness)
-            self._brush_mask_cache[mask_key] = mask
+            full_mask = create_brush_mask(size=radius * 2 + 1, hardness_percent=self.brush_hardness,
+                                          opacity_percent=self.brush_opacity)
+            self._brush_mask_cache[mask_key] = full_mask
         full_mask = self._brush_mask_cache[mask_key]
         mask = full_mask[
             y_start - (y_center - radius):y_end - (y_center - radius),
