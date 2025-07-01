@@ -53,7 +53,7 @@ class BrushPreviewItem(QGraphicsPixmapItem):
                     else:
                         area = area.clip(0, 255).astype(np.uint8)
                 else:
-                    area = (area.astype(np.float32) / 256.0).astype(np.uint8)
+                    area = (area // 256).astype(np.uint8)
             qimage = QImage(area.data, area.shape[1], area.shape[0], area.strides[0], QImage.Format_RGB888)
             mask = QPixmap(w, h)
             mask.fill(Qt.transparent)
