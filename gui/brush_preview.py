@@ -3,17 +3,23 @@ from PySide6.QtWidgets import QGraphicsPixmapItem
 from PySide6.QtCore import Qt, QPointF
 from PySide6.QtGui import QPixmap, QPainter, QImage, QColor
 
-def create_brush_mask(size, hardness_percent, opacity_percent=100):
+
+def brush_profile(r, hardness):
+    x = np.clip(r, 0, 1)
+    if hardness >= 1.0:
+        return np.where(r < 1.0, 1.0, 0.0)
+    if hardness <= 0.0:
+        return np.where(r < 1.0, 0.5 * (np.cos(np.pi * r) + 1.0), 0.0)
+    return np.where(r < 1.0, 0.5 * (np.cos(np.pi * np.power(r, 1.0 / (1.0 - hardness))) + 1.0), 0.0)
+
+def create_brush_mask(size, hardness_percent, opacity_percent):
     radius = size / 2.0
     center = (size - 1) / 2.0
+    h, o = hardness_percent / 100.0, opacity_percent / 100.0
     y, x = np.ogrid[:size, :size]
-    distances = np.sqrt((x - center)**2 + (y - center)**2)
-    mask = np.clip(1 - distances/radius, 0.0, 1.0)
-    if hardness_percent < 100:
-        hardness = hardness_percent / 100.0
-        mask = np.clip((mask - hardness) / (1 - hardness), 0.0, 1.0)
-    opacity = opacity_percent / 100.0
-    return mask * opacity
+    r = np.sqrt((x - center)**2 + (y - center)**2) / radius
+    mask = np.clip(brush_profile(r, h), 0.0, 1.0) * o
+    return mask
 
 class BrushPreviewItem(QGraphicsPixmapItem):
     def __init__(self):
