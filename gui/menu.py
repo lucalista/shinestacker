@@ -279,13 +279,11 @@ class WindowMenu(GuiActions):
             self.action_list.clear()
             self._modified_project = False
 
-    def open_project(self, file_path=None):
+    def open_project(self, file_path=False):
         if not self._check_unsaved_changes():
             return
-        if file_path is None:
-            file_path, _ = QFileDialog.getOpenFileName(
-                self, "Open Project", "",
-                "Project Files (*.fsp);;All Files (*)")
+        if file_path is False:
+            file_path, _ = QFileDialog.getOpenFileName(self, "Open Project", "", "Project Files (*.fsp);;All Files (*)")
         if file_path:
             try:
                 file = open(file_path, 'r')
@@ -313,8 +311,7 @@ class WindowMenu(GuiActions):
             self.save_project_as()
 
     def save_project_as(self):
-        file_path, _ = QFileDialog.getSaveFileName(self, "Save Project As", "",
-                                                   "Project Files (*.fsp);;All Files (*)")
+        file_path, _ = QFileDialog.getSaveFileName(self, "Save Project As", "", "Project Files (*.fsp);;All Files (*)")
         if file_path:
             if not file_path.endswith('.fsp'):
                 file_path += '.fsp'
