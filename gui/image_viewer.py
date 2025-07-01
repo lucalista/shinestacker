@@ -4,7 +4,6 @@ from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QCursor, QSho
 from PySide6.QtCore import Qt, QRectF, QTime
 from gui.brush_preview import BrushPreviewItem
 
-DEFAULT_BRUSH_HARDNESS = 25
 PAINT_REFRESH_TIMER = 200  # milliseconds
 MIN_ZOOMED_IMG_WIDTH = 400
 MAX_ZOOMED_IMG_PX_SIZE = 50
