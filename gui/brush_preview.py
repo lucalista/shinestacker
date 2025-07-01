@@ -4,13 +4,18 @@ from PySide6.QtCore import Qt, QPointF
 from PySide6.QtGui import QPixmap, QPainter, QImage, QColor
 
 
+def brush_profile_1(r, hardness):
+    x = np.clip(r, 0, 1)
+    if hardness >= 1.0:
+        return np.where(r < 1.0, 1.0, 0.0)
+    return np.where(r < 1.0, 0.5 * (np.cos(np.pi * np.power(r, 1.0 / (1.0 - hardness))) + 1.0), 0.0)
+
 def brush_profile(r, hardness):
     x = np.clip(r, 0, 1)
     if hardness >= 1.0:
         return np.where(r < 1.0, 1.0, 0.0)
-    if hardness <= 0.0:
-        return np.where(r < 1.0, 0.5 * (np.cos(np.pi * r) + 1.0), 0.0)
-    return np.where(r < 1.0, 0.5 * (np.cos(np.pi * np.power(r, 1.0 / (1.0 - hardness))) + 1.0), 0.0)
+    k =  0.5 + hardness/(1.0 - hardness)
+    return np.where(r < 1.0, 0.5 * (np.cos(np.pi * np.power(r, k)) + 1.0), 0.0)
 
 def create_brush_mask(size, hardness_percent, opacity_percent):
     radius = size / 2.0
@@ -71,7 +76,10 @@ class BrushPreviewItem(QGraphicsPixmapItem):
             master_area = self.get_layer_area(editor.master_layer, x, y, w, h)
             mask_area = create_brush_mask(size=size, hardness_percent=editor.brush_hardness,
                                      opacity_percent=editor.brush_opacity)[:, :, np.newaxis]
-            area = ((layer_area * mask_area + master_area * (1 - mask_area)) * 255.0).astype(np.uint8)
+            if mask_area is not None:
+                area = ((layer_area * mask_area + master_area * (1 - mask_area)) * 255.0).astype(np.uint8)
+            else:
+                raise Exception("Null mask returned")
             qimage = QImage(area.data, area.shape[1], area.shape[0], area.strides[0], QImage.Format_RGB888)
             mask = QPixmap(w, h)
             mask.fill(Qt.transparent)
