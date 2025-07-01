@@ -3,6 +3,16 @@ from PySide6.QtWidgets import QGraphicsPixmapItem
 from PySide6.QtCore import Qt, QPointF
 from PySide6.QtGui import QPixmap, QPainter, QImage, QColor
 
+def create_brush_mask(size, hardness, opacity):
+    radius = size / 2.0
+    center = (size - 1) / 2.0
+    y, x = np.ogrid[:size, :size]
+    distances = np.sqrt((x - center)**2 + (y - center)**2).astype(np.float32)
+    mask = np.clip(1 - distances/radius, 0.0, 1.0)
+    if hardness < 1.0:
+        mask = np.clip((mask - hardness) / (1 - hardness), 0.0, 1.0)
+    return (mask * opacity/100)[:, :, np.newaxis]
+
 class BrushPreviewItem(QGraphicsPixmapItem):
     def __init__(self):
         super().__init__()
@@ -25,8 +35,6 @@ class BrushPreviewItem(QGraphicsPixmapItem):
             area = np.ascontiguousarray(np.stack([area]*3, axis=-1))
         elif area.shape[2] == 4:  # RGBA
             area = np.ascontiguousarray(area[..., :3])  # RGB
-        if area.min() < 0 or area.max() > 65535:
-            print(">>> area min, max: ", area.min(), area.max())
         if area.dtype == np.uint8:
             return area.astype(np.float32) / 256.0
         elif area.dtype == np.uint16:
@@ -53,7 +61,9 @@ class BrushPreviewItem(QGraphicsPixmapItem):
                 return
             layer_area = self.get_layer_area(editor.current_stack[editor.current_layer], x, y, w, h)
             master_area = self.get_layer_area(editor.master_layer, x, y, w, h)
-            area = ((layer_area + master_area) * 128).astype(np.uint8)
+            mask_area = create_brush_mask(size, editor.brush_hardness, editor.brush_opacity)
+            area = ((layer_area * mask_area + master_area * (1 - mask_area)) * 256.0).astype(np.uint8)
+            
             qimage = QImage(area.data, area.shape[1], area.shape[0], area.strides[0], QImage.Format_RGB888)
             mask = QPixmap(w, h)
             mask.fill(Qt.transparent)
