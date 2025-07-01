@@ -4,8 +4,6 @@ from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QCursor, QSho
 from PySide6.QtCore import Qt, QRectF, QTime
 from gui.brush_preview import BrushPreviewItem
 
-DONT_USE_NATIVE_MENU = True
-
 LABEL_HEIGHT = 20
 THUMB_WIDTH = 120
 THUMB_HEIGHT = 80
