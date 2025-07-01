@@ -7,9 +7,9 @@ from PySide6.QtGui import QPixmap, QPainter, QImage
 def brush_profile(r, hardness):
     if hardness >= 1.0:
         return np.where(r < 1.0, 1.0, 0.0)
-    k = 0.5 + hardness / (1.0 - hardness)
+    k = 1.0 / (1.0 - hardness)
     #
-    # another option is to use np.power(r, 1.0 / (1.0 - hardness)))
+    # another option is to use np.power(r, 0.5 + hardness / (1.0 - hardness)))
     #
     return np.where(r < 1.0, 0.5 * (np.cos(np.pi * np.power(r, k)) + 1.0), 0.0)
 
