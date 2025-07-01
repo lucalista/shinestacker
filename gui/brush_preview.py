@@ -72,12 +72,18 @@ class BrushPreviewItem(QGraphicsPixmapItem):
                 return
             layer_area = self.get_layer_area(editor.current_stack[editor.current_layer], x, y, w, h)
             master_area = self.get_layer_area(editor.master_layer, x, y, w, h)
-            mask_area = create_brush_mask(size=size, hardness_percent=editor.brush_hardness,
+            if layer_area is None or master_area is None:
+                self.setVisible(False)
+                return
+            height, width = editor.current_stack[editor.current_layer].shape[:2]
+            full_mask = create_brush_mask(size=size, hardness_percent=editor.brush_hardness,
                                           opacity_percent=editor.brush_opacity)[:, :, np.newaxis]
-            if mask_area is not None:
-                area = ((layer_area * mask_area + master_area * (1 - mask_area)) * 255.0).astype(np.uint8)
-            else:
-                raise Exception("Null mask returned")
+            mask_x_start = max(0, -x) if x < 0 else 0
+            mask_y_start = max(0, -y) if y < 0 else 0
+            mask_x_end = size - (max(0, (x + w) - width)) if (x + w) > width else size
+            mask_y_end = size - (max(0, (y + h) - height)) if (y + h) > height else size
+            mask_area = full_mask[mask_y_start:mask_y_end, mask_x_start:mask_x_end]
+            area = ((layer_area * mask_area + master_area * (1 - mask_area)) * 255.0).astype(np.uint8)
             qimage = QImage(area.data, area.shape[1], area.shape[0], area.strides[0], QImage.Format_RGB888)
             mask = QPixmap(w, h)
             mask.fill(Qt.transparent)
