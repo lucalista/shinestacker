@@ -27,15 +27,12 @@ class BrushPreviewItem(QGraphicsPixmapItem):
             area = np.ascontiguousarray(area[..., :3])  # RGB
         if area.min() < 0 or area.max() > 65535:
             print(">>> area min, max: ", area.min(), area.max())
-        if area.dtype != np.uint8:
-            if area.dtype.kind == 'f':
-                if np.max(area) <= 1.0:
-                    area = (area * 255).clip(0, 255).astype(np.uint8)
-                else:
-                    area = area.clip(0, 255).astype(np.uint8)
-            else:
-                area = (area // 256).astype(np.uint8)
-        return area
+        if area.dtype == np.uint8:
+            return area.astype(np.float32) / 256.0
+        elif area.dtype == np.uint16:
+            return area.astype(np.float32) / 65536.0
+        else:
+            raise Expection("Bitmas is neither 8 bit nor 16, but of type " + area.dtype)
 
     def update_preview(self, editor, pos, size):
         try:
@@ -54,8 +51,9 @@ class BrushPreviewItem(QGraphicsPixmapItem):
             if editor.current_layer < 0 or editor.current_layer >= len(editor.current_stack):
                 self.setVisible(False)
                 return
-            layer = editor.current_stack[editor.current_layer]
-            area = self.get_layer_area(layer, x, y, w, h)
+            layer_area = self.get_layer_area(editor.current_stack[editor.current_layer], x, y, w, h)
+            master_area = self.get_layer_area(editor.master_layer, x, y, w, h)
+            area = ((layer_area + master_area) * 128).astype(np.uint8)
             qimage = QImage(area.data, area.shape[1], area.shape[0], area.strides[0], QImage.Format_RGB888)
             mask = QPixmap(w, h)
             mask.fill(Qt.transparent)
