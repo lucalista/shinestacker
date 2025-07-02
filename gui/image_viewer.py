@@ -4,7 +4,6 @@ from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QCursor, QSho
 from PySide6.QtCore import Qt, QRectF, QTime
 from gui.brush_preview import BrushPreviewItem
 
-PAINT_REFRESH_TIMER = 200  # milliseconds
 MIN_ZOOMED_IMG_WIDTH = 400
 MAX_ZOOMED_IMG_PX_SIZE = 50
 
@@ -27,6 +26,8 @@ BRUSH_SIZES = {
     'max': 1000
 }
 
+MIN_MOUSE_STEP_BRUSH_FRACTION = 0.3
+PAINT_REFRESH_TIMER = 20  # milliseconds
 
 def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None, outer_color=None, opacity=100):
     gradient = QRadialGradient(center_x, center_y, float(radius))
@@ -70,7 +71,6 @@ class ImageViewer(QGraphicsView):
         self.scrolling = False
         self.dragging = False
         self.last_update_time = QTime.currentTime()
-        self.update_interval = PAINT_REFRESH_TIMER
         self.pending_update = False
         self.setup_brush_cursor()
         self.brush_preview = BrushPreviewItem()
@@ -115,8 +115,6 @@ class ImageViewer(QGraphicsView):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-
-            total_start = time.perf_counter()
             copy_start = copy_end = 0
             if self.space_pressed:
                 self.scrolling = True
@@ -126,37 +124,26 @@ class ImageViewer(QGraphicsView):
                     self.brush_cursor.hide()
             else:
                 if self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual:
-
-                    copy_start = time.perf_counter()
-
                     self.image_editor.copy_brush_area_to_master(event.position().toPoint())
                     self.dragging = True
-
-                    copy_end = time.perf_counter()
                 if self.brush_cursor:
                     self.brush_cursor.show()
-
-            total_end = time.perf_counter()
-            total_time = total_end - total_start
-            print(f"mouse pressed event: {total_time * 1000:.2f}ms")
-            print(f"  copy method called: {(copy_end - copy_start) * 1000:.2f}ms\n")
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
         total_start = time.perf_counter()
-
+        
+        if not hasattr(self, 'last_brush_pos'):
+            self.last_brush_pos = event.pos()
         brush_size = self.image_editor.brush_controller.brush_size
-
-        update_start = time.perf_counter()
+        
         self.update_brush_cursor(brush_size)
-        update_end = time.perf_counter()
-        update_total = update_end - update_start
-        if update_total > 10:
-            print(f"update brush: {update_total * 1000:.2f}ms")
-
         if self.dragging and self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual and event.buttons() & Qt.LeftButton:
             current_time = QTime.currentTime()
-            if self.last_update_time.msecsTo(current_time) >= self.update_interval or not self.pending_update:
+            min_step = brush_size * MIN_MOUSE_STEP_BRUSH_FRACTION            
+            distance = (event.pos() - self.last_brush_pos).manhattanLength()
+            if (self.last_update_time.msecsTo(current_time) >= PAINT_REFRESH_TIMER and
+                distance >= min_step) or not self.pending_update:
                 self.image_editor.copy_brush_area_to_master(event.position().toPoint(), continuous=True)
                 self.last_update_time = current_time
                 self.pending_update = False
