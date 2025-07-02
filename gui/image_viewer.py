@@ -139,8 +139,8 @@ class ImageViewer(QGraphicsView):
 
             total_end = time.perf_counter()
             total_time = total_end - total_start
-            print(f"mouse pressed event: {total_time * 1000:.2f}ms")
-            print(f"  copy: {(copy_end - copy_start) * 1000:.2f}ms\n")
+            print(f"\nmouse pressed event: {total_time * 1000:.2f}ms")
+            print(f"  copy: {(copy_end - copy_start) * 1000:.2f}ms")
                 
                     
         super().mousePressEvent(event)

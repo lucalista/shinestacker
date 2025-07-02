@@ -512,7 +512,7 @@ class ImageEditor(QMainWindow):
                     self.update_timer.start()
         total_end = time.perf_counter()
         total_time = total_end - total_start
-        print(f"copy  brush area time: {(total_end - total_start) * 1000:.2f}ms\n")
+        print(f"copy  brush area time: {total_time * 1000:.2f}ms")
             
     def save_undo_state(self):
         if self.master_layer is None:
