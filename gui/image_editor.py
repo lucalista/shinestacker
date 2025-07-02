@@ -1,14 +1,13 @@
 import webbrowser
 import numpy as np
 import tifffile
-import zlib
 import time
 from psdtags import PsdChannelId
-from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QListWidgetItem, QFileDialog, QMessageBox, QAbstractItemView
+from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QAbstractItemView
 from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QRadialGradient
-from PySide6.QtCore import Qt, QTimer, QEvent, QSize, QPoint
+from PySide6.QtCore import Qt, QTimer, QEvent, QPoint
 from algorithms.multilayer import read_multilayer_tiff, write_multilayer_tiff_from_images
-from gui.image_viewer import BRUSH_COLORS, BRUSH_SIZES, PAINT_REFRESH_TIMER, DEFAULT_BRUSH_HARDNESS, DEFAULT_BRUSH_OPACITY
+from gui.image_viewer import BRUSH_COLORS, BRUSH_SIZES, PAINT_REFRESH_TIMER
 from gui.brush_controller import BrushController
 
 THUMB_WIDTH = 120
@@ -75,7 +74,7 @@ class ImageEditor(QMainWindow):
         self.current_file_path = None
         self.modified = False
         self.undo_stack = []
-        self.max_undo_steps = 50
+        self.max_undo_steps = 10
         self.sort_order = 'original'
         self.installEventFilter(self)
         self.update_timer = QTimer(self)
@@ -320,27 +319,7 @@ class ImageEditor(QMainWindow):
             self._add_thumbnail_item(thumbnail, label, i == self.current_layer)
 
     def _add_thumbnail_item(self, thumbnail, label, is_current):
-        item_widget = QWidget()
-        layout = QVBoxLayout(item_widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-
-        thumbnail_label = QLabel()
-        thumbnail_label.setPixmap(thumbnail)
-        thumbnail_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(thumbnail_label)
-
-        label_widget = QLabel(label)
-        label_widget.setAlignment(Qt.AlignCenter)
-        layout.addWidget(label_widget)
-
-        item = QListWidgetItem()
-        item.setSizeHint(QSize(IMG_WIDTH, IMG_HEIGHT))
-        self.thumbnail_list.addItem(item)
-        self.thumbnail_list.setItemWidget(item, item_widget)
-
-        if is_current:
-            self.thumbnail_list.setCurrentItem(item)
+        pass
 
     def create_rgb_thumbnail(self, layer):
         if layer.dtype == np.uint16:
@@ -492,9 +471,13 @@ class ImageEditor(QMainWindow):
             return
 
         total_start = time.perf_counter()
-        
+
+        undo_start = undo_end = 0
         if not continuous and not self.image_viewer.dragging:
+            undo_start = time.perf_counter()
             self.save_undo_state()
+            undo_end = time.perf_counter()
+
         success = self.brush_controller.apply_brush_operation(
             master_layer=self.master_layer,
             source_layer=self.current_stack[self.current_layer],
@@ -512,15 +495,21 @@ class ImageEditor(QMainWindow):
                     self.update_timer.start()
         total_end = time.perf_counter()
         total_time = total_end - total_start
-        print(f"copy  brush area time: {total_time * 1000:.2f}ms")
-            
+        if total_time > 20:
+            print(f"copy brush area time: {total_time * 1000:.2f}ms")
+            print(f"   save undo time: {(undo_end - undo_start) * 1000:.2f}ms")
+
     def save_undo_state(self):
         if self.master_layer is None:
             return
+        state_start = time.perf_counter()
         undo_state = self.brush_controller.create_undo_state(self.master_layer)
+        state_end = time.perf_counter()
+        if state_end - state_start > 20:
+            print(f"   create state: {(state_end - state_start) * 1000:.2f}ms")
         if not undo_state:
             return
-        if self.undo_stack and zlib.decompress(self.undo_stack[-1]['master']) == self.master_layer.tobytes():
+        if self.undo_stack and self.undo_stack[-1]['master'] == self.master_layer.tobytes():
             return
         if len(self.undo_stack) >= self.max_undo_steps:
             self.undo_stack.pop(0)

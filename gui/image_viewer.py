@@ -1,4 +1,3 @@
-import numpy as np
 import time
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
 from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QCursor, QShortcut, QKeySequence, QRadialGradient
@@ -139,15 +138,13 @@ class ImageViewer(QGraphicsView):
 
             total_end = time.perf_counter()
             total_time = total_end - total_start
-            print(f"\nmouse pressed event: {total_time * 1000:.2f}ms")
-            print(f"  copy: {(copy_end - copy_start) * 1000:.2f}ms")
-                
-                    
+            print(f"mouse pressed event: {total_time * 1000:.2f}ms")
+            print(f"  copy method called: {(copy_end - copy_start) * 1000:.2f}ms\n")
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
         total_start = time.perf_counter()
-        
+
         brush_size = self.image_editor.brush_controller.brush_size
 
         update_start = time.perf_counter()
@@ -156,7 +153,7 @@ class ImageViewer(QGraphicsView):
         update_total = update_end - update_start
         if update_total > 10:
             print(f"update brush: {update_total * 1000:.2f}ms")
-        
+
         if self.dragging and self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual and event.buttons() & Qt.LeftButton:
             current_time = QTime.currentTime()
             if self.last_update_time.msecsTo(current_time) >= self.update_interval or not self.pending_update:
@@ -176,7 +173,7 @@ class ImageViewer(QGraphicsView):
         total_time = total_end - total_start
         if total_time > 20:
             print(f"mouse move event: {total_time * 1000:.2f}ms")
-            
+
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton:
             if self.scrolling:

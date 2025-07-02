@@ -1,9 +1,9 @@
 import numpy as np
-import zlib
 import time
 from PySide6.QtCore import QDateTime
 from gui.brush_preview import create_brush_mask
 from gui.image_viewer import BRUSH_SIZES, DEFAULT_BRUSH_HARDNESS, DEFAULT_BRUSH_OPACITY
+
 
 class BrushController:
     def __init__(self):
@@ -17,7 +17,7 @@ class BrushController:
             return False
 
         total_start = time.perf_counter()
-        
+
         scene_pos = image_viewer.mapToScene(view_pos)
         x_center = int(round(scene_pos.x()))
         y_center = int(round(scene_pos.y()))
@@ -69,19 +69,16 @@ class BrushController:
         self._brush_mask_cache.clear()
 
     def create_undo_state(self, master_layer):
-        """Crea uno stato undo compresso"""
         if master_layer is None:
             return None
         return {
-            'master': zlib.compress(master_layer.tobytes()),
+            'master': master_layer.tobytes(),
             'shape': master_layer.shape,
             'dtype': master_layer.dtype,
             'timestamp': QDateTime.currentDateTime()
         }
 
     def apply_undo_state(self, undo_state):
-        """Applica uno stato undo"""
         if undo_state is None:
             return None
-        decompressed = zlib.decompress(undo_state['master'])
-        return np.frombuffer(decompressed, dtype=undo_state['dtype']).reshape(undo_state['shape'])
+        return np.frombuffer(undo_state['master'], dtype=undo_state['dtype']).reshape(undo_state['shape'])

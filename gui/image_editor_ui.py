@@ -1,7 +1,7 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QListWidget, QSlider
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QListWidget, QListWidgetItem, QSlider
 from PySide6.QtGui import QShortcut, QKeySequence, QAction, QActionGroup
-from PySide6.QtCore import Qt
-from gui.image_editor import ImageEditor, THUMB_WIDTH, THUMB_HEIGHT, BRUSH_SIZE_SLIDER_MAX, BRUSH_GAMMA
+from PySide6.QtCore import Qt, QSize
+from gui.image_editor import ImageEditor, THUMB_WIDTH, THUMB_HEIGHT, BRUSH_SIZE_SLIDER_MAX, BRUSH_GAMMA, IMG_WIDTH, IMG_HEIGHT
 from gui.image_viewer import ImageViewer, BRUSH_SIZES
 
 DONT_USE_NATIVE_MENU = True
@@ -289,3 +289,26 @@ class ImageEditorUI(ImageEditor):
     def quit(self):
         if self._check_unsaved_changes():
             self.close()
+
+    def _add_thumbnail_item(self, thumbnail, label, is_current):
+        item_widget = QWidget()
+        layout = QVBoxLayout(item_widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        thumbnail_label = QLabel()
+        thumbnail_label.setPixmap(thumbnail)
+        thumbnail_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(thumbnail_label)
+
+        label_widget = QLabel(label)
+        label_widget.setAlignment(Qt.AlignCenter)
+        layout.addWidget(label_widget)
+
+        item = QListWidgetItem()
+        item.setSizeHint(QSize(IMG_WIDTH, IMG_HEIGHT))
+        self.thumbnail_list.addItem(item)
+        self.thumbnail_list.setItemWidget(item, item_widget)
+
+        if is_current:
+            self.thumbnail_list.setCurrentItem(item)
