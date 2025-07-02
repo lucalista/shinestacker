@@ -1,14 +1,15 @@
 import numpy as np
 import zlib
 from PySide6.QtCore import QDateTime
-
+from gui.brush_preview import create_brush_mask
+from gui.image_viewer import BRUSH_SIZES, DEFAULT_BRUSH_HARDNESS, DEFAULT_BRUSH_OPACITY
 
 class BrushController:
     def __init__(self):
         self._brush_mask_cache = {}
-        self.brush_size = 50
-        self.brush_hardness = 50
-        self.brush_opacity = 100
+        self.brush_size = BRUSH_SIZES['default']
+        self.brush_hardness = DEFAULT_BRUSH_HARDNESS
+        self.brush_opacity = DEFAULT_BRUSH_OPACITY
 
     def apply_brush_operation(self, master_layer, source_layer, view_pos, image_viewer, continuous=False):
         if master_layer is None or source_layer is None:
@@ -28,17 +29,13 @@ class BrushController:
         self._apply_mask(
             master_layer[y_start:y_end, x_start:x_end],
             source_layer[y_start:y_end, x_start:x_end],
-            mask[
-                y_start - (y_center - radius):y_end - (y_center - radius),
-                x_start - (x_center - radius):x_end - (x_center - radius)
-            ]
+            mask[y_start - (y_center - radius):y_end - (y_center - radius), x_start - (x_center - radius):x_end - (x_center - radius)]
         )
         return True
 
     def _get_brush_mask(self, radius):
         mask_key = (radius, self.brush_hardness)
-        if mask_key not in self._brush_mask_cache:
-            from .brush_preview import create_brush_mask  # Import locale per evitare dipendenze circolari
+        if mask_key not in self._brush_mask_cache.keys():
             full_mask = create_brush_mask(
                 size=radius * 2 + 1,
                 hardness_percent=self.brush_hardness,
@@ -52,10 +49,10 @@ class BrushController:
         effective_mask = np.clip(mask * opacity_factor, 0, 1)
         dtype = master_area.dtype
         max_px_value = 65535 if dtype == np.uint16 else 255
-        if master_area.ndim == 3:  # Immagine RGB
+        if master_area.ndim == 3:
             master_area[:] = np.clip(master_area * (1 - effective_mask[..., np.newaxis]) + source_area * # noqa
                                      effective_mask[..., np.newaxis], 0, max_px_value).astype(dtype)
-        else:  # Immagine in scala di grigi
+        else:
             master_area[:] = np.clip(master_area * (1 - effective_mask) + source_area * effective_mask, 0, max_px_value).astype(dtype)
 
     def clear_cache(self):

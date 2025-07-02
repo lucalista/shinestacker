@@ -58,7 +58,7 @@ class ImageEditorUI(ImageEditor):
 
         self.brush_size_slider = QSlider(Qt.Horizontal)
         self.brush_size_slider.setRange(0, BRUSH_SIZE_SLIDER_MAX)
-        self.brush_size_slider.setValue(brush_size_to_slider(self.brush_size))
+        self.brush_size_slider.setValue(brush_size_to_slider(self.brush_controller.brush_size))
         self.brush_size_slider.valueChanged.connect(self.update_brush_size)
         brush_layout.addWidget(self.brush_size_slider)
         hardness_label = QLabel("Brush Hardness")
@@ -67,7 +67,7 @@ class ImageEditorUI(ImageEditor):
 
         self.hardness_slider = QSlider(Qt.Horizontal)
         self.hardness_slider.setRange(1, 100)
-        self.hardness_slider.setValue(self.brush_hardness)
+        self.hardness_slider.setValue(self.brush_controller.brush_hardness)
         self.hardness_slider.valueChanged.connect(self.update_brush_hardness)
         brush_layout.addWidget(self.hardness_slider)
 
@@ -77,7 +77,7 @@ class ImageEditorUI(ImageEditor):
 
         self.opacity_slider = QSlider(Qt.Horizontal)
         self.opacity_slider.setRange(0, 100)
-        self.opacity_slider.setValue(self.brush_opacity)
+        self.opacity_slider.setValue(self.brush_controller.brush_opacity)
         self.opacity_slider.valueChanged.connect(self.update_brush_opacity)
         brush_layout.addWidget(self.opacity_slider)
 

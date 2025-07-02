@@ -18,6 +18,8 @@ BRUSH_COLORS = {
     'preview_inner': QColor(255, 255, 255, 150)
 }
 
+DEFAULT_BRUSH_HARDNESS = 50
+DEFAULT_BRUSH_OPACITY = 100
 BRUSH_SIZES = {
     'default': 50,
     'min': 4,
@@ -41,20 +43,6 @@ def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None
         gradient.setColorAt(0.0, inner_with_opacity)
         gradient.setColorAt(1.0, inner_with_opacity)
     return gradient
-
-
-def calculate_brush_mask(radius, hardness_percent):
-    y, x = np.ogrid[-radius:radius + 1, -radius:radius + 1]
-    distance = np.sqrt(x**2.0 + y**2.0)
-    if hardness_percent <= 0:
-        return (distance <= radius).astype(float)
-    hardness_radius = radius * (hardness_percent / 100.0)
-    if hardness_radius >= radius:
-        return np.ones_like(distance, dtype=float)
-    with np.errstate(divide='ignore', invalid='ignore'):
-        mask = np.clip(1.0 - (distance - hardness_radius) / max(1e-10, (radius - hardness_radius)), 0.0, 1.0)
-        mask[np.isnan(mask)] = 1.0
-    return mask
 
 
 class ImageViewer(QGraphicsView):
@@ -142,7 +130,7 @@ class ImageViewer(QGraphicsView):
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
-        brush_size = self.image_editor.brush_size
+        brush_size = self.image_editor.brush_controller.brush_size
         self.update_brush_cursor(brush_size)
         if self.dragging and self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual and event.buttons() & Qt.LeftButton:
             current_time = QTime.currentTime()
@@ -195,7 +183,7 @@ class ImageViewer(QGraphicsView):
                 self.scale(zoom_out_factor, zoom_out_factor)
                 self.zoom_factor = new_scale
 
-        self.update_brush_cursor(self.image_editor.brush_size)
+        self.update_brush_cursor(self.image_editor.brush_controller.brush_size)
 
     def setup_brush_cursor(self):
         pen = QPen(BRUSH_COLORS['pen'], 1)
@@ -236,10 +224,10 @@ class ImageViewer(QGraphicsView):
     def _setup_simple_brush_style(self, center_x, center_y, radius):
         gradient = create_brush_gradient(
             center_x, center_y, radius,
-            self.image_editor.brush_hardness,
+            self.image_editor.brush_controller.brush_hardness,
             inner_color=BRUSH_COLORS['inner'],
             outer_color=BRUSH_COLORS['gradient_end'],
-            opacity=self.image_editor.brush_opacity
+            opacity=self.image_editor.brush_controller.brush_opacity
         )
         self.brush_cursor.setPen(QPen(BRUSH_COLORS['pen'], 1))
         self.brush_cursor.setBrush(QBrush(gradient))
