@@ -3,6 +3,7 @@ import time
 from PySide6.QtCore import QDateTime
 from gui.brush_preview import create_brush_mask
 from gui.image_viewer import BRUSH_SIZES, DEFAULT_BRUSH_HARDNESS, DEFAULT_BRUSH_OPACITY
+from config.constants import constants
 
 
 class BrushController:
@@ -58,7 +59,7 @@ class BrushController:
         opacity_factor = float(self.brush_opacity) / 100.0
         effective_mask = np.clip(mask * opacity_factor, 0, 1)
         dtype = master_area.dtype
-        max_px_value = 65535 if dtype == np.uint16 else 255
+        max_px_value = constants.MAX_UINT16 if dtype == np.uint16 else constants.MAX_UINT8
         if master_area.ndim == 3:
             master_area[:] = np.clip(master_area * (1 - effective_mask[..., np.newaxis]) + source_area * # noqa
                                      effective_mask[..., np.newaxis], 0, max_px_value).astype(dtype)

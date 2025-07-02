@@ -29,6 +29,7 @@ BRUSH_SIZES = {
 MIN_MOUSE_STEP_BRUSH_FRACTION = 0.3
 PAINT_REFRESH_TIMER = 20  # milliseconds
 
+
 def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None, outer_color=None, opacity=100):
     gradient = QRadialGradient(center_x, center_y, float(radius))
     inner = inner_color if inner_color is not None else BRUSH_COLORS['inner']
@@ -115,7 +116,6 @@ class ImageViewer(QGraphicsView):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            copy_start = copy_end = 0
             if self.space_pressed:
                 self.scrolling = True
                 self.last_mouse_pos = event.position()
@@ -132,18 +132,16 @@ class ImageViewer(QGraphicsView):
 
     def mouseMoveEvent(self, event):
         total_start = time.perf_counter()
-        
         if not hasattr(self, 'last_brush_pos'):
             self.last_brush_pos = event.pos()
         brush_size = self.image_editor.brush_controller.brush_size
-        
         self.update_brush_cursor(brush_size)
         if self.dragging and self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual and event.buttons() & Qt.LeftButton:
             current_time = QTime.currentTime()
-            min_step = brush_size * MIN_MOUSE_STEP_BRUSH_FRACTION            
+            min_step = brush_size * MIN_MOUSE_STEP_BRUSH_FRACTION
             distance = (event.pos() - self.last_brush_pos).manhattanLength()
-            if (self.last_update_time.msecsTo(current_time) >= PAINT_REFRESH_TIMER and
-                distance >= min_step) or not self.pending_update:
+            if (self.last_update_time.msecsTo(current_time) >= PAINT_REFRESH_TIMER and  # noqa
+                distance >= min_step) or not self.pending_update:  # noqa
                 self.image_editor.copy_brush_area_to_master(event.position().toPoint(), continuous=True)
                 self.last_update_time = current_time
                 self.pending_update = False

@@ -66,7 +66,7 @@ class ImageEditorUI(ImageEditor):
         brush_layout.addWidget(hardness_label)
 
         self.hardness_slider = QSlider(Qt.Horizontal)
-        self.hardness_slider.setRange(1, 100)
+        self.hardness_slider.setRange(0, 100)
         self.hardness_slider.setValue(self.brush_controller.brush_hardness)
         self.hardness_slider.valueChanged.connect(self.update_brush_hardness)
         brush_layout.addWidget(self.hardness_slider)
