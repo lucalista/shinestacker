@@ -9,6 +9,7 @@ from PySide6.QtCore import Qt, QTimer, QEvent, QSize, QDateTime, QPoint
 from algorithms.multilayer import read_multilayer_tiff, write_multilayer_tiff_from_images
 from gui.image_viewer import BRUSH_COLORS, BRUSH_SIZES, PAINT_REFRESH_TIMER
 from gui.brush_preview import create_brush_mask
+from gui.brush_controller import BrushController
 
 THUMB_WIDTH = 120
 THUMB_HEIGHT = 80
@@ -100,7 +101,8 @@ class ImageEditor(QMainWindow):
         self.update_timer.setInterval(PAINT_REFRESH_TIMER)
         self.update_timer.timeout.connect(self.process_pending_updates)
         self.needs_update = False
-
+        self.brush_controller = BrushController()
+        
     def process_pending_updates(self):
         if self.needs_update:
             self.display_current_view()
@@ -501,78 +503,55 @@ class ImageEditor(QMainWindow):
             self.mark_as_modified()
             self.statusBar().showMessage(f"Copied layer {self.current_layer + 1} to master")
 
+       
     def copy_brush_area_to_master(self, view_pos, continuous=False):
-        if self.current_stack is None or self.master_layer is None or self.view_mode != 'master' or self.temp_view_individual:
+        if (self.current_stack is None or self.master_layer is None or 
+            self.view_mode != 'master' or self.temp_view_individual):
             return
+            
         if not continuous and not self.image_viewer.dragging:
             self.save_undo_state()
-        scene_pos = self.image_viewer.mapToScene(view_pos)
-        x_center = int(round(scene_pos.x()))
-        y_center = int(round(scene_pos.y()))
-        radius = int(round(self.brush_size // 2))
-        h, w = self.master_layer.shape[:2]
-        x_start = max(0, x_center - radius)
-        y_start = max(0, y_center - radius)
-        x_end = min(w, x_center + radius + 1)
-        y_end = min(h, y_center + radius + 1)
-        if x_start >= x_end or y_start >= y_end:
-            return
-        mask_key = (radius, self.brush_hardness)
-        if mask_key not in self._brush_mask_cache:
-            full_mask = create_brush_mask(size=radius * 2 + 1, hardness_percent=self.brush_hardness,
-                                          opacity_percent=self.brush_opacity)
-            self._brush_mask_cache[mask_key] = full_mask
-        full_mask = self._brush_mask_cache[mask_key]
-        mask = full_mask[
-            y_start - (y_center - radius):y_end - (y_center - radius),
-            x_start - (x_center - radius):x_end - (x_center - radius)
-        ]
-        opacity_factor = float(self.brush_opacity) / 100.0
-        mask = np.clip(mask * opacity_factor, 0, 1)
-        master_area = self.master_layer[y_start:y_end, x_start:x_end]
-        layer_area = self.current_stack[self.current_layer][y_start:y_end, x_start:x_end]
-        dtype = self.master_layer.dtype
-        max_px_value = 65535 if dtype == np.uint16 else 255
-        self.master_layer[y_start:y_end, x_start:x_end] = np.clip(
-            master_area * (1 - mask[..., None] if master_area.ndim == 3 else 1 - mask) + # noqa
-            layer_area * (mask[..., None] if master_area.ndim == 3 else mask),
-            0, max_px_value
-        ).astype(dtype)
-        if not continuous:
-            self.display_current_view()
-            self.mark_as_modified()
-        else:
-            self.needs_update = True
-            if not self.update_timer.isActive():
-                self.update_timer.start()
+            
+        success = self.brush_controller.apply_brush_operation(
+            master_layer=self.master_layer,
+            source_layer=self.current_stack[self.current_layer],
+            view_pos=view_pos,
+            image_viewer=self.image_viewer,
+            continuous=continuous
+        )
+        
+        if success:
+            if not continuous:
+                self.display_current_view()
+                self.mark_as_modified()
+            else:
+                self.needs_update = True
+                if not self.update_timer.isActive():
+                    self.update_timer.start()
 
     def save_undo_state(self):
         if self.master_layer is None:
             return
-        current_state = zlib.compress(self.master_layer.tobytes())
-        if self.undo_stack:
-            if zlib.decompress(self.undo_stack[-1]['master']) == self.master_layer.tobytes():
-                return
-        undo_state = {
-            'master': current_state,
-            'shape': self.master_layer.shape,
-            'dtype': self.master_layer.dtype,
-            'timestamp': QDateTime.currentDateTime()
-        }
-
+            
+        undo_state = self.brush_controller.create_undo_state(self.master_layer)
+        if not undo_state:
+            return
+            
+        if self.undo_stack and zlib.decompress(self.undo_stack[-1]['master']) == self.master_layer.tobytes():
+            return
+            
         if len(self.undo_stack) >= self.max_undo_steps:
             self.undo_stack.pop(0)
+            
         self.undo_stack.append(undo_state)
 
     def undo_last_brush(self):
         if not self.undo_stack or self.master_layer is None:
             return
-
+            
         undo_state = self.undo_stack.pop()
-        decompressed = zlib.decompress(undo_state['master'])
-        self.master_layer = np.frombuffer(decompressed, dtype=undo_state['dtype'])
-        self.master_layer = self.master_layer.reshape(undo_state['shape'])
-
+        self.master_layer = self.brush_controller.apply_undo_state(undo_state)
+        
         self.display_current_view()
         self.mark_as_modified()
         self.statusBar().showMessage("Undo applied", 2000)
