@@ -2,37 +2,29 @@ import numpy as np
 import zlib
 from PySide6.QtCore import QDateTime
 
+
 class BrushController:
     def __init__(self):
         self._brush_mask_cache = {}
         self.brush_size = 50
         self.brush_hardness = 50
         self.brush_opacity = 100
-        
+
     def apply_brush_operation(self, master_layer, source_layer, view_pos, image_viewer, continuous=False):
-        """Applica l'operazione di brush con la maschera corrente"""
         if master_layer is None or source_layer is None:
             return False
-
         scene_pos = image_viewer.mapToScene(view_pos)
         x_center = int(round(scene_pos.x()))
         y_center = int(round(scene_pos.y()))
         radius = int(round(self.brush_size // 2))
-        
-        # Calcola area di applicazione
         h, w = master_layer.shape[:2]
         x_start, x_end = max(0, x_center - radius), min(w, x_center + radius + 1)
         y_start, y_end = max(0, y_center - radius), min(h, y_center + radius + 1)
-        
         if x_start >= x_end or y_start >= y_end:
             return False
-
-        # Ottieni/genera maschera
         mask = self._get_brush_mask(radius)
         if mask is None:
             return False
-
-        # Applica la maschera
         self._apply_mask(
             master_layer[y_start:y_end, x_start:x_end],
             source_layer[y_start:y_end, x_start:x_end],
@@ -41,13 +33,10 @@ class BrushController:
                 x_start - (x_center - radius):x_end - (x_center - radius)
             ]
         )
-        
         return True
 
     def _get_brush_mask(self, radius):
-        """Ottieni la maschera dalla cache o generane una nuova"""
         mask_key = (radius, self.brush_hardness)
-        
         if mask_key not in self._brush_mask_cache:
             from .brush_preview import create_brush_mask  # Import locale per evitare dipendenze circolari
             full_mask = create_brush_mask(
@@ -56,29 +45,18 @@ class BrushController:
                 opacity_percent=self.brush_opacity
             )
             self._brush_mask_cache[mask_key] = full_mask
-            
         return self._brush_mask_cache[mask_key]
 
     def _apply_mask(self, master_area, source_area, mask):
-        """Applica la maschera alle aree specificate"""
         opacity_factor = float(self.brush_opacity) / 100.0
         effective_mask = np.clip(mask * opacity_factor, 0, 1)
-        
         dtype = master_area.dtype
         max_px_value = 65535 if dtype == np.uint16 else 255
-        
         if master_area.ndim == 3:  # Immagine RGB
-            master_area[:] = np.clip(
-                master_area * (1 - effective_mask[..., np.newaxis]) + 
-                source_area * effective_mask[..., np.newaxis],
-                0, max_px_value
-            ).astype(dtype)
+            master_area[:] = np.clip(master_area * (1 - effective_mask[..., np.newaxis]) + source_area * # noqa
+                                     effective_mask[..., np.newaxis], 0, max_px_value).astype(dtype)
         else:  # Immagine in scala di grigi
-            master_area[:] = np.clip(
-                master_area * (1 - effective_mask) + 
-                source_area * effective_mask,
-                0, max_px_value
-            ).astype(dtype)
+            master_area[:] = np.clip(master_area * (1 - effective_mask) + source_area * effective_mask, 0, max_px_value).astype(dtype)
 
     def clear_cache(self):
         self._brush_mask_cache.clear()
@@ -87,7 +65,6 @@ class BrushController:
         """Crea uno stato undo compresso"""
         if master_layer is None:
             return None
-            
         return {
             'master': zlib.compress(master_layer.tobytes()),
             'shape': master_layer.shape,
@@ -99,6 +76,5 @@ class BrushController:
         """Applica uno stato undo"""
         if undo_state is None:
             return None
-            
         decompressed = zlib.decompress(undo_state['master'])
         return np.frombuffer(decompressed, dtype=undo_state['dtype']).reshape(undo_state['shape'])

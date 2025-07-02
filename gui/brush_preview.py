@@ -6,19 +6,19 @@ from PySide6.QtGui import QPixmap, QPainter, QImage
 
 
 def brush_profile(r, hardness):
-    start_time = time.perf_counter()    
+    start_time = time.perf_counter()
     if hardness >= 1.0:
         result = np.where(r < 1.0, 1.0, 0.0)
     else:
         k = 1.0 / (1.0 - hardness)
         result = np.where(r < 1.0, 0.5 * (np.cos(np.pi * np.power(r, k)) + 1.0), 0.0)
     end_time = time.perf_counter()
-    print(f"brush_profile: {(end_time - start_time)*1000:.2f}ms")
-    return result    
+    print(f"brush_profile: {(end_time - start_time) * 1000:.2f}ms")
+    return result
 
 
 def create_brush_mask(size, hardness_percent, opacity_percent):
-    start_time = time.perf_counter()    
+    start_time = time.perf_counter()
     radius = size / 2.0
     center = (size - 1) / 2.0
     h, o = hardness_percent / 100.0, opacity_percent / 100.0
@@ -26,7 +26,7 @@ def create_brush_mask(size, hardness_percent, opacity_percent):
     r = np.sqrt((x - center)**2 + (y - center)**2) / radius
     mask = np.clip(brush_profile(r, h), 0.0, 1.0) * o
     end_time = time.perf_counter()
-    print(f"create_brush_mask: {(end_time - start_time)*1000:.2f}ms (size: {size})")    
+    print(f"create_brush_mask: {(end_time - start_time) * 1000:.2f}ms (size: {size})")
     return mask
 
 
@@ -62,11 +62,11 @@ class BrushPreviewItem(QGraphicsPixmapItem):
     def update_preview(self, editor, pos, size):
         try:
             total_start = time.perf_counter()
-            
+
             if editor.current_stack is None or not hasattr(editor, 'image_viewer') or size <= 0:
                 self.setVisible(False)
                 return
-            
+
             # Misurazione posizione
             start_pos = time.perf_counter()
             radius = size // 2
@@ -79,7 +79,7 @@ class BrushPreviewItem(QGraphicsPixmapItem):
             y = int(scene_pos.y() - radius)
             w = h = size
             end_pos = time.perf_counter()
-            print(f"Position calc: {(end_pos - start_pos)*1000:.2f}ms")
+            print(f"Position calc: {(end_pos - start_pos) * 1000:.2f}ms")
 
             # Misurazione layer area
             start_layer = time.perf_counter()
@@ -92,7 +92,7 @@ class BrushPreviewItem(QGraphicsPixmapItem):
                 self.setVisible(False)
                 return
             end_layer = time.perf_counter()
-            print(f"Layer processing: {(end_layer - start_layer)*1000:.2f}ms")
+            print(f"Layer processing: {(end_layer - start_layer) * 1000:.2f}ms")
 
             # Misurazione maschera
             start_mask = time.perf_counter()
@@ -105,14 +105,14 @@ class BrushPreviewItem(QGraphicsPixmapItem):
             mask_y_end = size - (max(0, (y + h) - height)) if (y + h) > height else size
             mask_area = full_mask[mask_y_start:mask_y_end, mask_x_start:mask_x_end]
             end_mask = time.perf_counter()
-            print(f"Mask processing: {(end_mask - start_mask)*1000:.2f}ms")
+            print(f"Mask processing: {(end_mask - start_mask) * 1000:.2f}ms")
 
             # Misurazione composizione
             start_comp = time.perf_counter()
             area = (layer_area * mask_area + master_area * (1 - mask_area)) * 255.0
             area = area.astype(np.uint8)
             end_comp = time.perf_counter()
-            print(f"Composition: {(end_comp - start_comp)*1000:.2f}ms")
+            print(f"Composition: {(end_comp - start_comp) * 1000:.2f}ms")
 
             # Misurazione Qt rendering
             start_qt = time.perf_counter()
@@ -141,10 +141,10 @@ class BrushPreviewItem(QGraphicsPixmapItem):
             self.setPos(x_start, y_start)
             self.setVisible(True)
             end_qt = time.perf_counter()
-            print(f"Qt rendering: {(end_qt - start_qt)*1000:.2f}ms")
+            print(f"Qt rendering: {(end_qt - start_qt) * 1000:.2f}ms")
 
             total_end = time.perf_counter()
-            print(f"TOTAL preview update: {(total_end - total_start)*1000:.2f}ms\n")
+            print(f"TOTAL preview update: {(total_end - total_start) * 1000:.2f}ms\n")
 
         except Exception as e:
             print(f"Preview error: {str(e)}")
