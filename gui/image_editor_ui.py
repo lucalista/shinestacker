@@ -2,7 +2,8 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel,
 from PySide6.QtGui import QShortcut, QKeySequence, QAction, QActionGroup
 from PySide6.QtCore import Qt, QSize
 from gui.image_editor import ImageEditor, THUMB_WIDTH, THUMB_HEIGHT, BRUSH_SIZE_SLIDER_MAX, BRUSH_GAMMA, IMG_WIDTH, IMG_HEIGHT
-from gui.image_viewer import ImageViewer, BRUSH_SIZES
+from gui.image_viewer import ImageViewer
+from gui.brush_controller import BRUSH_SIZES
 
 DONT_USE_NATIVE_MENU = True
 
@@ -39,6 +40,7 @@ class ImageEditorUI(ImageEditor):
         layout = QHBoxLayout(central_widget)
         self.image_viewer = ImageViewer()
         self.image_viewer.image_editor = self
+        self.image_viewer.setup_brush_cursor()
         self.image_viewer.setFocusPolicy(Qt.StrongFocus)
         side_panel = QWidget()
         side_layout = QVBoxLayout(side_panel)

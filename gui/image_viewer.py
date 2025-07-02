@@ -17,15 +17,6 @@ BRUSH_COLORS = {
     'preview_inner': QColor(255, 255, 255, 150)
 }
 
-DEFAULT_BRUSH_HARDNESS = 50
-DEFAULT_BRUSH_OPACITY = 100
-BRUSH_SIZES = {
-    'default': 50,
-    'min': 4,
-    'mid': 50,
-    'max': 1000
-}
-
 MIN_MOUSE_STEP_BRUSH_FRACTION = 0.3
 PAINT_REFRESH_TIMER = 20  # milliseconds
 
@@ -73,7 +64,6 @@ class ImageViewer(QGraphicsView):
         self.dragging = False
         self.last_update_time = QTime.currentTime()
         self.pending_update = False
-        self.setup_brush_cursor()
         self.brush_preview = BrushPreviewItem()
         self.scene.addItem(self.brush_preview)
 
@@ -199,7 +189,10 @@ class ImageViewer(QGraphicsView):
     def setup_brush_cursor(self):
         pen = QPen(BRUSH_COLORS['pen'], 1)
         brush = QBrush(BRUSH_COLORS['cursor_inner'])
-        self.brush_cursor = self.scene.addEllipse(0, 0, BRUSH_SIZES['default'], BRUSH_SIZES['default'], pen, brush)
+        self.brush_cursor = self.scene.addEllipse(0, 0,
+                                                  self.image_editor.brush_controller.brush_size,
+                                                  self.image_editor.brush_controller.brush_size,
+                                                  pen, brush)
         self.brush_cursor.setZValue(1000)
         self.brush_cursor.hide()
 

@@ -7,8 +7,8 @@ from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QAbstractIt
 from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QRadialGradient
 from PySide6.QtCore import Qt, QTimer, QEvent, QPoint
 from algorithms.multilayer import read_multilayer_tiff, write_multilayer_tiff_from_images
-from gui.image_viewer import BRUSH_COLORS, BRUSH_SIZES, PAINT_REFRESH_TIMER
-from gui.brush_controller import BrushController
+from gui.image_viewer import BRUSH_COLORS, PAINT_REFRESH_TIMER
+from gui.brush_controller import BrushController, BRUSH_SIZES
 
 THUMB_WIDTH = 120
 THUMB_HEIGHT = 80

@@ -2,8 +2,17 @@ import numpy as np
 import time
 from PySide6.QtCore import QDateTime
 from gui.brush_preview import create_brush_mask
-from gui.image_viewer import BRUSH_SIZES, DEFAULT_BRUSH_HARDNESS, DEFAULT_BRUSH_OPACITY
 from config.constants import constants
+
+DEFAULT_BRUSH_HARDNESS = 50
+DEFAULT_BRUSH_OPACITY = 100
+
+BRUSH_SIZES = {
+    'default': 50,
+    'min': 4,
+    'mid': 50,
+    'max': 1000
+}
 
 
 class BrushController:
