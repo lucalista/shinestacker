@@ -5,10 +5,9 @@ import zlib
 from psdtags import PsdChannelId
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QListWidgetItem, QFileDialog, QMessageBox, QAbstractItemView
 from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QRadialGradient
-from PySide6.QtCore import Qt, QTimer, QEvent, QSize, QDateTime, QPoint
+from PySide6.QtCore import Qt, QTimer, QEvent, QSize, QPoint
 from algorithms.multilayer import read_multilayer_tiff, write_multilayer_tiff_from_images
 from gui.image_viewer import BRUSH_COLORS, BRUSH_SIZES, PAINT_REFRESH_TIMER
-from gui.brush_preview import create_brush_mask
 from gui.brush_controller import BrushController
 
 THUMB_WIDTH = 120
@@ -102,7 +101,7 @@ class ImageEditor(QMainWindow):
         self.update_timer.timeout.connect(self.process_pending_updates)
         self.needs_update = False
         self.brush_controller = BrushController()
-        
+
     def process_pending_updates(self):
         if self.needs_update:
             self.display_current_view()
@@ -503,15 +502,11 @@ class ImageEditor(QMainWindow):
             self.mark_as_modified()
             self.statusBar().showMessage(f"Copied layer {self.current_layer + 1} to master")
 
-       
     def copy_brush_area_to_master(self, view_pos, continuous=False):
-        if (self.current_stack is None or self.master_layer is None or 
-            self.view_mode != 'master' or self.temp_view_individual):
+        if self.current_stack is None or self.master_layer is None or self.view_mode != 'master' or self.temp_view_individual:
             return
-            
         if not continuous and not self.image_viewer.dragging:
             self.save_undo_state()
-            
         success = self.brush_controller.apply_brush_operation(
             master_layer=self.master_layer,
             source_layer=self.current_stack[self.current_layer],
@@ -519,7 +514,6 @@ class ImageEditor(QMainWindow):
             image_viewer=self.image_viewer,
             continuous=continuous
         )
-        
         if success:
             if not continuous:
                 self.display_current_view()
@@ -532,26 +526,20 @@ class ImageEditor(QMainWindow):
     def save_undo_state(self):
         if self.master_layer is None:
             return
-            
         undo_state = self.brush_controller.create_undo_state(self.master_layer)
         if not undo_state:
             return
-            
         if self.undo_stack and zlib.decompress(self.undo_stack[-1]['master']) == self.master_layer.tobytes():
             return
-            
         if len(self.undo_stack) >= self.max_undo_steps:
             self.undo_stack.pop(0)
-            
         self.undo_stack.append(undo_state)
 
     def undo_last_brush(self):
         if not self.undo_stack or self.master_layer is None:
             return
-            
         undo_state = self.undo_stack.pop()
         self.master_layer = self.brush_controller.apply_undo_state(undo_state)
-        
         self.display_current_view()
         self.mark_as_modified()
         self.statusBar().showMessage("Undo applied", 2000)
