@@ -4,9 +4,7 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt, QTimer
 from gui.gui_utils import disable_macos_special_menu_items
-from gui.image_editor import ImageEditor
-
-DONT_USE_NATIVE_MENU = True
+from gui.image_editor_ui import ImageEditorUI, DONT_USE_NATIVE_MENU
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -18,7 +16,7 @@ if __name__ == "__main__":
     file_to_open = None
     if len(sys.argv) > 1:
         file_to_open = sys.argv[1]
-    editor = ImageEditor()
+    editor = ImageEditorUI()
     editor.show()
     if file_to_open:
         QTimer.singleShot(100, lambda: editor.open_file(file_to_open))
