@@ -469,15 +469,8 @@ class ImageEditor(QMainWindow):
     def copy_brush_area_to_master(self, view_pos, continuous=False):
         if self.current_stack is None or self.master_layer is None or self.view_mode != 'master' or self.temp_view_individual:
             return
-
-        total_start = time.perf_counter()
-
-        undo_start = undo_end = 0
         if not continuous and not self.image_viewer.dragging:
-            undo_start = time.perf_counter()
             self.save_undo_state()
-            undo_end = time.perf_counter()
-
         success = self.brush_controller.apply_brush_operation(
             master_layer=self.master_layer,
             source_layer=self.current_stack[self.current_layer],
@@ -493,11 +486,6 @@ class ImageEditor(QMainWindow):
                 self.needs_update = True
                 if not self.update_timer.isActive():
                     self.update_timer.start()
-        total_end = time.perf_counter()
-        total_time = total_end - total_start
-        if total_time > 20:
-            print(f"copy brush area time: {total_time * 1000:.2f}ms")
-            print(f"   save undo time: {(undo_end - undo_start) * 1000:.2f}ms")
 
     def save_undo_state(self):
         if self.master_layer is None:
