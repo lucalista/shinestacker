@@ -1,4 +1,5 @@
 import numpy as np
+import time
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
 from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QCursor, QShortcut, QKeySequence, QRadialGradient
 from PySide6.QtCore import Qt, QRectF, QTime
@@ -115,6 +116,9 @@ class ImageViewer(QGraphicsView):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
+
+            total_start = time.perf_counter()
+            copy_start = copy_end = 0
             if self.space_pressed:
                 self.scrolling = True
                 self.last_mouse_pos = event.position()
@@ -123,15 +127,36 @@ class ImageViewer(QGraphicsView):
                     self.brush_cursor.hide()
             else:
                 if self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual:
+
+                    copy_start = time.perf_counter()
+
                     self.image_editor.copy_brush_area_to_master(event.position().toPoint())
                     self.dragging = True
+
+                    copy_end = time.perf_counter()
                 if self.brush_cursor:
                     self.brush_cursor.show()
+
+            total_end = time.perf_counter()
+            total_time = total_end - total_start
+            print(f"mouse pressed event: {total_time * 1000:.2f}ms")
+            print(f"  copy: {(copy_end - copy_start) * 1000:.2f}ms\n")
+                
+                    
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
+        total_start = time.perf_counter()
+        
         brush_size = self.image_editor.brush_controller.brush_size
+
+        update_start = time.perf_counter()
         self.update_brush_cursor(brush_size)
+        update_end = time.perf_counter()
+        update_total = update_end - update_start
+        if update_total > 10:
+            print(f"update brush: {update_total * 1000:.2f}ms")
+        
         if self.dragging and self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual and event.buttons() & Qt.LeftButton:
             current_time = QTime.currentTime()
             if self.last_update_time.msecsTo(current_time) >= self.update_interval or not self.pending_update:
@@ -147,7 +172,11 @@ class ImageViewer(QGraphicsView):
             self.verticalScrollBar().setValue(self.verticalScrollBar().value() - delta.y())
         else:
             super().mouseMoveEvent(event)
-
+        total_end = time.perf_counter()
+        total_time = total_end - total_start
+        if total_time > 20:
+            print(f"mouse move event: {total_time * 1000:.2f}ms")
+            
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton:
             if self.scrolling:

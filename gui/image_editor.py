@@ -2,6 +2,7 @@ import webbrowser
 import numpy as np
 import tifffile
 import zlib
+import time
 from psdtags import PsdChannelId
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QListWidgetItem, QFileDialog, QMessageBox, QAbstractItemView
 from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QRadialGradient
@@ -153,6 +154,7 @@ class ImageEditor(QMainWindow):
             self.current_labels.insert(0, master_label)
             self.current_stack = np.insert(self.current_stack, 0, master_layer, axis=0)
             self.master_layer = master_layer.copy()
+            self.master_layer.setflags(write=True)
         self.update_thumbnails()
         if self.current_layer >= len(self.current_stack):
             self.current_layer = len(self.current_stack) - 1
@@ -215,6 +217,7 @@ class ImageEditor(QMainWindow):
                     indices = list(range(len(self.current_stack)))
                     indices.remove(master_index)
                     self.current_stack = self.current_stack[indices]
+                self.master_layer.setflags(write=True)
                 if self.current_labels is None:
                     self.current_labels = [f"Layer {i + 1}" for i in range(len(self.current_stack))]
             self.update_thumbnails()
@@ -478,6 +481,7 @@ class ImageEditor(QMainWindow):
         )
         if reply == QMessageBox.Yes:
             self.master_layer = self.current_stack[self.current_layer].copy()
+            self.master_layer.setflags(write=True)
             self.display_current_view()
             self.update_thumbnails()
             self.mark_as_modified()
@@ -486,6 +490,9 @@ class ImageEditor(QMainWindow):
     def copy_brush_area_to_master(self, view_pos, continuous=False):
         if self.current_stack is None or self.master_layer is None or self.view_mode != 'master' or self.temp_view_individual:
             return
+
+        total_start = time.perf_counter()
+        
         if not continuous and not self.image_viewer.dragging:
             self.save_undo_state()
         success = self.brush_controller.apply_brush_operation(
@@ -503,7 +510,10 @@ class ImageEditor(QMainWindow):
                 self.needs_update = True
                 if not self.update_timer.isActive():
                     self.update_timer.start()
-
+        total_end = time.perf_counter()
+        total_time = total_end - total_start
+        print(f"copy  brush area time: {(total_end - total_start) * 1000:.2f}ms\n")
+            
     def save_undo_state(self):
         if self.master_layer is None:
             return

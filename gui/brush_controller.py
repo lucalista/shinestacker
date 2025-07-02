@@ -1,5 +1,6 @@
 import numpy as np
 import zlib
+import time
 from PySide6.QtCore import QDateTime
 from gui.brush_preview import create_brush_mask
 from gui.image_viewer import BRUSH_SIZES, DEFAULT_BRUSH_HARDNESS, DEFAULT_BRUSH_OPACITY
@@ -14,6 +15,9 @@ class BrushController:
     def apply_brush_operation(self, master_layer, source_layer, view_pos, image_viewer, continuous=False):
         if master_layer is None or source_layer is None:
             return False
+
+        total_start = time.perf_counter()
+        
         scene_pos = image_viewer.mapToScene(view_pos)
         x_center = int(round(scene_pos.x()))
         y_center = int(round(scene_pos.y()))
@@ -31,6 +35,12 @@ class BrushController:
             source_layer[y_start:y_end, x_start:x_end],
             mask[y_start - (y_center - radius):y_end - (y_center - radius), x_start - (x_center - radius):x_end - (x_center - radius)]
         )
+
+        total_end = time.perf_counter()
+        total_time = total_end - total_start
+        if total_time > 10:
+            print(f"apply brush time: {(total_end - total_start) * 1000:.2f}ms\n")
+
         return True
 
     def _get_brush_mask(self, radius):
