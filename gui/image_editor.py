@@ -470,16 +470,16 @@ class ImageEditor(QMainWindow):
         if self.current_layer is None or self.current_stack is None or len(self.current_stack) == 0 \
            or self.view_mode != 'master' or self.temp_view_individual:
             return
-        source_layer = self.current_stack[self.current_layer]
-        master_layer = self.master_layer
-        destination_layer = self.master_layer
-        self.brush_controller.apply_brush_operation(master_layer, source_layer, destination_layer, self.mask_layer,
-                                                    view_pos=view_pos, image_viewer=self.image_viewer)
+        self.brush_controller.apply_brush_operation(self.master_layer_copy,
+                                                    self.current_stack[self.current_layer],
+                                                    self.master_layer, self.mask_layer,
+                                                    view_pos, self.image_viewer)
 
     def begin_copy_brush_area(self, pos):
         if self.view_mode == 'master' and not self.temp_view_individual:
             self.save_undo_state()
             self.mask_layer = self.blank_layer.copy()
+            self.master_layer_copy = self.master_layer.copy()
             self.copy_brush_area_to_master(pos)
             self.display_current_view()
             self.mark_as_modified()
@@ -502,7 +502,6 @@ class ImageEditor(QMainWindow):
         self.undo_stack.append(undo_state)
 
     def undo_last_brush(self):
-        print("try undo state")
         if self.master_layer is None or not self.undo_stack or len(self.undo_stack) == 0:
             return
         undo_state = self.undo_stack.pop()
@@ -511,7 +510,6 @@ class ImageEditor(QMainWindow):
         self.display_current_view()
         self.mark_as_modified()
         self.statusBar().showMessage("Undo applied", 2000)
-        print("undo applied")
 
     def set_cursor_style(self, style):
         self.cursor_style = style

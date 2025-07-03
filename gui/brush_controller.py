@@ -39,8 +39,11 @@ class BrushController:
             return 0, 0, 0, 0
         master_area = master_layer[y_start:y_end, x_start:x_end]
         source_area = source_layer[y_start:y_end, x_start:x_end]
+        dest_area = dest_layer[y_start:y_end, x_start:x_end]
+        mask_layer_area = mask_layer[y_start:y_end, x_start:x_end]
         mask_area = mask[y_start - (y_center - radius):y_end - (y_center - radius), x_start - (x_center - radius):x_end - (x_center - radius)]
-        self._apply_mask(master_area, source_area, mask_area, master_area)
+        mask_layer_area[:] = np.maximum(mask_layer_area, mask_area)
+        self._apply_mask(master_area, source_area, mask_layer_area, dest_area)
         return x_start, y_start, x_end, y_end
 
     def _get_brush_mask(self, radius):
@@ -51,11 +54,9 @@ class BrushController:
             self._brush_mask_cache[mask_key] = full_mask
         return self._brush_mask_cache[mask_key]
 
-    def _apply_mask(self, master_area, source_area, mask, dest_area):
-        if dest_area is None:
-            dest_area = master_area
+    def _apply_mask(self, master_area, source_area, mask_area, dest_area):
         opacity_factor = float(self.brush_opacity) / 100.0
-        effective_mask = np.clip(mask * opacity_factor, 0, 1)
+        effective_mask = np.clip(mask_area * opacity_factor, 0, 1)
         dtype = master_area.dtype
         max_px_value = constants.MAX_UINT16 if dtype == np.uint16 else constants.MAX_UINT8
         if master_area.ndim == 3:

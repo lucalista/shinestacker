@@ -17,7 +17,7 @@ BRUSH_COLORS = {
     'preview_inner': QColor(255, 255, 255, 150)
 }
 
-MIN_MOUSE_STEP_BRUSH_FRACTION = 0.5
+MIN_MOUSE_STEP_BRUSH_FRACTION = 0.25
 PAINT_REFRESH_TIMER = 20  # milliseconds
 
 
