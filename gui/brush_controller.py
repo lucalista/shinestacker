@@ -22,7 +22,7 @@ class BrushController:
         self.brush_hardness = DEFAULT_BRUSH_HARDNESS
         self.brush_opacity = DEFAULT_BRUSH_OPACITY
 
-    def apply_brush_operation(self, master_layer, source_layer, view_pos, image_viewer, continuous=False, dest_layer=None):
+    def apply_brush_operation(self, master_layer, source_layer, dest_layer, view_pos, image_viewer, continuous=False):
         if master_layer is None or source_layer is None:
             return False
         if dest_layer is None:
