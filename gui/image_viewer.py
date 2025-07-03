@@ -113,7 +113,7 @@ class ImageViewer(QGraphicsView):
                     self.brush_cursor.hide()
             else:
                 if self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual:
-                    self.image_editor.copy_brush_area_to_master(event.position().toPoint())
+                    self.image_editor.copy_brush_area_to_master(event.position().toPoint(), continuous=False)
                     self.dragging = True
                 if self.brush_cursor:
                     self.brush_cursor.show()
