@@ -472,8 +472,6 @@ class ImageEditor(QMainWindow):
         source_layer = self.current_stack[self.current_layer]
         master_layer = self.master_layer
         destination_layer = self.master_layer
-        if not continuous and not self.image_viewer.dragging:
-            self.save_undo_state()
         success = self.brush_controller.apply_brush_operation(master_layer, source_layer, destination_layer,
                                                               view_pos=view_pos, image_viewer=self.image_viewer)
         if success:

@@ -113,6 +113,7 @@ class ImageViewer(QGraphicsView):
                     self.brush_cursor.hide()
             else:
                 if self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual:
+                    self.image_editor.save_undo_state()
                     self.image_editor.copy_brush_area_to_master(event.position().toPoint(), continuous=False)
                     self.dragging = True
                 if self.brush_cursor:
@@ -160,7 +161,6 @@ class ImageViewer(QGraphicsView):
                     self.image_editor.update_timer.stop()
                     self.image_editor.display_current_view()
                     self.image_editor.mark_as_modified()
-                    self.image_editor.save_undo_state()
         super().mouseReleaseEvent(event)
 
     def wheelEvent(self, event):
