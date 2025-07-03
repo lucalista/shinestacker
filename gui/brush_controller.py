@@ -46,11 +46,8 @@ class BrushController:
     def _get_brush_mask(self, radius):
         mask_key = (radius, self.brush_hardness)
         if mask_key not in self._brush_mask_cache.keys():
-            full_mask = create_brush_mask(
-                size=radius * 2 + 1,
-                hardness_percent=self.brush_hardness,
-                opacity_percent=self.brush_opacity
-            )
+            full_mask = create_brush_mask(size=radius * 2 + 1, hardness_percent=self.brush_hardness,
+                                          opacity_percent=self.brush_opacity)
             self._brush_mask_cache[mask_key] = full_mask
         return self._brush_mask_cache[mask_key]
 
@@ -63,7 +60,7 @@ class BrushController:
         max_px_value = constants.MAX_UINT16 if dtype == np.uint16 else constants.MAX_UINT8
         if master_area.ndim == 3:
             dest_area[:] = np.clip(master_area * (1 - effective_mask[..., np.newaxis]) + source_area * # noqa
-                                     effective_mask[..., np.newaxis], 0, max_px_value).astype(dtype)
+                                   effective_mask[..., np.newaxis], 0, max_px_value).astype(dtype)
         else:
             dest_area[:] = np.clip(master_area * (1 - effective_mask) + source_area * effective_mask, 0, max_px_value).astype(dtype)
 

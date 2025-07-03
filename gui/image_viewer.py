@@ -133,8 +133,8 @@ class ImageViewer(QGraphicsView):
                 distance = math.sqrt((x - xp)**2 + (y - yp)**2)
                 n_steps = int(float(distance) / min_step)
                 if n_steps > 0:
-                    delta_x = (position.x() - self.last_brush_pos.x())/n_steps
-                    delta_y = (position.y() - self.last_brush_pos.y())/n_steps
+                    delta_x = (position.x() - self.last_brush_pos.x()) / n_steps
+                    delta_y = (position.y() - self.last_brush_pos.y()) / n_steps
                     for i in range(1, n_steps + 1):
                         pos = QPoint(self.last_brush_pos.x() + i * delta_x,
                                      self.last_brush_pos.y() + i * delta_y)

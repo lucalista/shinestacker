@@ -489,8 +489,8 @@ class ImageEditor(QMainWindow):
             self.copy_brush_area_to_master(pos)
             self.needs_update = True
             if not self.update_timer.isActive():
-                self.update_timer.start()             
-        
+                self.update_timer.start()
+
     def save_undo_state(self):
         if self.master_layer is None:
             return
@@ -512,7 +512,7 @@ class ImageEditor(QMainWindow):
         self.mark_as_modified()
         self.statusBar().showMessage("Undo applied", 2000)
         print("undo applied")
-        
+
     def set_cursor_style(self, style):
         self.cursor_style = style
         if self.image_viewer.brush_cursor:
