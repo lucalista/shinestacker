@@ -25,9 +25,6 @@ class BrushController:
     def apply_brush_operation(self, master_layer, source_layer, view_pos, image_viewer, continuous=False):
         if master_layer is None or source_layer is None:
             return False
-
-        total_start = time.perf_counter()
-
         scene_pos = image_viewer.mapToScene(view_pos)
         x_center = int(round(scene_pos.x()))
         y_center = int(round(scene_pos.y()))
@@ -36,22 +33,16 @@ class BrushController:
         x_start, x_end = max(0, x_center - radius), min(w, x_center + radius + 1)
         y_start, y_end = max(0, y_center - radius), min(h, y_center + radius + 1)
         if x_start >= x_end or y_start >= y_end:
-            return False
+            return 0, 0, 0, 0
         mask = self._get_brush_mask(radius)
         if mask is None:
-            return False
+            return 0, 0, 0, 0
         self._apply_mask(
             master_layer[y_start:y_end, x_start:x_end],
             source_layer[y_start:y_end, x_start:x_end],
             mask[y_start - (y_center - radius):y_end - (y_center - radius), x_start - (x_center - radius):x_end - (x_center - radius)]
         )
-
-        total_end = time.perf_counter()
-        total_time = total_end - total_start
-        if total_time > 10:
-            print(f"apply brush time: {(total_end - total_start) * 1000:.2f}ms\n")
-
-        return True
+        return x_start, y_start, x_end, y_end
 
     def _get_brush_mask(self, radius):
         mask_key = (radius, self.brush_hardness)
