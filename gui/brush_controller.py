@@ -69,8 +69,3 @@ class BrushController:
 
     def clear_cache(self):
         self._brush_mask_cache.clear()
-
-    def apply_undo_state(self, undo_state):
-        if undo_state is None:
-            return None
-        return np.frombuffer(undo_state['master'], dtype=undo_state['dtype']).reshape(undo_state['shape'])

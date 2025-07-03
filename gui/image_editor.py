@@ -486,6 +486,7 @@ class ImageEditor(QMainWindow):
                     self.update_timer.start()
 
     def save_undo_state(self):
+        print("save undo state")
         if self.master_layer is None:
             return
         master_tobytes = self.master_layer.tobytes()
@@ -502,14 +503,16 @@ class ImageEditor(QMainWindow):
         self.undo_stack.append(undo_state)
 
     def undo_last_brush(self):
-        if not self.undo_stack or self.master_layer is None:
+        print("try undo state")
+        if self.master_layer is None or not self.undo_stack or len(self.undo_stack) == 0:
             return
         undo_state = self.undo_stack.pop()
-        self.master_layer = self.brush_controller.apply_undo_state(undo_state)
+        self.master_layer = np.frombuffer(undo_state['master'], dtype=undo_state['dtype']).reshape(undo_state['shape'])
         self.display_current_view()
         self.mark_as_modified()
         self.statusBar().showMessage("Undo applied", 2000)
-
+        print("undo applied")
+        
     def set_cursor_style(self, style):
         self.cursor_style = style
         if self.image_viewer.brush_cursor:
