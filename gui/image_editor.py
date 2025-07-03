@@ -489,11 +489,8 @@ class ImageEditor(QMainWindow):
         print("save undo state")
         if self.master_layer is None:
             return
-        master_tobytes = self.master_layer.tobytes()
-        if self.undo_stack and self.undo_stack[-1]['master'] == master_tobytes:
-            return
         undo_state = {
-            'master': master_tobytes,
+            'master': self.master_layer.copy(),
             'shape': self.master_layer.shape,
             'dtype': self.master_layer.dtype,
             'timestamp': QDateTime.currentDateTime()
@@ -507,7 +504,8 @@ class ImageEditor(QMainWindow):
         if self.master_layer is None or not self.undo_stack or len(self.undo_stack) == 0:
             return
         undo_state = self.undo_stack.pop()
-        self.master_layer = np.frombuffer(undo_state['master'], dtype=undo_state['dtype']).reshape(undo_state['shape'])
+        self.master_layer = undo_state['master']
+        self.master_layer
         self.display_current_view()
         self.mark_as_modified()
         self.statusBar().showMessage("Undo applied", 2000)
