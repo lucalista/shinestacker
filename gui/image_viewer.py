@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
 from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QCursor, QShortcut, QKeySequence, QRadialGradient
-from PySide6.QtCore import Qt, QRectF, QTime
+from PySide6.QtCore import Qt, QRectF, QTime, QPoint
 from gui.brush_preview import BrushPreviewItem
 
 MIN_ZOOMED_IMG_WIDTH = 400
@@ -16,7 +16,7 @@ BRUSH_COLORS = {
     'preview_inner': QColor(255, 255, 255, 150)
 }
 
-MIN_MOUSE_STEP_BRUSH_FRACTION = 0.3
+MIN_MOUSE_STEP_BRUSH_FRACTION = 0.5
 PAINT_REFRESH_TIMER = 20  # milliseconds
 
 
@@ -113,6 +113,7 @@ class ImageViewer(QGraphicsView):
                     self.brush_cursor.hide()
             else:
                 if self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual:
+                    self.last_brush_pos = event.position()
                     self.image_editor.save_undo_state()
                     self.image_editor.copy_brush_area_to_master(event.position().toPoint(), continuous=False)
                     self.dragging = True
@@ -121,24 +122,31 @@ class ImageViewer(QGraphicsView):
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
-        if not hasattr(self, 'last_brush_pos'):
-            self.last_brush_pos = event.pos()
+        position = event.position()
         brush_size = self.image_editor.brush_controller.brush_size
         self.update_brush_cursor(brush_size)
         if self.dragging and self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual and event.buttons() & Qt.LeftButton:
             current_time = QTime.currentTime()
             min_step = brush_size * MIN_MOUSE_STEP_BRUSH_FRACTION
-            distance = (event.pos() - self.last_brush_pos).manhattanLength()
+            distance = (position - self.last_brush_pos).manhattanLength()
             if (self.last_update_time.msecsTo(current_time) >= PAINT_REFRESH_TIMER and  # noqa
                 distance >= min_step) or not self.pending_update:  # noqa
-                self.image_editor.copy_brush_area_to_master(event.position().toPoint(), continuous=True)
+                n_steps = int(float(distance) / min_step)
+                if n_steps > 0:
+                    delta_x = (position.x() - self.last_brush_pos.x())/n_steps
+                    delta_y = (position.y() - self.last_brush_pos.y())/n_steps
+                    for i in range(n_steps):
+                        pos = QPoint(self.last_brush_pos.x() + (i + 1) * delta_x,
+                                     self.last_brush_pos.y() + (i + 1) * delta_y)
+                        self.image_editor.copy_brush_area_to_master(pos, continuous=True)
+                    self.last_brush_pos = event.position()
                 self.last_update_time = current_time
                 self.pending_update = False
             else:
                 self.pending_update = True
         if self.scrolling and event.buttons() & Qt.LeftButton:
-            delta = event.position() - self.last_mouse_pos
-            self.last_mouse_pos = event.position()
+            delta = position - self.last_mouse_pos
+            self.last_mouse_pos = position
             self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - delta.x())
             self.verticalScrollBar().setValue(self.verticalScrollBar().value() - delta.y())
         else:

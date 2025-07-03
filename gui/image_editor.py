@@ -484,14 +484,10 @@ class ImageEditor(QMainWindow):
                     self.update_timer.start()
 
     def save_undo_state(self):
-        print("save undo state")
         if self.master_layer is None:
             return
         undo_state = {
-            'master': self.master_layer.copy(),
-            'shape': self.master_layer.shape,
-            'dtype': self.master_layer.dtype,
-            'timestamp': QDateTime.currentDateTime()
+            'master': self.master_layer.copy()
         }
         if len(self.undo_stack) >= self.max_undo_steps:
             self.undo_stack.pop(0)
