@@ -1,4 +1,3 @@
-import time
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
 from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QCursor, QShortcut, QKeySequence, QRadialGradient
 from PySide6.QtCore import Qt, QRectF, QTime
@@ -121,7 +120,6 @@ class ImageViewer(QGraphicsView):
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
-        total_start = time.perf_counter()
         if not hasattr(self, 'last_brush_pos'):
             self.last_brush_pos = event.pos()
         brush_size = self.image_editor.brush_controller.brush_size
@@ -144,10 +142,6 @@ class ImageViewer(QGraphicsView):
             self.verticalScrollBar().setValue(self.verticalScrollBar().value() - delta.y())
         else:
             super().mouseMoveEvent(event)
-        total_end = time.perf_counter()
-        total_time = total_end - total_start
-        if total_time > 20:
-            print(f"mouse move event: {total_time * 1000:.2f}ms")
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton:

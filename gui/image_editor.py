@@ -1,7 +1,6 @@
 import webbrowser
 import numpy as np
 import tifffile
-import time
 from psdtags import PsdChannelId
 from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QAbstractItemView
 from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QRadialGradient
@@ -475,7 +474,7 @@ class ImageEditor(QMainWindow):
         if not continuous and not self.image_viewer.dragging:
             self.save_undo_state()
         success = self.brush_controller.apply_brush_operation(master_layer, source_layer, destination_layer,
-                                                              view_pos=view_pos, image_viewer=self.image_viewer, continuous=continuous)
+                                                              view_pos=view_pos, image_viewer=self.image_viewer)
         if success:
             if not continuous:
                 self.display_current_view()
@@ -488,11 +487,7 @@ class ImageEditor(QMainWindow):
     def save_undo_state(self):
         if self.master_layer is None:
             return
-        state_start = time.perf_counter()
         undo_state = self.brush_controller.create_undo_state(self.master_layer)
-        state_end = time.perf_counter()
-        if state_end - state_start > 20:
-            print(f"   create state: {(state_end - state_start) * 1000:.2f}ms")
         if not undo_state:
             return
         if self.undo_stack and self.undo_stack[-1]['master'] == self.master_layer.tobytes():
