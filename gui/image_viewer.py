@@ -17,8 +17,8 @@ BRUSH_COLORS = {
     'preview_inner': QColor(255, 255, 255, 150)
 }
 
-MIN_MOUSE_STEP_BRUSH_FRACTION = 0.25
-PAINT_REFRESH_TIMER = 20  # milliseconds
+MIN_MOUSE_STEP_BRUSH_FRACTION = 0.2
+PAINT_REFRESH_TIMER = 50  # milliseconds
 
 
 def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None, outer_color=None, opacity=100):

@@ -82,7 +82,7 @@ class ImageEditor(QMainWindow):
         self.update_timer.timeout.connect(self.process_pending_updates)
         self.needs_update = False
         self.brush_controller = BrushController()
-        self.reset_undo_area()        
+        self.reset_undo_area()
 
     def process_pending_updates(self):
         if self.needs_update:
@@ -410,6 +410,11 @@ class ImageEditor(QMainWindow):
         self.update_brush_preview()
         self.image_viewer.update_brush_cursor(self.brush_controller.brush_size)
 
+    def update_brush_flow(self, flow):
+        self.brush_controller.brush_flow = flow
+        self.update_brush_preview()
+        self.image_viewer.update_brush_cursor(self.brush_controller.brush_size)
+
     def update_brush_preview(self):
         width, height = UI_SIZES['brush_preview']
         pixmap = QPixmap(width, height)
@@ -443,6 +448,7 @@ class ImageEditor(QMainWindow):
             painter.drawText(0, 10, f"Size: {int(self.brush_controller.brush_size)}px")
             painter.drawText(0, 25, f"Hardness: {self.brush_controller.brush_hardness}%")
             painter.drawText(0, 40, f"Opacity: {self.brush_controller.brush_opacity}%")
+            painter.drawText(0, 55, f"Flow: {self.brush_controller.brush_flow}%")
 
         painter.end()
         self.brush_preview.setPixmap(pixmap)
@@ -484,7 +490,7 @@ class ImageEditor(QMainWindow):
     def reset_undo_area(self):
         self.x_end = self.y_end = 0
         self.x_start = self.y_start = constants.MAX_UINT16
-        
+
     def begin_copy_brush_area(self, pos):
         if self.view_mode == 'master' and not self.temp_view_individual:
             self.mask_layer = self.blank_layer.copy()

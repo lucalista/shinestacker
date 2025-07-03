@@ -63,10 +63,10 @@ class ImageEditorUI(ImageEditor):
         self.brush_size_slider.setValue(brush_size_to_slider(self.brush_controller.brush_size))
         self.brush_size_slider.valueChanged.connect(self.update_brush_size)
         brush_layout.addWidget(self.brush_size_slider)
+
         hardness_label = QLabel("Brush Hardness")
         hardness_label.setAlignment(Qt.AlignCenter)
         brush_layout.addWidget(hardness_label)
-
         self.hardness_slider = QSlider(Qt.Horizontal)
         self.hardness_slider.setRange(0, 100)
         self.hardness_slider.setValue(self.brush_controller.brush_hardness)
@@ -76,12 +76,20 @@ class ImageEditorUI(ImageEditor):
         opacity_label = QLabel("Brush Opacity")
         opacity_label.setAlignment(Qt.AlignCenter)
         brush_layout.addWidget(opacity_label)
-
         self.opacity_slider = QSlider(Qt.Horizontal)
         self.opacity_slider.setRange(0, 100)
         self.opacity_slider.setValue(self.brush_controller.brush_opacity)
         self.opacity_slider.valueChanged.connect(self.update_brush_opacity)
         brush_layout.addWidget(self.opacity_slider)
+
+        flow_label = QLabel("Brush Flow")
+        flow_label.setAlignment(Qt.AlignCenter)
+        brush_layout.addWidget(flow_label)
+        self.flow_slider = QSlider(Qt.Horizontal)
+        self.flow_slider.setRange(1, 100)
+        self.flow_slider.setValue(self.brush_controller.brush_flow)
+        self.flow_slider.valueChanged.connect(self.update_brush_flow)
+        brush_layout.addWidget(self.flow_slider)
 
         side_layout.addWidget(brush_panel)
         self.brush_preview = QLabel()
