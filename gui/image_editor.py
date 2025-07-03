@@ -4,7 +4,7 @@ import tifffile
 from psdtags import PsdChannelId
 from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QAbstractItemView
 from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QRadialGradient
-from PySide6.QtCore import Qt, QTimer, QEvent, QPoint, QDateTime
+from PySide6.QtCore import Qt, QTimer, QEvent, QPoint
 from algorithms.multilayer import read_multilayer_tiff, write_multilayer_tiff_from_images
 from gui.image_viewer import BRUSH_COLORS, PAINT_REFRESH_TIMER
 from gui.brush_controller import BrushController, BRUSH_SIZES
@@ -473,13 +473,13 @@ class ImageEditor(QMainWindow):
         source_layer = self.current_stack[self.current_layer]
         master_layer = self.master_layer
         destination_layer = self.master_layer
-        self.mask_layer = self.blank_layer.copy()
-        success = self.brush_controller.apply_brush_operation(master_layer, source_layer, destination_layer, self.mask_layer,
-                                                              view_pos=view_pos, image_viewer=self.image_viewer)
+        self.brush_controller.apply_brush_operation(master_layer, source_layer, destination_layer, self.mask_layer,
+                                                    view_pos=view_pos, image_viewer=self.image_viewer)
 
     def begin_copy_brush_area(self, pos):
         if self.view_mode == 'master' and not self.temp_view_individual:
             self.save_undo_state()
+            self.mask_layer = self.blank_layer.copy()
             self.copy_brush_area_to_master(pos)
             self.display_current_view()
             self.mark_as_modified()
