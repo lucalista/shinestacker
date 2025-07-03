@@ -113,13 +113,9 @@ class ImageViewer(QGraphicsView):
                 if self.brush_cursor:
                     self.brush_cursor.hide()
             else:
-                if self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual:
-                    self.last_brush_pos = event.position()
-                    self.image_editor.save_undo_state()
-                    self.image_editor.copy_brush_area_to_master(event.position().toPoint(), continuous=False)
-                    self.image_editor.display_current_view()
-                    self.image_editor.mark_as_modified()
-                    self.dragging = True
+                self.last_brush_pos = event.position()
+                self.image_editor.begin_copy_brush_area(event.position().toPoint())
+                self.dragging = True
                 if self.brush_cursor:
                     self.brush_cursor.show()
         super().mousePressEvent(event)
@@ -142,10 +138,7 @@ class ImageViewer(QGraphicsView):
                     for i in range(1, n_steps + 1):
                         pos = QPoint(self.last_brush_pos.x() + i * delta_x,
                                      self.last_brush_pos.y() + i * delta_y)
-                        self.image_editor.copy_brush_area_to_master(pos, continuous=True)
-                        self.image_editor.needs_update = True
-                        if not self.image_editor.update_timer.isActive():
-                            self.image_editor.update_timer.start()             
+                        self.image_editor.continue_copy_brush_area(pos)
                     self.last_brush_pos = event.position()
                 self.last_update_time = current_time
                 self.pending_update = False

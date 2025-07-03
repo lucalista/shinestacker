@@ -465,7 +465,7 @@ class ImageEditor(QMainWindow):
             self.mark_as_modified()
             self.statusBar().showMessage(f"Copied layer {self.current_layer + 1} to master")
 
-    def copy_brush_area_to_master(self, view_pos, continuous):
+    def copy_brush_area_to_master(self, view_pos):
         if self.current_layer is None or self.current_stack is None or len(self.current_stack) == 0 \
            or self.view_mode != 'master' or self.temp_view_individual:
             return
@@ -475,6 +475,19 @@ class ImageEditor(QMainWindow):
         success = self.brush_controller.apply_brush_operation(master_layer, source_layer, destination_layer,
                                                               view_pos=view_pos, image_viewer=self.image_viewer)
 
+    def begin_copy_brush_area(self, pos):
+        if self.view_mode == 'master' and not self.temp_view_individual:
+            self.save_undo_state()
+            self.copy_brush_area_to_master(pos)
+            self.display_current_view()
+            self.mark_as_modified()
+
+    def continue_copy_brush_area(self, pos):
+        self.copy_brush_area_to_master(pos)
+        self.needs_update = True
+        if not self.update_timer.isActive():
+            self.update_timer.start()             
+        
     def save_undo_state(self):
         if self.master_layer is None:
             return
