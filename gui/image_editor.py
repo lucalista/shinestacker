@@ -15,6 +15,8 @@ THUMB_HEIGHT = 80
 IMG_WIDTH = 100
 IMG_HEIGHT = 80
 
+MAX_UNDO_STEPS = 50
+
 BRUSH_SIZE_SLIDER_MAX = 1000
 
 UI_SIZES = {
@@ -74,7 +76,7 @@ class ImageEditor(QMainWindow):
         self.current_file_path = None
         self.modified = False
         self.undo_stack = []
-        self.max_undo_steps = 10
+        self.max_undo_steps = MAX_UNDO_STEPS
         self.sort_order = 'original'
         self.installEventFilter(self)
         self.update_timer = QTimer(self)
