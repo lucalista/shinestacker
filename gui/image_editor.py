@@ -402,7 +402,7 @@ class ImageEditor(QMainWindow):
         self.clear_brush_cache()
 
     def update_brush_hardness(self, hardness):
-        self.brush_controller.brush_hardness = max(1, min(100, hardness))
+        self.brush_controller.brush_hardness = hardness
         self.update_brush_preview()
         self.image_viewer.update_brush_cursor(self.brush_controller.brush_size)
         self.clear_brush_cache()

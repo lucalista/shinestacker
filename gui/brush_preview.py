@@ -4,12 +4,27 @@ from PySide6.QtCore import Qt, QPointF
 from PySide6.QtGui import QPixmap, QPainter, QImage
 
 
-def brush_profile(r, hardness):
+def brush_profile_lower_limited(r, hardness):
     if hardness >= 1.0:
         result = np.where(r < 1.0, 1.0, 0.0)
     else:
         k = 1.0 / (1.0 - hardness)
         result = np.where(r < 1.0, 0.5 * (np.cos(np.pi * np.power(r, k)) + 1.0), 0.0)
+    return result
+
+
+def brush_profile(r, hardness):
+    h = 2.0 * hardness - 1.0
+    if h >= 1.0:
+        result = np.where(r < 1.0, 1.0, 0.0)
+    elif h >= 0:
+        k = 1.0 / (1.0 - hardness)
+        result = np.where(r < 1.0, 0.5 * (np.cos(np.pi * np.power(r, k)) + 1.0), 0.0)
+    elif h < 0:
+        k = 1.0 / (1.0 + hardness)
+        result = np.where(r < 1.0, 0.5 * (1.0 - np.cos(np.pi * np.power(1.0 - r, k))), 0.0)
+    else:
+        result = np.zeros_like(r)
     return result
 
 
