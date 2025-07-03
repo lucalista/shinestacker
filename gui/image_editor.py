@@ -218,6 +218,7 @@ class ImageEditor(QMainWindow):
                 self.master_layer.setflags(write=True)
                 if self.current_labels is None:
                     self.current_labels = [f"Layer {i + 1}" for i in range(len(self.current_stack))]
+                self.blank_layer = np.zeros(self.master_layer.shape[:2])
             self.update_thumbnails()
             self.change_layer(0)
             self.image_viewer.reset_zoom()
@@ -472,7 +473,8 @@ class ImageEditor(QMainWindow):
         source_layer = self.current_stack[self.current_layer]
         master_layer = self.master_layer
         destination_layer = self.master_layer
-        success = self.brush_controller.apply_brush_operation(master_layer, source_layer, destination_layer,
+        self.mask_layer = self.blank_layer.copy()
+        success = self.brush_controller.apply_brush_operation(master_layer, source_layer, destination_layer, self.mask_layer,
                                                               view_pos=view_pos, image_viewer=self.image_viewer)
 
     def begin_copy_brush_area(self, pos):
