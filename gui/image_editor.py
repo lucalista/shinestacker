@@ -512,10 +512,9 @@ class ImageEditor(QMainWindow):
         if self.master_layer is None:
             return
         undo_state = {
-            'master': self.master_layer_copy,
+            'master': self.master_layer_copy[self.y_start:self.y_end, self.x_start:self.x_end],
             'area': (self.x_start, self.y_start, self.x_end, self.y_end)
         }
-        print("undo area: ", undo_state['area'])
         if len(self.undo_stack) >= self.max_undo_steps:
             self.undo_stack.pop(0)
         self.undo_stack.append(undo_state)
@@ -524,8 +523,8 @@ class ImageEditor(QMainWindow):
         if self.master_layer is None or not self.undo_stack or len(self.undo_stack) == 0:
             return
         undo_state = self.undo_stack.pop()
-        self.master_layer = undo_state['master']
-        self.master_layer
+        x_start, y_start, x_end, y_end = undo_state['area']
+        self.master_layer[y_start:y_end, x_start:x_end] = undo_state['master']
         self.display_current_view()
         self.mark_as_modified()
         self.statusBar().showMessage("Undo applied", 2000)
