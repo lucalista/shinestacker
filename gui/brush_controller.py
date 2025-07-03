@@ -4,7 +4,7 @@ from config.constants import constants
 
 DEFAULT_BRUSH_HARDNESS = 50
 DEFAULT_BRUSH_OPACITY = 100
-DEFAULT_BRUSH_FLOW = 20
+DEFAULT_BRUSH_FLOW = 100
 
 BRUSH_SIZES = {
     'default': 50,
