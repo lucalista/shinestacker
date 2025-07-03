@@ -56,7 +56,7 @@ class BrushController:
             self._brush_mask_cache[mask_key] = full_mask
         return self._brush_mask_cache[mask_key]
 
-    def _apply_mask(self, master_area, source_area, mask, dest_area=None):
+    def _apply_mask(self, master_area, source_area, mask, dest_area):
         if dest_area is None:
             dest_area = master_area
         opacity_factor = float(self.brush_opacity) / 100.0
