@@ -4,7 +4,7 @@ import tifffile
 from psdtags import PsdChannelId
 from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QAbstractItemView
 from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QRadialGradient
-from PySide6.QtCore import Qt, QTimer, QEvent, QPoint
+from PySide6.QtCore import Qt, QTimer, QEvent, QPoint, QDateTime
 from algorithms.multilayer import read_multilayer_tiff, write_multilayer_tiff_from_images
 from gui.image_viewer import BRUSH_COLORS, PAINT_REFRESH_TIMER
 from gui.brush_controller import BrushController, BRUSH_SIZES
@@ -466,7 +466,8 @@ class ImageEditor(QMainWindow):
             self.statusBar().showMessage(f"Copied layer {self.current_layer + 1} to master")
 
     def copy_brush_area_to_master(self, view_pos, continuous):
-        if self.current_layer is None or self.current_stack is None or len(self.current_stack) == 0 or self.view_mode != 'master' or self.temp_view_individual:
+        if self.current_layer is None or self.current_stack is None or len(self.current_stack) == 0 \
+           or self.view_mode != 'master' or self.temp_view_individual:
             return
         source_layer = self.current_stack[self.current_layer]
         master_layer = self.master_layer
@@ -487,11 +488,15 @@ class ImageEditor(QMainWindow):
     def save_undo_state(self):
         if self.master_layer is None:
             return
-        undo_state = self.brush_controller.create_undo_state(self.master_layer)
-        if not undo_state:
+        master_tobytes = self.master_layer.tobytes()
+        if self.undo_stack and self.undo_stack[-1]['master'] == master_tobytes:
             return
-        if self.undo_stack and self.undo_stack[-1]['master'] == self.master_layer.tobytes():
-            return
+        undo_state = {
+            'master': master_tobytes,
+            'shape': self.master_layer.shape,
+            'dtype': self.master_layer.dtype,
+            'timestamp': QDateTime.currentDateTime()
+        }
         if len(self.undo_stack) >= self.max_undo_steps:
             self.undo_stack.pop(0)
         self.undo_stack.append(undo_state)

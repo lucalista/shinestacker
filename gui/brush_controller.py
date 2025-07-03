@@ -1,5 +1,4 @@
 import numpy as np
-from PySide6.QtCore import QDateTime
 from gui.brush_preview import create_brush_mask
 from config.constants import constants
 
@@ -70,16 +69,6 @@ class BrushController:
 
     def clear_cache(self):
         self._brush_mask_cache.clear()
-
-    def create_undo_state(self, master_layer):
-        if master_layer is None:
-            return None
-        return {
-            'master': master_layer.tobytes(),
-            'shape': master_layer.shape,
-            'dtype': master_layer.dtype,
-            'timestamp': QDateTime.currentDateTime()
-        }
 
     def apply_undo_state(self, undo_state):
         if undo_state is None:
