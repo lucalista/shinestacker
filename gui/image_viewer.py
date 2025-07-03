@@ -165,10 +165,7 @@ class ImageViewer(QGraphicsView):
                 self.last_mouse_pos = None
             elif hasattr(self, 'dragging') and self.dragging:
                 self.dragging = False
-                if self.image_editor.update_timer.isActive():
-                    self.image_editor.update_timer.stop()
-                    self.image_editor.display_current_view()
-                    self.image_editor.mark_as_modified()
+                self.image_editor. end_copy_brush_area()
         super().mouseReleaseEvent(event)
 
     def wheelEvent(self, event):

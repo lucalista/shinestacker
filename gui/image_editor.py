@@ -8,6 +8,7 @@ from PySide6.QtCore import Qt, QTimer, QEvent, QPoint
 from algorithms.multilayer import read_multilayer_tiff, write_multilayer_tiff_from_images
 from gui.image_viewer import BRUSH_COLORS, PAINT_REFRESH_TIMER
 from gui.brush_controller import BrushController, BRUSH_SIZES
+from config.constants import constants
 
 THUMB_WIDTH = 120
 THUMB_HEIGHT = 80
@@ -81,6 +82,7 @@ class ImageEditor(QMainWindow):
         self.update_timer.timeout.connect(self.process_pending_updates)
         self.needs_update = False
         self.brush_controller = BrushController()
+        self.reset_undo_area()        
 
     def process_pending_updates(self):
         if self.needs_update:
@@ -470,16 +472,24 @@ class ImageEditor(QMainWindow):
         if self.current_layer is None or self.current_stack is None or len(self.current_stack) == 0 \
            or self.view_mode != 'master' or self.temp_view_individual:
             return
-        self.brush_controller.apply_brush_operation(self.master_layer_copy,
-                                                    self.current_stack[self.current_layer],
-                                                    self.master_layer, self.mask_layer,
-                                                    view_pos, self.image_viewer)
+        x_start, y_start, x_end, y_end = self.brush_controller.apply_brush_operation(self.master_layer_copy,
+                                                                                     self.current_stack[self.current_layer],
+                                                                                     self.master_layer, self.mask_layer,
+                                                                                     view_pos, self.image_viewer)
+        self.x_start = min(self.x_start, x_start)
+        self.y_start = min(self.y_start, y_start)
+        self.x_end = max(self.x_end, x_end)
+        self.y_end = max(self.y_end, y_end)
 
+    def reset_undo_area(self):
+        self.x_end = self.y_end = 0
+        self.x_start = self.y_start = constants.MAX_UINT16
+        
     def begin_copy_brush_area(self, pos):
         if self.view_mode == 'master' and not self.temp_view_individual:
-            self.save_undo_state()
             self.mask_layer = self.blank_layer.copy()
             self.master_layer_copy = self.master_layer.copy()
+            self.reset_undo_area()
             self.copy_brush_area_to_master(pos)
             self.display_current_view()
             self.mark_as_modified()
@@ -491,12 +501,21 @@ class ImageEditor(QMainWindow):
             if not self.update_timer.isActive():
                 self.update_timer.start()
 
+    def end_copy_brush_area(self):
+        if self.update_timer.isActive():
+            self.update_timer.stop()
+            self.display_current_view()
+            self.mark_as_modified()
+            self.save_undo_state()
+
     def save_undo_state(self):
         if self.master_layer is None:
             return
         undo_state = {
-            'master': self.master_layer.copy()
+            'master': self.master_layer_copy,
+            'area': (self.x_start, self.y_start, self.x_end, self.y_end)
         }
+        print("undo area: ", undo_state['area'])
         if len(self.undo_stack) >= self.max_undo_steps:
             self.undo_stack.pop(0)
         self.undo_stack.append(undo_state)
