@@ -8,7 +8,7 @@ DEFAULT_BRUSH_FLOW = 100
 
 BRUSH_SIZES = {
     'default': 50,
-    'min': 4,
+    'min': 5,
     'mid': 50,
     'max': 1000
 }

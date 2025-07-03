@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
 from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QCursor, QShortcut, QKeySequence, QRadialGradient
 from PySide6.QtCore import Qt, QRectF, QTime, QPoint
 from gui.brush_preview import BrushPreviewItem
+from gui.brush_controller import BRUSH_SIZES
 
 MIN_ZOOMED_IMG_WIDTH = 400
 MAX_ZOOMED_IMG_PX_SIZE = 50
@@ -82,6 +83,7 @@ class ImageViewer(QGraphicsView):
             self.scale(self.zoom_factor, self.zoom_factor)
 
     def keyPressEvent(self, event):
+        self.update_brush_cursor()
         if event.key() == Qt.Key_Space and not self.scrolling:
             self.space_pressed = True
             self.setCursor(Qt.OpenHandCursor)
@@ -93,6 +95,7 @@ class ImageViewer(QGraphicsView):
         super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event):
+        self.update_brush_cursor()
         if event.key() == Qt.Key_Space:
             self.space_pressed = False
             if not self.scrolling:
@@ -123,11 +126,12 @@ class ImageViewer(QGraphicsView):
     def mouseMoveEvent(self, event):
         position = event.position()
         brush_size = self.image_editor.brush_controller.brush_size
-        self.update_brush_cursor(brush_size)
+        if not self.space_pressed:
+            self.update_brush_cursor()
         if self.dragging and event.buttons() & Qt.LeftButton:
             current_time = QTime.currentTime()
             if self.last_update_time.msecsTo(current_time) >= PAINT_REFRESH_TIMER or not self.pending_update:
-                min_step = brush_size * MIN_MOUSE_STEP_BRUSH_FRACTION
+                min_step = max(brush_size * MIN_MOUSE_STEP_BRUSH_FRACTION, BRUSH_SIZES['min'] / 2)
                 x, y = position.x(), position.y()
                 xp, yp = self.last_brush_pos.x(), self.last_brush_pos.y()
                 distance = math.sqrt((x - xp)**2 + (y - yp)**2)
@@ -158,6 +162,8 @@ class ImageViewer(QGraphicsView):
                 self.scrolling = False
                 if self.space_pressed:
                     self.setCursor(Qt.OpenHandCursor)
+                    if self.brush_cursor:
+                        self.brush_cursor.hide()
                 else:
                     self.setCursor(Qt.BlankCursor)
                     if self.brush_cursor:
@@ -165,7 +171,7 @@ class ImageViewer(QGraphicsView):
                 self.last_mouse_pos = None
             elif hasattr(self, 'dragging') and self.dragging:
                 self.dragging = False
-                self.image_editor. end_copy_brush_area()
+                self.image_editor.end_copy_brush_area()
         super().mouseReleaseEvent(event)
 
     def wheelEvent(self, event):
@@ -183,7 +189,7 @@ class ImageViewer(QGraphicsView):
                 self.scale(zoom_out_factor, zoom_out_factor)
                 self.zoom_factor = new_scale
 
-        self.update_brush_cursor(self.image_editor.brush_controller.brush_size)
+        self.update_brush_cursor()
 
     def setup_brush_cursor(self):
         pen = QPen(BRUSH_COLORS['pen'], 1)
@@ -195,9 +201,10 @@ class ImageViewer(QGraphicsView):
         self.brush_cursor.setZValue(1000)
         self.brush_cursor.hide()
 
-    def update_brush_cursor(self, size):
+    def update_brush_cursor(self):        
         if not self.brush_cursor or not self.isVisible():
             return
+        size = self.image_editor.brush_controller.brush_size
         mouse_pos = self.mapFromGlobal(QCursor.pos())
         if not self.rect().contains(mouse_pos):
             self.brush_cursor.hide()
@@ -207,13 +214,13 @@ class ImageViewer(QGraphicsView):
         center_y = scene_pos.y()
         radius = size / 2
         self.brush_cursor.setRect(center_x - radius, center_y - radius, size, size)
-        if self.image_editor.cursor_style == 'preview':
+        if self.image_editor.cursor_style == 'preview' and self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual:
             self._setup_outline_style()
             self.brush_cursor.hide()
             self.brush_preview.update_preview(self.image_editor, QCursor.pos(), int(size))
         else:
             self.brush_preview.setVisible(False)
-            if self.image_editor.cursor_style == 'outline':
+            if self.image_editor.cursor_style == 'outline' or self.image_editor.view_mode != 'master' or self.image_editor.temp_view_individual:
                 self._setup_outline_style()
             else:
                 self._setup_simple_brush_style(center_x, center_y, radius)

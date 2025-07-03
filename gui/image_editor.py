@@ -282,12 +282,14 @@ class ImageEditor(QMainWindow):
     def start_temp_view(self):
         if not self.temp_view_individual and self.view_mode == 'master':
             self.temp_view_individual = True
+            self.image_viewer.update_brush_cursor()
             self.display_current_view()
             self.statusBar().showMessage("Temporary view: Individual layer (hold X)")
 
     def end_temp_view(self):
         if self.temp_view_individual:
             self.temp_view_individual = False
+            self.image_viewer.update_brush_cursor()
             self.display_current_view()
             self.statusBar().showMessage("View mode: Master")
 
@@ -348,7 +350,7 @@ class ImageEditor(QMainWindow):
             self.image_viewer.set_view_state(view_state)
             self.thumbnail_list.setCurrentRow(layer_idx)
             self.thumbnail_list.setFocus()
-            self.image_viewer.update_brush_cursor(self.brush_controller.brush_size)
+            self.image_viewer.update_brush_cursor()
             self.image_viewer.setFocus()
 
     def change_layer_item(self, item):
@@ -398,24 +400,24 @@ class ImageEditor(QMainWindow):
     def update_brush_size(self, slider_val):
         self.brush_controller.brush_size = slider_to_brush_size(slider_val)
         self.update_brush_preview()
-        self.image_viewer.update_brush_cursor(self.brush_controller.brush_size)
+        self.image_viewer.update_brush_cursor()
         self.clear_brush_cache()
 
     def update_brush_hardness(self, hardness):
         self.brush_controller.brush_hardness = hardness
         self.update_brush_preview()
-        self.image_viewer.update_brush_cursor(self.brush_controller.brush_size)
+        self.image_viewer.update_brush_cursor()
         self.clear_brush_cache()
 
     def update_brush_opacity(self, opacity):
         self.brush_controller.brush_opacity = opacity
         self.update_brush_preview()
-        self.image_viewer.update_brush_cursor(self.brush_controller.brush_size)
+        self.image_viewer.update_brush_cursor()
 
     def update_brush_flow(self, flow):
         self.brush_controller.brush_flow = flow
         self.update_brush_preview()
-        self.image_viewer.update_brush_cursor(self.brush_controller.brush_size)
+        self.image_viewer.update_brush_cursor()
 
     def update_brush_preview(self):
         width, height = UI_SIZES['brush_preview']
@@ -540,4 +542,4 @@ class ImageEditor(QMainWindow):
     def set_cursor_style(self, style):
         self.cursor_style = style
         if self.image_viewer.brush_cursor:
-            self.image_viewer.update_brush_cursor(self.brush_controller.brush_size)
+            self.image_viewer.update_brush_cursor()
