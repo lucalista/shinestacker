@@ -1,3 +1,4 @@
+import math
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
 from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QCursor, QShortcut, QKeySequence, QRadialGradient
 from PySide6.QtCore import Qt, QRectF, QTime, QPoint
@@ -127,10 +128,11 @@ class ImageViewer(QGraphicsView):
         self.update_brush_cursor(brush_size)
         if self.dragging and self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual and event.buttons() & Qt.LeftButton:
             current_time = QTime.currentTime()
-            min_step = brush_size * MIN_MOUSE_STEP_BRUSH_FRACTION
-            distance = (position - self.last_brush_pos).manhattanLength()
-            if (self.last_update_time.msecsTo(current_time) >= PAINT_REFRESH_TIMER and  # noqa
-                distance >= min_step) or not self.pending_update:  # noqa
+            if self.last_update_time.msecsTo(current_time) >= PAINT_REFRESH_TIMER or not self.pending_update:
+                min_step = brush_size * MIN_MOUSE_STEP_BRUSH_FRACTION
+                x, y = position.x(), position.y()
+                xp, yp = self.last_brush_pos.x(), self.last_brush_pos.y()
+                distance = math.sqrt((x - xp)**2 + (y - yp)**2)
                 n_steps = int(float(distance) / min_step)
                 if n_steps > 0:
                     delta_x = (position.x() - self.last_brush_pos.x())/n_steps
