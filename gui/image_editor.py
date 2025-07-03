@@ -474,14 +474,6 @@ class ImageEditor(QMainWindow):
         destination_layer = self.master_layer
         success = self.brush_controller.apply_brush_operation(master_layer, source_layer, destination_layer,
                                                               view_pos=view_pos, image_viewer=self.image_viewer)
-        if success:
-            if not continuous:
-                self.display_current_view()
-                self.mark_as_modified()
-            else:
-                self.needs_update = True
-                if not self.update_timer.isActive():
-                    self.update_timer.start()
 
     def save_undo_state(self):
         if self.master_layer is None:

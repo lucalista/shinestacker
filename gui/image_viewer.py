@@ -117,6 +117,8 @@ class ImageViewer(QGraphicsView):
                     self.last_brush_pos = event.position()
                     self.image_editor.save_undo_state()
                     self.image_editor.copy_brush_area_to_master(event.position().toPoint(), continuous=False)
+                    self.image_editor.display_current_view()
+                    self.image_editor.mark_as_modified()
                     self.dragging = True
                 if self.brush_cursor:
                     self.brush_cursor.show()
@@ -141,6 +143,9 @@ class ImageViewer(QGraphicsView):
                         pos = QPoint(self.last_brush_pos.x() + i * delta_x,
                                      self.last_brush_pos.y() + i * delta_y)
                         self.image_editor.copy_brush_area_to_master(pos, continuous=True)
+                        self.image_editor.needs_update = True
+                        if not self.image_editor.update_timer.isActive():
+                            self.image_editor.update_timer.start()             
                     self.last_brush_pos = event.position()
                 self.last_update_time = current_time
                 self.pending_update = False
