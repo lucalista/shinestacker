@@ -124,7 +124,7 @@ class ImageViewer(QGraphicsView):
         position = event.position()
         brush_size = self.image_editor.brush_controller.brush_size
         self.update_brush_cursor(brush_size)
-        if self.dragging and self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual and event.buttons() & Qt.LeftButton:
+        if self.dragging and event.buttons() & Qt.LeftButton:
             current_time = QTime.currentTime()
             if self.last_update_time.msecsTo(current_time) >= PAINT_REFRESH_TIMER or not self.pending_update:
                 min_step = brush_size * MIN_MOUSE_STEP_BRUSH_FRACTION

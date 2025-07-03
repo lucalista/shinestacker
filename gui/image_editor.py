@@ -483,10 +483,11 @@ class ImageEditor(QMainWindow):
             self.mark_as_modified()
 
     def continue_copy_brush_area(self, pos):
-        self.copy_brush_area_to_master(pos)
-        self.needs_update = True
-        if not self.update_timer.isActive():
-            self.update_timer.start()             
+        if self.view_mode == 'master' and not self.temp_view_individual:
+            self.copy_brush_area_to_master(pos)
+            self.needs_update = True
+            if not self.update_timer.isActive():
+                self.update_timer.start()             
         
     def save_undo_state(self):
         if self.master_layer is None:
