@@ -201,7 +201,7 @@ class ImageViewer(QGraphicsView):
         self.brush_cursor.setZValue(1000)
         self.brush_cursor.hide()
 
-    def update_brush_cursor(self):        
+    def update_brush_cursor(self):
         if not self.brush_cursor or not self.isVisible():
             return
         size = self.image_editor.brush_controller.brush_size
