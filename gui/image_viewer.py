@@ -137,9 +137,9 @@ class ImageViewer(QGraphicsView):
                 if n_steps > 0:
                     delta_x = (position.x() - self.last_brush_pos.x())/n_steps
                     delta_y = (position.y() - self.last_brush_pos.y())/n_steps
-                    for i in range(n_steps):
-                        pos = QPoint(self.last_brush_pos.x() + (i + 1) * delta_x,
-                                     self.last_brush_pos.y() + (i + 1) * delta_y)
+                    for i in range(1, n_steps + 1):
+                        pos = QPoint(self.last_brush_pos.x() + i * delta_x,
+                                     self.last_brush_pos.y() + i * delta_y)
                         self.image_editor.copy_brush_area_to_master(pos, continuous=True)
                     self.last_brush_pos = event.position()
                 self.last_update_time = current_time
