@@ -8,8 +8,9 @@ def brush_profile_lower_limited(r, hardness):
     if hardness >= 1.0:
         result = np.where(r < 1.0, 1.0, 0.0)
     else:
+        r_lim = np.where(r < 1.0, r, 1.0)
         k = 1.0 / (1.0 - hardness)
-        result = np.where(r < 1.0, 0.5 * (np.cos(np.pi * np.power(r, k)) + 1.0), 0.0)
+        result = 0.5 * (np.cos(np.pi * np.power(r_lim, k)) + 1.0)
     return result
 
 
@@ -19,10 +20,10 @@ def brush_profile(r, hardness):
         result = np.where(r < 1.0, 1.0, 0.0)
     elif h >= 0:
         k = 1.0 / (1.0 - hardness)
-        result = np.where(r < 1.0, 0.5 * (np.cos(np.pi * np.power(r, k)) + 1.0), 0.0)
+        result = 0.5 * (np.cos(np.pi * np.power(np.where(r < 1.0, r, 1.0), k)) + 1.0)
     elif h < 0:
         k = 1.0 / (1.0 + hardness)
-        result = np.where(r < 1.0, 0.5 * (1.0 - np.cos(np.pi * np.power(1.0 - r, k))), 0.0)
+        result = np.where(r < 1.0, 0.5 * (1.0 - np.cos(np.pi * np.power(1.0 - np.where(r < 1.0, r, 1.0), k))), 0.0)
     else:
         result = np.zeros_like(r)
     return result
