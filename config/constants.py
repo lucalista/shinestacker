@@ -1,4 +1,4 @@
-import shutil
+import sys
 
 
 class _Constants:
@@ -138,7 +138,7 @@ class _Constants:
         raise AttributeError(f"Can't reassign constant '{name}'")
 
     def __init__(self):
-        self.PYTHON_APP = shutil.which('python3') or shutil.which('python')
+        self.PYTHON_APP = sys.executable
         _Constants.__setattr__ = _Constants.__setattr__aux
 
 
