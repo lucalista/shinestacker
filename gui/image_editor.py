@@ -6,9 +6,9 @@ from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QAbstractIt
 from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QRadialGradient
 from PySide6.QtCore import Qt, QTimer, QEvent, QPoint
 from algorithms.multilayer import read_multilayer_tiff, write_multilayer_tiff_from_images
-from config.constants import constants
 from gui.gui_constants import gui_constants
 from gui.brush_controller import BrushController
+from gui.undo_manager import UndoManager
 
 
 def slider_to_brush_size(slider_val):
@@ -46,8 +46,6 @@ class ImageEditor(QMainWindow):
         self.temp_view_individual = False
         self.current_file_path = None
         self.modified = False
-        self.undo_stack = []
-        self.max_undo_steps = gui_constants.MAX_UNDO_STEPS
         self.sort_order = 'original'
         self.installEventFilter(self)
         self.update_timer = QTimer(self)
@@ -55,7 +53,7 @@ class ImageEditor(QMainWindow):
         self.update_timer.timeout.connect(self.process_pending_updates)
         self.needs_update = False
         self.brush_controller = BrushController()
-        self.reset_undo_area()
+        self.undo_manager = UndoManager()
 
     def process_pending_updates(self):
         if self.needs_update:
@@ -453,24 +451,17 @@ class ImageEditor(QMainWindow):
         if self.current_layer is None or self.current_stack is None or len(self.current_stack) == 0 \
            or self.view_mode != 'master' or self.temp_view_individual:
             return
-        x_start, y_start, x_end, y_end = self.brush_controller.apply_brush_operation(self.master_layer_copy,
-                                                                                     self.current_stack[self.current_layer],
-                                                                                     self.master_layer, self.mask_layer,
-                                                                                     view_pos, self.image_viewer)
-        self.x_start = min(self.x_start, x_start)
-        self.y_start = min(self.y_start, y_start)
-        self.x_end = max(self.x_end, x_end)
-        self.y_end = max(self.y_end, y_end)
-
-    def reset_undo_area(self):
-        self.x_end = self.y_end = 0
-        self.x_start = self.y_start = constants.MAX_UINT16
+        area = self.brush_controller.apply_brush_operation(self.master_layer_copy,
+                                                           self.current_stack[self.current_layer],
+                                                           self.master_layer, self.mask_layer,
+                                                           view_pos, self.image_viewer)
+        self.undo_manager.extend_undo_area(*area)
 
     def begin_copy_brush_area(self, pos):
         if self.view_mode == 'master' and not self.temp_view_individual:
             self.mask_layer = self.blank_layer.copy()
             self.master_layer_copy = self.master_layer.copy()
-            self.reset_undo_area()
+            self.undo_manager.reset_undo_area()
             self.copy_brush_area_to_master(pos)
             self.display_current_view()
             self.mark_as_modified()
@@ -487,25 +478,10 @@ class ImageEditor(QMainWindow):
             self.update_timer.stop()
             self.display_current_view()
             self.mark_as_modified()
-            self.save_undo_state()
-
-    def save_undo_state(self):
-        if self.master_layer is None:
-            return
-        undo_state = {
-            'master': self.master_layer_copy[self.y_start:self.y_end, self.x_start:self.x_end],
-            'area': (self.x_start, self.y_start, self.x_end, self.y_end)
-        }
-        if len(self.undo_stack) >= self.max_undo_steps:
-            self.undo_stack.pop(0)
-        self.undo_stack.append(undo_state)
+            self.undo_manager.save_undo_state(self.master_layer_copy)
 
     def undo_last_brush(self):
-        if self.master_layer is None or not self.undo_stack or len(self.undo_stack) == 0:
-            return
-        undo_state = self.undo_stack.pop()
-        x_start, y_start, x_end, y_end = undo_state['area']
-        self.master_layer[y_start:y_end, x_start:x_end] = undo_state['master']
+        self.undo_manager.undo(self.master_layer)
         self.display_current_view()
         self.mark_as_modified()
         self.statusBar().showMessage("Undo applied", 2000)

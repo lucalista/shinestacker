@@ -13,4 +13,3 @@ def test_brush_profile():
 
 if __name__ == '__main__':
     test_brush_profile()
-    

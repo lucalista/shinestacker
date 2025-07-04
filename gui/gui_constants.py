@@ -5,6 +5,7 @@ from PySide6.QtGui import QColor
 class _GuiConstants:
     MIN_ZOOMED_IMG_WIDTH = 400
     MAX_ZOOMED_IMG_PX_SIZE = 50
+    MAX_UNDO_SIZE = 65535
 
     BRUSH_COLORS = {
         'outer': QColor(255, 0, 0, 200),
