@@ -6,9 +6,9 @@ from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QAbstractIt
 from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QRadialGradient
 from PySide6.QtCore import Qt, QTimer, QEvent, QPoint
 from algorithms.multilayer import read_multilayer_tiff, write_multilayer_tiff_from_images
-from gui.gui_constants import gui_constants
-from gui.brush_controller import BrushController
-from gui.undo_manager import UndoManager
+from retouch.gui_constants import gui_constants
+from retouch.brush_controller import BrushController
+from retouch.undo_manager import UndoManager
 
 
 def slider_to_brush_size(slider_val):

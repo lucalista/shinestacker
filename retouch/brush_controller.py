@@ -1,7 +1,7 @@
 import numpy as np
-from gui.brush_preview import create_brush_mask
 from config.constants import constants
-from gui.gui_constants import gui_constants
+from retouch.brush_preview import create_brush_mask
+from retouch.gui_constants import gui_constants
 
 
 class BrushController:

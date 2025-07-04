@@ -1,4 +1,4 @@
-from gui.gui_constants import gui_constants
+from retouch.gui_constants import gui_constants
 
 
 class UndoManager:

@@ -1,9 +1,9 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QListWidget, QListWidgetItem, QSlider
 from PySide6.QtGui import QShortcut, QKeySequence, QAction, QActionGroup
 from PySide6.QtCore import Qt, QSize
-from gui.image_editor import ImageEditor
-from gui.image_viewer import ImageViewer
-from gui.gui_constants import gui_constants
+from retouch.image_editor import ImageEditor
+from retouch.image_viewer import ImageViewer
+from retouch.gui_constants import gui_constants
 
 DONT_USE_NATIVE_MENU = True
 
