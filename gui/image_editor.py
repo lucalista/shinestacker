@@ -368,27 +368,27 @@ class ImageEditor(QMainWindow):
 
     def update_brush_size(self, slider_val):
         self.brush_controller.brush_size = slider_to_brush_size(slider_val)
-        self.update_brush_preview()
+        self.update_brush_thumb()
         self.image_viewer.update_brush_cursor()
         self.clear_brush_cache()
 
     def update_brush_hardness(self, hardness):
         self.brush_controller.brush_hardness = hardness
-        self.update_brush_preview()
+        self.update_brush_thumb()
         self.image_viewer.update_brush_cursor()
         self.clear_brush_cache()
 
     def update_brush_opacity(self, opacity):
         self.brush_controller.brush_opacity = opacity
-        self.update_brush_preview()
+        self.update_brush_thumb()
         self.image_viewer.update_brush_cursor()
 
     def update_brush_flow(self, flow):
         self.brush_controller.brush_flow = flow
-        self.update_brush_preview()
+        self.update_brush_thumb()
         self.image_viewer.update_brush_cursor()
 
-    def update_brush_preview(self):
+    def update_brush_thumb(self):
         width, height = gui_constants.UI_SIZES['brush_preview']
         pixmap = QPixmap(width, height)
         pixmap.fill(Qt.transparent)
@@ -413,16 +413,13 @@ class ImageEditor(QMainWindow):
         else:
             painter.setBrush(QBrush(gui_constants.BRUSH_COLORS['cursor_inner']))
             painter.setPen(QPen(gui_constants.BRUSH_COLORS['pen'], 1))
-
         painter.drawEllipse(QPoint(center_x, center_y), radius, radius)
-
         if self.cursor_style == 'preview':
             painter.setPen(QPen(QColor(0, 0, 160)))
             painter.drawText(0, 10, f"Size: {int(self.brush_controller.brush_size)}px")
             painter.drawText(0, 25, f"Hardness: {self.brush_controller.brush_hardness}%")
             painter.drawText(0, 40, f"Opacity: {self.brush_controller.brush_opacity}%")
             painter.drawText(0, 55, f"Flow: {self.brush_controller.brush_flow}%")
-
         painter.end()
         self.brush_preview.setPixmap(pixmap)
 

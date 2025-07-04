@@ -103,7 +103,7 @@ class ImageEditorUI(ImageEditor):
         """)
         self.brush_preview.setAlignment(Qt.AlignCenter)
         self.brush_preview.setFixedHeight(100)
-        self.update_brush_preview()
+        self.update_brush_thumb()
         brush_layout.addWidget(self.brush_preview)
         side_layout.addWidget(brush_panel)
 
@@ -326,4 +326,3 @@ class ImageEditorUI(ImageEditor):
             self.display_current_view()
             self.mark_as_modified()
             self.statusBar().showMessage("Undo applied", 2000)
-
