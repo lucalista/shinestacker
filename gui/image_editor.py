@@ -11,23 +11,9 @@ from gui.gui_constants import gui_constants
 from gui.brush_controller import BrushController
 
 
-def calculate_gamma():
-    if gui_constants.BRUSH_SIZES['mid'] <= gui_constants.BRUSH_SIZES['min'] or gui_constants.BRUSH_SIZES['max'] <= 0:
-        return 1.0
-    ratio = (gui_constants.BRUSH_SIZES['mid'] - gui_constants.BRUSH_SIZES['min']) / gui_constants.BRUSH_SIZES['max']
-    half_point = gui_constants.BRUSH_SIZE_SLIDER_MAX / 2
-    if ratio <= 0:
-        return 1.0
-    gamma = np.log(ratio) / np.log(half_point / gui_constants.BRUSH_SIZE_SLIDER_MAX)
-    return gamma
-
-
-BRUSH_GAMMA = calculate_gamma()
-
-
 def slider_to_brush_size(slider_val):
     normalized = slider_val / gui_constants.BRUSH_SIZE_SLIDER_MAX
-    size = gui_constants.BRUSH_SIZES['min'] + gui_constants.BRUSH_SIZES['max'] * (normalized ** BRUSH_GAMMA)
+    size = gui_constants.BRUSH_SIZES['min'] + gui_constants.BRUSH_SIZES['max'] * (normalized ** gui_constants.BRUSH_GAMMA)
     return max(gui_constants.BRUSH_SIZES['min'], min(gui_constants.BRUSH_SIZES['max'], size))
 
 

@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QListWidget, QListWidgetItem, QSlider
 from PySide6.QtGui import QShortcut, QKeySequence, QAction, QActionGroup
 from PySide6.QtCore import Qt, QSize
-from gui.image_editor import ImageEditor, BRUSH_GAMMA
+from gui.image_editor import ImageEditor
 from gui.image_viewer import ImageViewer
 from gui.gui_constants import gui_constants
 
@@ -13,7 +13,7 @@ def brush_size_to_slider(size):
         return 0
     if size >= gui_constants.BRUSH_SIZES['max']:
         return gui_constants.BRUSH_SIZE_SLIDER_MAX
-    normalized = ((size - gui_constants.BRUSH_SIZES['min']) / gui_constants.BRUSH_SIZES['max']) ** (1 / BRUSH_GAMMA)
+    normalized = ((size - gui_constants.BRUSH_SIZES['min']) / gui_constants.BRUSH_SIZES['max']) ** (1 / gui_constants.BRUSH_GAMMA)
     return int(normalized * gui_constants.BRUSH_SIZE_SLIDER_MAX)
 
 

@@ -1,3 +1,4 @@
+import math
 from PySide6.QtGui import QColor
 
 
@@ -45,8 +46,22 @@ class _GuiConstants:
         'max': 1000
     }
 
-    def __setattr__(self, name, value):
+    def calculate_gamma(self):
+        if self.BRUSH_SIZES['mid'] <= self.BRUSH_SIZES['min'] or self.BRUSH_SIZES['max'] <= 0:
+            return 1.0
+        ratio = (self.BRUSH_SIZES['mid'] - self.BRUSH_SIZES['min']) / self.BRUSH_SIZES['max']
+        half_point = self.BRUSH_SIZE_SLIDER_MAX / 2
+        if ratio <= 0:
+            return 1.0
+        gamma = math.log(ratio) / math.log(half_point / self.BRUSH_SIZE_SLIDER_MAX)
+        return gamma
+
+    def __setattr__aux(self, name, value):
         raise AttributeError(f"Can't reassign constant '{name}'")
+
+    def __init__(self):
+        self.BRUSH_GAMMA = self.calculate_gamma()
+        _GuiConstants.__setattr__ = _GuiConstants.__setattr__aux
 
 
 gui_constants = _GuiConstants()
