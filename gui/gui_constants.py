@@ -16,7 +16,7 @@ class _GuiConstants:
         'preview_inner': QColor(255, 255, 255, 150)
     }
 
-    MIN_MOUSE_STEP_BRUSH_FRACTION = 0.2
+    MIN_MOUSE_STEP_BRUSH_FRACTION = 0.5
     PAINT_REFRESH_TIMER = 50  # milliseconds
 
     THUMB_WIDTH = 120
