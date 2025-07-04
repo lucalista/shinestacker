@@ -137,6 +137,10 @@ def write_multilayer_tiff_from_images(image_dict, output_file, exif_path='', cal
     compression = 'adobe_deflate'
     overlayed_images = overlay(*((np.concatenate((image, np.expand_dims(transp, axis=-1)), axis=-1), (0, 0)) for image in image_dict.values()), shape=shape)
     tifffile.imwrite(output_file, overlayed_images, compression=compression, metadata=None, **tiff_tags)
+    if callbacks:
+        callback = callbacks.get('open_app', None)
+        if callback:
+            callback(output_file)
 
 
 class MultiLayer(FrameMultiDirectory, JobBase):
@@ -175,6 +179,9 @@ class MultiLayer(FrameMultiDirectory, JobBase):
         self.print_message(colored("reading files", "blue"))
         filename = ".".join(files[0].split("/")[-1].split(".")[:-1])
         output_file = f"{self.working_path}/{self.output_path}/{filename}.tif"
-        callbacks = {'exif_msg': lambda: self.print_message(colored('copying exif data', 'blue')),
-                     'write_msg': lambda path: self.print_message(colored(f"writing multilayer tiff file: {path}", "blue"))}
+        callbacks = {
+            'exif_msg': lambda: self.print_message(colored('copying exif data', 'blue')),
+            'write_msg': lambda path: self.print_message(colored(f"writing multilayer tiff file: {path}", "blue")),
+            'open_app': lambda path: self.callback('open_app', self.id, self.name, 'python3 -m retouch.main', path)
+        }
         write_multilayer_tiff(input_files, output_file, exif_path=self.exif_path, callbacks=callbacks)

@@ -1,12 +1,12 @@
+import webbrowser
+import subprocess
+import os
+import platform
 from PySide6.QtWidgets import QSizePolicy, QVBoxLayout, QWidget, QLabel
 from PySide6.QtPdf import QPdfDocument
 from PySide6.QtPdfWidgets import QPdfView
 from PySide6.QtCore import Qt, QMargins
 from PySide6.QtGui import QPixmap
-import webbrowser
-import subprocess
-import os
-import platform
 
 
 def open_file(file_path):
@@ -73,3 +73,33 @@ class GuiImageView(QWidget):
 
     def mouseReleaseEvent(self, event):
         open_file(self.file_path)
+
+
+class GuiOpenApp(QWidget):
+    def __init__(self, app, file_path, parent=None):
+        super().__init__(parent)
+        self.file_path = file_path
+        self.app = app
+        self.setFixedWidth(250)
+        self.layout = QVBoxLayout()
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
+        self.image_label = QLabel()
+        self.image_label.setAlignment(Qt.AlignCenter)
+        self.layout.addWidget(self.image_label)
+        self.setLayout(self.layout)
+        pixmap = QPixmap(file_path)
+        if pixmap:
+            scaled_pixmap = pixmap.scaledToWidth(250, Qt.SmoothTransformation)
+            self.image_label.setPixmap(scaled_pixmap)
+        else:
+            raise RuntimeError(f"Can't load file: {file_path}.")
+
+    def sizeHint(self):
+        return self.size()
+
+    def mouseReleaseEvent(self, event):
+        try:
+            os.system(f"{self.app} {self.file_path}")
+        except Exception as e:
+            raise RuntimeError(f"Can't open file {self.file_path} with app: {self.app}.\n{str(e)}")

@@ -1,3 +1,4 @@
+import time
 from config.constants import constants
 from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QProgressBar,
                                QMessageBox, QScrollArea, QSizePolicy, QFrame, QLabel)
@@ -5,8 +6,7 @@ from PySide6.QtGui import QColor
 from PySide6.QtCore import Qt
 from PySide6.QtCore import Signal, Slot
 from gui.gui_logging import LogWorker, QTextEditLogger, LOG_FONTS_STR
-from gui.gui_images import GuiPdfView, GuiImageView
-import time
+from gui.gui_images import GuiPdfView, GuiImageView, GuiOpenApp
 
 DISABLED_TAG = ""  # " <disabled>"
 
@@ -300,6 +300,21 @@ class RunWindow(QTextEditLogger):
         self.right_area.updateGeometry()
         self.image_area_widget.updateGeometry()
 
+    @Slot(int, str, str, str)
+    def handle_open_app(self, id, name, app, path):
+        label = QLabel(name, self)
+        label.setStyleSheet("QLabel {margin-top: 5px; font-weight: bold;}")
+        self.image_layout.addWidget(label)
+        image_view = GuiOpenApp(app, path, self)
+        self.image_views.append(image_view)
+        self.image_layout.addWidget(image_view)
+        max_width = max(pv.size().width() for pv in self.image_views) if self.image_views else 0
+        needed_width = max_width + 15
+        self.right_area.setFixedWidth(needed_width)
+        self.image_area_widget.setFixedWidth(needed_width)
+        self.right_area.updateGeometry()
+        self.image_area_widget.updateGeometry()
+
 
 class RunWorker(LogWorker):
     before_action_signal = Signal(int, str)
@@ -309,6 +324,7 @@ class RunWorker(LogWorker):
     end_steps_signal = Signal(int, str)
     after_step_signal = Signal(int, str, int)
     save_plot_signal = Signal(int, str, str)
+    open_app_signal = Signal(int, str, str, str)
 
     def __init__(self, id_str):
         LogWorker.__init__(self)
@@ -322,7 +338,8 @@ class RunWorker(LogWorker):
             'end_steps': self.end_steps,
             'after_step': self.after_step,
             'save_plot': self.save_plot,
-            'check_running': self.check_running
+            'check_running': self.check_running,
+            'open_app': self.open_app
         }
         self.tag = ""
 
@@ -346,6 +363,9 @@ class RunWorker(LogWorker):
 
     def save_plot(self, id, name, path):
         self.save_plot_signal.emit(id, name, path)
+
+    def open_app(self, id, name, app, path):
+        self.open_app_signal.emit(id, name, app, path)
 
     def check_running(self, id, name):
         return self.status == constants.STATUS_RUNNING
