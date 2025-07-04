@@ -1,3 +1,6 @@
+import shutil
+
+
 class _Constants:
     EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
@@ -131,10 +134,12 @@ class _Constants:
     RUN_FAILED = 1
     RUN_STOPPED = 2
 
-    PYTHON_APP = 'python3'
-
-    def __setattr__(self, name, value):
+    def __setattr__aux(self, name, value):
         raise AttributeError(f"Can't reassign constant '{name}'")
+
+    def __init__(self):
+        self.PYTHON_APP = shutil.which('python3') or shutil.which('python')
+        _Constants.__setattr__ = _Constants.__setattr__aux
 
 
 constants = _Constants()
