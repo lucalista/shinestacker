@@ -182,6 +182,6 @@ class MultiLayer(FrameMultiDirectory, JobBase):
         callbacks = {
             'exif_msg': lambda: self.print_message(colored('copying exif data', 'blue')),
             'write_msg': lambda path: self.print_message(colored(f"writing multilayer tiff file: {path}", "blue")),
-            'open_app': lambda path: self.callback('open_app', self.id, self.name, 'python3 -m retouch.main', path)
+            'open_app': lambda path: self.callback('open_app', self.id, self.name, f'{constants.PYTHON_APP} -m retouch.main', path)
         }
         write_multilayer_tiff(input_files, output_file, exif_path=self.exif_path, callbacks=callbacks)

@@ -131,6 +131,8 @@ class _Constants:
     RUN_FAILED = 1
     RUN_STOPPED = 2
 
+    PYTHON_APP = 'python3'
+
     def __setattr__(self, name, value):
         raise AttributeError(f"Can't reassign constant '{name}'")
 

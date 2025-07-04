@@ -67,6 +67,14 @@ class GuiImageView(QWidget):
             self.image_label.setPixmap(scaled_pixmap)
         else:
             raise RuntimeError(f"Can't load file: {file_path}.")
+        self.setStyleSheet('''
+        QWidget {
+            border: 2px solid #0000a0;
+        }
+        QWidget:hover {
+            border: 2px solid #a0a0ff;
+        }
+        ''')
 
     def sizeHint(self):
         return self.size()
@@ -94,6 +102,14 @@ class GuiOpenApp(QWidget):
             self.image_label.setPixmap(scaled_pixmap)
         else:
             raise RuntimeError(f"Can't load file: {file_path}.")
+        self.setStyleSheet('''
+        QWidget {
+            border: 2px solid #a00000;
+        }
+        QWidget:hover {
+            border: 2px solid #ffa0a0;
+        }
+        ''')
 
     def sizeHint(self):
         return self.size()
