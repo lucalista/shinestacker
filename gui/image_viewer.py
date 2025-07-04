@@ -2,30 +2,15 @@ import math
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
 from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QCursor, QShortcut, QKeySequence, QRadialGradient
 from PySide6.QtCore import Qt, QRectF, QTime, QPoint
+from gui.gui_constants import gui_constants
 from gui.brush_preview import BrushPreviewItem
 from gui.brush_controller import BRUSH_SIZES
-
-MIN_ZOOMED_IMG_WIDTH = 400
-MAX_ZOOMED_IMG_PX_SIZE = 50
-
-BRUSH_COLORS = {
-    'outer': QColor(255, 0, 0, 200),
-    'inner': QColor(255, 0, 0, 150),
-    'gradient_end': QColor(255, 0, 0, 0),
-    'pen': QColor(255, 0, 0, 150),
-    'preview': QColor(255, 180, 180),
-    'cursor_inner': QColor(255, 0, 0, 120),
-    'preview_inner': QColor(255, 255, 255, 150)
-}
-
-MIN_MOUSE_STEP_BRUSH_FRACTION = 0.2
-PAINT_REFRESH_TIMER = 50  # milliseconds
 
 
 def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None, outer_color=None, opacity=100):
     gradient = QRadialGradient(center_x, center_y, float(radius))
-    inner = inner_color if inner_color is not None else BRUSH_COLORS['inner']
-    outer = outer_color if outer_color is not None else BRUSH_COLORS['gradient_end']
+    inner = inner_color if inner_color is not None else gui_constants.BRUSH_COLORS['inner']
+    outer = outer_color if outer_color is not None else gui_constants.BRUSH_COLORS['gradient_end']
     inner_with_opacity = QColor(inner)
     inner_with_opacity.setAlpha(int(float(inner.alpha()) * float(opacity) / 100.0))
     if hardness < 100:
@@ -73,8 +58,8 @@ class ImageViewer(QGraphicsView):
         self.pixmap_item.setPixmap(pixmap)
         self.setSceneRect(QRectF(pixmap.rect()))
         img_width = pixmap.width()
-        self.min_scale = MIN_ZOOMED_IMG_WIDTH / img_width
-        self.max_scale = MAX_ZOOMED_IMG_PX_SIZE
+        self.min_scale = gui_constants.MIN_ZOOMED_IMG_WIDTH / img_width
+        self.max_scale = gui_constants.MAX_ZOOMED_IMG_PX_SIZE
         if self.zoom_factor == 1.0:
             self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
             self.zoom_factor = self.get_current_scale()
@@ -130,8 +115,8 @@ class ImageViewer(QGraphicsView):
             self.update_brush_cursor()
         if self.dragging and event.buttons() & Qt.LeftButton:
             current_time = QTime.currentTime()
-            if self.last_update_time.msecsTo(current_time) >= PAINT_REFRESH_TIMER or not self.pending_update:
-                min_step = max(brush_size * MIN_MOUSE_STEP_BRUSH_FRACTION, BRUSH_SIZES['min'] / 2)
+            if self.last_update_time.msecsTo(current_time) >= gui_constants.PAINT_REFRESH_TIMER or not self.pending_update:
+                min_step = max(brush_size * gui_constants.MIN_MOUSE_STEP_BRUSH_FRACTION, BRUSH_SIZES['min'] / 2)
                 x, y = position.x(), position.y()
                 xp, yp = self.last_brush_pos.x(), self.last_brush_pos.y()
                 distance = math.sqrt((x - xp)**2 + (y - yp)**2)
@@ -192,8 +177,8 @@ class ImageViewer(QGraphicsView):
         self.update_brush_cursor()
 
     def setup_brush_cursor(self):
-        pen = QPen(BRUSH_COLORS['pen'], 1)
-        brush = QBrush(BRUSH_COLORS['cursor_inner'])
+        pen = QPen(gui_constants.BRUSH_COLORS['pen'], 1)
+        brush = QBrush(gui_constants.BRUSH_COLORS['cursor_inner'])
         self.brush_cursor = self.scene.addEllipse(0, 0,
                                                   self.image_editor.brush_controller.brush_size,
                                                   self.image_editor.brush_controller.brush_size,
@@ -228,18 +213,18 @@ class ImageViewer(QGraphicsView):
             self.brush_cursor.show()
 
     def _setup_outline_style(self):
-        self.brush_cursor.setPen(QPen(BRUSH_COLORS['pen'], 1))
+        self.brush_cursor.setPen(QPen(gui_constants.BRUSH_COLORS['pen'], 1))
         self.brush_cursor.setBrush(Qt.NoBrush)
 
     def _setup_simple_brush_style(self, center_x, center_y, radius):
         gradient = create_brush_gradient(
             center_x, center_y, radius,
             self.image_editor.brush_controller.brush_hardness,
-            inner_color=BRUSH_COLORS['inner'],
-            outer_color=BRUSH_COLORS['gradient_end'],
+            inner_color=gui_constants.BRUSH_COLORS['inner'],
+            outer_color=gui_constants.BRUSH_COLORS['gradient_end'],
             opacity=self.image_editor.brush_controller.brush_opacity
         )
-        self.brush_cursor.setPen(QPen(BRUSH_COLORS['pen'], 1))
+        self.brush_cursor.setPen(QPen(gui_constants.BRUSH_COLORS['pen'], 1))
         self.brush_cursor.setBrush(QBrush(gradient))
 
     def enterEvent(self, event):
