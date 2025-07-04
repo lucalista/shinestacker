@@ -48,7 +48,6 @@ class ImageViewer(QGraphicsView):
         self.scrolling = False
         self.dragging = False
         self.last_update_time = QTime.currentTime()
-        self.pending_update = False
         self.brush_preview = BrushPreviewItem()
         self.scene.addItem(self.brush_preview)
 
@@ -114,24 +113,21 @@ class ImageViewer(QGraphicsView):
             self.update_brush_cursor()
         if self.dragging and event.buttons() & Qt.LeftButton:
             current_time = QTime.currentTime()
-            if self.last_update_time.msecsTo(current_time) >= gui_constants.PAINT_REFRESH_TIMER or not self.pending_update:
-                min_step = max(brush_size * gui_constants.MIN_MOUSE_STEP_BRUSH_FRACTION, gui_constants.BRUSH_SIZES['min'] / 2)
+            if self.last_update_time.msecsTo(current_time) >= gui_constants.PAINT_REFRESH_TIMER:
+                min_step = min(brush_size * gui_constants.MIN_MOUSE_STEP_BRUSH_FRACTION, gui_constants.BRUSH_SIZES['min'] / 2)
                 x, y = position.x(), position.y()
                 xp, yp = self.last_brush_pos.x(), self.last_brush_pos.y()
-                distance = math.sqrt((x - xp)**2 + (y - yp)**2)
+                distance = math.sqrt((x - xp)**2 + (y - yp)**2)/self.zoom_factor
                 n_steps = int(float(distance) / min_step)
                 if n_steps > 0:
                     delta_x = (position.x() - self.last_brush_pos.x()) / n_steps
                     delta_y = (position.y() - self.last_brush_pos.y()) / n_steps
-                    for i in range(1, n_steps + 1):
+                    for i in range(0, n_steps + 1):
                         pos = QPoint(self.last_brush_pos.x() + i * delta_x,
                                      self.last_brush_pos.y() + i * delta_y)
                         self.image_editor.continue_copy_brush_area(pos)
-                    self.last_brush_pos = event.position()
+                    self.last_brush_pos = position
                 self.last_update_time = current_time
-                self.pending_update = False
-            else:
-                self.pending_update = True
         if self.scrolling and event.buttons() & Qt.LeftButton:
             delta = position - self.last_mouse_pos
             self.last_mouse_pos = position
