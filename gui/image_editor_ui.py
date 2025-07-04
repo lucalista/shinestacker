@@ -320,3 +320,10 @@ class ImageEditorUI(ImageEditor):
 
         if is_current:
             self.thumbnail_list.setCurrentItem(item)
+
+    def undo_last_brush(self):
+        if self.undo_manager.undo(self.master_layer):
+            self.display_current_view()
+            self.mark_as_modified()
+            self.statusBar().showMessage("Undo applied", 2000)
+

@@ -30,7 +30,9 @@ class UndoManager:
 
     def undo(self, layer):
         if layer is None or not self.undo_stack or len(self.undo_stack) == 0:
-            return
-        undo_state = self.undo_stack.pop()
-        x_start, y_start, x_end, y_end = undo_state['area']
-        layer[y_start:y_end, x_start:x_end] = undo_state['master']
+            return False
+        else:
+            undo_state = self.undo_stack.pop()
+            x_start, y_start, x_end, y_end = undo_state['area']
+            layer[y_start:y_end, x_start:x_end] = undo_state['master']
+            return True

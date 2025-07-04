@@ -480,12 +480,6 @@ class ImageEditor(QMainWindow):
             self.mark_as_modified()
             self.undo_manager.save_undo_state(self.master_layer_copy)
 
-    def undo_last_brush(self):
-        self.undo_manager.undo(self.master_layer)
-        self.display_current_view()
-        self.mark_as_modified()
-        self.statusBar().showMessage("Undo applied", 2000)
-
     def set_cursor_style(self, style):
         self.cursor_style = style
         if self.image_viewer.brush_cursor:
