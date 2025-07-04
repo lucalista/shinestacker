@@ -1,22 +1,20 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QListWidget, QListWidgetItem, QSlider
 from PySide6.QtGui import QShortcut, QKeySequence, QAction, QActionGroup
 from PySide6.QtCore import Qt, QSize
-from gui.image_editor import ImageEditor, THUMB_WIDTH, THUMB_HEIGHT, BRUSH_SIZE_SLIDER_MAX, BRUSH_GAMMA, IMG_WIDTH, IMG_HEIGHT
+from gui.image_editor import ImageEditor, BRUSH_GAMMA
 from gui.image_viewer import ImageViewer
-from gui.brush_controller import BRUSH_SIZES
+from gui.gui_constants import gui_constants
 
 DONT_USE_NATIVE_MENU = True
 
-LABEL_HEIGHT = 20
-
 
 def brush_size_to_slider(size):
-    if size <= BRUSH_SIZES['min']:
+    if size <= gui_constants.BRUSH_SIZES['min']:
         return 0
-    if size >= BRUSH_SIZES['max']:
-        return BRUSH_SIZE_SLIDER_MAX
-    normalized = ((size - BRUSH_SIZES['min']) / BRUSH_SIZES['max']) ** (1 / BRUSH_GAMMA)
-    return int(normalized * BRUSH_SIZE_SLIDER_MAX)
+    if size >= gui_constants.BRUSH_SIZES['max']:
+        return gui_constants.BRUSH_SIZE_SLIDER_MAX
+    normalized = ((size - gui_constants.BRUSH_SIZES['min']) / gui_constants.BRUSH_SIZES['max']) ** (1 / BRUSH_GAMMA)
+    return int(normalized * gui_constants.BRUSH_SIZE_SLIDER_MAX)
 
 
 class ImageEditorUI(ImageEditor):
@@ -59,7 +57,7 @@ class ImageEditorUI(ImageEditor):
         brush_layout.addWidget(brush_label)
 
         self.brush_size_slider = QSlider(Qt.Horizontal)
-        self.brush_size_slider.setRange(0, BRUSH_SIZE_SLIDER_MAX)
+        self.brush_size_slider.setRange(0, gui_constants.BRUSH_SIZE_SLIDER_MAX)
         self.brush_size_slider.setValue(brush_size_to_slider(self.brush_controller.brush_size))
         self.brush_size_slider.valueChanged.connect(self.update_brush_size)
         brush_layout.addWidget(self.brush_size_slider)
@@ -121,7 +119,7 @@ class ImageEditorUI(ImageEditor):
             }
         """)
         master_label.setAlignment(Qt.AlignCenter)
-        master_label.setFixedHeight(LABEL_HEIGHT)
+        master_label.setFixedHeight(gui_constants.LABEL_HEIGHT)
         side_layout.addWidget(master_label)
         self.master_thumbnail_frame = QFrame()
         self.master_thumbnail_frame.setFrameShape(QFrame.StyledPanel)
@@ -129,7 +127,7 @@ class ImageEditorUI(ImageEditor):
         master_thumbnail_layout.setContentsMargins(2, 2, 2, 2)
         self.master_thumbnail_label = QLabel()
         self.master_thumbnail_label.setAlignment(Qt.AlignCenter)
-        self.master_thumbnail_label.setFixedSize(THUMB_WIDTH, THUMB_HEIGHT)
+        self.master_thumbnail_label.setFixedSize(gui_constants.THUMB_WIDTH, gui_constants.THUMB_HEIGHT)
         self.master_thumbnail_label.mousePressEvent = lambda e: self.set_view_master()
         master_thumbnail_layout.addWidget(self.master_thumbnail_label)
         side_layout.addWidget(self.master_thumbnail_frame)
@@ -146,7 +144,7 @@ class ImageEditorUI(ImageEditor):
             }
         """)
         layers_label.setAlignment(Qt.AlignCenter)
-        layers_label.setFixedHeight(LABEL_HEIGHT)
+        layers_label.setFixedHeight(gui_constants.LABEL_HEIGHT)
         side_layout.addWidget(layers_label)
         self.thumbnail_list = QListWidget()
         self.thumbnail_list.setFocusPolicy(Qt.StrongFocus)
@@ -155,7 +153,7 @@ class ImageEditorUI(ImageEditor):
         self.thumbnail_list.setResizeMode(QListWidget.Adjust)
         self.thumbnail_list.setFlow(QListWidget.TopToBottom)
         self.thumbnail_list.setMovement(QListWidget.Static)
-        self.thumbnail_list.setFixedWidth(THUMB_WIDTH)
+        self.thumbnail_list.setFixedWidth(gui_constants.THUMB_WIDTH)
         self.thumbnail_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.thumbnail_list.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.thumbnail_list.itemClicked.connect(self.change_layer_item)
@@ -316,7 +314,7 @@ class ImageEditorUI(ImageEditor):
         layout.addWidget(label_widget)
 
         item = QListWidgetItem()
-        item.setSizeHint(QSize(IMG_WIDTH, IMG_HEIGHT))
+        item.setSizeHint(QSize(gui_constants.IMG_WIDTH, gui_constants.IMG_HEIGHT))
         self.thumbnail_list.addItem(item)
         self.thumbnail_list.setItemWidget(item, item_widget)
 

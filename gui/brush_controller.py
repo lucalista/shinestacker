@@ -1,26 +1,16 @@
 import numpy as np
 from gui.brush_preview import create_brush_mask
 from config.constants import constants
-
-DEFAULT_BRUSH_HARDNESS = 50
-DEFAULT_BRUSH_OPACITY = 100
-DEFAULT_BRUSH_FLOW = 100
-
-BRUSH_SIZES = {
-    'default': 50,
-    'min': 5,
-    'mid': 50,
-    'max': 1000
-}
+from gui.gui_constants import gui_constants
 
 
 class BrushController:
     def __init__(self):
         self._brush_mask_cache = {}
-        self.brush_size = BRUSH_SIZES['default']
-        self.brush_hardness = DEFAULT_BRUSH_HARDNESS
-        self.brush_opacity = DEFAULT_BRUSH_OPACITY
-        self.brush_flow = DEFAULT_BRUSH_FLOW
+        self.brush_size = gui_constants.BRUSH_SIZES['default']
+        self.brush_hardness = gui_constants.DEFAULT_BRUSH_HARDNESS
+        self.brush_opacity = gui_constants.DEFAULT_BRUSH_OPACITY
+        self.brush_flow = gui_constants.DEFAULT_BRUSH_FLOW
 
     def apply_brush_operation(self, master_layer, source_layer, dest_layer, mask_layer, view_pos, image_viewer):
         if master_layer is None or source_layer is None:

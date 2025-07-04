@@ -4,7 +4,6 @@ from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QCursor, QSho
 from PySide6.QtCore import Qt, QRectF, QTime, QPoint
 from gui.gui_constants import gui_constants
 from gui.brush_preview import BrushPreviewItem
-from gui.brush_controller import BRUSH_SIZES
 
 
 def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None, outer_color=None, opacity=100):
@@ -116,7 +115,7 @@ class ImageViewer(QGraphicsView):
         if self.dragging and event.buttons() & Qt.LeftButton:
             current_time = QTime.currentTime()
             if self.last_update_time.msecsTo(current_time) >= gui_constants.PAINT_REFRESH_TIMER or not self.pending_update:
-                min_step = max(brush_size * gui_constants.MIN_MOUSE_STEP_BRUSH_FRACTION, BRUSH_SIZES['min'] / 2)
+                min_step = max(brush_size * gui_constants.MIN_MOUSE_STEP_BRUSH_FRACTION, gui_constants.BRUSH_SIZES['min'] / 2)
                 x, y = position.x(), position.y()
                 xp, yp = self.last_brush_pos.x(), self.last_brush_pos.y()
                 distance = math.sqrt((x - xp)**2 + (y - yp)**2)

@@ -6,34 +6,19 @@ from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QAbstractIt
 from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QRadialGradient
 from PySide6.QtCore import Qt, QTimer, QEvent, QPoint
 from algorithms.multilayer import read_multilayer_tiff, write_multilayer_tiff_from_images
-from gui.image_viewer import BRUSH_COLORS, PAINT_REFRESH_TIMER
-from gui.brush_controller import BrushController, BRUSH_SIZES
 from config.constants import constants
-
-THUMB_WIDTH = 120
-THUMB_HEIGHT = 80
-IMG_WIDTH = 100
-IMG_HEIGHT = 80
-
-MAX_UNDO_STEPS = 50
-
-BRUSH_SIZE_SLIDER_MAX = 1000
-
-UI_SIZES = {
-    'brush_preview': (100, 80),
-    'thumbnail': (IMG_WIDTH, IMG_HEIGHT),
-    'master_thumb': (THUMB_WIDTH, THUMB_HEIGHT)
-}
+from gui.gui_constants import gui_constants
+from gui.brush_controller import BrushController
 
 
 def calculate_gamma():
-    if BRUSH_SIZES['mid'] <= BRUSH_SIZES['min'] or BRUSH_SIZES['max'] <= 0:
+    if gui_constants.BRUSH_SIZES['mid'] <= gui_constants.BRUSH_SIZES['min'] or gui_constants.BRUSH_SIZES['max'] <= 0:
         return 1.0
-    ratio = (BRUSH_SIZES['mid'] - BRUSH_SIZES['min']) / BRUSH_SIZES['max']
-    half_point = BRUSH_SIZE_SLIDER_MAX / 2
+    ratio = (gui_constants.BRUSH_SIZES['mid'] - gui_constants.BRUSH_SIZES['min']) / gui_constants.BRUSH_SIZES['max']
+    half_point = gui_constants.BRUSH_SIZE_SLIDER_MAX / 2
     if ratio <= 0:
         return 1.0
-    gamma = np.log(ratio) / np.log(half_point / BRUSH_SIZE_SLIDER_MAX)
+    gamma = np.log(ratio) / np.log(half_point / gui_constants.BRUSH_SIZE_SLIDER_MAX)
     return gamma
 
 
@@ -41,15 +26,15 @@ BRUSH_GAMMA = calculate_gamma()
 
 
 def slider_to_brush_size(slider_val):
-    normalized = slider_val / BRUSH_SIZE_SLIDER_MAX
-    size = BRUSH_SIZES['min'] + BRUSH_SIZES['max'] * (normalized ** BRUSH_GAMMA)
-    return max(BRUSH_SIZES['min'], min(BRUSH_SIZES['max'], size))
+    normalized = slider_val / gui_constants.BRUSH_SIZE_SLIDER_MAX
+    size = gui_constants.BRUSH_SIZES['min'] + gui_constants.BRUSH_SIZES['max'] * (normalized ** BRUSH_GAMMA)
+    return max(gui_constants.BRUSH_SIZES['min'], min(gui_constants.BRUSH_SIZES['max'], size))
 
 
 def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None, outer_color=None, opacity=100):
     gradient = QRadialGradient(center_x, center_y, float(radius))
-    inner = inner_color if inner_color is not None else BRUSH_COLORS['inner']
-    outer = outer_color if outer_color is not None else BRUSH_COLORS['gradient_end']
+    inner = inner_color if inner_color is not None else gui_constants.BRUSH_COLORS['inner']
+    outer = outer_color if outer_color is not None else gui_constants.BRUSH_COLORS['gradient_end']
     inner_with_opacity = QColor(inner)
     inner_with_opacity.setAlpha(int(float(inner.alpha()) * float(opacity) / 100.0))
     if hardness < 100:
@@ -76,11 +61,11 @@ class ImageEditor(QMainWindow):
         self.current_file_path = None
         self.modified = False
         self.undo_stack = []
-        self.max_undo_steps = MAX_UNDO_STEPS
+        self.max_undo_steps = gui_constants.MAX_UNDO_STEPS
         self.sort_order = 'original'
         self.installEventFilter(self)
         self.update_timer = QTimer(self)
-        self.update_timer.setInterval(PAINT_REFRESH_TIMER)
+        self.update_timer.setInterval(gui_constants.PAINT_REFRESH_TIMER)
         self.update_timer.timeout.connect(self.process_pending_updates)
         self.needs_update = False
         self.brush_controller = BrushController()
@@ -314,7 +299,7 @@ class ImageEditor(QMainWindow):
     def update_thumbnails(self):
         if not hasattr(self, 'master_layer') or self.master_layer is None:
             return
-        thumb_size = UI_SIZES['thumbnail']
+        thumb_size = gui_constants.UI_SIZES['thumbnail']
         master_thumb = self.create_thumbnail(self.master_layer, thumb_size)
         self.master_thumbnail_label.setPixmap(master_thumb)
         self.thumbnail_list.clear()
@@ -332,7 +317,7 @@ class ImageEditor(QMainWindow):
             layer = (layer // 256).astype(np.uint8)
         height, width, _ = layer.shape
         qimg = QImage(layer.data, width, height, 3 * width, QImage.Format_RGB888)
-        return QPixmap.fromImage(qimg.scaled(*UI_SIZES['thumbnail'], Qt.KeepAspectRatio))
+        return QPixmap.fromImage(qimg.scaled(*gui_constants.UI_SIZES['thumbnail'], Qt.KeepAspectRatio))
 
     def create_grayscale_thumbnail(self, layer):
         if layer.dtype == np.uint16:
@@ -340,7 +325,7 @@ class ImageEditor(QMainWindow):
             layer = np.clip(np.multiply(np.subtract(layer, p2), 255.0 / (p98 - p2)), 0, 255).astype(np.uint8)
         height, width = layer.shape
         qimg = QImage(layer.data, width, height, width, QImage.Format_Grayscale8)
-        return QPixmap.fromImage(qimg.scaled(*UI_SIZES['thumbnail'], Qt.KeepAspectRatio))
+        return QPixmap.fromImage(qimg.scaled(*gui_constants.UI_SIZES['thumbnail'], Qt.KeepAspectRatio))
 
     def change_layer(self, layer_idx):
         if 0 <= layer_idx < len(self.current_stack):
@@ -420,7 +405,7 @@ class ImageEditor(QMainWindow):
         self.image_viewer.update_brush_cursor()
 
     def update_brush_preview(self):
-        width, height = UI_SIZES['brush_preview']
+        width, height = gui_constants.UI_SIZES['brush_preview']
         pixmap = QPixmap(width, height)
         pixmap.fill(Qt.transparent)
         painter = QPainter(pixmap)
@@ -432,18 +417,18 @@ class ImageEditor(QMainWindow):
             gradient = create_brush_gradient(
                 center_x, center_y, radius,
                 self.brush_controller.brush_hardness,
-                inner_color=BRUSH_COLORS['inner'],
-                outer_color=BRUSH_COLORS['gradient_end'],
+                inner_color=gui_constants.BRUSH_COLORS['inner'],
+                outer_color=gui_constants.BRUSH_COLORS['gradient_end'],
                 opacity=self.brush_controller.brush_opacity
             )
             painter.setBrush(QBrush(gradient))
-            painter.setPen(QPen(BRUSH_COLORS['outer'], 1))
+            painter.setPen(QPen(gui_constants.BRUSH_COLORS['outer'], 1))
         elif self.cursor_style == 'outline':
             painter.setBrush(Qt.NoBrush)
-            painter.setPen(QPen(BRUSH_COLORS['outer'], 1))
+            painter.setPen(QPen(gui_constants.BRUSH_COLORS['outer'], 1))
         else:
-            painter.setBrush(QBrush(BRUSH_COLORS['cursor_inner']))
-            painter.setPen(QPen(BRUSH_COLORS['pen'], 1))
+            painter.setBrush(QBrush(gui_constants.BRUSH_COLORS['cursor_inner']))
+            painter.setPen(QPen(gui_constants.BRUSH_COLORS['pen'], 1))
 
         painter.drawEllipse(QPoint(center_x, center_y), radius, radius)
 
