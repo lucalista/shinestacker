@@ -65,6 +65,7 @@ The GUI requires the following python modules:
 * ansi2html
 * jsonpickle
 * PySide6
+* webbrowser
 
 ## Documentation
 - [Job creation and processing pipeline](../docs/job.md)
