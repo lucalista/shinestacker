@@ -83,7 +83,7 @@ The GUI requires the following python modules:
 
 ## Requirements
 
-* python version 3.12 or greater
+* python version 3.12. With python 3.13, when closing the applications, it crashes in in the garbage colleciton phase.
 
 The following python modules:
 * imagecodecs
