@@ -61,7 +61,7 @@ class FocusStackBunch(FocusStackBase, FrameDirectory, ActionList):
                                 exif_path=kwargs.pop('exif_path', ''),
                                 prefix=kwargs.pop('prefix', constants.DEFAUlT_STACK_PREFIX),
                                 denoise=kwargs.pop('denoise', 0),
-                                plot_stack=kwargs.pop('plot_stack', False))
+                                plot_stack=kwargs.pop('plot_stack', constants.DEFAULT_PLOT_STACK_BUNCH))
         FrameDirectory.__init__(self, name, **kwargs)
         ActionList.__init__(self, name, enabled)
         self.frame_count = 0
@@ -95,7 +95,7 @@ class FocusStack(FocusStackBase, FrameDirectory, JobBase):
                                 exif_path=kwargs.pop('exif_path', ''),
                                 prefix=kwargs.pop('prefix', constants.DEFAULT_STACK_PREFIX),
                                 denoise=kwargs.pop('denoise', 0),
-                                plot_stack=kwargs.pop('plot_stack', False))
+                                plot_stack=kwargs.pop('plot_stack', constants.DEFAULT_PLOT_STACK))
         FrameDirectory.__init__(self, name, **kwargs)
         JobBase.__init__(self, name, enabled)
 

@@ -439,7 +439,6 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
                                placeholder='relative to working path')
         self.builder.add_field('scratch_output_dir', FIELD_BOOL, 'Scratch output dir.',
                                required=False, default=True)
-        self.builder.add_field('plot_stack', FIELD_BOOL, 'Plot stack', required=False, default=False)
 
     def common_fields(self, layout, action):
         self.builder.add_field('denoise', FIELD_FLOAT, 'Denoise', required=False,
@@ -517,6 +516,8 @@ class FocusStackConfigurator(FocusStackBaseConfigurator):
                                placeholder='relative to working path')
         self.builder.add_field('prefix', FIELD_TEXT, 'Ouptut filename prefix', required=False,
                                default=constants.DEFAULT_STACK_PREFIX, placeholder="_stack")
+        self.builder.add_field('plot_stack', FIELD_BOOL, 'Plot stack', required=False,
+                               default=constants.DEFAULT_PLOT_STACK)
         super().common_fields(layout, action)
 
 
@@ -527,6 +528,8 @@ class FocusStackBunchConfigurator(FocusStackBaseConfigurator):
                                default=constants.DEFAULT_FRAMES, min=1, max=100)
         self.builder.add_field('overlap', FIELD_INT, 'Overlapping frames', required=False,
                                default=constants.DEFAULT_OVERLAP, min=0, max=100)
+        self.builder.add_field('plot_stack', FIELD_BOOL, 'Plot stack', required=False,
+                               default=constants.DEFAULT_PLOT_STACK_BUNCH)
         super().common_fields(layout, action)
 
 
