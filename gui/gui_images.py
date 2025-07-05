@@ -41,6 +41,14 @@ class GuiPdfView(QPdfView):
                               int(first_page_size.height() * zoom_factor) + 1)
         else:
             raise RuntimeError(f"Can't load file: {file_path}. Error code: {err}.")
+        self.setStyleSheet('''
+        QWidget {
+            border: 2px solid #0000a0;
+        }
+        QWidget:hover {
+            border: 2px solid #a0a0ff;
+        }
+        ''')
 
     def sizeHint(self):
         return self.size()

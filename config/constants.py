@@ -142,6 +142,7 @@ class _Constants:
 
     def __init__(self):
         self.PYTHON_APP = sys.executable
+        self.RETOUCH_APP = f"{self.PYTHON_APP} -m retouch.main"
         _Constants.__setattr__ = _Constants.__setattr__aux
 
 
