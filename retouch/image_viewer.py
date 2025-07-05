@@ -114,8 +114,7 @@ class ImageViewer(QGraphicsView):
         if self.dragging and event.buttons() & Qt.LeftButton:
             current_time = QTime.currentTime()
             if self.last_update_time.msecsTo(current_time) >= gui_constants.PAINT_REFRESH_TIMER:
-                min_step = min(brush_size * gui_constants.MIN_MOUSE_STEP_BRUSH_FRACTION,
-                               gui_constants.BRUSH_SIZES['min'] / 2) * self.zoom_factor
+                min_step = brush_size * gui_constants.MIN_MOUSE_STEP_BRUSH_FRACTION * self.zoom_factor
                 x, y = position.x(), position.y()
                 xp, yp = self.last_brush_pos.x(), self.last_brush_pos.y()
                 distance = math.sqrt((x - xp)**2 + (y - yp)**2)
