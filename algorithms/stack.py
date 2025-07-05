@@ -59,7 +59,7 @@ class FocusStackBunch(FocusStackBase, FrameDirectory, ActionList):
     def __init__(self, name, stack_algo, enabled=True, **kwargs):
         FocusStackBase.__init__(self, stack_algo,
                                 exif_path=kwargs.pop('exif_path', ''),
-                                prefix=kwargs.pop('prefix', constants.DEFAUlT_STACK_PREFIX),
+                                prefix=kwargs.pop('prefix', constants.DEFAULT_STACK_PREFIX),
                                 denoise=kwargs.pop('denoise', 0),
                                 plot_stack=kwargs.pop('plot_stack', constants.DEFAULT_PLOT_STACK_BUNCH))
         FrameDirectory.__init__(self, name, **kwargs)
