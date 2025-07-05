@@ -214,7 +214,7 @@ class CombinedActions(FramesRefActions):
 
     def run_frame(self, idx, ref_idx):
         filename = self.filenames[idx]
-        self.sub_message_r(': read imput image')
+        self.sub_message_r(': read input image')
         img = read_img(self.input_full_path + "/" + filename)
         if hasattr(self, 'dtype') and img.dtype != self.dtype:
             raise BitDepthError(img.dtype, self.dtype)
