@@ -2,8 +2,9 @@ import webbrowser
 import numpy as np
 import tifffile
 from psdtags import PsdChannelId
-from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QAbstractItemView, QVBoxLayout, QLabel, QDialog
-from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QRadialGradient
+from PySide6.QtWidgets import (QMainWindow, QFileDialog, QMessageBox, QAbstractItemView,
+                               QVBoxLayout, QLabel, QDialog, QApplication)
+from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QRadialGradient, QGuiApplication, QCursor
 from PySide6.QtCore import Qt, QTimer, QEvent, QPoint, QThread, Signal
 from algorithms.multilayer import read_multilayer_tiff, write_multilayer_tiff_from_images
 from retouch.gui_constants import gui_constants
@@ -209,6 +210,7 @@ class ImageEditor(QMainWindow):
         if not path:
             return
         self.current_file_path = path
+        QGuiApplication.setOverrideCursor(QCursor(Qt.BusyCursor))
         self.loading_dialog = QDialog(self)
         self.loading_dialog.setWindowTitle("Loading")
         self.loading_dialog.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
@@ -226,6 +228,7 @@ class ImageEditor(QMainWindow):
         self.loader_thread.start()
 
     def on_file_loaded(self, stack, labels, master_layer):
+        QApplication.restoreOverrideCursor()
         self.loading_timer.stop()
         self.loading_dialog.hide()
         self.current_stack = stack
@@ -239,6 +242,7 @@ class ImageEditor(QMainWindow):
         self.thumbnail_list.setFocus()
 
     def on_file_error(self, error_msg):
+        QApplication.restoreOverrideCursor()
         self.loading_timer.stop()
         self.loading_dialog.accept()
         self.loading_dialog.deleteLater()
