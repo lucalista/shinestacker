@@ -129,8 +129,7 @@ class ImageEditor(QMainWindow):
 
     def process_pending_updates(self):
         if self.needs_update:
-            self.display_current_view()
-            self.mark_as_modified()
+            self.display_master_layer()
             self.needs_update = False
 
     def eventFilter(self, obj, event):
@@ -171,7 +170,7 @@ class ImageEditor(QMainWindow):
                 self.current_stack, self.current_labels = self.load_tiff_stack(self.current_file_path)
                 self.update_thumbnails()
                 if self.current_layer >= len(self.current_stack):
-                    self.current_layer = len(self.current_stack) - 1
+                    self.current_layer = len(self.current_stacke) - 1
                 self.change_layer(self.current_layer)
             return
         master_index = -1
@@ -253,8 +252,8 @@ class ImageEditor(QMainWindow):
         self.modified = True
         title = "Focus Stack Editor"
         if self.current_file_path:
-            title += f" - {self.current_file_path}"
-        self.setWindowTitle(title + "*")
+            title += f" - {self.current_file_path.split('/')[-1]}"
+        self.setWindowTitle(title + " [*]")
 
     def save_file(self):
         if self.current_stack is None:
@@ -290,27 +289,27 @@ class ImageEditor(QMainWindow):
     def set_view_master(self):
         self.view_mode = 'master'
         self.temp_view_individual = False
-        self.display_current_view()
+        self.display_master_layer()
         self.statusBar().showMessage("View mode: Master")
 
     def set_view_individual(self):
         self.view_mode = 'individual'
         self.temp_view_individual = False
-        self.display_current_view()
+        self.display_current_layer()
         self.statusBar().showMessage("View mode: Individual layers")
 
     def start_temp_view(self):
         if not self.temp_view_individual and self.view_mode == 'master':
             self.temp_view_individual = True
             self.image_viewer.update_brush_cursor()
-            self.display_current_view()
+            self.display_current_layer()
             self.statusBar().showMessage("Temporary view: Individual layer (hold X)")
 
     def end_temp_view(self):
         if self.temp_view_individual:
             self.temp_view_individual = False
             self.image_viewer.update_brush_cursor()
-            self.display_current_view()
+            self.display_master_layer()
             self.statusBar().showMessage("View mode: Master")
 
     def display_current_view(self):
@@ -323,7 +322,6 @@ class ImageEditor(QMainWindow):
         if self.master_layer is not None:
             qimage = self.numpy_to_qimage(self.master_layer)
             self.image_viewer.set_image(qimage)
-            self.update_thumbnails()
 
     def create_thumbnail(self, layer, size):
         if layer.ndim == 3 and layer.shape[-1] == 3:
@@ -331,13 +329,17 @@ class ImageEditor(QMainWindow):
         else:
             return self.create_grayscale_thumbnail(layer)
 
-    def update_thumbnails(self):
+    def update_master_thumbnail(self):
         if not hasattr(self, 'master_layer') or self.master_layer is None:
             return
         thumb_size = gui_constants.UI_SIZES['thumbnail']
         master_thumb = self.create_thumbnail(self.master_layer, thumb_size)
         self.master_thumbnail_label.setPixmap(master_thumb)
+
+    def update_thumbnails(self):
+        self.update_master_thumbnail()
         self.thumbnail_list.clear()
+        thumb_size = gui_constants.UI_SIZES['thumbnail']
         if self.current_stack is None:
             return
         for i, (layer, label) in enumerate(zip(self.current_stack, self.current_labels)):
@@ -511,7 +513,9 @@ class ImageEditor(QMainWindow):
             self.master_layer_copy = self.master_layer.copy()
             self.undo_manager.reset_undo_area()
             self.copy_brush_area_to_master(pos)
-            self.display_current_view()
+            self.needs_update = True
+            if not self.update_timer.isActive():
+                self.update_timer.start()
             self.mark_as_modified()
 
     def continue_copy_brush_area(self, pos):
@@ -520,13 +524,15 @@ class ImageEditor(QMainWindow):
             self.needs_update = True
             if not self.update_timer.isActive():
                 self.update_timer.start()
+            self.mark_as_modified()
 
     def end_copy_brush_area(self):
         if self.update_timer.isActive():
-            self.update_timer.stop()
-            self.display_current_view()
-            self.mark_as_modified()
+            self.display_master_layer()
+            self.update_master_thumbnail()
             self.undo_manager.save_undo_state(self.master_layer_copy)
+            self.update_timer.stop()
+            self.mark_as_modified()
 
     def set_cursor_style(self, style):
         self.cursor_style = style
