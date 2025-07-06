@@ -286,6 +286,15 @@ class ImageEditor(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "Save Error", f"Could not save file: {str(e)}")
 
+    def close_file(self):
+        self.master_layer = None
+        self.blank_layer = None
+        self.current_stack = None
+        self.master_layer = None
+        self.current_layer = 0
+        self.display_master_layer()
+        self.update_thumbnails()
+
     def set_view_master(self):
         self.view_mode = 'master'
         self.temp_view_individual = False
@@ -319,7 +328,9 @@ class ImageEditor(QMainWindow):
             self.display_master_layer()
 
     def display_master_layer(self):
-        if self.master_layer is not None:
+        if self.master_layer is None:
+            self.image_viewer.clear_image()
+        else:
             qimage = self.numpy_to_qimage(self.master_layer)
             self.image_viewer.set_image(qimage)
 
@@ -330,11 +341,12 @@ class ImageEditor(QMainWindow):
             return self.create_grayscale_thumbnail(layer)
 
     def update_master_thumbnail(self):
-        if not hasattr(self, 'master_layer') or self.master_layer is None:
-            return
-        thumb_size = gui_constants.UI_SIZES['thumbnail']
-        master_thumb = self.create_thumbnail(self.master_layer, thumb_size)
-        self.master_thumbnail_label.setPixmap(master_thumb)
+        if self.master_layer is None:
+            self.master_thumbnail_label.clear()
+        else:
+            thumb_size = gui_constants.UI_SIZES['thumbnail']
+            master_thumb = self.create_thumbnail(self.master_layer, thumb_size)
+            self.master_thumbnail_label.setPixmap(master_thumb)
 
     def update_thumbnails(self):
         self.update_master_thumbnail()

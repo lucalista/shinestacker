@@ -65,6 +65,15 @@ class ImageViewer(QGraphicsView):
             self.resetTransform()
             self.scale(self.zoom_factor, self.zoom_factor)
 
+    def clear_image(self):
+        self.scene.clear()
+        self.pixmap_item = QGraphicsPixmapItem()
+        self.scene.addItem(self.pixmap_item)
+        self.zoom_factor = 1.0
+        self.setup_brush_cursor()
+        self.brush_preview = BrushPreviewItem()
+        self.scene.addItem(self.brush_preview)
+
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Space and not self.scrolling:
             self.space_pressed = True
@@ -91,7 +100,7 @@ class ImageViewer(QGraphicsView):
         super().keyReleaseEvent(event)
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.LeftButton and self.image_editor.master_layer is not None:
             if self.space_pressed:
                 self.scrolling = True
                 self.last_mouse_pos = event.position()
