@@ -3,6 +3,7 @@ from PySide6.QtGui import QColor
 
 
 class _GuiConstants:
+    APP_TITLE = "Focus Stack Editor"
     MIN_ZOOMED_IMG_WIDTH = 400
     MAX_ZOOMED_IMG_PX_SIZE = 50
     MAX_UNDO_SIZE = 65535

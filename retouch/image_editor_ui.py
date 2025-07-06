@@ -31,7 +31,7 @@ class ImageEditorUI(ImageEditor):
         next_layer.activated.connect(self.next_layer)
 
     def setup_ui(self):
-        self.setWindowTitle("Focus Stack Editor")
+        self.setWindowTitle(gui_constants.APP_TITLE)
         self.resize(1400, 900)
         central_widget = QWidget()
         self.setCentralWidget(central_widget)

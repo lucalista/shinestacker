@@ -239,6 +239,10 @@ class ImageEditor(QMainWindow):
         self.image_viewer.reset_zoom()
         self.statusBar().showMessage(f"Loaded: {self.current_file_path}")
         self.thumbnail_list.setFocus()
+        title = gui_constants.APP_TITLE
+        if self.current_file_path:
+            title += f" - {self.current_file_path.split('/')[-1]}"
+        self.setWindowTitle(title)
 
     def on_file_error(self, error_msg):
         QApplication.restoreOverrideCursor()
@@ -250,10 +254,10 @@ class ImageEditor(QMainWindow):
 
     def mark_as_modified(self):
         self.modified = True
-        title = "Focus Stack Editor"
+        title = gui_constants.APP_TITLE
         if self.current_file_path:
             title += f" - {self.current_file_path.split('/')[-1]}"
-        self.setWindowTitle(title + " [*]")
+        self.setWindowTitle(f"{title} *")
 
     def save_file(self):
         if self.current_stack is None:
@@ -261,7 +265,7 @@ class ImageEditor(QMainWindow):
         if self.current_file_path:
             self._save_to_path(self.current_file_path)
             self.modified = False
-            self.setWindowTitle("Focus Stack Editor")
+            self.setWindowTitle(gui_constants.APP_TITLE)
         else:
             self.save_file_as()
 
@@ -294,6 +298,7 @@ class ImageEditor(QMainWindow):
         self.current_layer = 0
         self.display_master_layer()
         self.update_thumbnails()
+        self.setWindowTitle(gui_constants.APP_TITLE)
 
     def set_view_master(self):
         self.view_mode = 'master'
