@@ -134,8 +134,9 @@ class _Constants:
     STATUS_STOPPED = 3
 
     RUN_COMPLETED = 0
-    RUN_FAILED = 1
-    RUN_STOPPED = 2
+    RUN_ONGOING = 1
+    RUN_FAILED = 2
+    RUN_STOPPED = 3
 
     def __setattr__aux(self, name, value):
         raise AttributeError(f"Can't reassign constant '{name}'")

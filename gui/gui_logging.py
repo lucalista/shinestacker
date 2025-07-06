@@ -106,8 +106,8 @@ class QTextEditLogger(GuiLogger):
         self.text_edit.setTextCursor(cursor)
         self.text_edit.ensureCursorVisible()
 
-    @Slot(str, str)
-    def handle_status_message(self, message, timeout):
+    @Slot(str, int, int)
+    def handle_status_message(self, message, status, timeout):
         self.status_bar.showMessage(message, timeout)
 
     @Slot(str)
@@ -119,7 +119,7 @@ class LogWorker(QThread):
     log_signal = Signal(str, str)
     html_signal = Signal(str)
     end_signal = Signal(int, str, str)
-    status_signal = Signal(str, int)
+    status_signal = Signal(str, int, int)
     exception_signal = Signal(str)
 
     def run(self):

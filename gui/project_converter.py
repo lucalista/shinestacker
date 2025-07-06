@@ -17,6 +17,9 @@ from gui.action_config import FocusStackBaseConfigurator
 
 
 class ProjectConverter:
+    def get_logger(self, logger_name=None):
+        return logging.getLogger(__name__ if logger_name is None else logger_name)
+    
     def run(self, job, logger):
         if job.enabled:
             logger.info(f"=== run job: {job.name} ===")
@@ -30,13 +33,16 @@ class ProjectConverter:
             return constants.RUN_STOPPED
         except Exception as e:
             msg = str(e)
-            logger.warning(f"=== job: {job.name} failed: {msg} ===")
+            logger.error(f"=== job: {job.name} failed: {msg} ===")
             traceback.print_tb(e.__traceback__)
             return constants.RUN_FAILED
 
     def run_project(self, project: Project, logger_name=None, callbacks=None):
-        logger = logging.getLogger(__name__ if logger_name is None else logger_name)
-        jobs = self.project(project, logger_name, callbacks)
+        logger = self.get_logger(logger_name)
+        try:
+            jobs = self.project(project, logger_name, callbacks)
+        except Exception as e:
+            return constants.RUN_FAILED
         status = constants.RUN_COMPLETED
         for job in jobs:
             job_status = self.run(job, logger)
@@ -47,12 +53,23 @@ class ProjectConverter:
         return status
 
     def run_job(self, job: ActionConfig, logger_name=None, callbacks=None):
-        logger = logging.getLogger(__name__ if logger_name is None else logger_name)
-        job = self.job(job, logger_name, callbacks)
-        return self.run(job, logger)
+        logger = self.get_logger(logger_name)
+        try:
+            job = self.job(job, logger_name, callbacks)
+        except Exception as e:
+            return constants.RUN_FAILED
+        status = self.run(job, logger)
+        return status
 
     def project(self, project: Project, logger_name=None, callbacks=None):
-        return [self.job(j, logger_name, callbacks) for j in project.jobs]
+        jobs = []
+        for j in project.jobs:
+            job = self.job(j, logger_name, callbacks)
+            if job is None:
+                raise Exception(f"Job instantiation failed")
+            else:
+                jobs.append(job)
+        return jobs
 
     def filter_dict_keys(self, dict, prefix):
         dict_with = {k.replace(prefix, ''): v for (k, v) in dict.items() if k.startswith(prefix)}
@@ -116,13 +133,21 @@ class ProjectConverter:
             raise Exception(f"Cannot convert action of type {action_config.type_name}.")
 
     def job(self, action_config: ActionConfig, logger_name=None, callbacks=None):
-        name = action_config.params.get('name', '')
-        enabled = action_config.params.get('enabled', True)
-        working_path = action_config.params.get('working_path', '')
-        input_path = action_config.params.get('input_path', '')
-        stack_job = StackJob(name, working_path, enabled=enabled, input_path=input_path, logger_name=logger_name, callbacks=callbacks)
-        for sub in action_config.sub_actions:
-            action = self.action(sub)
-            if action is not None:
-                stack_job.add_action(action)
-        return stack_job
+        try:
+            name = action_config.params.get('name', '')
+            enabled = action_config.params.get('enabled', True)
+            working_path = action_config.params.get('working_path', '')
+            input_path = action_config.params.get('input_path', '')
+            stack_job = StackJob(name, working_path, enabled=enabled, input_path=input_path,
+                                 logger_name=logger_name, callbacks=callbacks)
+            for sub in action_config.sub_actions:
+                action = self.action(sub)
+                if action is not None:
+                    stack_job.add_action(action)
+            return stack_job
+        except Exception as e:
+            msg = str(e)
+            logger = self.get_logger(logger_name)
+            logger.error(f"=== can't instantiate job: {name}: {msg} ===")
+            traceback.print_tb(e.__traceback__)
+            raise e
