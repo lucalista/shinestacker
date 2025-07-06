@@ -286,7 +286,7 @@ class ImageEditor(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "Save Error", f"Could not save file: {str(e)}")
 
-    def close_file(self):
+    def new_file(self):
         self.master_layer = None
         self.blank_layer = None
         self.current_stack = None

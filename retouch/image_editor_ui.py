@@ -193,10 +193,10 @@ class ImageEditorUI(ImageEditor):
     def setup_menu(self):
         menubar = self.menuBar()
         file_menu = menubar.addMenu("&File")
-        file_menu.addAction("Open...", self.open_file, "Ctrl+O")
-        file_menu.addAction("Save", self.save_file, "Ctrl+S")
-        file_menu.addAction("Save As...", self.save_file_as)
-        file_menu.addAction("Close", self.close_file)
+        file_menu.addAction("&New", self.new_file, "Ctrl+N")
+        file_menu.addAction("&Open...", self.open_file, "Ctrl+O")
+        file_menu.addAction("&Save", self.save_file, "Ctrl+S")
+        file_menu.addAction("Save &As...", self.save_file_as)
         file_menu.addSeparator()
         if DONT_USE_NATIVE_MENU:
             quit_txt, quit_short = "&Quit", "Ctrl+Q"
