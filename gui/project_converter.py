@@ -19,7 +19,7 @@ from gui.action_config import FocusStackBaseConfigurator
 class ProjectConverter:
     def get_logger(self, logger_name=None):
         return logging.getLogger(__name__ if logger_name is None else logger_name)
-    
+
     def run(self, job, logger):
         if job.enabled:
             logger.info(f"=== run job: {job.name} ===")
@@ -27,29 +27,31 @@ class ProjectConverter:
             logger.warning(f"=== job: {job.name} disabled ===")
         try:
             job.run()
-            return constants.RUN_COMPLETED
+            return constants.RUN_COMPLETED, ''
         except RunStopException:
             logger.warning(f"=== job: {job.name} stopped ===")
-            return constants.RUN_STOPPED
+            return constants.RUN_STOPPED, ''
         except Exception as e:
+            traceback.print_tb(e.__traceback__)
             msg = str(e)
             logger.error(f"=== job: {job.name} failed: {msg} ===")
-            traceback.print_tb(e.__traceback__)
-            return constants.RUN_FAILED
+
+            return constants.RUN_FAILED, msg
 
     def run_project(self, project: Project, logger_name=None, callbacks=None):
         logger = self.get_logger(logger_name)
         try:
             jobs = self.project(project, logger_name, callbacks)
         except Exception as e:
-            return constants.RUN_FAILED
-        status = constants.RUN_COMPLETED
+            traceback.print_tb(e.__traceback__)
+            return constants.RUN_FAILED, str(e)
+        status = constants.RUN_COMPLETED, ''
         for job in jobs:
             job_status = self.run(job, logger)
             if job_status == constants.RUN_STOPPED:
-                return constants.RUN_STOPPED
+                return constants.RUN_STOPPED, ''
             if job_status == constants.RUN_FAILED:
-                status = constants.RUN_FAILED
+                status = constants.RUN_FAILED, ''
         return status
 
     def run_job(self, job: ActionConfig, logger_name=None, callbacks=None):
@@ -57,7 +59,8 @@ class ProjectConverter:
         try:
             job = self.job(job, logger_name, callbacks)
         except Exception as e:
-            return constants.RUN_FAILED
+            traceback.print_tb(e.__traceback__)
+            return constants.RUN_FAILED, str(e)
         status = self.run(job, logger)
         return status
 
@@ -66,7 +69,7 @@ class ProjectConverter:
         for j in project.jobs:
             job = self.job(j, logger_name, callbacks)
             if job is None:
-                raise Exception(f"Job instantiation failed")
+                raise Exception("Job instantiation failed.")
             else:
                 jobs.append(job)
         return jobs

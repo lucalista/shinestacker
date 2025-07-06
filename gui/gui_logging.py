@@ -4,6 +4,7 @@ from PySide6.QtWidgets import QWidget, QTextEdit, QMessageBox, QStatusBar
 from PySide6.QtGui import QTextCursor, QTextOption, QFont
 from PySide6.QtCore import QThread, QObject, Signal, Slot, Qt
 from ansi2html import Ansi2HTMLConverter
+from config.constants import constants
 
 LOG_FONTS = ['Monaco', 'Menlo', ' Lucida Console', 'Courier New', 'Courier', 'monospace']
 LOG_FONTS_STR = ", ".join(LOG_FONTS)
@@ -106,8 +107,12 @@ class QTextEditLogger(GuiLogger):
         self.text_edit.setTextCursor(cursor)
         self.text_edit.ensureCursorVisible()
 
-    @Slot(str, int, int)
-    def handle_status_message(self, message, status, timeout):
+    @Slot(str, int, str, int)
+    def handle_status_message(self, message, status, error_message, timeout):
+        if status == constants.RUN_FAILED:
+            QMessageBox.critical(self, "Error", f"Job failed.\n{error_message}")
+        elif status == constants.RUN_STOPPED:
+            QMessageBox.warning(self, "Warning", "Run stopped.")
         self.status_bar.showMessage(message, timeout)
 
     @Slot(str)
@@ -119,7 +124,7 @@ class LogWorker(QThread):
     log_signal = Signal(str, str)
     html_signal = Signal(str)
     end_signal = Signal(int, str, str)
-    status_signal = Signal(str, int, int)
+    status_signal = Signal(str, int, str, int)
     exception_signal = Signal(str)
 
     def run(self):

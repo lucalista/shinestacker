@@ -371,13 +371,13 @@ class RunWorker(LogWorker):
         return self.status == constants.STATUS_RUNNING
 
     def run(self):
-        self.status_signal.emit(f"{self.tag} running...", constants.RUN_ONGOING, 0)
+        self.status_signal.emit(f"{self.tag} running...", constants.RUN_ONGOING, "", 0)
         self.html_signal.emit(f'''
         <div style="margin: 2px 0; font-family: {LOG_FONTS_STR};">
         <span style="color: #{ColorPalette.DARK_BLUE.hex()}; font-weight: bold;">{self.tag} begins</span>
         </div>
         ''')
-        status = self.do_run()
+        status, error_message = self.do_run()
         if status == constants.RUN_FAILED:
             message = f"{self.tag} failed"
             color = "#" + ColorPalette.DARK_RED.hex()
@@ -393,7 +393,7 @@ class RunWorker(LogWorker):
         </div>
         ''')
         self.end_signal.emit(status, self.id_str, message)
-        self.status_signal.emit(message, status, 0)
+        self.status_signal.emit(message, status, error_message, 0)
 
     def stop(self):
         self.status = constants.STATUS_STOPPED
