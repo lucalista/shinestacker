@@ -205,4 +205,6 @@ class ActionList(JobBase):
         self.begin()
         for x in iter(self):
             self.callback('after_step', self.id, self.name, self.count)
+            if self.callback('check_running', self.id, self.name) is False:
+                raise RunStopException(self.name)
         self.end()

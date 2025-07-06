@@ -3,6 +3,7 @@ from config.constants import constants
 from core.exceptions import ImageLoadError
 from core.framework import JobBase
 from core.core_utils import make_tqdm_bar
+from core.exceptions import RunStopException
 from algorithms.stack_framework import FrameMultiDirectory, SubAction
 from algorithms.utils import read_img, save_plot, get_img_metadata, validate_image
 from termcolor import colored
@@ -16,7 +17,7 @@ import errno
 
 def mean_image(file_paths, message_callback=None, progress_callback=None):
     mean_img = None
-    for path in file_paths:
+    for i, path in enumerate(file_paths):
         if message_callback:
             message_callback(path)
         if not os.path.exists(path):
@@ -33,7 +34,7 @@ def mean_image(file_paths, message_callback=None, progress_callback=None):
             validate_image(img, *metadata)
             mean_img += img
         if progress_callback:
-            progress_callback()
+            progress_callback(i)
     return (mean_img / len(file_paths)).astype(np.uint8)
 
 
@@ -52,23 +53,27 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
     def hot_map(self, ch, th):
         return cv2.threshold(ch, th, 255, cv2.THRESH_BINARY)[1]
 
+    def progress(self, i):
+        self.callback('after_step', self.id, self.name, i)
+        if not config.DISABLE_TQDM:
+            self.bar.update(1)
+            if self.callback('check_running', self.id, self.name) is False:
+                raise RunStopException(self.name)
+
     def run_core(self):
         self.print_message(colored("map noisy pixels from frames in " + self.folder_list_str(), "blue"))
         files = self.folder_filelist()
         in_paths = [self.working_path + "/" + f for f in files]
+        n_frames = len(in_paths)
+        self.callback('step_counts', self.id, self.name, n_frames)
         if not config.DISABLE_TQDM:
-            bar = make_tqdm_bar(self.name, len(in_paths))
-            mean_img = mean_image(
-                file_paths=in_paths,
-                message_callback=lambda path: self.print_message_r(colored(f"reading frame: {path.split('/')[-1]}", "blue")),
-                progress_callback=lambda: bar.update(1),
-            )
-            bar.close()
-        else:
-            mean_img = mean_image(
-                file_paths=in_paths,
-                message_callback=lambda path: self.print_message_r(colored(f"reading frame: {path.split('/')[-1]}", "blue")),
-            )
+            self.bar = make_tqdm_bar(self.name, n_frames)
+        mean_img = mean_image(
+            file_paths=in_paths,
+            message_callback=lambda path: self.print_message_r(colored(f"reading frame: {path.split('/')[-1]}", "blue")),
+            progress_callback=lambda i: self.progress(i))
+        if not config.DISABLE_TQDM:
+            self.bar.close()
         blurred = cv2.GaussianBlur(mean_img, (self.blur_size, self.blur_size), 0)
         diff = cv2.absdiff(mean_img, blurred)
         channels = cv2.split(diff)
