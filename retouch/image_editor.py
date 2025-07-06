@@ -2,9 +2,9 @@ import webbrowser
 import numpy as np
 import tifffile
 from psdtags import PsdChannelId
-from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QAbstractItemView
+from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QAbstractItemView, QVBoxLayout, QLabel, QDialog
 from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QRadialGradient
-from PySide6.QtCore import Qt, QTimer, QEvent, QPoint
+from PySide6.QtCore import Qt, QTimer, QEvent, QPoint, QThread, Signal
 from algorithms.multilayer import read_multilayer_tiff, write_multilayer_tiff_from_images
 from retouch.gui_constants import gui_constants
 from retouch.brush_controller import BrushController
@@ -32,6 +32,77 @@ def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None
         gradient.setColorAt(0.0, inner_with_opacity)
         gradient.setColorAt(1.0, inner_with_opacity)
     return gradient
+
+
+class FileLoader(QThread):
+    finished = Signal(object, object, object)
+    error = Signal(str)
+
+    def __init__(self, path):
+        super().__init__()
+        self.path = path
+
+    def run(self):
+        try:
+            current_stack, current_labels = self.load_tiff_stack(self.path)
+            if current_stack is None or len(current_stack) == 0:
+                self.error.emit("Empty or invalid stack")
+                return
+            master_indices = [i for i, label in enumerate(current_labels) if label.lower() == "master"]
+            master_index = -1 if len(master_indices) == 0 else master_indices[0]
+            if master_index == -1:
+                master_layer = current_stack[0].copy()
+            else:
+                current_labels.pop(master_index)
+                master_layer = current_stack[master_index].copy()
+                indices = list(range(len(current_stack)))
+                indices.remove(master_index)
+                current_stack = current_stack[indices]
+            master_layer.setflags(write=True)
+            if current_labels is None:
+                current_labels = [f"Layer {i + 1}" for i in range(len(current_stack))]
+            self.finished.emit(current_stack, current_labels, master_layer)
+        except Exception as e:
+            self.error.emit(f"Error loading file: {str(e)}")
+
+    def load_tiff_stack(self, path):
+        try:
+            psd_data = read_multilayer_tiff(path)
+            layers = []
+            labels = []
+            for layer in reversed(psd_data.layers.layers):
+                channels = {}
+                for channel in layer.channels:
+                    channels[channel.channelid] = channel.data
+                if PsdChannelId.CHANNEL0 in channels:
+                    img = np.stack([
+                        channels[PsdChannelId.CHANNEL0],
+                        channels[PsdChannelId.CHANNEL1],
+                        channels[PsdChannelId.CHANNEL2]
+                    ], axis=-1)
+                    layers.append(img)
+                    labels.append(layer.name)
+            if layers:
+                stack = np.array(layers)
+                if labels:
+                    master_indices = [i for i, label in enumerate(labels) if label.lower() == "master"]
+                    if master_indices:
+                        master_index = master_indices[0]
+                        master_label = labels.pop(master_index)
+                        master_layer = stack[master_index]
+                        stack = np.delete(stack, master_index, axis=0)
+                        labels.insert(0, master_label)
+                        stack = np.insert(stack, 0, master_layer, axis=0)
+                    return stack, labels
+                return stack, labels
+        except Exception:
+            try:
+                stack = tifffile.imread(path)
+                if stack.ndim == 3:
+                    return stack, None
+                return None, None
+            except Exception:
+                return None, None
 
 
 class ImageEditor(QMainWindow):
@@ -131,72 +202,48 @@ class ImageEditor(QMainWindow):
             self.current_layer = len(self.current_stack) - 1
         self.change_layer(self.current_layer)
 
-    def load_tiff_stack(self, path):
-        try:
-            psd_data = read_multilayer_tiff(path)
-            layers = []
-            labels = []
-            for layer in reversed(psd_data.layers.layers):
-                channels = {}
-                for channel in layer.channels:
-                    channels[channel.channelid] = channel.data
-                if PsdChannelId.CHANNEL0 in channels:
-                    img = np.stack([
-                        channels[PsdChannelId.CHANNEL0],
-                        channels[PsdChannelId.CHANNEL1],
-                        channels[PsdChannelId.CHANNEL2]
-                    ], axis=-1)
-                    layers.append(img)
-                    labels.append(layer.name)
-            if layers:
-                stack = np.array(layers)
-                if labels:
-                    master_indices = [i for i, label in enumerate(labels) if label.lower() == "master"]
-                    if master_indices:
-                        master_index = master_indices[0]
-                        master_label = labels.pop(master_index)
-                        master_layer = stack[master_index]
-                        stack = np.delete(stack, master_index, axis=0)
-                        labels.insert(0, master_label)
-                        stack = np.insert(stack, 0, master_layer, axis=0)
-                    return stack, labels
-                return stack, labels
-        except Exception:
-            try:
-                stack = tifffile.imread(path)
-                if stack.ndim == 3:
-                    return stack, None
-                return None, None
-            except Exception:
-                return None, None
-
     def open_file(self, path=None):
         if path is None:
             path, _ = QFileDialog.getOpenFileName(
                 self, "Open Image", "", "Images (*.tif *.tiff *.png *.jpg)")
-        if path:
-            self.current_file_path = path
-            self.current_stack, self.current_labels = self.load_tiff_stack(path)
-            if self.current_stack is not None and len(self.current_stack) > 0:
-                master_indices = [i for i, label in enumerate(self.current_labels) if label.lower() == "master"]
-                master_index = -1 if len(master_indices) == 0 else master_indices[0]
-                if master_index == -1:
-                    self.master_layer = self.current_stack[0].copy()
-                else:
-                    self.current_labels.pop(master_index)
-                    self.master_layer = self.current_stack[master_index].copy()
-                    indices = list(range(len(self.current_stack)))
-                    indices.remove(master_index)
-                    self.current_stack = self.current_stack[indices]
-                self.master_layer.setflags(write=True)
-                if self.current_labels is None:
-                    self.current_labels = [f"Layer {i + 1}" for i in range(len(self.current_stack))]
-                self.blank_layer = np.zeros(self.master_layer.shape[:2])
-            self.update_thumbnails()
-            self.change_layer(0)
-            self.image_viewer.reset_zoom()
-            self.statusBar().showMessage(f"Loaded: {path}")
-            self.thumbnail_list.setFocus()
+        if not path:
+            return
+        self.current_file_path = path
+        self.loading_dialog = QDialog(self)
+        self.loading_dialog.setWindowTitle("Loading")
+        self.loading_dialog.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
+        self.loading_dialog.setModal(True)
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel("File loading..."))
+        self.loading_dialog.setLayout(layout)
+        self.loading_timer = QTimer()
+        self.loading_timer.setSingleShot(True)
+        self.loading_timer.timeout.connect(self.loading_dialog.show)
+        self.loading_timer.start(100)
+        self.loader_thread = FileLoader(path)
+        self.loader_thread.finished.connect(self.on_file_loaded)
+        self.loader_thread.error.connect(self.on_file_error)
+        self.loader_thread.start()
+
+    def on_file_loaded(self, stack, labels, master_layer):
+        self.loading_timer.stop()
+        self.loading_dialog.hide()
+        self.current_stack = stack
+        self.current_labels = labels
+        self.master_layer = master_layer
+        self.blank_layer = np.zeros(master_layer.shape[:2])
+        self.update_thumbnails()
+        self.change_layer(0)
+        self.image_viewer.reset_zoom()
+        self.statusBar().showMessage(f"Loaded: {self.current_file_path}")
+        self.thumbnail_list.setFocus()
+
+    def on_file_error(self, error_msg):
+        self.loading_timer.stop()
+        self.loading_dialog.accept()
+        self.loading_dialog.deleteLater()
+        QMessageBox.critical(self, "Error", error_msg)
+        self.statusBar().showMessage(f"Error loading: {self.current_file_path}")
 
     def mark_as_modified(self):
         self.modified = True
