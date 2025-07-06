@@ -16,7 +16,6 @@ from algorithms.exif import exif_extra_tags, get_exif
 
 
 def read_multilayer_tiff(input_file):
-    print(f"reading file {input_file}")
     return TiffImageSourceData.fromtiff(input_file)
 
 

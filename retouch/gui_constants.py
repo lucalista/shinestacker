@@ -39,13 +39,16 @@ class _GuiConstants:
     DEFAULT_BRUSH_HARDNESS = 50
     DEFAULT_BRUSH_OPACITY = 100
     DEFAULT_BRUSH_FLOW = 100
-
     BRUSH_SIZES = {
         'default': 50,
         'min': 5,
         'mid': 50,
         'max': 1000
     }
+    BRUSH_LINE_WIDTH = 2
+    BRUSH_PREVIEW_LINE_WIDTH = 1.5
+    ZOOM_IN_FACTOR = 1.25
+    ZOOM_OUT_FACTOR = 0.80
 
     def calculate_gamma(self):
         if self.BRUSH_SIZES['mid'] <= self.BRUSH_SIZES['min'] or self.BRUSH_SIZES['max'] <= 0:

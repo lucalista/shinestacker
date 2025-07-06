@@ -326,3 +326,8 @@ class ImageEditorUI(ImageEditor):
             self.display_current_view()
             self.mark_as_modified()
             self.statusBar().showMessage("Undo applied", 2000)
+
+    def set_cursor_style(self, style):
+        self.cursor_style = style
+        if self.image_viewer.brush_cursor:
+            self.image_viewer.update_brush_cursor()

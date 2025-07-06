@@ -459,13 +459,13 @@ class ImageEditor(QMainWindow):
                 opacity=self.brush_controller.brush_opacity
             )
             painter.setBrush(QBrush(gradient))
-            painter.setPen(QPen(gui_constants.BRUSH_COLORS['outer'], 1))
+            painter.setPen(QPen(gui_constants.BRUSH_COLORS['outer'], gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
         elif self.cursor_style == 'outline':
             painter.setBrush(Qt.NoBrush)
-            painter.setPen(QPen(gui_constants.BRUSH_COLORS['outer'], 1))
+            painter.setPen(QPen(gui_constants.BRUSH_COLORS['outer'], gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
         else:
             painter.setBrush(QBrush(gui_constants.BRUSH_COLORS['cursor_inner']))
-            painter.setPen(QPen(gui_constants.BRUSH_COLORS['pen'], 1))
+            painter.setPen(QPen(gui_constants.BRUSH_COLORS['pen'], gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
         painter.drawEllipse(QPoint(center_x, center_y), radius, radius)
         if self.cursor_style == 'preview':
             painter.setPen(QPen(QColor(0, 0, 160)))
@@ -533,8 +533,3 @@ class ImageEditor(QMainWindow):
             self.undo_manager.save_undo_state(self.master_layer_copy)
             self.update_timer.stop()
             self.mark_as_modified()
-
-    def set_cursor_style(self, style):
-        self.cursor_style = style
-        if self.image_viewer.brush_cursor:
-            self.image_viewer.update_brush_cursor()
