@@ -12,6 +12,7 @@ class PyramidBase:
         self.min_size = min_size
         self.kernel_size = kernel_size
         self.pad_amount = (kernel_size - 1) // 2
+        self.do_step_callback = False
         kernel = np.array([0.25 - gen_kernel / 2.0, 0.25, gen_kernel, 0.25, 0.25 - gen_kernel / 2.0])
         self.gen_kernel = np.outer(kernel, kernel)
         if float_type == constants.FLOAT_32:
@@ -23,6 +24,9 @@ class PyramidBase:
 
     def print_message(self, msg):
         self.process.sub_message_r(colored(msg, "light_blue"))
+
+    def steps_per_frame(self):
+        return 1
 
     def convolve(self, image):
         return cv2.filter2D(image, -1, self.gen_kernel, borderType=cv2.BORDER_REFLECT101)
@@ -147,7 +151,6 @@ class PyramidStack(PyramidBase):
         metadata = None
         all_laplacians = []
         levels = None
-        self.process.callback('step_counts', self.process.id, self.process.name, len(filenames))
         for i, img_path in enumerate(filenames):
             self.print_message(': validating file {}'.format(img_path.split('/')[-1]))
             img = read_img(img_path)
@@ -161,7 +164,8 @@ class PyramidStack(PyramidBase):
                 levels = int(np.log2(min(img.shape[:2]) / self.min_size))
             else:
                 validate_image(img, *metadata)
-            self.process.callback('after_step', self.process.id, self.process.name, i)
+            if self.do_step_callback:
+                self.process.callback('after_step', self.process.id, self.process.name, i)
             if self.process.callback('check_running', self.process.id, self.process.name) is False:
                 raise RunStopException(self.name)
         for img_path in filenames:

@@ -28,6 +28,9 @@ class DepthMapStack:
     def name(self):
         return "depth map"
 
+    def steps_per_frame(self):
+        return 2
+
     def print_message(self, msg):
         self.process.sub_message_r(colored(msg, "light_blue"))
 
@@ -101,7 +104,6 @@ class DepthMapStack:
     def focus_stack(self, filenames):
         gray_images = []
         metadata = None
-        self.process.callback('step_counts', self.process.id, self.process.name, 2 * len(filenames))
         for i, img_path in enumerate(filenames):
             self.print_message(': reading file (1/2) {}'.format(img_path.split('/')[-1]))
             img = read_img(img_path)

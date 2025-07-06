@@ -68,8 +68,13 @@ class FocusStackBunch(FocusStackBase, FrameDirectory, ActionList):
         self.frames = kwargs.get('frames', constants.DEFAULT_FRAMES)
         self.overlap = kwargs.get('overlap', constants.DEFAULT_OVERLAP)
         self.denoise = kwargs.get('denoise', 0)
+        self.stack_algo.do_step_callback = False
         if self.overlap >= self.frames:
             raise InvalidOptionError("overlap", self.overlap, "overlap must be smaller than batch size")
+
+    def init(self, job):
+        FrameDirectory.init(self, job)
+        FocusStackBase.init(self, job, self.working_path)
 
     def begin(self):
         ActionList.begin(self)
@@ -83,10 +88,7 @@ class FocusStackBunch(FocusStackBase, FrameDirectory, ActionList):
     def run_step(self):
         self.print_message_r(colored("fusing bunch: {}".format(self.count), "blue"))
         self.focus_stack(self.__chunks[self.count - 1])
-
-    def init(self, job):
-        FrameDirectory.init(self, job)
-        FocusStackBase.init(self, job, self.working_path)
+        self.callback('after_step', self.id, self.name, self.count)
 
 
 class FocusStack(FocusStackBase, FrameDirectory, JobBase):
@@ -98,9 +100,11 @@ class FocusStack(FocusStackBase, FrameDirectory, JobBase):
                                 plot_stack=kwargs.pop('plot_stack', constants.DEFAULT_PLOT_STACK))
         FrameDirectory.__init__(self, name, **kwargs)
         JobBase.__init__(self, name, enabled)
+        self.stack_algo.do_step_callback = True
 
     def run_core(self):
         self.set_filelist()
+        self.callback('step_counts', self.id, self.name, self.stack_algo.steps_per_frame() * len(self.filenames))
         self.focus_stack(self.filenames)
 
     def init(self, job):
