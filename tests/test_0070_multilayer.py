@@ -45,8 +45,8 @@ def test_jpg():
 def test_tif():
     try:
         job = StackJob("job", "./", input_path="input/img-tif")
-        job.add_action(MultiLayer("multi", output_path="output/img-tiff-multilayer",
-                                  input_path=["input/img-tif", "output/img-tif-stack"],
+        job.add_action(MultiLayer("multi", output_path="output/img-tif-multilayer",
+                                  input_path=["output/img-tif-stack", "input/img-tif"],
                                   exif_path='input/img-tif',
                                   reverse_order=True))
         job.run()
