@@ -62,8 +62,7 @@ def test_exif_tiff():
         exif = copy_exif("input/img-tif/0000.tif", "input/img-tif/0001.tif",
                          out_filename=out_filename, verbose=True)
         image = Image.open(out_filename)
-        exif_copy = image.tag_v2 if hasattr(image,
-                                            'tag_v2') else image.getexif()
+        exif_copy = image.tag_v2 if hasattr(image, 'tag_v2') else image.getexif()
         ext = out_filename.split(".")[-1]
         logging.getLogger(__name__).info("*** Copy TIFF EXIF ***")
         print_exif(exif_copy, ext)
