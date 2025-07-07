@@ -1,4 +1,5 @@
 import webbrowser
+import traceback
 import numpy as np
 from PySide6.QtWidgets import (QMainWindow, QFileDialog, QMessageBox, QAbstractItemView,
                                QVBoxLayout, QLabel, QDialog, QApplication)
@@ -206,16 +207,17 @@ class ImageEditor(QMainWindow):
             if not path.lower().endswith(('.tif', '.tiff')):
                 path += '.tiff'
             self._save_to_path(path)
-            self.current_file_path = path
             self.statusBar().showMessage(f"Saved: {path}")
 
     def _save_to_path(self, path):
         try:
             master_layer = {'Master': self.master_layer}
             individual_layers = {label: image for label, image in zip(self.current_labels, self.current_stack)}
-            write_multilayer_tiff_from_images({**individual_layers, **master_layer}, path)
+            exif_path = '' #  '/'.join(self.current_file_path.split('/')[:-1])
+            write_multilayer_tiff_from_images({**individual_layers, **master_layer}, path, exif_path=exif_path)
             self.statusBar().showMessage(f"Saved: {path}")
         except Exception as e:
+            traceback.print_tb(e.__traceback__)
             QMessageBox.critical(self, "Save Error", f"Could not save file: {str(e)}")
 
     def new_file(self):
@@ -225,6 +227,7 @@ class ImageEditor(QMainWindow):
             self.current_stack = None
             self.master_layer = None
             self.current_layer = 0
+            self.current_file_path = ''            
             self.display_master_layer()
             self.update_thumbnails()
             self.setWindowTitle(gui_constants.APP_TITLE)
