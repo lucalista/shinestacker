@@ -1,6 +1,5 @@
 import sys
 sys.path.append('../')
-import sys
 import logging
 import os
 import matplotlib
