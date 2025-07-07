@@ -3,7 +3,6 @@ sys.path.append('../')
 from algorithms.stack_framework import StackJob
 from algorithms.stack import FocusStack, FocusStackBunch
 from algorithms.pyramid import PyramidStack
-from algorithms.pyramid_block import PyramidBlock
 from algorithms.depth_map import DepthMapStack
 
 
@@ -12,16 +11,6 @@ def test_jpg():
         job = StackJob("job", "./", input_path="input/img-jpg")
         job.add_action(FocusStack("stack-pyramid", PyramidStack(),
                                   output_path="output/img-jpg-stack", prefix='pyr_'))
-        job.run()
-    except Exception:
-        assert False
-
-
-def test_jpg_block():
-    try:
-        job = StackJob("job", "./", input_path="input/img-jpg")
-        job.add_action(FocusStack("stack-pyramid-block", PyramidBlock(),
-                                  output_path="output/img-jpg-block", prefix='pyr_'))
         job.run()
     except Exception:
         assert False
@@ -59,7 +48,6 @@ def test_bunches():
 
 if __name__ == '__main__':
     test_jpg()
-    test_jpg_block()
     test_tif()
     test_jpg_dm()
     test_bunches()

@@ -9,7 +9,6 @@ from algorithms.align import AlignFrames
 from algorithms.balance import BalanceFrames
 from algorithms.stack import FocusStack, FocusStackBunch
 from algorithms.pyramid import PyramidStack
-from algorithms.pyramid_block import PyramidBlock
 from algorithms.depth_map import DepthMapStack
 from algorithms.multilayer import MultiLayer
 from gui.project_model import Project, ActionConfig
@@ -110,9 +109,6 @@ class ProjectConverter:
             if stacker == FocusStackBaseConfigurator.STACK_ALGO_PYRAMID:
                 algo_dict, module_dict = self.filter_dict_keys(action_config.params, 'pyramid_')
                 stack_algo = PyramidStack(**algo_dict)
-            elif stacker == FocusStackBaseConfigurator.STACK_ALGO_PYRAMID_BLOCK:
-                algo_dict, module_dict = self.filter_dict_keys(action_config.params, 'pyramid_')
-                stack_algo = PyramidBlock(**algo_dict)
             elif stacker == FocusStackBaseConfigurator.STACK_ALGO_DEPTH_MAP:
                 algo_dict, module_dict = self.filter_dict_keys(action_config.params, 'depthmap_')
                 stack_algo = DepthMapStack(**algo_dict)
