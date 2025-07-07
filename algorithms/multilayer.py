@@ -39,7 +39,7 @@ def write_multilayer_tiff(input_files, output_file, labels=None, exif_path='', c
         if len(labels) != len(input_files):
             raise Exception("input_files and labels must have the same length if labels are provided.")
         image_dict = {label: image for label, image in zip(labels, images)}
-    write_multilayer_tiff_from_images(image_dict, output_file, exif_path='', callbacks=callbacks)
+    write_multilayer_tiff_from_images(image_dict, output_file, exif_path=exif_path, callbacks=callbacks)
 
 
 def write_multilayer_tiff_from_images(image_dict, output_file, exif_path='', callbacks=None):
@@ -122,7 +122,7 @@ def write_multilayer_tiff_from_images(image_dict, output_file, exif_path='', cal
         if callbacks:
             callback = callbacks.get('exif_msg', None)
             if callback:
-                callback()
+                callback(exif_path)
         dirpath, _, fnames = next(os.walk(exif_path))
         fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in constants.EXTENSIONS]
         exif_filename = exif_path + '/' + fnames[0]
@@ -136,22 +136,18 @@ def write_multilayer_tiff_from_images(image_dict, output_file, exif_path='', cal
     compression = 'adobe_deflate'
     overlayed_images = overlay(*((np.concatenate((image, np.expand_dims(transp, axis=-1)), axis=-1), (0, 0)) for image in image_dict.values()), shape=shape)
     tifffile.imwrite(output_file, overlayed_images, compression=compression, metadata=None, **tiff_tags)
-    if callbacks:
-        callback = callbacks.get('open_app', None)
-        if callback:
-            callback(output_file)
 
 
 class MultiLayer(FrameMultiDirectory, JobBase):
-    def __init__(self, name, enabled=True, exif_path='', **kwargs):
+    def __init__(self, name, enabled=True, **kwargs):
         FrameMultiDirectory.__init__(self, name, **kwargs)
         JobBase.__init__(self, name, enabled)
-        self.exif_path = exif_path
+        self.exif_path = kwargs.get('exif_path', '')
         self.reverse_order = kwargs.get('reverse_order', constants.DEFAULT_MULTILAYER_FILE_REVERSE_ORDER)
 
     def init(self, job):
         FrameMultiDirectory.init(self, job)
-        if self.exif_path is None:
+        if self.exif_path == '':
             self.exif_path = job.paths[0]
         if self.exif_path != '':
             self.exif_path = self.working_path + "/" + self.exif_path
@@ -179,8 +175,8 @@ class MultiLayer(FrameMultiDirectory, JobBase):
         filename = ".".join(files[0].split("/")[-1].split(".")[:-1])
         output_file = f"{self.working_path}/{self.output_path}/{filename}.tif"
         callbacks = {
-            'exif_msg': lambda: self.print_message(colored('copying exif data', 'blue')),
-            'write_msg': lambda path: self.print_message(colored(f"writing multilayer tiff file: {path}", "blue")),
-            'open_app': lambda path: self.callback('open_app', self.id, self.name, f'{constants.RETOUCH_APP}', path)
+            'exif_msg': lambda path: self.print_message(colored(f"copying exif data from path: {path}", "blue")),
+            'write_msg': lambda path: self.print_message(colored(f"writing multilayer tiff file: {path}", "blue"))
         }
-        write_multilayer_tiff(input_files, output_file, exif_path=self.exif_path, callbacks=callbacks)
+        write_multilayer_tiff(input_files, output_file, labels=None, exif_path=self.exif_path, callbacks=callbacks)
+        self.callback('open_app', self.id, self.name, f'{constants.RETOUCH_APP}', output_file)
