@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QListWidget, QListWidgetItem, QSlider
 from PySide6.QtGui import QShortcut, QKeySequence, QAction, QActionGroup
 from PySide6.QtCore import Qt, QSize
+from PySide6.QtGui import QGuiApplication
 from retouch.image_editor import ImageEditor
 from retouch.image_viewer import ImageViewer
 from retouch.gui_constants import gui_constants
@@ -33,6 +34,8 @@ class ImageEditorUI(ImageEditor):
     def setup_ui(self):
         self.setWindowTitle(gui_constants.APP_TITLE)
         self.resize(1400, 900)
+        center = QGuiApplication.primaryScreen().geometry().center()
+        self.move(center - self.rect().center())
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         layout = QHBoxLayout(central_widget)
