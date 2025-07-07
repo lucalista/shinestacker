@@ -45,7 +45,8 @@ class ImageEditor(QMainWindow):
         self.cursor_style = 'preview'
         self.view_mode = 'master'
         self.temp_view_individual = False
-        self.current_file_path = None
+        self.current_file_path = ''
+        self.exif_path = ''
         self.modified = False
         self.sort_order = 'original'
         self.installEventFilter(self)
@@ -191,12 +192,21 @@ class ImageEditor(QMainWindow):
     def save_file(self):
         if self.current_stack is None:
             return
-        if self.current_file_path:
+        if self.current_file_path != '':
             self._save_to_path(self.current_file_path)
             self.modified = False
             self.setWindowTitle(gui_constants.APP_TITLE)
         else:
             self.save_file_as()
+
+    def select_exif_path(self):
+        if self.current_stack is None:
+            return
+        dialog = QFileDialog()
+        path = dialog.getExistingDirectory(None, "Select EXIF path")
+        if path:
+            self.exif_path = path
+            self.statusBar().showMessage(f"EXIF path set to {path}.")
 
     def save_file_as(self):
         if self.current_stack is None:
@@ -213,8 +223,7 @@ class ImageEditor(QMainWindow):
         try:
             master_layer = {'Master': self.master_layer}
             individual_layers = {label: image for label, image in zip(self.current_labels, self.current_stack)}
-            exif_path = '' #  '/'.join(self.current_file_path.split('/')[:-1])
-            write_multilayer_tiff_from_images({**individual_layers, **master_layer}, path, exif_path=exif_path)
+            write_multilayer_tiff_from_images({**master_layer, **individual_layers}, path, exif_path=self.exif_path)
             self.statusBar().showMessage(f"Saved: {path}")
         except Exception as e:
             traceback.print_tb(e.__traceback__)
@@ -227,7 +236,7 @@ class ImageEditor(QMainWindow):
             self.current_stack = None
             self.master_layer = None
             self.current_layer = 0
-            self.current_file_path = ''            
+            self.current_file_path = ''
             self.display_master_layer()
             self.update_thumbnails()
             self.setWindowTitle(gui_constants.APP_TITLE)

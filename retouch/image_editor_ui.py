@@ -198,6 +198,8 @@ class ImageEditorUI(ImageEditor):
         file_menu.addAction("&Save", self.save_file, "Ctrl+S")
         file_menu.addAction("Save &As...", self.save_file_as)
         file_menu.addSeparator()
+        file_menu.addAction("Select &EXIF path", self.select_exif_path)
+        file_menu.addSeparator()
         if DONT_USE_NATIVE_MENU:
             quit_txt, quit_short = "&Quit", "Ctrl+Q"
         else:
