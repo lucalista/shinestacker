@@ -9,7 +9,7 @@ from config.config import config
 config.init(DISABLE_TQDM=True)
 from core.logging import setup_logging
 from gui.main_window import MainWindow
-from gui.menu import DONT_USE_NATIVE_MENU
+from app.app_config import app_config
 from retouch.image_editor_ui import ImageEditorUI
 from gui.gui_utils import disable_macos_special_menu_items
 
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     setup_logging(console_level=logging.DEBUG, file_level=logging.DEBUG,
                   log_file="logs/focusstack.log", disable_console=True)
     app = QApplication(sys.argv)
-    if DONT_USE_NATIVE_MENU:
+    if app_config.DONT_USE_NATIVE_MENU:
         app.setAttribute(Qt.AA_DontUseNativeMenuBar)
     else:
         disable_macos_special_menu_items()
