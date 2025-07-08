@@ -10,6 +10,7 @@ from psdtags import (PsdBlendMode, PsdChannel, PsdChannelId, PsdClippingType, Ps
                      PsdLayerFlag, PsdLayerMask, PsdLayers, PsdRectangle, PsdString, PsdUserMask,
                      TiffImageSourceData, overlay)
 from config.constants import constants
+from config.config import config
 from core.framework import JobBase
 from algorithms.stack_framework import FrameMultiDirectory
 from algorithms.exif import exif_extra_tags, get_exif
@@ -179,4 +180,7 @@ class MultiLayer(FrameMultiDirectory, JobBase):
             'write_msg': lambda path: self.print_message(colored(f"writing multilayer tiff file: {path}", "blue"))
         }
         write_multilayer_tiff(input_files, output_file, labels=None, exif_path=self.exif_path, callbacks=callbacks)
-        self.callback('open_app', self.id, self.name, f'{constants.RETOUCH_APP}', output_file)
+        if config.COMBINED_APP:
+            self.callback('open_app', self.id, self.name, 'internal_retouch_app', output_file)
+        else:
+            self.callback('open_app', self.id, self.name, f'{constants.RETOUCH_APP}', output_file)

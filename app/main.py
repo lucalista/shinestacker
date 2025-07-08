@@ -6,10 +6,9 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QStackedWidget, QMenu
 from PySide6.QtGui import QAction, QIcon, QGuiApplication
 from PySide6.QtCore import Qt, QTimer
 from config.config import config
-config.init(DISABLE_TQDM=True)
+config.init(DISABLE_TQDM=True, COMBINED_APP=True)
 from core.logging import setup_logging
 from gui.main_window import MainWindow
-from app.app_config import app_config
 from retouch.image_editor_ui import ImageEditorUI
 from gui.gui_utils import disable_macos_special_menu_items
 
@@ -57,7 +56,7 @@ class MainApp(QMainWindow):
         app_menu.addAction(self.switch_to_project_action)
         app_menu.addAction(self.switch_to_retouch_action)
         app_menu.addSeparator()
-        if app_config.DONT_USE_NATIVE_MENU:
+        if config.DONT_USE_NATIVE_MENU:
             quit_txt, quit_short = "&Quit", "Ctrl+Q"
         else:
             quit_txt, quit_short = "Shut dw&wn", "Ctrl+W"
@@ -86,7 +85,7 @@ if __name__ == "__main__":
     setup_logging(console_level=logging.DEBUG, file_level=logging.DEBUG,
                   log_file="logs/focusstack.log", disable_console=True)
     app = QApplication(sys.argv)
-    if app_config.DONT_USE_NATIVE_MENU:
+    if config.DONT_USE_NATIVE_MENU:
         app.setAttribute(Qt.AA_DontUseNativeMenuBar)
     else:
         disable_macos_special_menu_items()

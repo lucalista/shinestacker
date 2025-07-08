@@ -12,7 +12,6 @@ config.init(DISABLE_TQDM=True)
 from core.logging import setup_logging
 from gui.main_window import MainWindow
 from gui.gui_utils import disable_macos_special_menu_items
-from app.app_config import app_config
 
 
 class ProjectApp(MainWindow):
@@ -23,7 +22,7 @@ class ProjectApp(MainWindow):
 
     def create_menu(self):
         app_menu = QMenu("FocusStack")
-        if app_config.DONT_USE_NATIVE_MENU:
+        if config.DONT_USE_NATIVE_MENU:
             quit_txt, quit_short = "&Quit", "Ctrl+Q"
         else:
             quit_txt, quit_short = "Shut dw&wn", "Ctrl+W"
@@ -38,7 +37,7 @@ def main():
     setup_logging(console_level=logging.DEBUG, file_level=logging.DEBUG,
                   log_file="logs/focusstack.log", disable_console=True)
     app = QApplication(sys.argv)
-    if app_config.DONT_USE_NATIVE_MENU:
+    if config.DONT_USE_NATIVE_MENU:
         app.setAttribute(Qt.AA_DontUseNativeMenuBar)
     else:
         disable_macos_special_menu_items()

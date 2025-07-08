@@ -10,6 +10,8 @@ class _Config:
 
     def _init_defaults(self):
         self._DISABLE_TQDM = False
+        self._COMBINED_APP = False
+        self._DONT_USE_NATIVE_MENU = True
         try:
             __IPYTHON__ # noqa
             self._JUPYTER_NOTEBOOK = True
@@ -33,6 +35,14 @@ class _Config:
     @property
     def JUPYTER_NOTEBOOK(self):
         return self._JUPYTER_NOTEBOOK
+
+    @property
+    def DONT_USE_NATIVE_MENU(self):
+        return self._DONT_USE_NATIVE_MENU
+
+    @property
+    def COMBINED_APP(self):
+        return self._COMBINED_APP
 
     def __setattr__(self, name, value):
         if self._initialized and name.startswith('_'):

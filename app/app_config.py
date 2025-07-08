@@ -10,6 +10,7 @@ class _AppConfig:
 
     def _init_defaults(self):
         self._DONT_USE_NATIVE_MENU = True
+        self._COMBINED_APP = False
 
     def init(self, **kwargs):
         if self._initialized:
@@ -24,6 +25,10 @@ class _AppConfig:
     @property
     def DONT_USE_NATIVE_MENU(self):
         return self._DONT_USE_NATIVE_MENU
+
+    @property
+    def COMBINED_APP(self):
+        return self._COMBINED_APP
 
     def __setattr__(self, name, value):
         if self._initialized and name.startswith('_'):

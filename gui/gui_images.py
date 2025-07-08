@@ -2,7 +2,7 @@ import webbrowser
 import subprocess
 import os
 import platform
-from PySide6.QtWidgets import QSizePolicy, QVBoxLayout, QWidget, QLabel
+from PySide6.QtWidgets import QSizePolicy, QVBoxLayout, QWidget, QLabel, QMainWindow
 from PySide6.QtPdf import QPdfDocument
 from PySide6.QtPdfWidgets import QPdfView
 from PySide6.QtCore import Qt, QMargins
@@ -123,7 +123,13 @@ class GuiOpenApp(QWidget):
         return self.size()
 
     def mouseReleaseEvent(self, event):
-        try:
-            os.system(f"{self.app} {self.file_path}")
-        except Exception as e:
-            raise RuntimeError(f"Can't open file {self.file_path} with app: {self.app}.\n{str(e)}")
+        if self.app != 'internal_retouch_app':
+            try:
+                os.system(f"{self.app} {self.file_path}")
+            except Exception as e:
+                raise RuntimeError(f"Can't open file {self.file_path} with app: {self.app}.\n{str(e)}")
+        else:
+            main_app = self.window()
+            if isinstance(main_app, QMainWindow):
+                main_app.switch_to_retouch()
+                main_app.retouch_window.open_file(self.file_path)

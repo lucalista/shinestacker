@@ -5,7 +5,7 @@ from PySide6.QtGui import QIcon, QAction
 from PySide6.QtCore import Qt, QTimer
 from gui.gui_utils import disable_macos_special_menu_items
 from retouch.image_editor_ui import ImageEditorUI
-from app.app_config import app_config
+from config.config import config
 
 
 class RetouchApp(ImageEditorUI):
@@ -16,7 +16,7 @@ class RetouchApp(ImageEditorUI):
 
     def create_menu(self):
         app_menu = QMenu("FocusStack")
-        if app_config.DONT_USE_NATIVE_MENU:
+        if config.DONT_USE_NATIVE_MENU:
             quit_txt, quit_short = "&Quit", "Ctrl+Q"
         else:
             quit_txt, quit_short = "Shut dw&wn", "Ctrl+W"
@@ -33,7 +33,7 @@ class RetouchApp(ImageEditorUI):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    if app_config.DONT_USE_NATIVE_MENU:
+    if config.DONT_USE_NATIVE_MENU:
         app.setAttribute(Qt.AA_DontUseNativeMenuBar)
     else:
         disable_macos_special_menu_items()
