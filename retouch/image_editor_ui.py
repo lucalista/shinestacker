@@ -202,15 +202,6 @@ class ImageEditorUI(ImageEditor):
         file_menu.addAction("Save &As...", self.save_file_as)
         file_menu.addSeparator()
         file_menu.addAction("Select &EXIF path", self.select_exif_path)
-        file_menu.addSeparator()
-        if DONT_USE_NATIVE_MENU:
-            quit_txt, quit_short = "&Quit", "Ctrl+Q"
-        else:
-            quit_txt, quit_short = "Shut dw&wn", "Ctrl+W"
-        exit_action = QAction(quit_txt, self)
-        exit_action.setShortcut(quit_short)
-        exit_action.triggered.connect(self.quit)
-        file_menu.addAction(exit_action)
 
         edit_menu = menubar.addMenu("&Edit")
         undo_action = QAction("Undo Brush", self)

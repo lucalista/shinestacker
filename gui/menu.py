@@ -80,15 +80,6 @@ class WindowMenu(GuiActions):
         save_as_action.setShortcut("Ctrl+Shift+S")
         save_as_action.triggered.connect(self.save_project_as)
         menu.addAction(save_as_action)
-        menu.addSeparator()
-        if DONT_USE_NATIVE_MENU:
-            quit_txt, quit_short = "&Quit", "Ctrl+Q"
-        else:
-            quit_txt. quit_short = "Shut dw&wn", "Ctrl+W"
-        exit_action = QAction(quit_txt, self)
-        exit_action.setShortcut(quit_short)
-        exit_action.triggered.connect(self.quit)
-        menu.addAction(exit_action)
 
     def add_edit_menu(self, menubar):
         menu = menubar.addMenu("&Edit")

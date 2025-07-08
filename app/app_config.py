@@ -25,7 +25,6 @@ class _AppConfig:
     def DONT_USE_NATIVE_MENU(self):
         return self._DONT_USE_NATIVE_MENU
 
-
     def __setattr__(self, name, value):
         if self._initialized and name.startswith('_'):
             raise AttributeError("Can't change config after initialization")

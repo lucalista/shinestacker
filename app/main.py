@@ -56,7 +56,20 @@ class MainApp(QMainWindow):
         self.switch_to_retouch_action.triggered.connect(self.switch_to_retouch)
         app_menu.addAction(self.switch_to_project_action)
         app_menu.addAction(self.switch_to_retouch_action)
+        app_menu.addSeparator()
+        if app_config.DONT_USE_NATIVE_MENU:
+            quit_txt, quit_short = "&Quit", "Ctrl+Q"
+        else:
+            quit_txt, quit_short = "Shut dw&wn", "Ctrl+W"
+        exit_action = QAction(quit_txt, self)
+        exit_action.setShortcut(quit_short)
+        exit_action.triggered.connect(self.quit)
+        app_menu.addAction(exit_action)
         return app_menu
+
+    def quit(self):
+        if self.retouch_window._check_unsaved_changes() and self.project_window._check_unsaved_changes():
+            self.close()
 
     def switch_app(self, index):
         self.stacked_widget.setCurrentIndex(index)
