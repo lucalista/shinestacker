@@ -249,6 +249,12 @@ class ImageEditor(QMainWindow):
         self.display_current_layer()
         self.statusBar().showMessage("View mode: Individual layers")
 
+    def handle_temp_view(self, start):
+        if start:
+            self.start_temp_view()
+        else:
+            self.end_temp_view()        
+
     def start_temp_view(self):
         if not self.temp_view_individual and self.view_mode == 'master':
             self.temp_view_individual = True

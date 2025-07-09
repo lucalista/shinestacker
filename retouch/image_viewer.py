@@ -1,7 +1,7 @@
 import math
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
 from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QCursor, QShortcut, QKeySequence, QRadialGradient
-from PySide6.QtCore import Qt, QRectF, QTime, QPoint
+from PySide6.QtCore import Qt, QRectF, QTime, QPoint, Signal
 from retouch.gui_constants import gui_constants
 from retouch.brush_preview import BrushPreviewItem
 
@@ -24,6 +24,8 @@ def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None
 
 
 class ImageViewer(QGraphicsView):
+    temp_view_requested = Signal(bool)
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         self.image_editor = None
@@ -81,7 +83,7 @@ class ImageViewer(QGraphicsView):
             if self.brush_cursor:
                 self.brush_cursor.hide()
         elif event.key() == Qt.Key_X:
-            self.image_editor.start_temp_view()
+            self.temp_view_requested.emit(True)
             self.update_brush_cursor()
             return
         super().keyPressEvent(event)
@@ -95,7 +97,7 @@ class ImageViewer(QGraphicsView):
                 if self.brush_cursor:
                     self.brush_cursor.show()
         elif event.key() == Qt.Key_X:
-            self.image_editor.end_temp_view()
+            self.temp_view_requested.emit(False)
             return
         super().keyReleaseEvent(event)
 

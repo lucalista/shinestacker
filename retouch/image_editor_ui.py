@@ -38,6 +38,7 @@ class ImageEditorUI(ImageEditor):
         self.setCentralWidget(central_widget)
         layout = QHBoxLayout(central_widget)
         self.image_viewer = ImageViewer()
+        self.image_viewer.temp_view_requested.connect(self.handle_temp_view)
         self.image_viewer.image_editor = self
         self.image_viewer.setup_brush_cursor()
         self.image_viewer.setFocusPolicy(Qt.StrongFocus)
