@@ -33,7 +33,7 @@ class RetouchApp(ImageEditorUI):
             self.close()
 
 
-if __name__ == "__main__":
+def main():
     app = QApplication(sys.argv)
     if config.DONT_USE_NATIVE_MENU:
         app.setAttribute(Qt.AA_DontUseNativeMenuBar)
@@ -48,3 +48,8 @@ if __name__ == "__main__":
     if file_to_open:
         QTimer.singleShot(100, lambda: editor.open_file(file_to_open))
     sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()
+

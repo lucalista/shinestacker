@@ -83,7 +83,7 @@ class MainApp(QMainWindow):
             self.switch_to_project()
 
 
-if __name__ == "__main__":
+def main():
     setup_logging(console_level=logging.DEBUG, file_level=logging.DEBUG,
                   log_file="logs/focusstack.log", disable_console=True)
     app = QApplication(sys.argv)
@@ -111,3 +111,8 @@ if __name__ == "__main__":
         else:
             print(f"File extension: {extension} not supported.")
     sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()
+
