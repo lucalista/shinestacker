@@ -2,9 +2,14 @@
 requires = ["setuptools>=68.2.2"]
 	 build-backend = "setuptools.build_meta"
 
+[tool.setuptools_scm]
+version_scheme = "python-simplified-semver"
+local_scheme = "no-local-version"
+fallback_version = "0.0.0"
+
 [project]
 name = "focusstack"
-version = "0.0.12"
+dynamic = ["version"]
 description = "FocusStack"
 authors = [
     {name = "Luca Lista", email = "luka.lista@gmail.com"}
