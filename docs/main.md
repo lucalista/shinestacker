@@ -99,7 +99,7 @@ The package lacks a real installation setup. It will be possibly developed at a 
 You can clone the pagkage from GitHub:
 
 ```bash
-pip install git+https://github.com/lucalista/focusstack.git
+pip install "git+https://github.com/lucalista/focusstack.git@main#egg=focusstack&subdirectory=src"
 ```
 ## Issues
 

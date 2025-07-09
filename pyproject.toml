@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68.2.2"]
+	 build-backend = "setuptools.build_meta"
+
+[project]
+name = "focusstack"
+version = "0.0.12"
+description = "FocusStack"
+authors = [
+    {name = "Luca Lista", email = "luka.lista@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "LGPL-3.0"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+[project.scripts]
+focusstack-main = "focusstack.app.main:main"
+focusstack-project = "focusstack.app.project:main"
+focusstack-retouch = "focusstack.app.retouch:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = [
+	 "focusstack.app",
+	 "focusstack.config",
+	 "focusstack.core",
+	 "focusstack.algorithms",
+	 "focusstack.gui",
+	 "focusstack.retouch"	 
+	 ]
