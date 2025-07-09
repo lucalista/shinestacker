@@ -1,11 +1,6 @@
 [build-system]
-requires = ["setuptools>=68.2.2"]
-	 build-backend = "setuptools.build_meta"
-
-[tool.setuptools_scm]
-version_scheme = "python-simplified-semver"
-local_scheme = "no-local-version"
-fallback_version = "0.0.0"
+requires = ["setuptools>=68.2.2", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "focusstack"
@@ -16,7 +11,7 @@ authors = [
 ]
 readme = "README.md"
 requires-python = ">=3.12"
-license = {text = "LGPL-3.0"}
+license = "LGPL-3.0"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
@@ -35,5 +30,14 @@ packages = [
 	 "focusstack.core",
 	 "focusstack.algorithms",
 	 "focusstack.gui",
+         "focusstack.gui.img",	 
 	 "focusstack.retouch"	 
 	 ]
+include-package-data = true
+
+[tool.setuptools_scm]
+version_scheme = "no-guess-dev"
+local_scheme = "no-local-version"
+fallback_version = "0.0.0"
+write_to = "src/focusstack/_version.py"
+write_to_template = "__version__ = '{version}'"
