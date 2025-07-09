@@ -13,6 +13,7 @@ from focusstack.core.logging import setup_logging
 from focusstack.gui.main_window import MainWindow
 from focusstack.app.gui_utils import disable_macos_special_menu_items
 from focusstack.app.help_menu import add_help_menu
+from focusstack.app.about_dialog import show_about_dialog
 
 
 class ProjectApp(MainWindow):
@@ -24,6 +25,10 @@ class ProjectApp(MainWindow):
 
     def create_menu(self):
         app_menu = QMenu("FocusStack")
+        about_action = QAction("About", self)
+        about_action.triggered.connect(show_about_dialog)
+        app_menu.addAction(about_action)
+        app_menu.addSeparator()
         if config.DONT_USE_NATIVE_MENU:
             quit_txt, quit_short = "&Quit", "Ctrl+Q"
         else:
