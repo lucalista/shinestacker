@@ -14,7 +14,6 @@ import platform
 import subprocess
 
 
-DONT_USE_NATIVE_MENU = True
 ENABLED_LIST_ITEM_COLOR = ColorPalette.DARK_BLUE.tuple()
 DISABLED_LIST_ITEM_COLOR = ColorPalette.DARK_RED.tuple()
 
@@ -27,7 +26,7 @@ def running_under_macos() -> bool:
     return "darwin" in platform.system().casefold()
 
 
-class WindowMenu(GuiActions):
+class MenuWindow(GuiActions):
     def __init__(self):
         super().__init__()
         self.script_dir = os.path.dirname(__file__)

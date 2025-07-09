@@ -6,8 +6,6 @@ from retouch.image_editor import ImageEditor
 from retouch.image_viewer import ImageViewer
 from retouch.gui_constants import gui_constants
 
-DONT_USE_NATIVE_MENU = True
-
 
 def brush_size_to_slider(size):
     if size <= gui_constants.BRUSH_SIZES['min']:

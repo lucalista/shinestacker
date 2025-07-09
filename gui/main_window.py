@@ -3,14 +3,14 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication
 from gui.project_model import Project
 from gui.action_config import ActionConfigDialog
-from gui.menu import WindowMenu
+from gui.menu import MenuWindow
 from gui.gui_logging import LogManager
 from gui.gui_run import RunWindow
 
 
-class MainWindow(WindowMenu, LogManager):
+class MainWindow(MenuWindow, LogManager):
     def __init__(self):
-        WindowMenu.__init__(self)
+        MenuWindow.__init__(self)
         LogManager.__init__(self)
         self._windows = []
         self.setWindowTitle("Focus Stacking GUI")
