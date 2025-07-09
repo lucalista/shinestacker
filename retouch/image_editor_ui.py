@@ -286,11 +286,6 @@ class ImageEditorUI(ImageEditor):
         cursor_group.addAction(brush_action)
         cursor_group.setExclusive(True)
 
-        help_menu = menubar.addMenu("&Help")
-        help_action = QAction("Online Help", self)
-        help_action.triggered.connect(self.website)
-        help_menu.addAction(help_action)
-
     def quit(self):
         if self._check_unsaved_changes():
             self.close()

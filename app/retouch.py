@@ -6,6 +6,7 @@ from PySide6.QtCore import Qt, QTimer
 from gui.gui_utils import disable_macos_special_menu_items
 from retouch.image_editor_ui import ImageEditorUI
 from config.config import config
+from app.help_menu import add_help_menu
 
 
 class RetouchApp(ImageEditorUI):
@@ -13,6 +14,7 @@ class RetouchApp(ImageEditorUI):
         super().__init__()
         self.app_menu = self.create_menu()
         self.menuBar().insertMenu(self.menuBar().actions()[0], self.app_menu)
+        add_help_menu(self)
 
     def create_menu(self):
         app_menu = QMenu("FocusStack")

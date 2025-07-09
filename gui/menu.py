@@ -10,7 +10,6 @@ import os.path
 import os
 import json
 import jsonpickle
-import webbrowser
 import platform
 import subprocess
 
@@ -39,7 +38,6 @@ class WindowMenu(GuiActions):
         self.add_edit_menu(menubar)
         self.add_job_menu(menubar)
         self.add_actions_menu(menubar)
-        self.add_help_menu(menubar)
         toolbar = QToolBar(self)
         self.addToolBar(Qt.TopToolBarArea, toolbar)
         self.fill_toolbar(toolbar)
@@ -191,12 +189,6 @@ class WindowMenu(GuiActions):
             add_sub_action_menu.addAction(entry_action)
         menu.addMenu(add_sub_action_menu)
 
-    def add_help_menu(self, menubar):
-        menu = menubar.addMenu("&Help")
-        help_action = QAction("Online Help", self)
-        help_action.triggered.connect(self.website)
-        menu.addAction(help_action)
-
     def fill_toolbar(self, toolbar):
         toolbar.addAction(self.add_job_action)
         toolbar.addSeparator()
@@ -225,9 +217,6 @@ class WindowMenu(GuiActions):
         toolbar.addSeparator()
         toolbar.addAction(self.run_job_action)
         toolbar.addAction(self.run_all_jobs_action)
-
-    def website(self):
-        webbrowser.open("https://github.com/lucalista/focusstack/blob/main/docs/main.md")
 
     def refresh_ui(self, job_row=-1, action_row=-1):
         self.job_list.clear()

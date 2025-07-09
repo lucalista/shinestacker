@@ -12,6 +12,7 @@ config.init(DISABLE_TQDM=True)
 from core.logging import setup_logging
 from gui.main_window import MainWindow
 from gui.gui_utils import disable_macos_special_menu_items
+from app.help_menu import add_help_menu
 
 
 class ProjectApp(MainWindow):
@@ -19,6 +20,7 @@ class ProjectApp(MainWindow):
         super().__init__()
         self.app_menu = self.create_menu()
         self.menuBar().insertMenu(self.menuBar().actions()[0], self.app_menu)
+        add_help_menu(self)
 
     def create_menu(self):
         app_menu = QMenu("FocusStack")

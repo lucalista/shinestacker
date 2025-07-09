@@ -1,4 +1,3 @@
-import webbrowser
 import traceback
 import numpy as np
 from PySide6.QtWidgets import (QMainWindow, QFileDialog, QMessageBox, QAbstractItemView,
@@ -87,9 +86,6 @@ class ImageEditor(QMainWindow):
                 return False
         else:
             return True
-
-    def website(self):
-        webbrowser.open("https://github.com/lucalista/focusstack/blob/main/docs/main.md")
 
     def sort_layers(self, order):
         if not hasattr(self, 'current_stack') or not hasattr(self, 'current_labels'):

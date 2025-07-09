@@ -11,6 +11,7 @@ from core.logging import setup_logging
 from gui.main_window import MainWindow
 from retouch.image_editor_ui import ImageEditorUI
 from gui.gui_utils import disable_macos_special_menu_items
+from app.help_menu import add_help_menu
 
 
 class MainApp(QMainWindow):
@@ -29,6 +30,8 @@ class MainApp(QMainWindow):
         self.app_menu = self.create_menu()
         self.project_window.menuBar().insertMenu(self.project_window.menuBar().actions()[0], self.app_menu)
         self.retouch_window.menuBar().insertMenu(self.retouch_window.menuBar().actions()[0], self.app_menu)
+        add_help_menu(self.project_window)
+        add_help_menu(self.retouch_window)
         self.set_initial_app()
 
     def switch_to_project(self):
