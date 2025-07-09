@@ -11,7 +11,7 @@ from config.config import config
 config.init(DISABLE_TQDM=True)
 from core.logging import setup_logging
 from gui.main_window import MainWindow
-from gui.gui_utils import disable_macos_special_menu_items
+from app.gui_utils import disable_macos_special_menu_items
 from app.help_menu import add_help_menu
 
 

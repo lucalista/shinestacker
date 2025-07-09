@@ -3,9 +3,9 @@ sys.path.append('../')
 from PySide6.QtWidgets import QApplication, QMenu
 from PySide6.QtGui import QIcon, QAction
 from PySide6.QtCore import Qt, QTimer
-from gui.gui_utils import disable_macos_special_menu_items
 from retouch.image_editor_ui import ImageEditorUI
 from config.config import config
+from app.gui_utils import disable_macos_special_menu_items
 from app.help_menu import add_help_menu
 
 
