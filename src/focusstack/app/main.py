@@ -13,6 +13,7 @@ from focusstack.app.gui_utils import disable_macos_special_menu_items
 from focusstack.app.help_menu import add_help_menu
 from focusstack.app.about_dialog import show_about_dialog
 
+
 class MainApp(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -119,4 +120,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
