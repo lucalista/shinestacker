@@ -1,7 +1,5 @@
-import sys
-sys.path.append('../')
-from algorithms.stack_framework import StackJob, CombinedActions
-from algorithms.vignetting import Vignetting
+from focusstack.algorithms.stack_framework import StackJob, CombinedActions
+from focusstack.algorithms.vignetting import Vignetting
 
 
 def test_vignetting():

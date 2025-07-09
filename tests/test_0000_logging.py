@@ -1,11 +1,9 @@
-import sys
-sys.path.append('../')
-from config.config import config
-from core.logging import setup_logging, console_logging_overwrite, console_logging_newline
 import logging
 import time
 from tqdm import tqdm
 from tqdm.notebook import tqdm_notebook
+from focusstack.config.config import config
+from focusstack.core.logging import setup_logging, console_logging_overwrite, console_logging_newline
 
 
 def test_log():

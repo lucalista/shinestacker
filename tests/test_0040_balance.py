@@ -1,8 +1,6 @@
-import sys
-sys.path.append('../')
-from config.constants import constants
-from algorithms.stack_framework import StackJob, CombinedActions
-from algorithms.balance import BalanceFrames
+from focusstack.config.constants import constants
+from focusstack.algorithms.stack_framework import StackJob, CombinedActions
+from focusstack.algorithms.balance import BalanceFrames
 
 
 def test_tif_rgb_match():

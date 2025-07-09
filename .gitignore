@@ -10,3 +10,7 @@ sandbox/img-test/*
 */logs/*
 .DS_Store
 .virtual_documents
+*.egg-info/
+build/
+dist/
+.eggs/

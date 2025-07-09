@@ -1,0 +1,400 @@
+import time
+from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QProgressBar,
+                               QMessageBox, QScrollArea, QSizePolicy, QFrame, QLabel)
+from PySide6.QtGui import QColor
+from PySide6.QtCore import Qt
+from PySide6.QtCore import Signal, Slot
+from focusstack.config.constants import constants
+from focusstack.gui.gui_logging import LogWorker, QTextEditLogger, LOG_FONTS_STR
+from focusstack.gui.gui_images import GuiPdfView, GuiImageView, GuiOpenApp
+
+DISABLED_TAG = ""  # " <disabled>"
+
+
+class ColorEntry:
+    def __init__(self, r, g, b):
+        self.r = r
+        self.g = g
+        self.b = b
+
+    def tuple(self):
+        return self.r, self.g, self.b
+
+    def hex(self):
+        return f"{self.r:02x}{self.g:02x}{self.b:02x}"
+
+    def q_color(self):
+        return QColor(self.r, self.g, self.b)
+
+
+class ColorPalette:
+    BLACK = ColorEntry(0, 0, 0)
+    WHITE = ColorEntry(255, 255, 255)
+    LIGHT_BLUE = ColorEntry(210, 210, 240)
+    LIGHT_RED = ColorEntry(240, 210, 210)
+    DARK_BLUE = ColorEntry(0, 0, 160)
+    DARK_RED = ColorEntry(160, 0, 0)
+    MEDIUM_BLUE = ColorEntry(160, 160, 200)
+    MEDIUM_GREEN = ColorEntry(160, 200, 160)
+    MEDIUM_RED = ColorEntry(200, 160, 160)
+
+
+RED_BUTTON_STYLE = f"""
+    QPushButton {{
+        background-color: #{ColorPalette.MEDIUM_RED.hex()};
+        color: #{ColorPalette.DARK_RED.hex()};
+        font-weight: bold;
+        border-radius: 5px;
+        padding: 4px;
+    }}
+    QPushButton:disabled {{
+        background-color: #{ColorPalette.LIGHT_RED.hex()};
+        color: #{ColorPalette.MEDIUM_RED.hex()};
+    }}
+"""
+
+
+class ColorButton(QPushButton):
+    def __init__(self, text, enabled, parent=None):
+        super().__init__(text.replace(DISABLED_TAG, ''), parent)
+        self.setMinimumHeight(1)
+        self.setMaximumHeight(70)
+        color = ColorPalette.LIGHT_BLUE if enabled else ColorPalette.LIGHT_RED
+        self.set_color(*color.tuple())
+
+    def set_color(self, r, g, b):
+        self.color = QColor(r, g, b)
+        self.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {self.color.name()};
+                color: #{ColorPalette.DARK_BLUE.hex()};
+                font-weight: bold;
+                border: none;
+                min-height: 1px;
+                padding: 4px;
+                margin: 0px;
+            }}
+        """)
+
+
+action_running_color = ColorPalette.MEDIUM_BLUE
+action_done_color = ColorPalette.MEDIUM_GREEN
+
+
+class TimerProgressBar(QProgressBar):
+    light_background_color = ColorPalette.LIGHT_BLUE
+    border_color = ColorPalette.DARK_BLUE
+    text_color = ColorPalette.DARK_BLUE
+
+    def __init__(self):
+        super().__init__()
+        super().setRange(0, 10)
+        super().setValue(0)
+        self.set_running_style()
+        self._start_time = -1
+
+    def set_style(self, bar_color=None):
+        if bar_color is None:
+            bar_color = ColorPalette.MEDIUM_BLUE
+        self.setStyleSheet(f"""
+        QProgressBar {{
+          border: 2px solid #{self.border_color.hex()};
+          border-radius: 8px;
+          text-align: center;
+          font-weight: bold;
+          font-size: 12px;
+          background-color: #{self.light_background_color.hex()};
+          color: #{self.text_color.hex()};
+          min-height: 1px;
+        }}
+        QProgressBar::chunk {{
+          border-radius: 6px;
+          background-color: #{bar_color.hex()};
+        }}
+        """)
+
+    def time_str(self, secs):
+        ss = int(secs)
+        h = ss // 3600
+        m = (ss % 3600) // 60
+        s = (ss % 3600) % 60
+        x = secs - ss
+        t_str = "{:02d}".format(s) + "{:.1f}s".format(x).lstrip('0')
+        if m > 0:
+            t_str = "{:02d}:{}".format(m, t_str)
+        if h > 0:
+            t_str = "{:02d}:{}".format(h, t_str)
+        if m > 0 or h > 0:
+            t_str = t_str.lstrip('0')
+        elif 0 < s < 10:
+            t_str = t_str.lstrip('0')
+        elif s == 0:
+            t_str = t_str[1:]
+        return t_str
+
+    def check_time(self, val):
+        if self._start_time < 0:
+            raise RuntimeError("TimeProgressbar: start and must be called before setValue and stop")
+        self._current_time = time.time()
+        elapsed_time = self._current_time - self._start_time
+        elapsed_str = self.time_str(elapsed_time)
+        fmt = f"Progress: %p% - %v of %m - elapsed: {elapsed_str}"
+        if 0 < val < self.maximum():
+            time_per_iter = elapsed_time / val
+            estimated_time = time_per_iter * self.maximum()
+            remaining_time = max(0, estimated_time - elapsed_time)
+            remaining_str = self.time_str(remaining_time)
+            fmt += f", {remaining_str} remaining"
+        self.setFormat(fmt)
+
+    def start(self, steps):
+        super().setMaximum(steps)
+        self._start_time = time.time()
+        self.setValue(0)
+
+    def stop(self):
+        self.check_time(self.maximum())
+        self.setValue(self.maximum())
+
+    def setValue(self, val):
+        self.check_time(val)
+        super().setValue(val)
+
+    def set_running_style(self):
+        self.set_style(action_running_color)
+
+    def set_done_style(self):
+        self.set_style(action_done_color)
+
+
+class RunWindow(QTextEditLogger):
+    def __init__(self, labels, main_window, parent=None):
+        QTextEditLogger.__init__(self, parent)
+        self.main_window = main_window
+        self.row_widget_id = 0
+        layout = QVBoxLayout()
+        self.color_widgets = []
+        self.image_views = []
+        if len(labels) > 0:
+            for label_row in labels:
+                self.color_widgets.append([])
+                row = QWidget(self)
+                h_layout = QHBoxLayout(row)
+                h_layout.setContentsMargins(0, 0, 0, 0)
+                h_layout.setSpacing(2)
+                for label, enabled in label_row:
+                    widget = ColorButton(label, enabled)
+                    h_layout.addWidget(widget, stretch=1)
+                    self.color_widgets[-1].append(widget)
+                layout.addWidget(row)
+        self.progress_bar = TimerProgressBar()
+        layout.addWidget(self.progress_bar)
+        output_layout = QHBoxLayout()
+        left_layout, right_layout = QVBoxLayout(), QVBoxLayout()
+        output_layout.addLayout(left_layout, stretch=1)
+        output_layout.addLayout(right_layout, stretch=0)
+        left_layout.addWidget(self.text_edit)
+        self.right_area = QScrollArea()
+        self.right_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.right_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.right_area.setWidgetResizable(True)
+        self.right_area.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
+        self.right_area.setContentsMargins(0, 0, 0, 0)
+        self.right_area.setFrameShape(QFrame.NoFrame)
+        self.right_area.setViewportMargins(0, 0, 0, 0)
+        self.right_area.viewport().setStyleSheet("background: transparent; border: 0px;")
+        self.image_area_widget = QWidget()
+        self.image_area_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
+        self.image_area_widget.setContentsMargins(0, 0, 0, 0)
+        self.right_area.setWidget(self.image_area_widget)
+        self.image_layout = QVBoxLayout()
+        self.image_layout.setSpacing(5)
+        self.image_layout.setContentsMargins(0, 0, 0, 0)
+        self.image_layout.setAlignment(Qt.AlignTop)
+        self.image_area_widget.setLayout(self.image_layout)
+        right_layout.addWidget(self.right_area)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        self.right_area.setMinimumWidth(0)
+        self.right_area.setMaximumWidth(0)
+        self.image_area_widget.setFixedWidth(0)
+        layout.addLayout(output_layout)
+
+        self.stop_button = QPushButton("Stop")
+        self.setStyleSheet(RED_BUTTON_STYLE)
+        self.stop_button.clicked.connect(self.stop_worker)
+        self.status_bar.addPermanentWidget(self.stop_button)
+
+        self.close_button = QPushButton("Close")
+        self.close_button.setEnabled(False)
+        self.setStyleSheet(RED_BUTTON_STYLE)
+        self.close_button.clicked.connect(self.close_window)
+        self.status_bar.addPermanentWidget(self.close_button)
+
+        layout.addWidget(self.status_bar)
+        self.setLayout(layout)
+
+    def stop_worker(self):
+        self.main_window.stop_worker(self.main_window.get_tab_position(self.id_str()))
+
+    def close_window(self):
+        confirm = QMessageBox()
+        confirm.setIcon(QMessageBox.Question)
+        confirm.setWindowTitle('Close Tab')
+        confirm.setInformativeText("Really close tab?")
+        confirm.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        confirm.setDefaultButton(QMessageBox.Cancel)
+        if confirm.exec() == QMessageBox.Ok:
+            self.main_window.close_window(self.main_window.get_tab_position(self.id_str()))
+
+    @Slot(int, str)
+    def handle_before_action(self, id, name):
+        if 0 <= id < len(self.color_widgets[self.row_widget_id]):
+            self.color_widgets[self.row_widget_id][id].set_color(*action_running_color.tuple())
+            self.progress_bar.start(1)
+        if id == -1:
+            self.progress_bar.set_running_style()
+
+    @Slot(int, str)
+    def handle_after_action(self, id, name):
+        if 0 <= id < len(self.color_widgets[self.row_widget_id]):
+            self.color_widgets[self.row_widget_id][id].set_color(*action_done_color.tuple())
+            self.progress_bar.stop()
+        if id == -1:
+            self.row_widget_id += 1
+            self.progress_bar.set_done_style()
+
+    @Slot(int, str, str)
+    def handle_step_counts(self, id, name, steps):
+        self.progress_bar.start(steps)
+
+    @Slot(int, str)
+    def handle_begin_steps(self, id, name):
+        self.progress_bar.start(1)
+
+    @Slot(int, str)
+    def handle_end_steps(self, id, name):
+        self.progress_bar.stop()
+
+    @Slot(int, str, str)
+    def handle_after_step(self, id, name, step):
+        self.progress_bar.setValue(step)
+
+    @Slot(int, str, str)
+    def handle_save_plot(self, id, name, path):
+        label = QLabel(name, self)
+        label.setStyleSheet("QLabel {margin-top: 5px; font-weight: bold;}")
+        self.image_layout.addWidget(label)
+        ext = path.split('.')[-1].lower()
+        if ext == 'pdf':
+            image_view = GuiPdfView(path, self)
+        elif ext in ['jpg', 'jpeg', 'tif', 'tiff', 'png']:
+            image_view = GuiImageView(path, self)
+        else:
+            raise RuntimeError("Can't visualize file type {ext}.")
+        self.image_views.append(image_view)
+        self.image_layout.addWidget(image_view)
+        max_width = max(pv.size().width() for pv in self.image_views) if self.image_views else 0
+        needed_width = max_width + 15
+        self.right_area.setFixedWidth(needed_width)
+        self.image_area_widget.setFixedWidth(needed_width)
+        self.right_area.updateGeometry()
+        self.image_area_widget.updateGeometry()
+
+    @Slot(int, str, str, str)
+    def handle_open_app(self, id, name, app, path):
+        label = QLabel(name, self)
+        label.setStyleSheet("QLabel {margin-top: 5px; font-weight: bold;}")
+        self.image_layout.addWidget(label)
+        image_view = GuiOpenApp(app, path, self)
+        self.image_views.append(image_view)
+        self.image_layout.addWidget(image_view)
+        max_width = max(pv.size().width() for pv in self.image_views) if self.image_views else 0
+        needed_width = max_width + 15
+        self.right_area.setFixedWidth(needed_width)
+        self.image_area_widget.setFixedWidth(needed_width)
+        self.right_area.updateGeometry()
+        self.image_area_widget.updateGeometry()
+
+
+class RunWorker(LogWorker):
+    before_action_signal = Signal(int, str)
+    after_action_signal = Signal(int, str)
+    step_counts_signal = Signal(int, str, int)
+    begin_steps_signal = Signal(int, str)
+    end_steps_signal = Signal(int, str)
+    after_step_signal = Signal(int, str, int)
+    save_plot_signal = Signal(int, str, str)
+    open_app_signal = Signal(int, str, str, str)
+
+    def __init__(self, id_str):
+        LogWorker.__init__(self)
+        self.id_str = id_str
+        self.status = constants.STATUS_RUNNING
+        self.callbacks = {
+            'before_action': self.before_action,
+            'after_action': self.after_action,
+            'step_counts': self.step_counts,
+            'begin_steps': self.begin_steps,
+            'end_steps': self.end_steps,
+            'after_step': self.after_step,
+            'save_plot': self.save_plot,
+            'check_running': self.check_running,
+            'open_app': self.open_app
+        }
+        self.tag = ""
+
+    def before_action(self, id, name):
+        self.before_action_signal.emit(id, name)
+
+    def after_action(self, id, name):
+        self.after_action_signal.emit(id, name)
+
+    def step_counts(self, id, name, steps):
+        self.step_counts_signal.emit(id, name, steps)
+
+    def begin_steps(self, id, name):
+        self.begin_steps_signal.emit(id, name)
+
+    def end_steps(self, id, name):
+        self.end_steps_signal.emit(id, name)
+
+    def after_step(self, id, name, step):
+        self.after_step_signal.emit(id, name, step)
+
+    def save_plot(self, id, name, path):
+        self.save_plot_signal.emit(id, name, path)
+
+    def open_app(self, id, name, app, path):
+        self.open_app_signal.emit(id, name, app, path)
+
+    def check_running(self, id, name):
+        return self.status == constants.STATUS_RUNNING
+
+    def run(self):
+        self.status_signal.emit(f"{self.tag} running...", constants.RUN_ONGOING, "", 0)
+        self.html_signal.emit(f'''
+        <div style="margin: 2px 0; font-family: {LOG_FONTS_STR};">
+        <span style="color: #{ColorPalette.DARK_BLUE.hex()}; font-weight: bold;">{self.tag} begins</span>
+        </div>
+        ''')
+        status, error_message = self.do_run()
+        if status == constants.RUN_FAILED:
+            message = f"{self.tag} failed"
+            color = "#" + ColorPalette.DARK_RED.hex()
+        elif status == constants.RUN_COMPLETED:
+            message = f"{self.tag} ended successfully"
+            color = "#" + ColorPalette.DARK_BLUE.hex()
+        elif status == constants.RUN_STOPPED:
+            message = f"{self.tag} stopped"
+            color = "#" + ColorPalette.DARK_RED.hex()
+        self.html_signal.emit(f'''
+        <div style="margin: 2px 0; font-family: {LOG_FONTS_STR};">
+        <span style="color: {color}; font-weight: bold;">{message}</span>
+        </div>
+        ''')
+        self.end_signal.emit(status, self.id_str, message)
+        self.status_signal.emit(message, status, error_message, 0)
+
+    def stop(self):
+        self.status = constants.STATUS_STOPPED
+        self.wait()

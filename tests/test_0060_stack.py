@@ -1,9 +1,7 @@
-import sys
-sys.path.append('../')
-from algorithms.stack_framework import StackJob
-from algorithms.stack import FocusStack, FocusStackBunch
-from algorithms.pyramid import PyramidStack
-from algorithms.depth_map import DepthMapStack
+from focusstack.algorithms.stack_framework import StackJob
+from focusstack.algorithms.stack import FocusStack, FocusStackBunch
+from focusstack.algorithms.pyramid import PyramidStack
+from focusstack.algorithms.depth_map import DepthMapStack
 
 
 def test_jpg():

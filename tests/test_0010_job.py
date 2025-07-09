@@ -1,8 +1,6 @@
-import sys
-sys.path.append('../')
-from core.framework import Job, JobBase, ActionList
 from termcolor import colored
 import time
+from focusstack.core.framework import Job, JobBase, ActionList
 
 
 class Action1(JobBase):

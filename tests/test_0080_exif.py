@@ -1,11 +1,9 @@
-import sys
-sys.path.append('../')
 import os
 import logging
 from PIL import Image
 from PIL.ExifTags import TAGS
-from core.logging import setup_logging
-from algorithms.exif import get_exif, copy_exif, print_exif
+from focusstack.core.logging import setup_logging
+from focusstack.algorithms.exif import get_exif, copy_exif, print_exif
 
 
 NO_TEST_TIFF_TAGS = ["XMLPacket", "Compression", "StripOffsets", "RowsPerStrip", "StripByteCounts", "ImageResources", "ExifOffset", 34665]

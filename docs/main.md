@@ -4,7 +4,7 @@
 
 ## Quick Start
 ```python
-from algorithms import *
+from focusstack.algorithms import *
 
 job = StackJob("demo", "/path/to/images", input_path="src")
 job.add_action(CombinedActions("align", [AlignFrames()]))
@@ -15,7 +15,7 @@ job.run()
 ## Usage example
 
 ```python
-from algorithms import *
+from focusstack.algorithms import *
 
 job = StackJob("job", "E:/Focus stacking/My image directory/", input_path="src")
 job.add_action(NoiseDetection())
@@ -35,7 +35,7 @@ job.run()
 
 if some constants have to be used in the configuration, the set of predefined constants should be imported:
 ```python
-from config.constants import constants
+from focusstack.config.constants import constants
 ```
 
 ## Jupyter notebooks

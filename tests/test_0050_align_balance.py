@@ -1,9 +1,7 @@
-import sys
-sys.path.append('../')
-from config.constants import constants
-from algorithms.stack_framework import StackJob, CombinedActions
-from algorithms.align import AlignFrames
-from algorithms.balance import BalanceFrames
+from focusstack.config.constants import constants
+from focusstack.algorithms.stack_framework import StackJob, CombinedActions
+from focusstack.algorithms.align import AlignFrames
+from focusstack.algorithms.balance import BalanceFrames
 
 
 def test_hls_gamma():

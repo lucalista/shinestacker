@@ -1,7 +1,5 @@
-import sys
-sys.path.append('../')
 import numpy as np
-from gui.brush_preview import brush_profile
+from focusstack.retouch.brush_preview import brush_profile
 
 
 def test_brush_profile():
