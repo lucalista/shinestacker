@@ -3,7 +3,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication
 from gui.project_model import Project
 from gui.action_config import ActionConfigDialog
-from gui.menu import MenuWindow
+from gui.menu_window import MenuWindow
 from gui.gui_logging import LogManager
 from gui.gui_run import RunWindow
 
