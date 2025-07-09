@@ -322,3 +322,10 @@ class ImageEditorUI(ImageEditor):
         self.cursor_style = style
         if self.image_viewer.brush_cursor:
             self.image_viewer.update_brush_cursor()
+
+    def handle_temp_view(self, start):
+        if start:
+            self.start_temp_view()
+        else:
+            self.end_temp_view()        
+
