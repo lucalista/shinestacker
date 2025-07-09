@@ -14,3 +14,4 @@ sandbox/img-test/*
 build/
 dist/
 .eggs/
+src/focusstack/_version.py
