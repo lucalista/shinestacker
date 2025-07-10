@@ -89,6 +89,7 @@ The following python modules:
 * pillow
 * psdtags
 * scipy
+* setuptools-scm
 * termcolor
 * tifffile
 * tqdm
