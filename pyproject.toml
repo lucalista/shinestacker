@@ -19,6 +19,7 @@ classifiers = [
 dependencies = [
     "ansi2html",
     "imagecodecs",
+    "ipywidgets",
     "jsonpickle",
     "matplotlib",
     "networkx",
