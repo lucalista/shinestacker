@@ -17,7 +17,7 @@ def test_open_file_success(main_window, qtbot, mocker):
     )
 
     main_window.open_project("../examples/project.fsp")
-    time.sleep(1)
+    time.sleep(0.5)
 
     assert main_window is not None
     assert main_window.windowTitle() == "Focus Stacking GUI - project.fsp"
