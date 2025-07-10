@@ -16,7 +16,7 @@ def test_open_file_success(main_window, qtbot, mocker):
         return_value=("../examples/project.fsp", "")
     )
 
-    main_window.open_project("../examples/project.fsp")
+    main_window.open_project()
     time.sleep(0.5)
 
     assert main_window is not None
