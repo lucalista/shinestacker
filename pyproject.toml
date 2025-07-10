@@ -42,15 +42,15 @@ focusstack-retouch = "focusstack.app.retouch:main"
 [tool.setuptools]
 package-dir = {"" = "src"}
 packages = [
-	 "focusstack",
-	 "focusstack.app",
-	 "focusstack.config",
-	 "focusstack.core",
-	 "focusstack.algorithms",
-	 "focusstack.gui",
-         "focusstack.gui.img",	 
-	 "focusstack.retouch"	 
-	 ]
+    "focusstack",
+    "focusstack.app",
+    "focusstack.config",
+    "focusstack.core",
+    "focusstack.algorithms",
+    "focusstack.gui",
+    "focusstack.gui.img",
+    "focusstack.retouch"
+]
 include-package-data = true
 
 [tool.setuptools_scm]
