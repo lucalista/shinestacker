@@ -16,6 +16,22 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+    "ansi2html",
+    "imagecodecs",
+    "jsonpickle",
+    "matplotlib",
+    "networkx",
+    "numpy",
+    "opencv_python",
+    "Pillow",
+    "psdtags",
+    "PySide6",
+    "scipy",
+    "termcolor",
+    "tifffile",
+    "tqdm"
+]
 
 [project.scripts]
 focusstack-main = "focusstack.app.main:main"
