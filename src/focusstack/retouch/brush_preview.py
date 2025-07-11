@@ -48,13 +48,13 @@ class BrushPreviewItem(QGraphicsPixmapItem):
 
     def get_layer_area(self, layer, x, y, w, h):
         if not isinstance(layer, np.ndarray):
-            self.setVisible(False)
+            self.hide()
             return None
         height, width = layer.shape[:2]
         x_start, y_start = max(0, x), max(0, y)
         x_end, y_end = min(width, x + w), min(height, y + h)
         if x_end <= x_start or y_end <= y_start:
-            self.setVisible(False)
+            self.hide()
             return None
         area = np.ascontiguousarray(layer[y_start:y_end, x_start:x_end])
         if area.ndim == 2:  # grayscale
@@ -71,7 +71,7 @@ class BrushPreviewItem(QGraphicsPixmapItem):
     def update_preview(self, editor, pos, size):
         try:
             if editor.current_stack is None or not hasattr(editor, 'image_viewer') or size <= 0:
-                self.setVisible(False)
+                self.hide()
                 return
             radius = size // 2
             if isinstance(pos, QPointF):
@@ -83,12 +83,12 @@ class BrushPreviewItem(QGraphicsPixmapItem):
             y = int(scene_pos.y() - radius)
             w = h = size
             if editor.current_layer < 0 or editor.current_layer >= len(editor.current_stack):
-                self.setVisible(False)
+                self.hide()
                 return
             layer_area = self.get_layer_area(editor.current_stack[editor.current_layer], x, y, w, h)
             master_area = self.get_layer_area(editor.master_layer, x, y, w, h)
             if layer_area is None or master_area is None:
-                self.setVisible(False)
+                self.hide()
                 return
             height, width = editor.current_stack[editor.current_layer].shape[:2]
             full_mask = create_brush_mask(size=size, hardness_percent=editor.brush.hardness,
@@ -119,9 +119,9 @@ class BrushPreviewItem(QGraphicsPixmapItem):
             self.setPixmap(final_pixmap)
             x_start, y_start = max(0, x), max(0, y)
             self.setPos(x_start, y_start)
-            self.setVisible(True)
+            self.show()
         except Exception as e:
             print(f"Preview error: {str(e)}")
             import traceback
             traceback.print_exc()
-            self.setVisible(False)
+            self.hide()
