@@ -6,6 +6,7 @@ from PySide6.QtGui import QAction, QIcon, QGuiApplication
 from PySide6.QtCore import Qt, QTimer
 from focusstack.config.config import config
 config.init(DISABLE_TQDM=True, COMBINED_APP=True)
+from focusstack.config import constants
 from focusstack.core.logging import setup_logging
 from focusstack.gui.main_window import MainWindow
 from focusstack.retouch.image_editor_ui import ImageEditorUI
@@ -17,7 +18,7 @@ from focusstack.app.about_dialog import show_about_dialog
 class MainApp(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Focus stacking")
+        self.setWindowTitle(constants.APP_TITLE)
         self.resize(1400, 900)
         center = QGuiApplication.primaryScreen().geometry().center()
         self.move(center - self.rect().center())
