@@ -29,6 +29,7 @@ class ImageViewer(QGraphicsView):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.image_editor = None
+        self.brush_controller = None
         self.scene = QGraphicsScene(self)
         self.setScene(self.scene)
         self.pixmap_item = QGraphicsPixmapItem()
@@ -119,7 +120,7 @@ class ImageViewer(QGraphicsView):
 
     def mouseMoveEvent(self, event):
         position = event.position()
-        brush_size = self.image_editor.brush_controller.brush_size
+        brush_size = self.brush_controller.brush_size
         if not self.space_pressed:
             self.update_brush_cursor()
         if self.dragging and event.buttons() & Qt.LeftButton:
@@ -190,8 +191,8 @@ class ImageViewer(QGraphicsView):
         pen = QPen(gui_constants.BRUSH_COLORS['pen'], 1)
         brush = QBrush(gui_constants.BRUSH_COLORS['cursor_inner'])
         self.brush_cursor = self.scene.addEllipse(0, 0,
-                                                  self.image_editor.brush_controller.brush_size,
-                                                  self.image_editor.brush_controller.brush_size,
+                                                  self.brush_controller.brush_size,
+                                                  self.brush_controller.brush_size,
                                                   pen, brush)
         self.brush_cursor.setZValue(1000)
         self.brush_cursor.hide()
@@ -199,7 +200,7 @@ class ImageViewer(QGraphicsView):
     def update_brush_cursor(self):
         if not self.brush_cursor or not self.isVisible():
             return
-        size = self.image_editor.brush_controller.brush_size
+        size = self.brush_controller.brush_size
         mouse_pos = self.mapFromGlobal(QCursor.pos())
         if not self.rect().contains(mouse_pos):
             self.brush_cursor.hide()
@@ -230,10 +231,10 @@ class ImageViewer(QGraphicsView):
     def _setup_simple_brush_style(self, center_x, center_y, radius):
         gradient = create_brush_gradient(
             center_x, center_y, radius,
-            self.image_editor.brush_controller.brush_hardness,
+            self.brush_controller.brush_hardness,
             inner_color=gui_constants.BRUSH_COLORS['inner'],
             outer_color=gui_constants.BRUSH_COLORS['gradient_end'],
-            opacity=self.image_editor.brush_controller.brush_opacity
+            opacity=self.brush_controller.brush_opacity
         )
         self.brush_cursor.setPen(QPen(gui_constants.BRUSH_COLORS['pen'],
                                       gui_constants.BRUSH_LINE_WIDTH / self.zoom_factor))

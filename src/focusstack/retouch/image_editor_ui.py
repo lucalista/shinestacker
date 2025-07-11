@@ -40,6 +40,7 @@ class ImageEditorUI(ImageEditor):
         self.image_viewer = ImageViewer()
         self.image_viewer.temp_view_requested.connect(self.handle_temp_view)
         self.image_viewer.image_editor = self
+        self.image_viewer.brush_controller = self.brush_controller
         self.image_viewer.setup_brush_cursor()
         self.image_viewer.setFocusPolicy(Qt.StrongFocus)
         side_panel = QWidget()
