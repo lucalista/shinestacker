@@ -12,7 +12,7 @@ class MainWindow(MenuWindow, LogManager):
         MenuWindow.__init__(self)
         LogManager.__init__(self)
         self._windows = []
-        self.setWindowTitle("Focus Stacking GUI")
+        self.update_title()
         self.resize(1200, 800)
         center = QGuiApplication.primaryScreen().geometry().center()
         self.move(center - self.rect().center())
