@@ -212,13 +212,13 @@ class ImageViewer(QGraphicsView):
         radius = size / 2
         self.brush_cursor.setRect(center_x - radius, center_y - radius, size, size)
         allow_cursor_preview = self.image_editor.allow_cursor_preview()
-        if self.cursor_style == 'preview' and  allow_cursor_preview:
+        if self.cursor_style == 'preview' and allow_cursor_preview:
             self._setup_outline_style()
             self.brush_cursor.hide()
             self.brush_preview.update(self.image_editor, QCursor.pos(), int(size))
         else:
             self.brush_preview.hide()
-            if self.cursor_style == 'outline' or not  allow_cursor_preview:
+            if self.cursor_style == 'outline' or not allow_cursor_preview:
                 self._setup_outline_style()
             else:
                 self._setup_simple_brush_style(center_x, center_y, radius)

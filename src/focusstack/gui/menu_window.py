@@ -279,6 +279,16 @@ class MenuWindow(GuiActions):
             self.job_list.setCurrentRow(0)
             self.activateWindow()
         self._modified_project = False
+        for i, job in enumerate(self.project.jobs):
+            if 'working_path' in job.params.keys():
+                working_path = job.params['working_path']
+                if not os.path.isdir(working_path):
+                    QMessageBox.warning(self, "Working path not found",
+                                        f'''The working path specified in the project file for the job:
+                                        "{job.params['name']}"
+                                        was not found.\n
+                                        Please, select a valid working path.''')
+                    self.on_job_edit(self.job_list.item(i))
 
     def current_file_name(self):
         return os.path.basename(self._current_file) if self._current_file else ''
