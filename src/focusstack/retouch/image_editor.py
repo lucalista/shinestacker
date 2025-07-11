@@ -42,7 +42,6 @@ class ImageEditor(QMainWindow):
         self.master_layer = None
         self.current_layer = 0
         self._brush_mask_cache = {}
-        self.cursor_style = 'preview'
         self.view_mode = 'master'
         self.temp_view_individual = False
         self.current_file_path = ''
@@ -406,7 +405,7 @@ class ImageEditor(QMainWindow):
         preview_size = min(self.brush.size, width + 30, height + 30)
         center_x, center_y = width // 2, height // 2
         radius = preview_size // 2
-        if self.cursor_style == 'preview':
+        if self.image_viewer.cursor_style == 'preview':
             gradient = create_brush_gradient(
                 center_x, center_y, radius,
                 self.brush.hardness,
@@ -416,14 +415,14 @@ class ImageEditor(QMainWindow):
             )
             painter.setBrush(QBrush(gradient))
             painter.setPen(QPen(gui_constants.BRUSH_COLORS['outer'], gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
-        elif self.cursor_style == 'outline':
+        elif self.image_viewer.cursor_style == 'outline':
             painter.setBrush(Qt.NoBrush)
             painter.setPen(QPen(gui_constants.BRUSH_COLORS['outer'], gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
         else:
             painter.setBrush(QBrush(gui_constants.BRUSH_COLORS['cursor_inner']))
             painter.setPen(QPen(gui_constants.BRUSH_COLORS['pen'], gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
         painter.drawEllipse(QPoint(center_x, center_y), radius, radius)
-        if self.cursor_style == 'preview':
+        if self.image_viewer.cursor_style == 'preview':
             painter.setPen(QPen(QColor(0, 0, 160)))
             painter.drawText(0, 10, f"Size: {int(self.brush.size)}px")
             painter.drawText(0, 25, f"Hardness: {self.brush.hardness}%")

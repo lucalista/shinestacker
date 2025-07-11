@@ -264,20 +264,20 @@ class ImageEditorUI(ImageEditor):
 
         brush_action = QAction("Simple Brush", self)
         brush_action.setCheckable(True)
-        brush_action.setChecked(self.cursor_style == 'brush')
-        brush_action.triggered.connect(lambda: self.set_cursor_style('brush'))
+        brush_action.setChecked(self.image_viewer.cursor_style == 'brush')
+        brush_action.triggered.connect(lambda: self.image_viewer.set_cursor_style('brush'))
         cursor_menu.addAction(brush_action)
 
         preview_action = QAction("Brush Preview", self)
         preview_action.setCheckable(True)
-        preview_action.setChecked(self.cursor_style == 'preview')
-        preview_action.triggered.connect(lambda: self.set_cursor_style('preview'))
+        preview_action.setChecked(self.image_viewer.cursor_style == 'preview')
+        preview_action.triggered.connect(lambda: self.image_viewer.set_cursor_style('preview'))
         cursor_menu.addAction(preview_action)
 
         outline_action = QAction("Outline Only", self)
         outline_action.setCheckable(True)
-        outline_action.setChecked(self.cursor_style == 'outline')
-        outline_action.triggered.connect(lambda: self.set_cursor_style('outline'))
+        outline_action.setChecked(self.image_viewer.cursor_style == 'outline')
+        outline_action.triggered.connect(lambda: self.image_viewer.set_cursor_style('outline'))
         cursor_menu.addAction(outline_action)
 
         cursor_group = QActionGroup(self)
@@ -318,11 +318,6 @@ class ImageEditorUI(ImageEditor):
             self.display_current_view()
             self.mark_as_modified()
             self.statusBar().showMessage("Undo applied", 2000)
-
-    def set_cursor_style(self, style):
-        self.cursor_style = style
-        if self.image_viewer.brush_cursor:
-            self.image_viewer.update_brush_cursor()
 
     def handle_temp_view(self, start):
         if start:

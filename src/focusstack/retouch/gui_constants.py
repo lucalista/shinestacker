@@ -46,6 +46,7 @@ class _GuiConstants:
         'mid': 50,
         'max': 1000
     }
+    DEFAULT_CURSOR_STYLE = 'preview'
     BRUSH_LINE_WIDTH = 2
     BRUSH_PREVIEW_LINE_WIDTH = 1.5
     ZOOM_IN_FACTOR = 1.25

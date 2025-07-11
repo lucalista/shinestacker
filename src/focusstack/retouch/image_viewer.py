@@ -30,6 +30,7 @@ class ImageViewer(QGraphicsView):
         super().__init__(parent)
         self.image_editor = None
         self.brush = None
+        self.cursor_style = gui_constants.DEFAULT_CURSOR_STYLE
         self.scene = QGraphicsScene(self)
         self.setScene(self.scene)
         self.pixmap_item = QGraphicsPixmapItem()
@@ -210,13 +211,13 @@ class ImageViewer(QGraphicsView):
         center_y = scene_pos.y()
         radius = size / 2
         self.brush_cursor.setRect(center_x - radius, center_y - radius, size, size)
-        if self.image_editor.cursor_style == 'preview' and self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual:
+        if self.cursor_style == 'preview' and self.image_editor.view_mode == 'master' and not self.image_editor.temp_view_individual:
             self._setup_outline_style()
             self.brush_cursor.hide()
             self.brush_preview.update_preview(self.image_editor, QCursor.pos(), int(size))
         else:
             self.brush_preview.setVisible(False)
-            if self.image_editor.cursor_style == 'outline' or self.image_editor.view_mode != 'master' or self.image_editor.temp_view_individual:
+            if self.cursor_style == 'outline' or self.image_editor.view_mode != 'master' or self.image_editor.temp_view_individual:
                 self._setup_outline_style()
             else:
                 self._setup_simple_brush_style(center_x, center_y, radius)
@@ -304,3 +305,8 @@ class ImageViewer(QGraphicsView):
             self.horizontalScrollBar().setValue(state['h_scroll'])
             self.verticalScrollBar().setValue(state['v_scroll'])
             self.zoom_factor = state['zoom']
+
+    def set_cursor_style(self, style):
+        self.cursor_style = style
+        if self.brush_cursor:
+            self.update_brush_cursor()
