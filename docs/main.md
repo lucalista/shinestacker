@@ -42,9 +42,6 @@ from focusstack.config.constants import constants
 
 Examples in jupyter notebooks are provided.
 
-Running in jupyter notebook requires the following packages:
-* ipywidgets
-
 ## Graphical User Interface
 
 A GUI based on ```PySide6``` is also available, still experimental and undocumented.
@@ -62,11 +59,6 @@ To run the GUI, from the main package directory run:
 
 <img src='../img/gui-retouch.png' width="600">
 
-The GUI requires the following python modules:
-* ansi2html
-* jsonpickle
-* PySide6
-* webbrowser
 
 ## Documentation
 - [Job creation and processing pipeline](../docs/job.md)
@@ -93,6 +85,17 @@ The following python modules:
 * termcolor
 * tifffile
 * tqdm
+
+Running in jupyter notebook requires the following packages:
+
+* ipywidgets
+
+The GUI requires the following python modules:
+
+* ansi2html
+* jsonpickle
+* PySide6
+* webbrowser
 
 ## Installation
 The package lacks a real installation setup. It will be possibly developed at a later stage.
