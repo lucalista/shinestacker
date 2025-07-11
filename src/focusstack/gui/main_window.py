@@ -2,7 +2,6 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QLa
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication
 from focusstack.gui.project_model import Project
-from focusstack.gui.action_config import ActionConfigDialog
 from focusstack.gui.menu_window import MenuWindow
 from focusstack.gui.gui_logging import LogManager
 from focusstack.gui.gui_run import RunWindow
@@ -98,12 +97,6 @@ class MainWindow(MenuWindow, LogManager):
         worker.after_step_signal.connect(window.handle_after_step)
         worker.save_plot_signal.connect(window.handle_save_plot)
         worker.open_app_signal.connect(window.handle_open_app)
-
-    def show_action_config_dialog(self, action):
-        dialog = ActionConfigDialog(action, self)
-        if dialog.exec():
-            current_job_index = self.job_list.currentRow()
-            self.on_job_selected(current_job_index)
 
     def set_enabled_sub_actions_gui(self, enabled):
         self.add_sub_action_entry_action.setEnabled(enabled)

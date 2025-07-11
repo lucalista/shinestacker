@@ -279,7 +279,7 @@ class MenuWindow(GuiActions):
             self.job_list.setCurrentRow(0)
             self.activateWindow()
         self._modified_project = False
-        for i, job in enumerate(self.project.jobs):
+        for job in self.project.jobs:
             if 'working_path' in job.params.keys():
                 working_path = job.params['working_path']
                 if not os.path.isdir(working_path):
@@ -288,7 +288,17 @@ class MenuWindow(GuiActions):
                                         "{job.params['name']}"
                                         was not found.\n
                                         Please, select a valid working path.''')
-                    self.on_job_edit(self.job_list.item(i))
+                    self.edit_action(job)
+            for action in job.sub_actions:
+                if 'working_path' in job.params.keys():
+                    working_path = job.params['working_path']
+                    if working_path != '' and not os.path.isdir(working_path):
+                        QMessageBox.warning(self, "Working path not found",
+                                            f'''The working path specified in the project file for the job:
+                                            "{job.params['name']}"
+                                            was not found.\n
+                                            Please, select a valid working path.''')
+                        self.edit_action(action)
 
     def current_file_name(self):
         return os.path.basename(self._current_file) if self._current_file else ''
@@ -504,4 +514,29 @@ class MenuWindow(GuiActions):
             if current_action:
                 if not is_sub_action:
                     self.set_enabled_sub_actions_gui(current_action.type_name == constants.ACTION_COMBO)
-                self.show_action_config_dialog(current_action)
+                dialog = ActionConfigDialog(action, self)
+                if dialog.exec():
+                    current_job_index = self.job_list.currentRow()
+                    self.on_job_selected(current_job_index)
+
+    def edit_current_action(self):
+        current_action = None
+        job_row = self.job_list.currentRow()
+        sub_action_index = -1
+        if 0 <= job_row < len(self.project.jobs):
+            job = self.project.jobs[job_row]
+            if self.job_list.hasFocus():
+                current_action = job
+            elif self.action_list.hasFocus():
+                job_row, action_row, actions, sub_actions, action_index, sub_action_index = self.get_current_action()
+                if actions is not None:
+                    action = actions[action_index]
+                    current_action = action if sub_action_index == -1 else sub_actions[sub_action_index]
+        if current_action is not None:
+            self.edit_action(current_action)
+
+    def edit_action(self, action):
+        dialog = ActionConfigDialog(action, self)
+        if dialog.exec():
+            current_job_index = self.job_list.currentRow()
+            self.on_job_selected(current_job_index)
