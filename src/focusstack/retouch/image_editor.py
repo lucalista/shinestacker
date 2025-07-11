@@ -192,6 +192,9 @@ class ImageEditor(QMainWindow):
         if self.current_file_path != '':
             self._save_to_path(self.current_file_path)
             self.modified = False
+            title = gui_constants.APP_TITLE
+            if self.current_file_path:
+                title += f" - {self.current_file_path.split('/')[-1]}"
             self.setWindowTitle(gui_constants.APP_TITLE)
         else:
             self.save_file_as()

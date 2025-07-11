@@ -13,7 +13,6 @@ from focusstack.gui.gui_run import ColorPalette
 from focusstack.gui.action_config import ActionConfigDialog
 from focusstack.gui.gui_actions import GuiActions
 
-
 ENABLED_LIST_ITEM_COLOR = ColorPalette.DARK_BLUE.tuple()
 DISABLED_LIST_ITEM_COLOR = ColorPalette.DARK_RED.tuple()
 
@@ -58,6 +57,7 @@ class MenuWindow(GuiActions):
     def touch_project(self):
         self._modified_project = True
         self._project_buffer.append(self.project.clone())
+        self.update_title()
 
     def add_file_menu(self, menubar):
         menu = menubar.addMenu("&File")
@@ -240,9 +240,11 @@ class MenuWindow(GuiActions):
             self.run_all_jobs_action.setEnabled(True)
 
     def update_title(self):
-        title = "Focus Stacking GUI"
+        title = "Focus Stacking"
         if self._current_file:
             title += f" - {os.path.basename(self._current_file)}"
+            if self._modified_project:
+                title += " *"
         self.setWindowTitle(title)
 
     def quit(self):
@@ -316,6 +318,7 @@ class MenuWindow(GuiActions):
                 file_path += '.fsp'
             self.do_save(file_path)
             self._current_file = file_path
+            self._modified_project = False
             self.update_title()
 
     def do_save(self, file_path):
@@ -538,5 +541,5 @@ class MenuWindow(GuiActions):
     def edit_action(self, action):
         dialog = ActionConfigDialog(action, self)
         if dialog.exec():
-            current_job_index = self.job_list.currentRow()
-            self.on_job_selected(current_job_index)
+            self.on_job_selected(self.job_list.currentRow())
+            self.touch_project()
