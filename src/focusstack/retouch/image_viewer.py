@@ -217,7 +217,7 @@ class ImageViewer(QGraphicsView):
             self.brush_cursor.hide()
             self.brush_preview.update_preview(self.image_editor, QCursor.pos(), int(size))
         else:
-            self.brush_preview.setVisible(False)
+            self.brush_preview.hide()
             if self.cursor_style == 'outline' or not  allow_cursor_preview:
                 self._setup_outline_style()
             else:
