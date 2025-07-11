@@ -8,6 +8,7 @@ from focusstack.config.config import config
 config.init(DISABLE_TQDM=True, COMBINED_APP=True)
 from focusstack.config import constants
 from focusstack.core.logging import setup_logging
+from focusstack.core.core_utils import get_app_base_path
 from focusstack.gui.main_window import MainWindow
 from focusstack.retouch.image_editor_ui import ImageEditorUI
 from focusstack.app.gui_utils import disable_macos_special_menu_items
@@ -99,8 +100,7 @@ def main():
         app.setAttribute(Qt.AA_DontUseNativeMenuBar)
     else:
         disable_macos_special_menu_items()
-    path = "/".join(os.path.dirname(os.path.abspath(__file__)).split("/")[:-3])
-    app.setWindowIcon(QIcon(f'{path}/ico/focus_stack.png'))
+    app.setWindowIcon(QIcon(f'{get_app_base_path()}/ico/focus_stack.png'))
     main_app = MainApp()
     main_app.show()
     file_to_open = None

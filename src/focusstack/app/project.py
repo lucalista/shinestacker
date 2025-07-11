@@ -9,6 +9,7 @@ from PySide6.QtCore import Qt, QTimer
 from focusstack.config.config import config
 config.init(DISABLE_TQDM=True)
 from focusstack.core.logging import setup_logging
+from focusstack.core.core_utils import get_app_base_path
 from focusstack.gui.main_window import MainWindow
 from focusstack.app.gui_utils import disable_macos_special_menu_items
 from focusstack.app.help_menu import add_help_menu
@@ -47,8 +48,7 @@ def main():
         app.setAttribute(Qt.AA_DontUseNativeMenuBar)
     else:
         disable_macos_special_menu_items()
-    path = "/".join(os.path.dirname(os.path.abspath(__file__)).split("/")[:-3])
-    app.setWindowIcon(QIcon(f'{path}/ico/focus_stack.png'))
+    app.setWindowIcon(QIcon(f'{get_app_base_path()}/ico/focus_stack.png'))
     file_to_open = None
     if len(sys.argv) > 1:
         file_to_open = sys.argv[1]

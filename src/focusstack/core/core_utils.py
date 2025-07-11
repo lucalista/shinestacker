@@ -1,4 +1,5 @@
 import os
+import sys
 from focusstack.config.config import config
 
 if not config.DISABLE_TQDM:
@@ -20,3 +21,11 @@ def make_tqdm_bar(name, size, ncols=80):
         return bar
     else:
         return None
+
+
+def get_app_base_path():
+    if getattr(sys, 'frozen', False):
+        path = os.path.dirname(os.path.realpath(sys.executable))
+    elif __file__:
+        path = "/".join(os.path.dirname(os.path.abspath(__file__)).split("/")[:-3])
+    return path
