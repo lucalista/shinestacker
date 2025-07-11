@@ -434,6 +434,9 @@ class ImageEditor(QMainWindow):
     def clear_brush_cache(self):
         self._brush_mask_cache.clear()
 
+    def allow_cursor_preview(self):
+        return self.view_mode == 'master' and not self.temp_view_individual
+
     def copy_layer_to_master(self):
         if self.current_stack is None or self.master_layer is None:
             return
