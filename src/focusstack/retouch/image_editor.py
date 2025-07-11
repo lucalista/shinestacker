@@ -136,7 +136,7 @@ class ImageEditor(QMainWindow):
             title += f" - {self.current_file_path.split('/')[-1]}"
             if self.modified:
                 title += " *"
-        self.setWindowTitle(title)
+        self.window().setWindowTitle(title)
 
     def open_file(self, path=None):
         if path is None:

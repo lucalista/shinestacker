@@ -40,6 +40,7 @@ class MainApp(QMainWindow):
         self.switch_to_retouch_action.setChecked(False)
         self.switch_to_project_action.setEnabled(False)
         self.switch_to_retouch_action.setEnabled(True)
+        self.project_window.update_title()
 
     def switch_to_retouch(self):
         self.switch_app(1)
@@ -47,6 +48,7 @@ class MainApp(QMainWindow):
         self.switch_to_retouch_action.setChecked(True)
         self.switch_to_project_action.setEnabled(True)
         self.switch_to_retouch_action.setEnabled(False)
+        self.retouch_window.update_title()
 
     def create_menu(self):
         app_menu = QMenu("FocusStack")

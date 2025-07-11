@@ -31,7 +31,7 @@ class ImageEditorUI(ImageEditor):
         next_layer.activated.connect(self.next_layer)
 
     def setup_ui(self):
-        self.setWindowTitle(constants.APP_TITLE)
+        self.update_title()
         self.resize(1400, 900)
         center = QGuiApplication.primaryScreen().geometry().center()
         self.move(center - self.rect().center())

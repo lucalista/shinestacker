@@ -54,7 +54,7 @@ class MenuWindow(GuiActions):
         item.setForeground(color)
         return item
 
-    def touch_project(self):
+    def mark_as_modified(self):
         self._modified_project = True
         self._project_buffer.append(self.project.clone())
         self.update_title()
@@ -245,7 +245,7 @@ class MenuWindow(GuiActions):
             title += f" - {os.path.basename(self._current_file)}"
             if self._modified_project:
                 title += " *"
-        self.setWindowTitle(title)
+        self.window().setWindowTitle(title)
 
     def quit(self):
         if self._check_unsaved_changes():
@@ -542,4 +542,4 @@ class MenuWindow(GuiActions):
         dialog = ActionConfigDialog(action, self)
         if dialog.exec():
             self.on_job_selected(self.job_list.currentRow())
-            self.touch_project()
+            self.mark_as_modified()

@@ -62,7 +62,7 @@ class GuiActions(QMainWindow):
         new_index = job_index + delta
         if 0 <= new_index < len(self.project.jobs):
             jobs = self.project.jobs
-            self.touch_project()
+            self.mark_as_modified()
             jobs.insert(new_index, jobs.pop(job_index))
             self.refresh_ui(new_index, -1)
 
@@ -106,7 +106,7 @@ class GuiActions(QMainWindow):
             if sub_action_index == -1:
                 new_index = action_index + delta
                 if 0 <= new_index < len(actions):
-                    self.touch_project()
+                    self.mark_as_modified()
                     actions.insert(new_index, actions.pop(action_index))
                     new_row = 0
                     for action in actions[:new_index]:
@@ -114,7 +114,7 @@ class GuiActions(QMainWindow):
             else:
                 new_index = sub_action_index + delta
                 if 0 <= new_index < len(sub_actions):
-                    self.touch_project()
+                    self.mark_as_modified()
                     sub_actions.insert(new_index, sub_actions.pop(sub_action_index))
                     new_row = 1 + new_index
                     for action in actions[:action_index]:
@@ -138,7 +138,7 @@ class GuiActions(QMainWindow):
         if 0 <= job_index < len(self.project.jobs):
             job_clone = self.project.jobs[job_index].clone(CLONE_POSTFIX)
             new_job_index = job_index + 1
-            self.touch_project()
+            self.mark_as_modified()
             self.project.jobs.insert(new_job_index, job_clone)
             self.job_list.setCurrentRow(new_job_index)
             self.action_list.setCurrentRow(new_job_index)
@@ -150,12 +150,12 @@ class GuiActions(QMainWindow):
         if actions is not None:
             if sub_action_index == -1:
                 action_clone = action.clone(CLONE_POSTFIX)
-                self.touch_project()
+                self.mark_as_modified()
                 actions.insert(action_index + 1, action_clone)
             else:
                 sub_action = sub_actions[sub_action_index]
                 sub_action_clone = sub_action.clone(CLONE_POSTFIX)
-                self.touch_project()
+                self.mark_as_modified()
                 sub_actions.insert(sub_action_index + 1, sub_action_clone)
             new_row = action_row
             if sub_action_index == -1:
@@ -189,7 +189,7 @@ class GuiActions(QMainWindow):
                 )
             if not confirm or reply == QMessageBox.Yes:
                 self.job_list.takeItem(current_index)
-                self.touch_project()
+                self.mark_as_modified()
                 current_job = self.project.jobs.pop(current_index)
                 self.action_list.clear()
                 self.refresh_ui()
@@ -210,11 +210,11 @@ class GuiActions(QMainWindow):
                 )
             if not confirm or reply == QMessageBox.Yes:
                 if sub_action_index != -1:
-                    self.touch_project()
+                    self.mark_as_modified()
                     action.pop_sub_action(sub_action_index)
                     new_row = action_row if sub_action_index < len(sub_actions) else action_row - 1
                 else:
-                    self.touch_project()
+                    self.mark_as_modified()
                     self.project.jobs[job_row].pop_sub_action(action_index)
                     if action_index == 0:
                         new_row = 0 if len(actions) > 0 else -1
@@ -239,7 +239,7 @@ class GuiActions(QMainWindow):
         job_action = ActionConfig("Job")
         dialog = ActionConfigDialog(job_action, self)
         if dialog.exec() == QDialog.Accepted:
-            self.touch_project()
+            self.mark_as_modified()
             self.project.jobs.append(job_action)
             self.job_list.addItem(self.list_item(self.job_text(job_action), job_action.enabled()))
             self.job_list.setCurrentRow(self.job_list.count() - 1)
@@ -260,7 +260,7 @@ class GuiActions(QMainWindow):
         action.parent = self.get_current_job()
         dialog = ActionConfigDialog(action, self)
         if dialog.exec() == QDialog.Accepted:
-            self.touch_project()
+            self.mark_as_modified()
             self.project.jobs[current_index].add_sub_action(action)
             self.action_list.addItem(self.list_item(self.action_text(action), action.enabled()))
             self.delete_element_action.setEnabled(False)
@@ -301,7 +301,7 @@ class GuiActions(QMainWindow):
         sub_action = ActionConfig(type_name)
         dialog = ActionConfigDialog(sub_action, self)
         if dialog.exec() == QDialog.Accepted:
-            self.touch_project()
+            self.mark_as_modified()
             action.add_sub_action(sub_action)
             self.on_job_selected(current_job_index)
             self.action_list.setCurrentRow(current_action_index)
@@ -343,7 +343,7 @@ class GuiActions(QMainWindow):
         job_index = self.job_list.currentRow()
         if 0 <= job_index < len(self.project.jobs):
             new_job_index = job_index
-            self.touch_project()
+            self.mark_as_modified()
             self.project.jobs.insert(new_job_index, self._copy_buffer)
             self.job_list.setCurrentRow(new_job_index)
             self.action_list.setCurrentRow(new_job_index)
@@ -356,13 +356,13 @@ class GuiActions(QMainWindow):
             if sub_action_index == -1:
                 if self._copy_buffer.type_name not in constants.ACTION_TYPES:
                     return
-                self.touch_project()
+                self.mark_as_modified()
                 actions.insert(action_index, self._copy_buffer)
             else:
                 if action.type_name != constants.ACTION_COMBO or \
                    self._copy_buffer.type_name not in constants.SUB_ACTION_TYPES:
                     return
-                self.touch_project()
+                self.mark_as_modified()
                 sub_actions.insert(sub_action_index, self._copy_buffer)
             new_row = action_row
             if sub_action_index == -1:
@@ -422,7 +422,7 @@ class GuiActions(QMainWindow):
                 current_action = action if sub_action_index == -1 else sub_actions[sub_action_index]
         if current_action:
             if current_action.enabled() != enabled:
-                self.touch_project()
+                self.mark_as_modified()
                 current_action.set_enabled(enabled)
                 self.refresh_ui(job_row, action_row)
 
@@ -433,7 +433,7 @@ class GuiActions(QMainWindow):
         self.set_enabled(False)
 
     def set_enabled_all(self, enable=True):
-        self.touch_project()
+        self.mark_as_modified()
         job_row = self.job_list.currentRow()
         action_row = self.action_list.currentRow()
         for j in self.project.jobs:
