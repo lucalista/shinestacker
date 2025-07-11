@@ -2,6 +2,7 @@ import sys
 
 
 class _Constants:
+    APP_TITLE = "Focus Stack"
     EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
     NUM_UINT8 = 256

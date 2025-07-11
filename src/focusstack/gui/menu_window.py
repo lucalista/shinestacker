@@ -240,7 +240,7 @@ class MenuWindow(GuiActions):
             self.run_all_jobs_action.setEnabled(True)
 
     def update_title(self):
-        title = "Focus Stacking"
+        title = constants.APP_TITLE
         if self._current_file:
             title += f" - {os.path.basename(self._current_file)}"
             if self._modified_project:

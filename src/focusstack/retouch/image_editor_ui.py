@@ -2,6 +2,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel,
 from PySide6.QtGui import QShortcut, QKeySequence, QAction, QActionGroup
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QGuiApplication
+from focusstack.config.constants import constants
 from focusstack.retouch.image_editor import ImageEditor
 from focusstack.retouch.image_viewer import ImageViewer
 from focusstack.retouch.gui_constants import gui_constants
@@ -30,7 +31,7 @@ class ImageEditorUI(ImageEditor):
         next_layer.activated.connect(self.next_layer)
 
     def setup_ui(self):
-        self.setWindowTitle(gui_constants.APP_TITLE)
+        self.setWindowTitle(constants.APP_TITLE)
         self.resize(1400, 900)
         center = QGuiApplication.primaryScreen().geometry().center()
         self.move(center - self.rect().center())

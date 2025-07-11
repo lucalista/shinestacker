@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (QMainWindow, QFileDialog, QMessageBox, QAbstractI
 from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QRadialGradient, QGuiApplication, QCursor
 from PySide6.QtCore import Qt, QTimer, QEvent, QPoint
 from focusstack.algorithms.multilayer import write_multilayer_tiff_from_images
+from focusstack.config.constants import constants
 from focusstack.retouch.gui_constants import gui_constants
 from focusstack.retouch.brush import Brush
 from focusstack.retouch.brush_controller import BrushController
@@ -129,6 +130,14 @@ class ImageEditor(QMainWindow):
             self.current_layer = len(self.current_stack) - 1
         self.change_layer(self.current_layer)
 
+    def update_title(self):
+        title = constants.APP_TITLE
+        if self.current_file_path:
+            title += f" - {self.current_file_path.split('/')[-1]}"
+            if self.modified:
+                title += " *"
+        self.setWindowTitle(title)
+
     def open_file(self, path=None):
         if path is None:
             path, _ = QFileDialog.getOpenFileName(
@@ -166,10 +175,7 @@ class ImageEditor(QMainWindow):
         self.image_viewer.reset_zoom()
         self.statusBar().showMessage(f"Loaded: {self.current_file_path}")
         self.thumbnail_list.setFocus()
-        title = gui_constants.APP_TITLE
-        if self.current_file_path:
-            title += f" - {self.current_file_path.split('/')[-1]}"
-        self.setWindowTitle(title)
+        self.update_title()
 
     def on_file_error(self, error_msg):
         QApplication.restoreOverrideCursor()
@@ -181,10 +187,7 @@ class ImageEditor(QMainWindow):
 
     def mark_as_modified(self):
         self.modified = True
-        title = gui_constants.APP_TITLE
-        if self.current_file_path:
-            title += f" - {self.current_file_path.split('/')[-1]}"
-        self.setWindowTitle(f"{title} *")
+        self.update_title()
 
     def save_file(self):
         if self.current_stack is None:
@@ -192,10 +195,7 @@ class ImageEditor(QMainWindow):
         if self.current_file_path != '':
             self._save_to_path(self.current_file_path)
             self.modified = False
-            title = gui_constants.APP_TITLE
-            if self.current_file_path:
-                title += f" - {self.current_file_path.split('/')[-1]}"
-            self.setWindowTitle(gui_constants.APP_TITLE)
+            self.update_title()
         else:
             self.save_file_as()
 
@@ -239,7 +239,7 @@ class ImageEditor(QMainWindow):
             self.current_file_path = ''
             self.display_master_layer()
             self.update_thumbnails()
-            self.setWindowTitle(gui_constants.APP_TITLE)
+            self.update_title()
 
     def set_view_master(self):
         self.view_mode = 'master'
