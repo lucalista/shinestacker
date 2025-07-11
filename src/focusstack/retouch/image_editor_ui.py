@@ -216,6 +216,15 @@ class ImageEditorUI(ImageEditor):
         edit_menu.addAction(copy_action)
 
         view_menu = menubar.addMenu("&View")
+
+        fullscreen_action = QAction("Full Screen", self)
+        fullscreen_action.setShortcut("Ctrl+Cmd+F")
+        fullscreen_action.setCheckable(True)
+        fullscreen_action.triggered.connect(self.toggle_fullscreen)
+        view_menu.addAction(fullscreen_action)
+
+        view_menu.addSeparator()
+
         zoom_in_action = QAction("Zoom In", self)
         zoom_in_action.setShortcut("Ctrl++")
         zoom_in_action.triggered.connect(self.image_viewer.zoom_in)
@@ -285,6 +294,12 @@ class ImageEditorUI(ImageEditor):
         cursor_group.addAction(outline_action)
         cursor_group.addAction(brush_action)
         cursor_group.setExclusive(True)
+
+    def toggle_fullscreen(self, checked):
+        if checked:
+            self.window().showFullScreen()
+        else:
+            self.window().showNormal()
 
     def quit(self):
         if self._check_unsaved_changes():
