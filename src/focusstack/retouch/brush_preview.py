@@ -68,9 +68,6 @@ class BrushPreviewItem(QGraphicsPixmapItem):
         else:
             raise Exception("Bitmas is neither 8 bit nor 16, but of type " + area.dtype)
 
-    def hide(self):
-        self.setVisible(False)
-
     def update_preview(self, editor, pos, size):
         try:
             if editor.current_stack is None or not hasattr(editor, 'image_viewer') or size <= 0:
