@@ -1,5 +1,6 @@
 import logging
 import sys
+import os
 from pathlib import Path
 import re
 from focusstack.config.config import config
@@ -62,6 +63,9 @@ def setup_logging(console_level=logging.INFO, file_level=logging.DEBUG, log_file
     tqdm_logger.addHandler(tqdm_handler)
     tqdm_logger.propagate = False
     if log_file:
+        if log_file[0] != '/':
+            path = "/".join(os.path.dirname(os.path.abspath(__file__)).split("/")[:-3])
+            log_file = f'{path}/{log_file}'
         Path(log_file).parent.mkdir(parents=True, exist_ok=True)
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(file_level)

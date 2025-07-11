@@ -2,7 +2,6 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel,
 from PySide6.QtGui import QShortcut, QKeySequence, QAction, QActionGroup
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QGuiApplication
-from focusstack.config.constants import constants
 from focusstack.retouch.image_editor import ImageEditor
 from focusstack.retouch.image_viewer import ImageViewer
 from focusstack.retouch.gui_constants import gui_constants
