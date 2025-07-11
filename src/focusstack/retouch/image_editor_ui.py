@@ -40,7 +40,7 @@ class ImageEditorUI(ImageEditor):
         self.image_viewer = ImageViewer()
         self.image_viewer.temp_view_requested.connect(self.handle_temp_view)
         self.image_viewer.image_editor = self
-        self.image_viewer.brush_controller = self.brush_controller
+        self.image_viewer.brush = self.brush_controller.brush
         self.image_viewer.setup_brush_cursor()
         self.image_viewer.setFocusPolicy(Qt.StrongFocus)
         side_panel = QWidget()
@@ -61,7 +61,7 @@ class ImageEditorUI(ImageEditor):
 
         self.brush_size_slider = QSlider(Qt.Horizontal)
         self.brush_size_slider.setRange(0, gui_constants.BRUSH_SIZE_SLIDER_MAX)
-        self.brush_size_slider.setValue(brush_size_to_slider(self.brush_controller.brush_size))
+        self.brush_size_slider.setValue(brush_size_to_slider(self.brush.size))
         self.brush_size_slider.valueChanged.connect(self.update_brush_size)
         brush_layout.addWidget(self.brush_size_slider)
 
@@ -70,7 +70,7 @@ class ImageEditorUI(ImageEditor):
         brush_layout.addWidget(hardness_label)
         self.hardness_slider = QSlider(Qt.Horizontal)
         self.hardness_slider.setRange(0, 100)
-        self.hardness_slider.setValue(self.brush_controller.brush_hardness)
+        self.hardness_slider.setValue(self.brush.hardness)
         self.hardness_slider.valueChanged.connect(self.update_brush_hardness)
         brush_layout.addWidget(self.hardness_slider)
 
@@ -79,7 +79,7 @@ class ImageEditorUI(ImageEditor):
         brush_layout.addWidget(opacity_label)
         self.opacity_slider = QSlider(Qt.Horizontal)
         self.opacity_slider.setRange(0, 100)
-        self.opacity_slider.setValue(self.brush_controller.brush_opacity)
+        self.opacity_slider.setValue(self.brush.opacity)
         self.opacity_slider.valueChanged.connect(self.update_brush_opacity)
         brush_layout.addWidget(self.opacity_slider)
 
@@ -88,7 +88,7 @@ class ImageEditorUI(ImageEditor):
         brush_layout.addWidget(flow_label)
         self.flow_slider = QSlider(Qt.Horizontal)
         self.flow_slider.setRange(1, 100)
-        self.flow_slider.setValue(self.brush_controller.brush_flow)
+        self.flow_slider.setValue(self.brush.flow)
         self.flow_slider.valueChanged.connect(self.update_brush_flow)
         brush_layout.addWidget(self.flow_slider)
 

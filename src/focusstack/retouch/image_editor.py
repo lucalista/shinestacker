@@ -6,6 +6,7 @@ from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QRadi
 from PySide6.QtCore import Qt, QTimer, QEvent, QPoint
 from focusstack.algorithms.multilayer import write_multilayer_tiff_from_images
 from focusstack.retouch.gui_constants import gui_constants
+from focusstack.retouch.brush import Brush
 from focusstack.retouch.brush_controller import BrushController
 from focusstack.retouch.undo_manager import UndoManager
 from focusstack.retouch.file_loader import FileLoader
@@ -53,7 +54,8 @@ class ImageEditor(QMainWindow):
         self.update_timer.setInterval(gui_constants.PAINT_REFRESH_TIMER)
         self.update_timer.timeout.connect(self.process_pending_updates)
         self.needs_update = False
-        self.brush_controller = BrushController()
+        self.brush = Brush()
+        self.brush_controller = BrushController(self.brush)
         self.undo_manager = UndoManager()
 
     def process_pending_updates(self):
@@ -374,24 +376,24 @@ class ImageEditor(QMainWindow):
                                          QAbstractItemView.PositionAtCenter)
 
     def update_brush_size(self, slider_val):
-        self.brush_controller.brush_size = slider_to_brush_size(slider_val)
+        self.brush.size = slider_to_brush_size(slider_val)
         self.update_brush_thumb()
         self.image_viewer.update_brush_cursor()
         self.clear_brush_cache()
 
     def update_brush_hardness(self, hardness):
-        self.brush_controller.brush_hardness = hardness
+        self.brush.hardness = hardness
         self.update_brush_thumb()
         self.image_viewer.update_brush_cursor()
         self.clear_brush_cache()
 
     def update_brush_opacity(self, opacity):
-        self.brush_controller.brush_opacity = opacity
+        self.brush.opacity = opacity
         self.update_brush_thumb()
         self.image_viewer.update_brush_cursor()
 
     def update_brush_flow(self, flow):
-        self.brush_controller.brush_flow = flow
+        self.brush.flow = flow
         self.update_brush_thumb()
         self.image_viewer.update_brush_cursor()
 
@@ -401,16 +403,16 @@ class ImageEditor(QMainWindow):
         pixmap.fill(Qt.transparent)
         painter = QPainter(pixmap)
         painter.setRenderHint(QPainter.Antialiasing)
-        preview_size = min(self.brush_controller.brush_size, width + 30, height + 30)
+        preview_size = min(self.brush.size, width + 30, height + 30)
         center_x, center_y = width // 2, height // 2
         radius = preview_size // 2
         if self.cursor_style == 'preview':
             gradient = create_brush_gradient(
                 center_x, center_y, radius,
-                self.brush_controller.brush_hardness,
+                self.brush.hardness,
                 inner_color=gui_constants.BRUSH_COLORS['inner'],
                 outer_color=gui_constants.BRUSH_COLORS['gradient_end'],
-                opacity=self.brush_controller.brush_opacity
+                opacity=self.brush.opacity
             )
             painter.setBrush(QBrush(gradient))
             painter.setPen(QPen(gui_constants.BRUSH_COLORS['outer'], gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
@@ -423,10 +425,10 @@ class ImageEditor(QMainWindow):
         painter.drawEllipse(QPoint(center_x, center_y), radius, radius)
         if self.cursor_style == 'preview':
             painter.setPen(QPen(QColor(0, 0, 160)))
-            painter.drawText(0, 10, f"Size: {int(self.brush_controller.brush_size)}px")
-            painter.drawText(0, 25, f"Hardness: {self.brush_controller.brush_hardness}%")
-            painter.drawText(0, 40, f"Opacity: {self.brush_controller.brush_opacity}%")
-            painter.drawText(0, 55, f"Flow: {self.brush_controller.brush_flow}%")
+            painter.drawText(0, 10, f"Size: {int(self.brush.size)}px")
+            painter.drawText(0, 25, f"Hardness: {self.brush.hardness}%")
+            painter.drawText(0, 40, f"Opacity: {self.brush.opacity}%")
+            painter.drawText(0, 55, f"Flow: {self.brush.flow}%")
         painter.end()
         self.brush_preview.setPixmap(pixmap)
 

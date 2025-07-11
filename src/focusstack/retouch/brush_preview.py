@@ -91,8 +91,8 @@ class BrushPreviewItem(QGraphicsPixmapItem):
                 self.setVisible(False)
                 return
             height, width = editor.current_stack[editor.current_layer].shape[:2]
-            full_mask = create_brush_mask(size=size, hardness_percent=editor.brush_controller.brush_hardness,
-                                          opacity_percent=editor.brush_controller.brush_opacity)[:, :, np.newaxis]
+            full_mask = create_brush_mask(size=size, hardness_percent=editor.brush.hardness,
+                                          opacity_percent=editor.brush.opacity)[:, :, np.newaxis]
             mask_x_start = max(0, -x) if x < 0 else 0
             mask_y_start = max(0, -y) if y < 0 else 0
             mask_x_end = size - (max(0, (x + w) - width)) if (x + w) > width else size
