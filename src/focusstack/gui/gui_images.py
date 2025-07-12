@@ -54,7 +54,9 @@ class GuiPdfView(QPdfView):
         return self.size()
 
     def mouseReleaseEvent(self, event):
-        open_file(self.file_path)
+        if event.button() == Qt.LeftButton:
+            open_file(self.file_path)
+        super().mouseReleaseEvent(event)
 
 
 class GuiImageView(QWidget):
@@ -88,8 +90,9 @@ class GuiImageView(QWidget):
         return self.size()
 
     def mouseReleaseEvent(self, event):
-        open_file(self.file_path)
-
+        if event.button() == Qt.LeftButton:      
+            open_file(self.file_path)
+        super().mouseReleaseEvent(event)
 
 class GuiOpenApp(QWidget):
     def __init__(self, app, file_path, parent=None):
@@ -123,13 +126,15 @@ class GuiOpenApp(QWidget):
         return self.size()
 
     def mouseReleaseEvent(self, event):
-        if self.app != 'internal_retouch_app':
-            try:
-                os.system(f"{self.app} {self.file_path}")
-            except Exception as e:
-                raise RuntimeError(f"Can't open file {self.file_path} with app: {self.app}.\n{str(e)}")
-        else:
-            main_app = self.window()
-            if isinstance(main_app, QMainWindow):
-                main_app.switch_to_retouch()
-                main_app.retouch_window.open_file(self.file_path)
+        if event.button() == Qt.LeftButton:        
+            if self.app != 'internal_retouch_app':
+                try:
+                    os.system(f"{self.app} {self.file_path}")
+                except Exception as e:
+                    raise RuntimeError(f"Can't open file {self.file_path} with app: {self.app}.\n{str(e)}")
+            else:
+                main_app = self.window()
+                if isinstance(main_app, QMainWindow):
+                    main_app.switch_to_retouch()
+                    main_app.retouch_window.open_file(self.file_path)
+        super().mouseReleaseEvent(event)

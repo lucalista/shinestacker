@@ -263,7 +263,7 @@ class ActionsWindow(ProjectEditor):
             if current_action:
                 if not is_sub_action:
                     self.set_enabled_sub_actions_gui(current_action.type_name == constants.ACTION_COMBO)
-                dialog = ActionConfigDialog(action, self)
+                dialog = ActionConfigDialog(current_action, self)
                 if dialog.exec():
                     current_job_index = self.job_list.currentRow()
                     self.on_job_selected(current_job_index)

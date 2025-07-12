@@ -12,7 +12,7 @@ def test_write():
         output_dir = test_path
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        filenames = ["output/img-tif-stack/0000_pyr.tif"] + [f"input/img-tif/000{i}.tif" for i in range(N_LAYERS)]
+        filenames = ["output/img-tif-stack/pyr_0000.tif"] + [f"input/img-tif/000{i}.tif" for i in range(N_LAYERS)]
         labels = ['Pyramid'] + [f'Layer {i + 1}' for i in range(N_LAYERS)]
         write_multilayer_tiff(filenames, output_dir + test_file, labels=labels, exif_path="input/img-tif")
     except Exception:
