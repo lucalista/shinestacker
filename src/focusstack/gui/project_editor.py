@@ -7,7 +7,7 @@ INDENT_SPACE = "     "
 CLONE_POSTFIX = " (clone)"
 
 
-class GuiActions(QMainWindow):
+class ProjectEditor(QMainWindow):
     def __init__(self):
         super().__init__()
         self._copy_buffer = None
@@ -29,17 +29,6 @@ class GuiActions(QMainWindow):
         if not action.enabled():
             txt += DISABLED_TAG
         return txt
-
-    def shift_job(self, delta):
-        job_index = self.job_list.currentRow()
-        if job_index < 0:
-            return
-        new_index = job_index + delta
-        if 0 <= new_index < len(self.project.jobs):
-            jobs = self.project.jobs
-            self.mark_as_modified()
-            jobs.insert(new_index, jobs.pop(job_index))
-            self.refresh_ui(new_index, -1)
 
     def get_job_at(self, index):
         return None if index < 0 else self.project.jobs[index]
@@ -73,6 +62,17 @@ class GuiActions(QMainWindow):
                         break
             return job_row, action_row, actions, sub_actions, action_index, sub_action_index
         return job_row, action_row, None, None, -1, -1
+
+    def shift_job(self, delta):
+        job_index = self.job_list.currentRow()
+        if job_index < 0:
+            return
+        new_index = job_index + delta
+        if 0 <= new_index < len(self.project.jobs):
+            jobs = self.project.jobs
+            self.mark_as_modified()
+            jobs.insert(new_index, jobs.pop(job_index))
+            self.refresh_ui(new_index, -1)
 
     def shift_action(self, delta):
         job_row, action_row, actions, sub_actions, action_index, sub_action_index = self.get_current_action()

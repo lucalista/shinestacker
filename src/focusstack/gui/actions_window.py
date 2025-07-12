@@ -10,7 +10,7 @@ from focusstack.gui.project_model import Project
 from focusstack.config.constants import constants
 from focusstack.gui.gui_run import ColorPalette
 from focusstack.gui.action_config import ActionConfigDialog
-from focusstack.gui.gui_actions import GuiActions
+from focusstack.gui.project_editor import ProjectEditor
 
 ENABLED_LIST_ITEM_COLOR = ColorPalette.DARK_BLUE.tuple()
 DISABLED_LIST_ITEM_COLOR = ColorPalette.DARK_RED.tuple()
@@ -24,7 +24,7 @@ def running_under_macos() -> bool:
     return "darwin" in platform.system().casefold()
 
 
-class ActionsWindow(GuiActions):
+class ActionsWindow(ProjectEditor):
     def __init__(self):
         super().__init__()
         self.script_dir = os.path.dirname(__file__)
