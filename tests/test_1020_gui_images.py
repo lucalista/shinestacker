@@ -1,5 +1,4 @@
 import pytest
-import os
 import sys
 import platform
 from PySide6.QtWidgets import QApplication, QMainWindow
@@ -7,11 +6,13 @@ from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt
 from focusstack.gui.gui_images import GuiPdfView, GuiImageView, GuiOpenApp, open_file
 
+
 @pytest.fixture
 def app(qtbot):
     app = QApplication.instance() or QApplication(sys.argv)
     yield app
     app.quit()
+
 
 @pytest.fixture
 def sample_image(tmp_path):
@@ -20,6 +21,7 @@ def sample_image(tmp_path):
     pixmap.fill(Qt.red)
     pixmap.save(str(img_path))
     return str(img_path)
+
 
 @pytest.fixture
 def sample_pdf(tmp_path):
@@ -36,10 +38,10 @@ endobj
 endobj
 xref
 0 4
-0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000114 00000 n 
+0000000000 65535 f
+0000000009 00000 n
+0000000058 00000 n
+0000000114 00000 n
 trailer
 << /Size 4 /Root 1 0 R >>
 startxref
@@ -48,6 +50,7 @@ startxref
     with open(pdf_path, 'wb') as f:
         f.write(pdf_content)
     return str(pdf_path)
+
 
 def test_open_file_image(sample_image, qtbot, monkeypatch):
     calls = []
@@ -58,12 +61,14 @@ def test_open_file_image(sample_image, qtbot, monkeypatch):
     open_file(sample_image)
     assert len(calls) >= 1
 
+
 def test_gui_image_view_initialization(sample_image, qtbot):
     image_view = GuiImageView(sample_image)
     qtbot.addWidget(image_view)
     assert image_view.file_path == sample_image
     assert image_view.image_label.pixmap() is not None
     assert image_view.width() == 250
+
 
 def test_gui_image_view_click(sample_image, qtbot, monkeypatch):
     calls = []
@@ -76,12 +81,14 @@ def test_gui_image_view_click(sample_image, qtbot, monkeypatch):
     qtbot.mouseClick(image_view, Qt.LeftButton)
     assert len(calls) >= 1
 
+
 def test_gui_pdf_view_initialization(sample_pdf, qtbot):
     pdf_view = GuiPdfView(sample_pdf)
     qtbot.addWidget(pdf_view)
     assert pdf_view.file_path == sample_pdf
     assert pdf_view.document() is not None
     assert pdf_view.zoomFactor() == pytest.approx(0.35)
+
 
 def test_gui_pdf_view_click(sample_pdf, qtbot, monkeypatch):
     pdf_view = GuiPdfView(sample_pdf)
@@ -97,6 +104,7 @@ def test_gui_pdf_view_click(sample_pdf, qtbot, monkeypatch):
     qtbot.mousePress(pdf_view, Qt.LeftButton, pos=center)
     qtbot.mouseRelease(pdf_view, Qt.LeftButton, pos=center)
 
+
 def test_gui_open_app_initialization(sample_image, qtbot):
     test_app = "test_app"
     open_app = GuiOpenApp(test_app, sample_image)
@@ -105,6 +113,7 @@ def test_gui_open_app_initialization(sample_image, qtbot):
     assert open_app.app == test_app
     assert open_app.image_label.pixmap() is not None
     assert open_app.width() == 250
+
 
 def test_gui_open_app_click_external(sample_image, qtbot, monkeypatch):
     calls = []
@@ -117,19 +126,21 @@ def test_gui_open_app_click_external(sample_image, qtbot, monkeypatch):
     assert test_app in calls[0]
     assert sample_image in calls[0]
 
+
 class MockMainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.switch_called = False
         self.retouch_called = False
         self.retouch_window = self
-    
+
     def switch_to_retouch(self):
         self.switch_called = True
-    
+
     def open_file(self, file_path):
         self.retouch_called = True
         self.file_path = file_path
+
 
 def test_gui_open_app_click_internal(sample_image, qtbot):
     main_window = MockMainWindow()
@@ -141,11 +152,13 @@ def test_gui_open_app_click_internal(sample_image, qtbot):
     assert main_window.retouch_called
     assert main_window.file_path == sample_image
 
+
 def test_gui_image_view_error_handling(tmp_path, qtbot):
     invalid_image = tmp_path / "invalid.png"
     invalid_image.write_text("not an image")
     with pytest.raises(RuntimeError):
         GuiImageView(str(invalid_image))
+
 
 def test_gui_pdf_view_error_handling(tmp_path, qtbot):
     invalid_pdf = tmp_path / "invalid.pdf"
