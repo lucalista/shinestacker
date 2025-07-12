@@ -210,16 +210,12 @@ class GuiActions(QMainWindow):
             self.delete_element_action.setEnabled(True)
         return element
 
-    def add_job_list_item(self, job):
-        self.job_list.addItem(self.list_item(self.job_text(job), job.enabled()))
-
     def add_job(self):
         job_action = ActionConfig("Job")
         dialog = ActionConfigDialog(job_action, self)
         if dialog.exec() == QDialog.Accepted:
             self.mark_as_modified()
             self.project.jobs.append(job_action)
-            self.add_job_list_item(job_action)
             self.job_list.setCurrentRow(self.job_list.count() - 1)
             self.job_list.item(self.job_list.count() - 1).setSelected(True)
             self.refresh_ui()
@@ -429,8 +425,7 @@ class GuiActions(QMainWindow):
         if 0 <= index < len(self.project.jobs):
             job = self.project.jobs[index]
             for action in job.sub_actions:
-                self.action_list.addItem(self.list_item(self.action_text(action),
-                                                        action.enabled()))
+                self.action_list.addItem(self.list_item(self.action_text(action), action.enabled()))
                 if len(action.sub_actions) > 0:
                     for sub_action in action.sub_actions:
                         self.action_list.addItem(self.list_item(self.action_text(sub_action, is_sub_action=True),
