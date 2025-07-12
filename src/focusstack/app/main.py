@@ -3,7 +3,7 @@ import os
 import logging
 from PySide6.QtWidgets import QApplication, QMainWindow, QStackedWidget, QMenu
 from PySide6.QtGui import QAction, QIcon, QGuiApplication
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer, QEvent
 from focusstack.config.config import config
 config.init(DISABLE_TQDM=True, COMBINED_APP=True)
 from focusstack.config import constants
@@ -78,8 +78,9 @@ class MainApp(QMainWindow):
         return app_menu
 
     def quit(self):
-        if self.retouch_window._check_unsaved_changes() and self.project_window._check_unsaved_changes():
-            self.close()
+        self.retouch_window.quit()
+        self.project_window.quit()
+        self.close()
 
     def switch_app(self, index):
         self.stacked_widget.setCurrentIndex(index)
@@ -92,16 +93,25 @@ class MainApp(QMainWindow):
             self.switch_to_project()
 
 
+class Application(QApplication):
+    def event(self, event):
+        if event.type() == QEvent.Quit and event.spontaneous():
+            if sys.platform.startswith('darwin'):
+                self.main_app.quit()
+        return super().event(event)
+
+
 def main():
     setup_logging(console_level=logging.DEBUG, file_level=logging.DEBUG,
                   log_file="logs/focusstack.log", disable_console=True)
-    app = QApplication(sys.argv)
+    app = Application(sys.argv)
     if config.DONT_USE_NATIVE_MENU:
         app.setAttribute(Qt.AA_DontUseNativeMenuBar)
     else:
         disable_macos_special_menu_items()
     app.setWindowIcon(QIcon(f'{get_app_base_path()}/ico/focus_stack.png'))
     main_app = MainApp()
+    app.main_app = main_app
     main_app.show()
     file_to_open = None
     if len(sys.argv) > 1:

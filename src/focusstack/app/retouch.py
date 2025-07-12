@@ -1,7 +1,7 @@
 import sys
 from PySide6.QtWidgets import QApplication, QMenu
 from PySide6.QtGui import QIcon, QAction
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer, QEvent
 from focusstack.retouch.image_editor_ui import ImageEditorUI
 from focusstack.core.core_utils import get_app_base_path
 from focusstack.config.config import config
@@ -38,8 +38,16 @@ class RetouchApp(ImageEditorUI):
             self.close()
 
 
+class Application(QApplication):
+    def event(self, event):
+        if event.type() == QEvent.Quit and event.spontaneous():
+            if sys.platform.startswith('darwin'):
+                self.editor.quit()
+        return super().event(event)
+
+
 def main():
-    app = QApplication(sys.argv)
+    app = Application(sys.argv)
     if config.DONT_USE_NATIVE_MENU:
         app.setAttribute(Qt.AA_DontUseNativeMenuBar)
     else:
@@ -49,6 +57,7 @@ def main():
     if len(sys.argv) > 1:
         file_to_open = sys.argv[1]
     editor = RetouchApp()
+    app.editor = editor
     editor.show()
     if file_to_open:
         QTimer.singleShot(100, lambda: editor.open_file(file_to_open))

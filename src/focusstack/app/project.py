@@ -5,7 +5,7 @@ import matplotlib
 matplotlib.use('agg')
 from PySide6.QtWidgets import QApplication, QMenu
 from PySide6.QtGui import QIcon, QAction
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer, QEvent
 from focusstack.config.config import config
 config.init(DISABLE_TQDM=True)
 from focusstack.core.logging import setup_logging
@@ -40,10 +40,18 @@ class ProjectApp(MainWindow):
         return app_menu
 
 
+class Application(QApplication):
+    def event(self, event):
+        if event.type() == QEvent.Quit and event.spontaneous():
+            if sys.platform.startswith('darwin'):
+                self.window.quit()
+        return super().event(event)
+
+
 def main():
     setup_logging(console_level=logging.DEBUG, file_level=logging.DEBUG,
                   log_file="logs/focusstack.log", disable_console=True)
-    app = QApplication(sys.argv)
+    app = Application(sys.argv)
     if config.DONT_USE_NATIVE_MENU:
         app.setAttribute(Qt.AA_DontUseNativeMenuBar)
     else:
@@ -56,6 +64,7 @@ def main():
             print(f"File not found: {file_to_open}")
             file_to_open = None
     window = ProjectApp()
+    app.window = window
     window.show()
     if file_to_open:
         QTimer.singleShot(100, lambda: window.open_project(file_to_open))
