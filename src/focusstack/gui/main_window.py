@@ -12,7 +12,7 @@ class MainWindow(MenuWindow, LogManager):
         MenuWindow.__init__(self)
         LogManager.__init__(self)
         self._windows = []
-        self._workers = []        
+        self._workers = []
         self.update_title()
         self.resize(1200, 800)
         center = QGuiApplication.primaryScreen().geometry().center()
@@ -74,7 +74,10 @@ class MainWindow(MenuWindow, LogManager):
         self.get_tab_at_position(id_str).stop_button.setEnabled(False)
 
     def create_new_window(self, title, labels=[]):
-        new_window = RunWindow(labels, self)
+        new_window = RunWindow(labels,
+                               lambda id_str: self.stop_worker(self.get_tab_position(id_str)),
+                               lambda id_str: self.close_window(self.get_tab_position(id_str)),
+                               self)
         self.tab_widget.addTab(new_window, title)
         self.tab_widget.setCurrentIndex(self.tab_widget.count() - 1)
         if title is not None:
@@ -91,7 +94,7 @@ class MainWindow(MenuWindow, LogManager):
 
     def stop_worker(self, tab_position):
         worker = self._workers[tab_position]
-        worker.stop()        
+        worker.stop()
 
     def connect_signals(self, worker, window):
         worker.before_action_signal.connect(window.handle_before_action)

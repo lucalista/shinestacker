@@ -168,9 +168,10 @@ class TimerProgressBar(QProgressBar):
 
 
 class RunWindow(QTextEditLogger):
-    def __init__(self, labels, main_window, parent=None):
+    def __init__(self, labels, stop_worker_callback, close_window_callback, parent):
         QTextEditLogger.__init__(self, parent)
-        self.main_window = main_window
+        self.stop_worker_callback = stop_worker_callback
+        self.close_window_callback = close_window_callback
         self.row_widget_id = 0
         layout = QVBoxLayout()
         self.color_widgets = []
@@ -234,7 +235,7 @@ class RunWindow(QTextEditLogger):
         self.setLayout(layout)
 
     def stop_worker(self):
-        self.main_window.stop_worker(self.main_window.get_tab_position(self.id_str()))
+        self.stop_worker_callback(self.id_str())
 
     def close_window(self):
         confirm = QMessageBox()
@@ -244,7 +245,7 @@ class RunWindow(QTextEditLogger):
         confirm.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
         confirm.setDefaultButton(QMessageBox.Cancel)
         if confirm.exec() == QMessageBox.Ok:
-            self.main_window.close_window(self.main_window.get_tab_position(self.id_str()))
+            self.close_window_callback(self.id_str())
 
     @Slot(int, str)
     def handle_before_action(self, id, name):
