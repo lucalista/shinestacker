@@ -7,6 +7,35 @@ INDENT_SPACE = "     "
 CLONE_POSTFIX = " (clone)"
 
 
+class JobListModel:
+    def __init__(self, project):
+        self.project = project
+
+    def get_flat_actions(self, job_index):
+        flat = []
+        if 0 <= job_index < len(self.project.jobs):
+            for action in self.project.jobs[job_index].sub_actions:
+                flat.append(("action", action))
+                for sub in action.sub_actions:
+                    flat.append(("sub", sub))
+        return flat
+
+    def find_action_position(self, job_index, ui_index):
+        if not 0 <= job_index < len(self.project.jobs):
+            return (None, None, -1)
+        actions = self.project.jobs[job_index].sub_actions
+        counter = -1
+        for action in actions:
+            counter += 1
+            if counter == ui_index:
+                return (action, None, -1)
+            for sub_index, sub_action in enumerate(action.sub_actions):
+                counter += 1
+                if counter == ui_index:
+                    return (action, sub_action, sub_index)
+        return (None, None, -1)
+
+
 class ProjectEditor(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -15,9 +44,11 @@ class ProjectEditor(QMainWindow):
         self.job_list = QListWidget()
         self.action_list = QListWidget()
         self.project = None
+        self.job_list_model = None
 
     def set_project(self, project):
         self.project = project
+        self.job_list_model = JobListModel(project)
 
     def job_text(self, job):
         txt = job.params.get('name', '(job)')
@@ -45,27 +76,16 @@ class ProjectEditor(QMainWindow):
 
     def get_action_at(self, action_row):
         job_row = self.job_list.currentRow()
-        if (0 <= job_row < len(self.project.jobs)) and (0 <= action_row < self.action_list.count()):
-            job = self.project.jobs[job_row]
-            action_counter = -1
-            sub_action_index = -1
-            sub_actions = None
-            actions = job.sub_actions
-            for action_index, action in enumerate(actions):
-                action_counter += 1
-                if action_counter == action_row:
-                    break
-                if len(action.sub_actions) > 0:
-                    sub_actions = action.sub_actions
-                    for i, sub_action in enumerate(sub_actions):
-                        action_counter += 1
-                        if action_counter == action_row:
-                            sub_action_index = i
-                            break
-                    if sub_action_index != -1:
-                        break
-            return job_row, action_row, actions, sub_actions, action_index, sub_action_index
-        return job_row, action_row, None, None, -1, -1
+        if job_row < 0 or action_row < 0:
+            return (job_row, action_row, None, None, -1, -1)
+        parent_action, sub_action, sub_index = self.job_list_model.find_action_position(job_row, action_row)
+        if not parent_action:
+            return (job_row, action_row, None, None, -1, -1)
+        job = self.project.jobs[job_row]
+        if sub_action:
+            return (job_row, action_row, job.sub_actions, parent_action.sub_actions, job.sub_actions.index(parent_action), sub_index)
+        else:
+            return (job_row, action_row, job.sub_actions, None, job.sub_actions.index(parent_action), -1)
 
     def shift_job(self, delta):
         job_index = self.job_list.currentRow()
