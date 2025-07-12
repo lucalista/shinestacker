@@ -33,10 +33,6 @@ class RetouchApp(ImageEditorUI):
         app_menu.addAction(exit_action)
         return app_menu
 
-    def quit(self):
-        if self._check_unsaved_changes():
-            self.close()
-
 
 class Application(QApplication):
     def event(self, event):
