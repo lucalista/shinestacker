@@ -11,7 +11,6 @@ class GuiActions(QMainWindow):
     def __init__(self):
         super().__init__()
         self._copy_buffer = None
-        self._modified_project = False
         self._project_buffer = []
         self.job_list = QListWidget()
         self.action_list = QListWidget()

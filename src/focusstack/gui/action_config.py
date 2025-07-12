@@ -365,7 +365,7 @@ class ActionConfigDialog(QDialog):
     def accept(self):
         self.parent()._project_buffer.append(self.parent().project.clone())
         if self.configurator.update_params(self.action.params):
-            self.parent()._modified_project = True
+            self.parent().mark_as_modified()
             super().accept()
         else:
             self.parent()._project_buffer.pop()

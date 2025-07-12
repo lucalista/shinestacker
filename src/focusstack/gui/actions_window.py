@@ -29,7 +29,8 @@ class ActionsWindow(GuiActions):
         super().__init__()
         self.script_dir = os.path.dirname(__file__)
         self._current_file = None
-        self.update_title()        
+        self._modified_project = False
+        self.update_title()
 
     def update_title(self):
         title = constants.APP_TITLE
@@ -37,7 +38,7 @@ class ActionsWindow(GuiActions):
             title += f" - {os.path.basename(self._current_file)}"
             if self._modified_project:
                 title += " *"
-        self.window().setWindowTitle(title)        
+        self.window().setWindowTitle(title)
 
     def get_icon(self, icon):
         return QIcon(os.path.join(self.script_dir, f"img/{icon}.png"))
