@@ -96,8 +96,7 @@ class MainApp(QMainWindow):
 class Application(QApplication):
     def event(self, event):
         if event.type() == QEvent.Quit and event.spontaneous():
-            if sys.platform.startswith('darwin'):
-                self.main_app.quit()
+            self.main_app.quit()
         return super().event(event)
 
 

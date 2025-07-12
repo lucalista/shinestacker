@@ -41,8 +41,7 @@ class RetouchApp(ImageEditorUI):
 class Application(QApplication):
     def event(self, event):
         if event.type() == QEvent.Quit and event.spontaneous():
-            if sys.platform.startswith('darwin'):
-                self.editor.quit()
+            self.editor.quit()
         return super().event(event)
 
 
