@@ -61,7 +61,7 @@ class ActionsWindow(ProjectEditor):
 
     def new_project(self):
         if self._check_unsaved_changes():
-            self.project = Project()
+            self.set_project(Project())
             self._current_file = None
             self.update_title()
             self.job_list.clear()
@@ -77,7 +77,7 @@ class ActionsWindow(ProjectEditor):
             try:
                 file = open(file_path, 'r')
                 json_obj = json.load(file)
-                self.project = Project.from_dict(json_obj['project'])
+                self.set_project(Project.from_dict(json_obj['project']))
                 self._current_file = file_path
                 self.update_title()
                 self.refresh_ui(0, -1)

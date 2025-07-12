@@ -50,7 +50,7 @@ class MainWindow(ActionsWindow, LogManager):
         self.resize(1200, 800)
         center = QGuiApplication.primaryScreen().geometry().center()
         self.move(center - self.rect().center())
-        self.project = Project()
+        self.set_project(Project())
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         layout = QVBoxLayout()

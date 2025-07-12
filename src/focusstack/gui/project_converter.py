@@ -34,7 +34,6 @@ class ProjectConverter:
             traceback.print_tb(e.__traceback__)
             msg = str(e)
             logger.error(f"=== job: {job.name} failed: {msg} ===")
-
             return constants.RUN_FAILED, msg
 
     def run_project(self, project: Project, logger_name=None, callbacks=None):
@@ -46,11 +45,9 @@ class ProjectConverter:
             return constants.RUN_FAILED, str(e)
         status = constants.RUN_COMPLETED, ''
         for job in jobs:
-            job_status = self.run(job, logger)
-            if job_status == constants.RUN_STOPPED:
-                return constants.RUN_STOPPED, ''
-            if job_status == constants.RUN_FAILED:
-                status = constants.RUN_FAILED, ''
+            job_status, message = self.run(job, logger)
+            if job_status in [constants.RUN_STOPPED, constants.RUN_FAILED]:
+                return job_status, message
         return status
 
     def run_job(self, job: ActionConfig, logger_name=None, callbacks=None):
