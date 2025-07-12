@@ -1,5 +1,5 @@
 import os
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QLabel,
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QLabel, QMessageBox,
                                QSplitter, QToolBar, QMenu, QComboBox)
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication, QAction, QIcon
@@ -7,7 +7,30 @@ from focusstack.config.constants import constants
 from focusstack.gui.project_model import Project
 from focusstack.gui.actions_window import ActionsWindow
 from focusstack.gui.gui_logging import LogManager
-from focusstack.gui.gui_run import RunWindow
+from focusstack.gui.gui_run import RunWindow, RunWorker
+from focusstack.gui.project_converter import ProjectConverter
+
+
+class JobLogWorker(RunWorker):
+    def __init__(self, job, id_str):
+        super().__init__(id_str)
+        self.job = job
+        self.tag = "Job"
+
+    def do_run(self):
+        converter = ProjectConverter()
+        return converter.run_job(self.job, self.id_str, self.callbacks)
+
+
+class ProjectLogWorker(RunWorker):
+    def __init__(self, project, id_str):
+        super().__init__(id_str)
+        self.project = project
+        self.tag = "Project"
+
+    def do_run(self):
+        converter = ProjectConverter()
+        return converter.run_project(self.project, self.id_str, self.callbacks)
 
 
 class MainWindow(ActionsWindow, LogManager):
@@ -24,7 +47,6 @@ class MainWindow(ActionsWindow, LogManager):
         toolbar = QToolBar(self)
         self.addToolBar(Qt.TopToolBarArea, toolbar)
         self.fill_toolbar(toolbar)
-        self.update_title()
         self.resize(1200, 800)
         center = QGuiApplication.primaryScreen().geometry().center()
         self.move(center - self.rect().center())
@@ -298,16 +320,10 @@ class MainWindow(ActionsWindow, LogManager):
             self.run_job_action.setEnabled(True)
             self.run_all_jobs_action.setEnabled(True)
 
-    def update_title(self):
-        title = constants.APP_TITLE
-        if self._current_file:
-            title += f" - {os.path.basename(self._current_file)}"
-            if self._modified_project:
-                title += " *"
-        self.window().setWindowTitle(title)
-
     def quit(self):
         if self._check_unsaved_changes():
+            for worker in self._workers:
+                worker.stop()
             self.close()
 
     def before_thread_begins(self):
@@ -372,3 +388,35 @@ class MainWindow(ActionsWindow, LogManager):
         self.sub_action_selector.setEnabled(enabled)
         for a in self.sub_action_menu_entries:
             a.setEnabled(enabled)
+
+    def run_job(self):
+        current_index = self.job_list.currentRow()
+        if current_index < 0:
+            if len(self.project.jobs) > 0:
+                QMessageBox.warning(self, "No Job Selected", "Please select a job first.")
+            else:
+                QMessageBox.warning(self, "No Job Added", "Please add a job first.")
+            return
+        if current_index >= 0:
+            job = self.project.jobs[current_index]
+            if job.enabled():
+                labels = [[(self.action_text(a), a.enabled()) for a in job.sub_actions]]
+                new_window, id_str = self.create_new_window("Job: " + job.params["name"], labels)
+                worker = JobLogWorker(job, id_str)
+                self.connect_signals(worker, new_window)
+                self.start_thread(worker)
+                self._workers.append(worker)
+            else:
+                QMessageBox.warning(self, "Can't run Job", "Job " + job.params["name"] + " is disabled.")
+                return
+
+    def run_all_jobs(self):
+        labels = [[(self.action_text(a), a.enabled() and job.enabled()) for a in job.sub_actions] for job in self.project.jobs]
+        project_name = ".".join(self.current_file_name().split(".")[:-1])
+        if project_name == '':
+            project_name = '[new]'
+        new_window, id_str = self.create_new_window("Project: " + project_name, labels)
+        worker = ProjectLogWorker(self.project, id_str)
+        self.connect_signals(worker, new_window)
+        self.start_thread(worker)
+        self._workers.append(worker)

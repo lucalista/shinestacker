@@ -1,34 +1,10 @@
 from PySide6.QtWidgets import QMainWindow, QListWidget, QMessageBox, QDialog
 from focusstack.config.constants import constants
 from focusstack.gui.action_config import ActionConfig, ActionConfigDialog
-from focusstack.gui.project_converter import ProjectConverter
-from focusstack.gui.gui_run import RunWorker
 
 DISABLED_TAG = ""  # " <disabled>"
 INDENT_SPACE = "     "
 CLONE_POSTFIX = " (clone)"
-
-
-class JobLogWorker(RunWorker):
-    def __init__(self, job, id_str):
-        super().__init__(id_str)
-        self.job = job
-        self.tag = "Job"
-
-    def do_run(self):
-        converter = ProjectConverter()
-        return converter.run_job(self.job, self.id_str, self.callbacks)
-
-
-class ProjectLogWorker(RunWorker):
-    def __init__(self, project, id_str):
-        super().__init__(id_str)
-        self.project = project
-        self.tag = "Project"
-
-    def do_run(self):
-        converter = ProjectConverter()
-        return converter.run_project(self.project, self.id_str, self.callbacks)
 
 
 class GuiActions(QMainWindow):
@@ -445,38 +421,6 @@ class GuiActions(QMainWindow):
 
     def disable_all(self):
         self.set_enabled_all(False)
-
-    def run_job(self):
-        current_index = self.job_list.currentRow()
-        if current_index < 0:
-            if len(self.project.jobs) > 0:
-                QMessageBox.warning(self, "No Job Selected", "Please select a job first.")
-            else:
-                QMessageBox.warning(self, "No Job Added", "Please add a job first.")
-            return
-        if current_index >= 0:
-            job = self.project.jobs[current_index]
-            if job.enabled():
-                labels = [[(self.action_text(a), a.enabled()) for a in job.sub_actions]]
-                new_window, id_str = self.create_new_window("Job: " + job.params["name"], labels)
-                worker = JobLogWorker(job, id_str)
-                self.connect_signals(worker, new_window)
-                self.start_thread(worker)
-                self._workers.append(worker)
-            else:
-                QMessageBox.warning(self, "Can't run Job", "Job " + job.params["name"] + " is disabled.")
-                return
-
-    def run_all_jobs(self):
-        labels = [[(self.action_text(a), a.enabled() and job.enabled()) for a in job.sub_actions] for job in self.project.jobs]
-        project_name = ".".join(self.current_file_name().split(".")[:-1])
-        if project_name == '':
-            project_name = '[new]'
-        new_window, id_str = self.create_new_window("Project: " + project_name, labels)
-        worker = ProjectLogWorker(self.project, id_str)
-        self.connect_signals(worker, new_window)
-        self.start_thread(worker)
-        self._workers.append(worker)
 
     def on_job_selected(self, index):
         self.action_list.clear()
