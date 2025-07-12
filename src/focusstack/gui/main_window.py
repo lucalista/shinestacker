@@ -2,14 +2,14 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QLa
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication
 from focusstack.gui.project_model import Project
-from focusstack.gui.menu_window import MenuWindow
+from focusstack.gui.actions_window import ActionsWindow
 from focusstack.gui.gui_logging import LogManager
 from focusstack.gui.gui_run import RunWindow
 
 
-class MainWindow(MenuWindow, LogManager):
+class MainWindow(ActionsWindow, LogManager):
     def __init__(self):
-        MenuWindow.__init__(self)
+        ActionsWindow.__init__(self)
         LogManager.__init__(self)
         self._windows = []
         self._workers = []

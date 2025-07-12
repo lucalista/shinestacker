@@ -25,7 +25,7 @@ def running_under_macos() -> bool:
     return "darwin" in platform.system().casefold()
 
 
-class MenuWindow(GuiActions):
+class ActionsWindow(GuiActions):
     def __init__(self):
         super().__init__()
         self.script_dir = os.path.dirname(__file__)
