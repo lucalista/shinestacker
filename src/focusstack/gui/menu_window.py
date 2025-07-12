@@ -30,7 +30,6 @@ class MenuWindow(GuiActions):
         super().__init__()
         self.script_dir = os.path.dirname(__file__)
         self._current_file = None
-        self._workers = []
         menubar = self.menuBar()
         self.add_file_menu(menubar)
         self.add_edit_menu(menubar)
@@ -349,10 +348,6 @@ class MenuWindow(GuiActions):
                 return False
         else:
             return True
-
-    def stop_worker(self, tab_position):
-        worker = self._workers[tab_position]
-        worker.stop()
 
     def contextMenuEvent(self, event):
         item = self.job_list.itemAt(self.job_list.viewport().mapFrom(self, event.pos()))

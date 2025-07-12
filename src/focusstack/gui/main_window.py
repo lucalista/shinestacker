@@ -12,6 +12,7 @@ class MainWindow(MenuWindow, LogManager):
         MenuWindow.__init__(self)
         LogManager.__init__(self)
         self._windows = []
+        self._workers = []        
         self.update_title()
         self.resize(1200, 800)
         center = QGuiApplication.primaryScreen().geometry().center()
@@ -87,6 +88,10 @@ class MainWindow(MenuWindow, LogManager):
         self._windows.pop(tab_position)
         self._workers.pop(tab_position)
         self.tab_widget.removeTab(tab_position)
+
+    def stop_worker(self, tab_position):
+        worker = self._workers[tab_position]
+        worker.stop()        
 
     def connect_signals(self, worker, window):
         worker.before_action_signal.connect(window.handle_before_action)
