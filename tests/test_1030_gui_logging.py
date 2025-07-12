@@ -1,7 +1,6 @@
 import pytest
 import logging
 from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import Qt
 from focusstack.gui.gui_logging import (SimpleHtmlFormatter, SimpleHtmlHandler,
                                         GuiLogger, QTextEditLogger, LogManager, LogWorker)
 
@@ -36,7 +35,7 @@ def test_simple_html_formatter():
         msg="Test message",
         args=None,
         exc_info=None
-    )    
+    )
     formatted = formatter.format(record)
     assert "[INF]" in formatted
     assert "Test message" in formatted
@@ -82,7 +81,7 @@ def test_text_edit_logger_append_html(qtbot, text_edit_logger):
 
 def test_log_manager_add_gui_logger(log_manager):
     gui_logger = GuiLogger()
-    log_manager.add_gui_logger(gui_logger)    
+    log_manager.add_gui_logger(gui_logger)
     assert len(log_manager.gui_loggers) == 1
     assert log_manager.last_gui_logger == gui_logger
 
@@ -90,6 +89,7 @@ def test_log_manager_add_gui_logger(log_manager):
 def test_log_manager_start_thread(qtbot, log_manager, text_edit_logger):
     log_manager.add_gui_logger(text_edit_logger)
     worker = LogWorker()
+
     def mock_run():
         worker.html_signal.emit("<div>Test message from worker</div>")
         worker.log_signal.emit("INFO", "Test log message")
@@ -107,7 +107,7 @@ def test_log_manager_handle_end_message(log_manager):
         def do_handle_end_message(self, status, id_str, message):
             self.end_status = status
             self.end_id_str = id_str
-            self.end_message = message    
+            self.end_message = message
     test_manager = TestLogManager()
     gui_logger = GuiLogger()
     test_manager.add_gui_logger(gui_logger)
