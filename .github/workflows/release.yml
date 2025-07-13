@@ -2,6 +2,11 @@
 
 name: Create new release
 
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+
 on:
   push:
     tags:
@@ -36,7 +41,7 @@ jobs:
           python build_release.py
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4	
+        uses: actions/upload-artifact@v4
         with:
           name: focusstack-${{ matrix.os }}
           path: dist/focusstack-release.zip
