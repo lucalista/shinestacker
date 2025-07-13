@@ -43,7 +43,7 @@ jobs:
 
   create-release:
     needs: publish-release
-        runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v3
