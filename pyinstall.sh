@@ -7,3 +7,4 @@
 # Install ina single directory
 #
 pyinstaller --onedir --name=focusstack-main --paths=src --collect-all=focusstack src/focusstack/app/main.py
+cp -r ico dist/focusstack-main
