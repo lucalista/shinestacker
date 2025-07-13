@@ -34,6 +34,11 @@ dependencies = [
     "setuptools-scm"
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
 [project.scripts]
 focusstack-main = "focusstack.app.main:main"
 focusstack-project = "focusstack.app.project:main"
