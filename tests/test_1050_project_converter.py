@@ -3,8 +3,6 @@ import os
 from unittest.mock import MagicMock, patch
 from focusstack.gui.project_model import Project, ActionConfig
 from focusstack.algorithms.stack_framework import StackJob
-from focusstack.algorithms.stack import FocusStackBunch
-from focusstack.algorithms.pyramid import PyramidStack
 from focusstack.gui.project_converter import ProjectConverter
 from focusstack.config.constants import constants
 from focusstack.core.exceptions import RunStopException
@@ -34,7 +32,7 @@ def real_job():
 def test_get_logger(converter):
     logger = converter.get_logger()
     assert isinstance(logger, logging.Logger)
-    assert logger.name == "focusstack.gui.project_converter"    
+    assert logger.name == "focusstack.gui.project_converter"
     custom_logger = converter.get_logger("custom_logger")
     assert custom_logger.name == "custom_logger"
 
@@ -43,7 +41,7 @@ def test_run_enabled_job(converter, logger):
     mock_job = MagicMock()
     mock_job.enabled = True
     mock_job.name = "test_job"
-    mock_job.run.return_value = None    
+    mock_job.run.return_value = None
     status, msg = converter.run(mock_job, logger)
     assert status == constants.RUN_COMPLETED
     assert msg == ""
@@ -54,7 +52,7 @@ def test_run_disabled_job(converter, logger):
     mock_job = MagicMock()
     mock_job.enabled = False
     mock_job.name = "test_job"
-    mock_job.run.return_value = None    
+    mock_job.run.return_value = None
     status, msg = converter.run(mock_job, logger)
     assert status == constants.RUN_COMPLETED
     assert msg == ""
@@ -65,7 +63,7 @@ def test_run_stopped_job(converter, logger):
     mock_job = MagicMock()
     mock_job.enabled = True
     mock_job.name = "test_job"
-    mock_job.run.side_effect = RunStopException("test_job")    
+    mock_job.run.side_effect = RunStopException("test_job")
     status, msg = converter.run(mock_job, logger)
     assert status == constants.RUN_STOPPED
     assert msg == ""
@@ -76,7 +74,7 @@ def test_filter_dict_keys(converter):
         "prefix_key1": "value1",
         "prefix_key2": "value2",
         "other_key": "value3"
-    }    
+    }
     with_prefix, without_prefix = converter.filter_dict_keys(test_dict, "prefix_")
     assert with_prefix == {"key1": "value1", "key2": "value2"}
     assert without_prefix == {"other_key": "value3"}
@@ -91,7 +89,7 @@ def test_action_unsupported_type(converter):
 def test_job_with_valid_config(converter, tmp_path):
     # Creiamo una directory temporanea valida
     working_path = str(tmp_path / "test_working")
-    os.makedirs(working_path)    
+    os.makedirs(working_path)
     config = ActionConfig(
         "JOB_TYPE",
         {
@@ -114,7 +112,7 @@ def test_project_with_multiple_jobs(converter, tmp_path):
     working_path1 = str(tmp_path / "job1")
     working_path2 = str(tmp_path / "job2")
     os.makedirs(working_path1)
-    os.makedirs(working_path2)    
+    os.makedirs(working_path2)
     project = Project()
     job1 = ActionConfig("JOB_TYPE", {"name": "job1", "enabled": True, "working_path": working_path1})
     job1.sub_actions = []
@@ -153,7 +151,7 @@ def test_run_project(converter):
     project.jobs = [job1, job2]
     with patch.object(converter, 'project', return_value=[MagicMock(), MagicMock()]) as mock_project:
         with patch.object(converter, 'run', side_effect=[(constants.RUN_COMPLETED, ""), (constants.RUN_COMPLETED, "")]):
-            status, msg = converter.run_project(project)    
+            status, msg = converter.run_project(project)
     assert status == constants.RUN_COMPLETED
     assert msg == ""
     assert mock_project.call_count == 1
