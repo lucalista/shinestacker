@@ -1,6 +1,10 @@
 import pytest
 import sys
 import platform
+import os
+os.environ["QT_QPA_PLATFORM"] = "offscreen"
+import PySide6
+PySide6.QtCore.QCoreApplication.setAttribute(PySide6.QtCore.Qt.AA_ShareOpenGLContexts)
 from PySide6.QtWidgets import QApplication, QMainWindow
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt

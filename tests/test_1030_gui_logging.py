@@ -1,5 +1,9 @@
 import pytest
 import logging
+import os
+os.environ["QT_QPA_PLATFORM"] = "offscreen"
+import PySide6
+PySide6.QtCore.QCoreApplication.setAttribute(PySide6.QtCore.Qt.AA_ShareOpenGLContexts)
 from PySide6.QtWidgets import QApplication
 from focusstack.gui.gui_logging import (SimpleHtmlFormatter, SimpleHtmlHandler,
                                         GuiLogger, QTextEditLogger, LogManager, LogWorker)

@@ -1,5 +1,8 @@
 import pytest
 import os
+os.environ["QT_QPA_PLATFORM"] = "offscreen"
+import PySide6
+PySide6.QtCore.QCoreApplication.setAttribute(PySide6.QtCore.Qt.AA_ShareOpenGLContexts)
 from unittest.mock import MagicMock, patch
 from focusstack.gui.project_model import Project, ActionConfig
 from focusstack.algorithms.stack_framework import StackJob

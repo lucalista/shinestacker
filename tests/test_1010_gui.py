@@ -1,5 +1,9 @@
 import pytest
 import time
+import os
+os.environ["QT_QPA_PLATFORM"] = "offscreen"
+import PySide6
+PySide6.QtCore.QCoreApplication.setAttribute(PySide6.QtCore.Qt.AA_ShareOpenGLContexts)
 from focusstack.config.constants import constants
 from focusstack.gui.main_window import MainWindow
 

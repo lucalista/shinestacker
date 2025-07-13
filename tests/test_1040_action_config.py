@@ -1,5 +1,9 @@
 import pytest
 from unittest.mock import MagicMock, patch
+import os
+os.environ["QT_QPA_PLATFORM"] = "offscreen"
+import PySide6
+PySide6.QtCore.QCoreApplication.setAttribute(PySide6.QtCore.Qt.AA_ShareOpenGLContexts)
 from PySide6.QtWidgets import QApplication, QFormLayout
 from focusstack.gui.action_config import (FieldBuilder, ActionConfigDialog, DefaultActionConfigurator,
                                           FIELD_TEXT, FIELD_ABS_PATH, FIELD_REL_PATH, FIELD_FLOAT,
