@@ -402,9 +402,8 @@ class NoiseDetectionConfigurator(DefaultActionConfigurator):
                                placeholder='inherit from job')
         self.builder.add_field('input_path', FIELD_REL_PATH, f'Input path (separate by {constants.PATH_SEPARATOR})', required=False,
                                multiple_entries=True, placeholder='relative to working path')
-        # output_path is available as parameter, but unused
-        #        self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
-        #                               placeholder='relative to working path')
+        self.builder.add_field('max_frames', FIELD_INT, 'Max. num. of frames', required=False,
+                               default=-1, min=-1, max=1000)
         self.builder.add_field('channel_thresholds', FIELD_INT_TUPLE, 'Noise threshold', required=False, size=3,
                                default=constants.DEFAULT_CHANNEL_THRESHOLDS, labels=constants.RGB_LABELS, min=[1] * 3, max=[1000] * 3)
         self.builder.add_field('blur_size', FIELD_INT, 'Blur size (px)', required=False,

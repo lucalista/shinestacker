@@ -14,10 +14,15 @@ from focusstack.core.exceptions import RunStopException
 from focusstack.algorithms.stack_framework import FrameMultiDirectory, SubAction
 from focusstack.algorithms.utils import read_img, save_plot, get_img_metadata, validate_image
 
+MAX_NOISY_PIXELS = 1000
 
-def mean_image(file_paths, message_callback=None, progress_callback=None):
+def mean_image(file_paths, max_frames=-1, message_callback=None, progress_callback=None):
     mean_img = None
+    counter = 0
     for i, path in enumerate(file_paths):
+        if max_frames >= 1 and i > max_frames:
+            break
+        counter += 1
         if message_callback:
             message_callback(path)
         if not os.path.exists(path):
@@ -35,13 +40,14 @@ def mean_image(file_paths, message_callback=None, progress_callback=None):
             mean_img += img
         if progress_callback:
             progress_callback(i)
-    return (mean_img / len(file_paths)).astype(np.uint8)
+    return None if mean_img is None else (mean_img / counter).astype(np.uint8)
 
 
 class NoiseDetection(FrameMultiDirectory, JobBase):
     def __init__(self, name="noise-map", enabled=True, **kwargs):
         FrameMultiDirectory.__init__(self, name, **kwargs)
         JobBase.__init__(self, name, enabled)
+        self.max_frames = kwargs.get('max_frames', -1)
         self.blur_size = kwargs.get('blur_size', constants.DEFAULT_BLUR_SIZE)
         self.file_name = kwargs.get('file_name', constants.DEFAULT_NOISE_MAP_FILENAME)
         if self.file_name == '':
@@ -64,14 +70,18 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         self.print_message(colored("map noisy pixels from frames in " + self.folder_list_str(), "blue"))
         files = self.folder_filelist()
         in_paths = [self.working_path + "/" + f for f in files]
-        n_frames = len(in_paths)
+        n_frames = min(len(in_paths), self.max_frames)
         self.callback('step_counts', self.id, self.name, n_frames)
         if not config.DISABLE_TQDM:
             self.bar = make_tqdm_bar(self.name, n_frames)
+        def progress_callback(i):
+            self.progress(i)
+            if self.callback('check_running', self.id, self.name) is False:
+                raise RunStopException(self.name)
         mean_img = mean_image(
-            file_paths=in_paths,
+            file_paths=in_paths, max_frames=self.max_frames,
             message_callback=lambda path: self.print_message_r(colored(f"reading frame: {path.split('/')[-1]}", "blue")),
-            progress_callback=lambda i: self.progress(i))
+            progress_callback=progress_callback)
         if not config.DISABLE_TQDM:
             self.bar.close()
         blurred = cv2.GaussianBlur(mean_img, (self.blur_size, self.blur_size), 0)
@@ -90,7 +100,13 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
 
         self.print_message("writing hot pixels map file: " + self.file_name)
         cv2.imwrite(self.working_path + '/' + self.file_name, hot)
-        th_range = range(*self.plot_range)
+        plot_range = self.plot_range
+        min_th, max_th =  min(self.channel_thresholds),  max(self.channel_thresholds)
+        if min_th < plot_range[0]:
+            plot_range[0] = min_th -1
+        if max_th > plot_range[1]:
+            plot_range[1] = max_th + 1
+        th_range = np.arange(self.plot_range[0], self.plot_range[1] + 1)
         if self.plot_histograms:
             plt.figure(figsize=(10, 5))
             x = np.array(list(th_range))
@@ -124,6 +140,7 @@ class MaskNoise(SubAction):
         self.process = process
         path = f"{process.working_path}/{self.noise_mask}"
         if os.path.exists(path):
+            self.process.sub_message_r(f': reading noisy pixel mask file: {self.noise_mask}')
             self.noise_mask_img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
             if self.noise_mask_img is None:
                 raise ImageLoadError(path, f"failed to load image file {self.noise_mask}.")
@@ -146,6 +163,9 @@ class MaskNoise(SubAction):
     def correct_channel(self, channel):
         corrected = channel.copy()
         noise_coords = np.argwhere(self.noise_mask_img > 0)
+        n_noisy_pixels = noise_coords.shape[0]
+        if n_noisy_pixels > MAX_NOISY_PIXELS:
+            raise RuntimeError(f"Noise map contains too many hot pixels: {n_noisy_pixels}")
         for y, x in noise_coords:
             neighborhood = channel[
                 max(0, y - self.ks2):min(channel.shape[0], y + self.ks2_1),
