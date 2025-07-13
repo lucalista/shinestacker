@@ -107,10 +107,10 @@ class ProjectEditor(QMainWindow):
     def get_action_at(self, action_row):
         job_row = self.job_list.currentRow()
         if job_row < 0 or action_row < 0:
-            return (job_row, action_row, None, None, -1, -1)
+            return (job_row, action_row, None)
         action, sub_action, sub_action_index = self.find_action_position(job_row, action_row)
         if not action:
-            return (job_row, action_row, None, None, -1, -1)
+            return (job_row, action_row, None)
         job = self.project.jobs[job_row]
         if sub_action:
             return (job_row, action_row, ActionPosition(job.sub_actions, action.sub_actions, job.sub_actions.index(action), sub_action_index))
@@ -167,7 +167,7 @@ class ProjectEditor(QMainWindow):
 
     def shift_action(self, delta):
         job_row, action_row, pos = self.get_current_action()
-        if pos.actions is not None:
+        if pos is not None:
             if not pos.is_sub_action:
                 new_index = pos.action_index + delta
                 if 0 <= new_index < len(pos.actions):
@@ -245,7 +245,7 @@ class ProjectEditor(QMainWindow):
 
     def delete_action(self, confirm=True):
         job_row, action_row, pos = self.get_current_action()
-        if pos.actions is not None:
+        if pos is not None:
             current_action = pos.action if not pos.is_sub_action else pos.sub_action
             if confirm:
                 reply = QMessageBox.question(

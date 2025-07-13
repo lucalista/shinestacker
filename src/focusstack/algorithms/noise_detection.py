@@ -70,7 +70,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         self.print_message(colored("map noisy pixels from frames in " + self.folder_list_str(), "blue"))
         files = self.folder_filelist()
         in_paths = [self.working_path + "/" + f for f in files]
-        n_frames = min(len(in_paths), self.max_frames)
+        n_frames = min(len(in_paths), self.max_frames) if self.max_frames > 0 else len(in_paths)
         self.callback('step_counts', self.id, self.name, n_frames)
         if not config.DISABLE_TQDM:
             self.bar = make_tqdm_bar(self.name, n_frames)
