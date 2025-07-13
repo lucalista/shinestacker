@@ -37,12 +37,19 @@ jobs:
         pip install -e .[dev]
         pip install pytest-xvfb
 
+    - name: List test files
+      run: |
+        pwd
+        ls -la tests/
+        echo "Test files matching pattern:"
+        ls tests/test_00*.py || echo "No files found"
+
     - name: Run non-GUI tests (test_00*.py)
       run: |
-        pytest test_00*.py -v --disable-warnings
+        pytest "tests/test_00*.py" -v --disable-warnings
 
     - name: Run GUI tests (test_10*.py)
       run: |
-        xvfb-run pytest test_10*.py -v --disable-warnings
+        xvfb-run pytest "tests/test_10*.py" -v --disable-warnings
       env:
         QT_QPA_PLATFORM: "offscreen"
