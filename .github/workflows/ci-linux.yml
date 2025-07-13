@@ -1,58 +1,60 @@
+---
+
 name: CI Linux
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.12"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-      	  libgl1-mesa-glx \
-      	  libxrender1 \
-      	  libsm6 \
-	  libfontconfig1 \
-      	  libxext6 \
-      	  xvfb \
-      	  libegl1 \
-      	  libgl1-mesa-dev \
-      	  libxkbcommon-x11-0 \
-      	  libopengl0 \
-      	  libglx0
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgl1-mesa-glx \
+            libxrender1 \
+            libsm6 \
+            libfontconfig1 \
+            libxext6 \
+            xvfb \
+            libegl1 \
+            libgl1-mesa-dev \
+            libxkbcommon-x11-0 \
+            libopengl0 \
+            libglx0
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e .[dev]
-        pip install pytest-xvfb
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+          pip install pytest-xvfb
 
-    - name: Run non-GUI tests
-      run: |
-        cd tests/
-        MPLBACKEND=Agg pytest test_00*.py -v --disable-warnings
-      env:
-        QT_QPA_PLATFORM: "offscreen"
-        MPLBACKEND: "Agg"  # Doppia assicurazione
+      - name: Run non-GUI tests
+        run: |
+          cd tests/
+          MPLBACKEND=Agg pytest test_00*.py -v --disable-warnings
+        env:
+          QT_QPA_PLATFORM: "offscreen"
+          MPLBACKEND: "Agg"  # Doppia assicurazione
 
-    - name: Run GUI tests
-      run: |
-        cd tests/
-        xvfb-run -a pytest test_10*.py -v --disable-warnings
-      env:
-        QT_QPA_PLATFORM: "offscreen"
-        MPLBACKEND: "Agg"
+      - name: Run GUI tests
+        run: |
+          cd tests/
+          xvfb-run -a pytest test_10*.py -v --disable-warnings
+        env:
+          QT_QPA_PLATFORM: "offscreen"
+          MPLBACKEND: "Agg"
