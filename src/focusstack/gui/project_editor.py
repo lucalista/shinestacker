@@ -144,32 +144,24 @@ class ProjectEditor(QMainWindow):
             self.refresh_ui(new_job_index, -1)
 
     def clone_action(self):
-        job_row, action_row, actions, sub_actions, action_index, sub_action_index = self.get_current_action()
-        action = actions[action_index]
-        if actions is not None:
-            if sub_action_index == -1:
-                action_clone = action.clone(CLONE_POSTFIX)
-                self.mark_as_modified()
-                actions.insert(action_index + 1, action_clone)
-            else:
-                sub_action = sub_actions[sub_action_index]
-                sub_action_clone = sub_action.clone(CLONE_POSTFIX)
-                self.mark_as_modified()
-                sub_actions.insert(sub_action_index + 1, sub_action_clone)
-            new_row = action_row
-            if sub_action_index == -1:
-                new_index = action_index + 1
-                if 0 <= new_index < len(actions):
-                    new_row = 0
-                    for action in actions[:new_index]:
-                        new_row += 1 + len(action.sub_actions)
-            else:
-                new_index = sub_action_index + 1
-                if 0 <= new_index < len(sub_actions):
-                    new_row = 1 + new_index
-                    for action in actions[:action_index]:
-                        new_row += 1 + len(action.sub_actions)
-            self.refresh_ui(job_row, new_row)
+        job_index = self.job_list.currentRow()
+        ui_index = self.action_list.currentRow()
+        parent_action, sub_action, sub_index = self.job_list_model.find_action_position(job_index, ui_index)
+        if not parent_action:
+            return
+        self.mark_as_modified()
+        if sub_action:
+            cloned = sub_action.clone(CLONE_POSTFIX)
+            parent_action.sub_actions.insert(sub_index + 1, cloned)
+            new_row = ui_index + 1
+        else:
+            cloned = parent_action.clone(CLONE_POSTFIX)
+            job = self.project.jobs[job_index]
+            job.sub_actions.insert(job.sub_actions.index(parent_action) + 1, cloned)
+            new_row = 0
+            for action in job.sub_actions[:job.sub_actions.index(cloned)]:
+                new_row += 1 + len(action.sub_actions)
+        self.refresh_ui(job_index, new_row)
 
     def clone_element(self):
         if self.job_list.hasFocus():
