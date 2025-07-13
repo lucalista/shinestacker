@@ -281,10 +281,15 @@ class ImageEditor(QMainWindow):
             self.image_viewer.set_image(qimage)
 
     def create_thumbnail(self, layer, size):
+        if layer.dtype == np.uint16:
+            layer = (layer // 256).astype(np.uint8)
+        height, width = layer.shape[:2]
         if layer.ndim == 3 and layer.shape[-1] == 3:
-            return self.create_rgb_thumbnail(layer)
+            qimg = QImage(layer.data, width, height, 3 * width, QImage.Format_RGB888)
+            return QPixmap.fromImage(qimg.scaled(*gui_constants.UI_SIZES['thumbnail'], Qt.KeepAspectRatio))
         else:
-            return self.create_grayscale_thumbnail(layer)
+            qimg = QImage(layer.data, width, height, width, QImage.Format_Grayscale8)
+            return QPixmap.fromImage(qimg.scaled(*gui_constants.UI_SIZES['thumbnail'], Qt.KeepAspectRatio))
 
     def update_master_thumbnail(self):
         if self.master_layer is None:
@@ -306,20 +311,6 @@ class ImageEditor(QMainWindow):
 
     def _add_thumbnail_item(self, thumbnail, label, is_current):
         pass
-
-    def create_rgb_thumbnail(self, layer):
-        if layer.dtype == np.uint16:
-            layer = (layer // 256).astype(np.uint8)
-        height, width, _ = layer.shape
-        qimg = QImage(layer.data, width, height, 3 * width, QImage.Format_RGB888)
-        return QPixmap.fromImage(qimg.scaled(*gui_constants.UI_SIZES['thumbnail'], Qt.KeepAspectRatio))
-
-    def create_grayscale_thumbnail(self, layer):
-        if layer.dtype == np.uint16:
-            layer = (layer // 256).astype(np.uint8)
-        height, width = layer.shape
-        qimg = QImage(layer.data, width, height, width, QImage.Format_Grayscale8)
-        return QPixmap.fromImage(qimg.scaled(*gui_constants.UI_SIZES['thumbnail'], Qt.KeepAspectRatio))
 
     def change_layer(self, layer_idx):
         if 0 <= layer_idx < len(self.current_stack):
