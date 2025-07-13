@@ -47,5 +47,7 @@ jobs:
 
       - name: Run non-GUI tests (test_00*.py)
         working-directory: tests
-        run: |
-          python -c "import glob; import pytest; pytest.main([*glob.glob('test_00*.py'), '-v', '--disable-warnings'])"
+        run: >
+          python -c "import glob; import pytest;
+          pytest.main([*glob.glob('test_00*.py'),
+          '-v', '--disable-warnings'])"
