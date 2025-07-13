@@ -42,12 +42,13 @@ jobs:
           pip install pytest-xvfb
 
       - name: Run non-GUI tests (test_00*.py)
+        working-directory: ./tests
         run: |
           pytest test_00*.py -v --disable-warnings
 
       - name: Run GUI tests
+        working-directory: ./tests
         run: |
-          cd tests/
           xvfb-run -a python -m pytest test_10*.py -v --disable-warnings \
             --capture=no \
             --color=no
