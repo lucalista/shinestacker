@@ -286,10 +286,9 @@ class ImageEditor(QMainWindow):
         height, width = layer.shape[:2]
         if layer.ndim == 3 and layer.shape[-1] == 3:
             qimg = QImage(layer.data, width, height, 3 * width, QImage.Format_RGB888)
-            return QPixmap.fromImage(qimg.scaled(*gui_constants.UI_SIZES['thumbnail'], Qt.KeepAspectRatio))
         else:
             qimg = QImage(layer.data, width, height, width, QImage.Format_Grayscale8)
-            return QPixmap.fromImage(qimg.scaled(*gui_constants.UI_SIZES['thumbnail'], Qt.KeepAspectRatio))
+        return QPixmap.fromImage(qimg.scaled(*gui_constants.UI_SIZES['thumbnail'], Qt.KeepAspectRatio))
 
     def update_master_thumbnail(self):
         if self.master_layer is None:
