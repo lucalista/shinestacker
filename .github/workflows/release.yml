@@ -27,7 +27,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyinstall	er
+          pip install pyinstaller
           pip install -e .[dev]
 
       - name: Build and package release
@@ -36,7 +36,7 @@ jobs:
           python build_release.py
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4	
         with:
           name: focusstack-${{ matrix.os }}
           path: dist/focusstack-release.zip
