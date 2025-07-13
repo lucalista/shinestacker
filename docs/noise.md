@@ -8,7 +8,7 @@ job.add_action(NoiseDetection("noise-map", input_path=["src"]))
 job.run()
 ```
 
-Usually, this job should be run first, enabling the option ```plot_histograms```, playing with the plot range (```plot_range``` option) in order to determine the optimal threshold balues (```channel_thresholds```) to be applied in order to mask a reasonable number of pixels.
+Usually, this job should be run first, enabling the option ```plot_histograms```, playing with the plot range (```plot_range``` option) in order to determine the optimal threshold values (```channel_thresholds```) to be applied in order to mask a reasonable number of pixels. Once the threshold values are determined, the main focus stacking job should be ran adding the sub-action ```MaskNoise``` before ```AlignFrames``` and ```BalanceFrames```.
 
 Arguments for the constructor of ```NoiseDetection``` are:
 * ```name``` (optional, default: ```noise-map```): name of the action and default name of the subdirectory within ```working_path``` where aligned noise map is written. 
