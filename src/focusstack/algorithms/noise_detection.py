@@ -22,7 +22,6 @@ def mean_image(file_paths, max_frames=-1, message_callback=None, progress_callba
     for i, path in enumerate(file_paths):
         if max_frames >= 1 and i > max_frames:
             break
-        counter += 1
         if message_callback:
             message_callback(path)
         if not os.path.exists(path):
@@ -37,7 +36,8 @@ def mean_image(file_paths, max_frames=-1, message_callback=None, progress_callba
             mean_img = img.astype(np.float64)
         else:
             validate_image(img, *metadata)
-            mean_img += img
+            mean_img += img.astype(np.float64)
+        counter += 1
         if progress_callback:
             progress_callback(i)
     return None if mean_img is None else (mean_img / counter).astype(np.uint8)

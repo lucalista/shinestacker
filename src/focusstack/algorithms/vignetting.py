@@ -69,7 +69,7 @@ class Vignetting(SubAction):
         return np.clip(image / vignette, 0, 255 if image.dtype == np.uint8 else 65535).astype(image.dtype)
 
     def run_frame(self, idx, ref_idx, img_0):
-        self.process.sub_message_r(colored(": compute vignetting", "light_blue"))
+        self.process.sub_message_r(colored(": compute vignetting"))
         img = cv2.cvtColor(img_8bit(img_0), cv2.COLOR_BGR2GRAY)
         radii, intensities = self.radial_mean_intensity(img)
         pars = self.fit_sigmoid(radii, intensities)
@@ -96,7 +96,7 @@ class Vignetting(SubAction):
         for i, p in enumerate(self.percentiles):
             self.corrections[i][idx] = fsolve(lambda x: Vignetting.sigmoid(x, *pars) / self.v0 - p, r0_fit)[0]
         if self.apply_correction:
-            self.process.sub_message_r(colored(": correct vignetting", "light_blue"))
+            self.process.sub_message_r(colored(": correct vignetting"))
             return self.correct_vignetting(img_0, pars)
         else:
             return img_0
