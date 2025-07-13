@@ -38,7 +38,6 @@ class GuiPdfView(QPdfView):
             self.setDocument(self.pdf_document)
             first_page_size = self.pdf_document.pagePointSize(0)
             zoom_factor = GUI_IMG_WIDTH / first_page_size.width()
-            print("zoom: ", zoom_factor)
             self.setZoomFactor(zoom_factor)
             self.setFixedSize(int(first_page_size.width() * zoom_factor) + 1,
                               int(first_page_size.height() * zoom_factor) + 1)
