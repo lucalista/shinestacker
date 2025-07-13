@@ -439,8 +439,7 @@ class ProjectEditor(QMainWindow):
                 action_row = -1
         elif self.action_list.hasFocus():
             job_row, action_row, pos = self.get_current_action()
-            if pos.actions is not None:
-                current_action = pos.sub_actions if pos.is_sub_action else pos.action
+            current_action = pos.sub_action if pos.is_sub_action else pos.action
         if current_action:
             if current_action.enabled() != enabled:
                 self.mark_as_modified()
