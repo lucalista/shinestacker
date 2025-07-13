@@ -1,6 +1,6 @@
 # Focus Stacking Processing Framework
 
-[![CI multiplatform](https://github.com/lucalista/focusstack/actions/workflows/ci-linux.yml/badge.svg)](https://github.com/lucalista/focusstack/actions/workflows/ci-linux.yml)
+[![CI multiplatform](https://github.com/lucalista/focusstack/actions/workflows/ci-multiplatform.yml/badge.svg)](https://github.com/lucalista/focusstack/actions/workflows/ci-multiplatform.yml)
 
 <img src='img/flies.gif' width="400">  <img src='img/flies_stack.jpg' width="400">
 
