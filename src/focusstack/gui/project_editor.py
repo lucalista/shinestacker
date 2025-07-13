@@ -75,7 +75,7 @@ class JobListModel:
             for action in job.sub_actions[:job.sub_actions.index(cloned)]:
                 new_row += 1 + len(action.sub_actions)
         return new_row
-        
+
 
 class ProjectEditor(QMainWindow):
     def __init__(self):
@@ -127,6 +127,28 @@ class ProjectEditor(QMainWindow):
             return (job_row, action_row, job.sub_actions, parent_action.sub_actions, job.sub_actions.index(parent_action), sub_index)
         else:
             return (job_row, action_row, job.sub_actions, None, job.sub_actions.index(parent_action), -1)
+
+    def refresh_ui(self, job_row=-1, action_row=-1):
+        self.job_list.clear()
+        for job in self.project.jobs:
+            self.job_list.addItem(self.list_item(self.job_text(job), job.enabled()))
+        if self.project.jobs:
+            self.job_list.setCurrentRow(0)
+        if job_row >= 0:
+            self.job_list.setCurrentRow(job_row)
+        if action_row >= 0:
+            self.action_list.setCurrentRow(action_row)
+        if self.job_list.count() == 0:
+            self.add_action_entry_action.setEnabled(False)
+            self.action_selector.setEnabled(False)
+            self.run_job_action.setEnabled(False)
+            self.run_all_jobs_action.setEnabled(False)
+        else:
+            self.add_action_entry_action.setEnabled(True)
+            self.action_selector.setEnabled(True)
+            self.delete_element_action.setEnabled(True)
+            self.run_job_action.setEnabled(True)
+            self.run_all_jobs_action.setEnabled(True)
 
     def shift_job(self, delta):
         job_index = self.job_list.currentRow()
@@ -192,7 +214,7 @@ class ProjectEditor(QMainWindow):
             cloned = parent_action.clone(CLONE_POSTFIX)
             job = self.project.jobs[job_index]
             job.sub_actions.insert(job.sub_actions.index(parent_action) + 1, cloned)
-        new_row = self.job_list_model. new_row_after_clone(job_index, ui_index, sub_action, cloned)             
+        new_row = self.job_list_model. new_row_after_clone(job_index, ui_index, sub_action, cloned)
         self.refresh_ui(job_index, new_row)
 
     def clone_element(self):

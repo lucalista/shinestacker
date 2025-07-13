@@ -298,28 +298,6 @@ class MainWindow(ActionsWindow, LogManager):
             menu.addAction(self.run_all_jobs_action)
             menu.exec(event.globalPos())
 
-    def refresh_ui(self, job_row=-1, action_row=-1):
-        self.job_list.clear()
-        for job in self.project.jobs:
-            self.job_list.addItem(self.list_item(self.job_text(job), job.enabled()))
-        if self.project.jobs:
-            self.job_list.setCurrentRow(0)
-        if job_row >= 0:
-            self.job_list.setCurrentRow(job_row)
-        if action_row >= 0:
-            self.action_list.setCurrentRow(action_row)
-        if self.job_list.count() == 0:
-            self.add_action_entry_action.setEnabled(False)
-            self.action_selector.setEnabled(False)
-            self.run_job_action.setEnabled(False)
-            self.run_all_jobs_action.setEnabled(False)
-        else:
-            self.add_action_entry_action.setEnabled(True)
-            self.action_selector.setEnabled(True)
-            self.delete_element_action.setEnabled(True)
-            self.run_job_action.setEnabled(True)
-            self.run_all_jobs_action.setEnabled(True)
-
     def quit(self):
         if self._check_unsaved_changes():
             for worker in self._workers:
