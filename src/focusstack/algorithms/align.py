@@ -116,6 +116,17 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
         src_pts = np.float32([kp_0[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
         dst_pts = np.float32([kp_1[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
         M, msk = find_transform(src_pts, dst_pts, alignment_config['transform'], alignment_config['rans_threshold'])
+        if plot_path is not None:
+            matches_mask = msk.ravel().tolist()
+            img_match = cv2.cvtColor(cv2.drawMatches(img_8bit(img_0), kp_0, img_8bit(img_1),
+                                                     kp_1, good_matches, None, matchColor=(0, 255, 0),
+                                                     singlePointColor=None, matchesMask=matches_mask,
+                                                     flags=2), cv2.COLOR_BGR2RGB)
+            plt.figure(figsize=(10, 5))
+            plt.imshow(img_match, 'gray')
+            plt.savefig(plot_path)
+            if callbacks and 'save_plot' in callbacks.keys():
+                callbacks['save_plot'](plot_path)
         h, w = img_0.shape[:2]
         if callbacks and 'align_message' in callbacks.keys():
             callbacks['align_message']()
@@ -137,17 +148,6 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
             mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
             blurred_warp = cv2.GaussianBlur(img_warp, (21, 21), sigmaX=alignment_config['border_blur'])
             img_warp[mask == 0] = blurred_warp[mask == 0]
-        if plot_path is not None:
-            matches_mask = msk.ravel().tolist()
-            img_match = cv2.cvtColor(cv2.drawMatches(img_8bit(img_0), kp_0, img_8bit(img_1),
-                                                     kp_1, good_matches, None, matchColor=(0, 255, 0),
-                                                     singlePointColor=None, matchesMask=matches_mask,
-                                                     flags=2), cv2.COLOR_BGR2RGB)
-            plt.figure(figsize=(10, 5))
-            plt.imshow(img_match, 'gray')
-            plt.savefig(plot_path)
-            if callbacks and 'save_plot' in callbacks.keys():
-                callbacks['save_plot'](plot_path)
     return n_good_matches, img_warp
 
 
