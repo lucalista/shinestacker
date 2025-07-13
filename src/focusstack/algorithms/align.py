@@ -1,3 +1,4 @@
+import time
 import matplotlib.pyplot as plt
 import cv2
 import numpy as np
@@ -87,10 +88,12 @@ def detect_and_compute(img_0, img_1, feature_config=None, matching_config=None):
 
 def find_transform(src_pts, dst_pts, transform=constants.DEFAULT_TRANSFORM, rans_threshold=constants.DEFAULT_RANS_THRESHOLD):
     if transform == constants.ALIGN_HOMOGRAPHY:
-        return cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, rans_threshold)
+        transf = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, rans_threshold)
     elif transform == constants.ALIGN_RIGID:
-        return cv2.estimateAffinePartial2D(src_pts, dst_pts, method=cv2.RANSAC, ransacReprojThreshold=rans_threshold)
-    raise InvalidOptionError("transform", transform)
+        transf = cv2.estimateAffinePartial2D(src_pts, dst_pts, method=cv2.RANSAC, ransacReprojThreshold=rans_threshold)
+    else:
+        raise InvalidOptionError("transform", transform)
+    return transf
 
 
 def align_images(img_1, img_0, feature_config=None, matching_config=None, alignment_config=None, plot_path=None, callbacks=None):
