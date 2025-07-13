@@ -10,4 +10,4 @@ def add_help_menu(app):
 
 
 def browse_website():
-    webbrowser.open("https://github.com/lucalista/focusstack/blob/main/docs/main.md")
+    webbrowser.open("https://github.com/lucalista/focusstack/blob/main/README.md")
