@@ -8,11 +8,14 @@ job.add_action(NoiseDetection("noise-map", input_path=["src"]))
 job.run()
 ```
 
+Usually, this module should be run first, enabling the option ```plot_histograms```, playing with the plot range (```plot_range`` option) in order to determine the optimal threshold balues (```channel_thresholds```) to be applied in order to mask a reasonable number of pixels.
+
 Arguments for the constructor of ```NoiseDetection``` are:
 * ```name``` (optional, default: ```noise-map```): name of the action and default name of the subdirectory within ```working_path``` where aligned noise map is written. 
 * ```input_path``` (optional): one or more subdirectory within ```working_path``` that contains input images to be combined. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
 * ```output_path``` (optional): unused
-* ```working_path```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_path```.
+* ```working_path``` (optional): the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_path```.
+* ```max_frames``` (optional): if provided, at most ```max_frames``` images are analyzed to extract noisy pixel mask.
 * ```plot_path``` (optional, default: ```plots```): the directory within ```working_path``` that contains plots produced by the different actions
 * ```plot_histograms```  (optional, default: ```False```): if ```True```, plot a summary of the number of hot pixel by channel as a function of the applied threshold. It may be useful to set the optimal threshold values.
 * ```channel_thresholds``` (optional, default: ```(13, 13, 13)```): threshold values for noisy pixel detections in the color channels R, G, B, respectively.
@@ -34,6 +37,8 @@ job.add_action(Actions("align", [MaskNoise(),
                                  BalanceFrames(mask_size=0.9,
                                                intensity_interval={'min': 150, 'max':65385})]))
 ```
+
+Note that if the number of pixels contained in the mask file (```noise_mask``` option) is greater than 1000, the job is aborted.
 
 Arguments for the constructor of ```NoiseDetection``` are:
 * ```noise_mask``` (optional, default: ```noise-map/hot-rgb.png```): filename of the noise mask
