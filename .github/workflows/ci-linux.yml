@@ -1,6 +1,6 @@
 ---
 
-name: CI Linux
+name: CI multiplatform
 
 on:
   push:
@@ -10,7 +10,11 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.12"]
 
     steps:
       - name: Checkout repo
@@ -21,20 +25,20 @@ jobs:
         with:
           python-version: "3.12"
 
-#      - name: Install system dependencies
-#        run: |
-#          sudo apt-get update
-#          sudo apt-get install -y \
-#            xvfb \
-#            libxkbcommon-x11-0 \
-#            libxcb-icccm4 \
-#            libxcb-image0 \
-#            libxcb-keysyms1 \
-#            libxcb-render-util0 \
-#            libxcb-xinerama0 \
-#            libxcb-xinput0 \
-#            libxcb-xfixes0
-#
+      #      - name: Install system dependencies
+      #        run: |
+      #          sudo apt-get update
+      #          sudo apt-get install -y \
+      #            xvfb \
+      #            libxkbcommon-x11-0 \
+      #            libxcb-icccm4 \
+      #            libxcb-image0 \
+      #            libxcb-keysyms1 \
+      #            libxcb-render-util0 \
+      #            libxcb-xinerama0 \
+      #            libxcb-xinput0 \
+      #            libxcb-xfixes0
+      #
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
