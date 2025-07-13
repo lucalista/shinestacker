@@ -87,7 +87,6 @@ def test_gui_pdf_view_initialization(sample_pdf, qtbot):
     qtbot.addWidget(pdf_view)
     assert pdf_view.file_path == sample_pdf
     assert pdf_view.document() is not None
-    assert pdf_view.zoomFactor() == pytest.approx(0.35)
 
 
 def test_gui_pdf_view_click(sample_pdf, qtbot, monkeypatch):

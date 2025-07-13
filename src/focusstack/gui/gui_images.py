@@ -8,6 +8,8 @@ from PySide6.QtPdfWidgets import QPdfView
 from PySide6.QtCore import Qt, QMargins
 from PySide6.QtGui import QPixmap
 
+GUI_IMG_WIDTH = 250  # px
+
 
 def open_file(file_path):
     try:
@@ -35,7 +37,8 @@ class GuiPdfView(QPdfView):
         if err == QPdfDocument.Error.None_:
             self.setDocument(self.pdf_document)
             first_page_size = self.pdf_document.pagePointSize(0)
-            zoom_factor = 0.35
+            zoom_factor = GUI_IMG_WIDTH / first_page_size.width()
+            print("zoom: ", zoom_factor)
             self.setZoomFactor(zoom_factor)
             self.setFixedSize(int(first_page_size.width() * zoom_factor) + 1,
                               int(first_page_size.height() * zoom_factor) + 1)
@@ -63,7 +66,7 @@ class GuiImageView(QWidget):
     def __init__(self, file_path, parent=None):
         super().__init__(parent)
         self.file_path = file_path
-        self.setFixedWidth(250)
+        self.setFixedWidth(GUI_IMG_WIDTH)
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
@@ -73,7 +76,7 @@ class GuiImageView(QWidget):
         self.setLayout(self.layout)
         pixmap = QPixmap(file_path)
         if pixmap:
-            scaled_pixmap = pixmap.scaledToWidth(250, Qt.SmoothTransformation)
+            scaled_pixmap = pixmap.scaledToWidth(GUI_IMG_WIDTH, Qt.SmoothTransformation)
             self.image_label.setPixmap(scaled_pixmap)
         else:
             raise RuntimeError(f"Can't load file: {file_path}.")
@@ -100,7 +103,7 @@ class GuiOpenApp(QWidget):
         super().__init__(parent)
         self.file_path = file_path
         self.app = app
-        self.setFixedWidth(250)
+        self.setFixedWidth(GUI_IMG_WIDTH)
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
@@ -110,7 +113,7 @@ class GuiOpenApp(QWidget):
         self.setLayout(self.layout)
         pixmap = QPixmap(file_path)
         if pixmap:
-            scaled_pixmap = pixmap.scaledToWidth(250, Qt.SmoothTransformation)
+            scaled_pixmap = pixmap.scaledToWidth(GUI_IMG_WIDTH, Qt.SmoothTransformation)
             self.image_label.setPixmap(scaled_pixmap)
         else:
             raise RuntimeError(f"Can't load file: {file_path}.")
