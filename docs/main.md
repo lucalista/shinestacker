@@ -2,7 +2,7 @@
 
 <img src='../img/flies.gif' width="400">  <img src='../img/flies_stack.jpg' width="400">
 
-## Quick Start
+## Quick start
 ```python
 from focusstack.algorithms import *
 
@@ -12,7 +12,7 @@ job.add_action(FocusStack("result", PyramidStack()))
 job.run()
 ```
 
-## Usage example
+## Complete and more complex usage example
 
 ```python
 from focusstack.algorithms import *
