@@ -251,10 +251,8 @@ class MainWindow(ActionsWindow, LogManager):
         if item:
             index = self.action_list.row(item)
             self.action_list.setCurrentRow(index)
-            job_row, action_row, actions, sub_actions, action_index, sub_action_index = self.get_action_at(index)
-            if actions is not None:
-                action = actions[action_index]
-                current_action = action if sub_action_index == -1 else sub_actions[sub_action_index]
+            job_row, action_row, pos = self.get_action_at(index)
+            current_action = pos.action if not pos.is_sub_action else pos.sub_action
         if current_action:
             menu = QMenu(self)
             if current_action.enabled():
