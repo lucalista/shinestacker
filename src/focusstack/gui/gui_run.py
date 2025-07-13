@@ -41,14 +41,9 @@ class ColorPalette:
 
 RED_BUTTON_STYLE = f"""
     QPushButton {{
-        background-color: #{ColorPalette.MEDIUM_RED.hex()};
         color: #{ColorPalette.DARK_RED.hex()};
-        font-weight: bold;
-        border-radius: 5px;
-        padding: 4px;
     }}
     QPushButton:disabled {{
-        background-color: #{ColorPalette.LIGHT_RED.hex()};
         color: #{ColorPalette.MEDIUM_RED.hex()};
     }}
 """
