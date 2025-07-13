@@ -63,13 +63,8 @@ def new_row_after_paste(action_row, pos: ActionPosition):
 
 
 def new_row_after_clone(job, action_row, is_sub_action, cloned):
-    if is_sub_action:
-        new_row = action_row + 1
-    else:
-        new_row = 0
-        for action in job.sub_actions[:job.sub_actions.index(cloned)]:
-            new_row += 1 + len(action.sub_actions)
-    return new_row
+    return action_row + 1 if is_sub_action else \
+        sum(1 + len(action.sub_actions) for action in job.sub_actions[:job.sub_actions.index(cloned)])
 
 
 class ProjectEditor(QMainWindow):
