@@ -78,6 +78,7 @@ class ActionsWindow(ProjectEditor):
                 file = open(file_path, 'r')
                 json_obj = json.load(file)
                 self.set_project(Project.from_dict(json_obj['project']))
+                self._modified_project = False
                 self._current_file = file_path
                 self.update_title()
                 self.refresh_ui(0, -1)
@@ -85,30 +86,29 @@ class ActionsWindow(ProjectEditor):
                     self.job_list.setCurrentRow(0)
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Cannot open file {file_path}:\n{str(e)}")
-        if len(self.project.jobs) > 0:
-            self.job_list.setCurrentRow(0)
-            self.activateWindow()
-        self._modified_project = False
-        for job in self.project.jobs:
-            if 'working_path' in job.params.keys():
-                working_path = job.params['working_path']
-                if not os.path.isdir(working_path):
-                    QMessageBox.warning(self, "Working path not found",
-                                        f'''The working path specified in the project file for the job:
-                                        "{job.params['name']}"
-                                        was not found.\n
-                                        Please, select a valid working path.''')
-                    self.edit_action(job)
-            for action in job.sub_actions:
+            if len(self.project.jobs) > 0:
+                self.job_list.setCurrentRow(0)
+                self.activateWindow()
+            for job in self.project.jobs:
                 if 'working_path' in job.params.keys():
                     working_path = job.params['working_path']
-                    if working_path != '' and not os.path.isdir(working_path):
+                    if not os.path.isdir(working_path):
                         QMessageBox.warning(self, "Working path not found",
                                             f'''The working path specified in the project file for the job:
                                             "{job.params['name']}"
                                             was not found.\n
                                             Please, select a valid working path.''')
-                        self.edit_action(action)
+                        self.edit_action(job)
+                for action in job.sub_actions:
+                    if 'working_path' in job.params.keys():
+                        working_path = job.params['working_path']
+                        if working_path != '' and not os.path.isdir(working_path):
+                            QMessageBox.warning(self, "Working path not found",
+                                                f'''The working path specified in the project file for the job:
+                                                "{job.params['name']}"
+                                                was not found.\n
+                                                Please, select a valid working path.''')
+                            self.edit_action(action)
 
     def current_file_name(self):
         return os.path.basename(self._current_file) if self._current_file else ''
