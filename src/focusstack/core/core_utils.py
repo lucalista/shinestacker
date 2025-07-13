@@ -1,5 +1,6 @@
 import os
 import sys
+import platform
 from focusstack.config.config import config
 
 if not config.DISABLE_TQDM:
@@ -27,5 +28,6 @@ def get_app_base_path():
     if getattr(sys, 'frozen', False):
         path = os.path.dirname(os.path.realpath(sys.executable))
     elif __file__:
-        path = "/".join(os.path.dirname(os.path.abspath(__file__)).split("/")[:-3])
+        sep = '\\' if (platform.system() == 'Windows') else '/'
+        path = sep.join(os.path.dirname(os.path.abspath(__file__)).split(sep)[:-3])
     return path
