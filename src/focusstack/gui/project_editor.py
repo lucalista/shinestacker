@@ -21,17 +21,11 @@ class ActionPosition:
 
     @property
     def action(self):
-        if self.actions is None:
-            return None
-        else:
-            return self.actions[self.action_index]
+        return None if self.actions is None else self.actions[self.action_index]
 
     @property
     def sub_action(self):
-        if self.sub_actions is None or self.sub_action_index == -1:
-            return None
-        else:
-            return self.sub_actions[self.sub_action_index]
+        return None if self.sub_actions is None or self.sub_action_index == -1 else self.sub_actions[self.sub_action_index]
 
 
 def new_row_after_delete(action_row, pos: ActionPosition):
@@ -215,12 +209,12 @@ class ProjectEditor(QMainWindow):
             self.action_list.setCurrentRow(new_job_index)
             self.refresh_ui(new_job_index, -1)
 
-    def clone_action(self): 
+    def clone_action(self):
         job_row, action_row, pos = self.get_current_action()
         if not pos.actions:
             return
         self.mark_as_modified()
-        job = self.project.jobs[job_row]        
+        job = self.project.jobs[job_row]
         if pos.is_sub_action:
             cloned = pos.sub_action.clone(CLONE_POSTFIX)
             pos.sub_actions.insert(pos.sub_action_index + 1, cloned)
