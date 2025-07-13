@@ -124,9 +124,9 @@ class ProjectEditor(QMainWindow):
             return (job_row, action_row, None, None, -1, -1)
         job = self.project.jobs[job_row]
         if sub_action:
-            return job_row, action_row, ActionPosition(job.sub_actions, action.sub_actions, job.sub_actions.index(action), sub_action_index)
+            return (job_row, action_row, ActionPosition(job.sub_actions, action.sub_actions, job.sub_actions.index(action), sub_action_index))
         else:
-            return job_row, action_row, ActionPosition(job.sub_actions, None, job.sub_actions.index(action))
+            return (job_row, action_row, ActionPosition(job.sub_actions, None, job.sub_actions.index(action)))
 
     def find_action_position(self, job_index, ui_index):
         if not 0 <= job_index < len(self.project.jobs):
