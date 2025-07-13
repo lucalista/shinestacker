@@ -16,6 +16,7 @@ from focusstack.algorithms.utils import read_img, save_plot, get_img_metadata, v
 
 MAX_NOISY_PIXELS = 1000
 
+
 def mean_image(file_paths, max_frames=-1, message_callback=None, progress_callback=None):
     mean_img = None
     counter = 0
@@ -74,6 +75,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         self.callback('step_counts', self.id, self.name, n_frames)
         if not config.DISABLE_TQDM:
             self.bar = make_tqdm_bar(self.name, n_frames)
+
         def progress_callback(i):
             self.progress(i)
             if self.callback('check_running', self.id, self.name) is False:
@@ -101,9 +103,9 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
         self.print_message("writing hot pixels map file: " + self.file_name)
         cv2.imwrite(self.working_path + '/' + self.file_name, hot)
         plot_range = self.plot_range
-        min_th, max_th =  min(self.channel_thresholds),  max(self.channel_thresholds)
+        min_th, max_th = min(self.channel_thresholds), max(self.channel_thresholds)
         if min_th < plot_range[0]:
-            plot_range[0] = min_th -1
+            plot_range[0] = min_th - 1
         if max_th > plot_range[1]:
             plot_range[1] = max_th + 1
         th_range = np.arange(self.plot_range[0], self.plot_range[1] + 1)

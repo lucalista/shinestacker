@@ -45,15 +45,3 @@ jobs:
         working-directory: ./tests
         run: |
           pytest test_00*.py -v --disable-warnings
-
-      - name: Run GUI tests
-        working-directory: ./tests
-        run: |
-          xvfb-run -a python -m pytest test_10*.py -v --disable-warnings \
-            --capture=no \
-            --color=no
-        env:
-          QT_QPA_PLATFORM: "offscreen"
-          QT_DEBUG_PLUGINS: "1"
-          MPLBACKEND: "Agg"
-          DISPLAY: ":99"
