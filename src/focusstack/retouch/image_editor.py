@@ -316,8 +316,7 @@ class ImageEditor(QMainWindow):
 
     def create_grayscale_thumbnail(self, layer):
         if layer.dtype == np.uint16:
-            p2, p98 = np.percentile(layer, (2, 98))
-            layer = np.clip(np.multiply(np.subtract(layer, p2), 255.0 / (p98 - p2)), 0, 255).astype(np.uint8)
+            layer = (layer // 256).astype(np.uint8)
         height, width = layer.shape
         qimg = QImage(layer.data, width, height, width, QImage.Format_Grayscale8)
         return QPixmap.fromImage(qimg.scaled(*gui_constants.UI_SIZES['thumbnail'], Qt.KeepAspectRatio))
