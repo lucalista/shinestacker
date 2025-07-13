@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')
 from focusstack.config.constants import constants
 from focusstack.algorithms.utils import read_img
 from focusstack.algorithms.stack_framework import StackJob, CombinedActions

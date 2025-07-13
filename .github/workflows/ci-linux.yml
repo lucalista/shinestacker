@@ -23,13 +23,17 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y \
-          libegl1 \
-          libgl1-mesa-dev \
-          libxkbcommon-x11-0 \
-          xvfb \
-          libopengl0 \
-          libglx0 \
-          libgl1
+      	  libgl1-mesa-glx \
+      	  libxrender1 \
+      	  libsm6 \
+	  libfontconfig1 \
+      	  libxext6 \
+      	  xvfb \
+      	  libegl1 \
+      	  libgl1-mesa-dev \
+      	  libxkbcommon-x11-0 \
+      	  libopengl0 \
+      	  libglx0
 
     - name: Install dependencies
       run: |
@@ -37,14 +41,18 @@ jobs:
         pip install -e .[dev]
         pip install pytest-xvfb
 
-    - name: Run non-GUI tests (test_00*.py)
+    - name: Run non-GUI tests
       run: |
         cd tests/
-        pytest test_00*.py -v --disable-warnings
-
-    - name: Run GUI tests (test_10*.py)
-      run: |
-        cd tests/
-        xvfb-run pytest test_10*.py -v --disable-warnings
+        MPLBACKEND=Agg pytest test_00*.py -v --disable-warnings
       env:
         QT_QPA_PLATFORM: "offscreen"
+        MPLBACKEND: "Agg"  # Doppia assicurazione
+
+    - name: Run GUI tests
+      run: |
+        cd tests/
+        xvfb-run -a pytest test_10*.py -v --disable-warnings
+      env:
+        QT_QPA_PLATFORM: "offscreen"
+        MPLBACKEND: "Agg"
