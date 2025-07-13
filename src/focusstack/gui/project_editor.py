@@ -7,74 +7,48 @@ INDENT_SPACE = "     "
 CLONE_POSTFIX = " (clone)"
 
 
-class JobListModel:
-    def __init__(self, project):
-        self.project = project
+def new_row_after_delete(action_row, actions, sub_actions, action_index, sub_action_index):
+    if sub_action_index != -1:
+        new_row = action_row if sub_action_index < len(sub_actions) else action_row - 1
+    else:
+        if action_index == 0:
+            new_row = 0 if len(actions) > 0 else -1
+        elif action_index < len(actions):
+            new_row = action_row
+        elif action_index == len(actions):
+            new_row = action_row - len(actions[action_index - 1].sub_actions) - 1
+    return new_row
 
-    def get_flat_actions(self, job_index):
-        flat = []
-        if 0 <= job_index < len(self.project.jobs):
-            for action in self.project.jobs[job_index].sub_actions:
-                flat.append(("action", action))
-                for sub in action.sub_actions:
-                    flat.append(("sub", sub))
-        return flat
 
-    def find_action_position(self, job_index, ui_index):
-        if not 0 <= job_index < len(self.project.jobs):
-            return (None, None, -1)
-        actions = self.project.jobs[job_index].sub_actions
-        counter = -1
-        for action in actions:
-            counter += 1
-            if counter == ui_index:
-                return (action, None, -1)
-            for sub_index, sub_action in enumerate(action.sub_actions):
-                counter += 1
-                if counter == ui_index:
-                    return (action, sub_action, sub_index)
-        return (None, None, -1)
-
-    def new_row_after_delete(self, action_row, actions, sub_actions, action_index, sub_action_index):
-        if sub_action_index != -1:
-            new_row = action_row if sub_action_index < len(sub_actions) else action_row - 1
-        else:
-            if action_index == 0:
-                new_row = 0 if len(actions) > 0 else -1
-            elif action_index < len(actions):
-                new_row = action_row
-            elif action_index == len(actions):
-                new_row = action_row - len(actions[action_index - 1].sub_actions) - 1
-        return new_row
-
-    def new_row_after_insert(self, action_row, actions, sub_actions, action_index, sub_action_index, delta):
-        new_row = action_row
-        if sub_action_index == -1:
-            new_index = action_index + delta
-            if 0 <= new_index < len(actions):
-                new_row = 0
-                for action in actions[:new_index]:
-                    new_row += 1 + len(action.sub_actions)
-        else:
-            new_index = sub_action_index + delta
-            if 0 <= new_index < len(sub_actions):
-                new_row = 1 + new_index
-                for action in actions[:action_index]:
-                    new_row += 1 + len(action.sub_actions)
-        return new_row
-
-    def new_row_after_paste(self, action_row, actions, sub_actions, action_index, sub_action_index):
-        return self.new_row_after_insert(action_row, actions, sub_actions, action_index, sub_action_index, 0)
-
-    def new_row_after_clone(self, job_index, ui_index, sub_action, cloned):
-        if sub_action:
-            new_row = ui_index + 1
-        else:
+def new_row_after_insert(action_row, actions, sub_actions, action_index, sub_action_index, delta):
+    new_row = action_row
+    if sub_action_index == -1:
+        new_index = action_index + delta
+        if 0 <= new_index < len(actions):
             new_row = 0
-            job = self.project.jobs[job_index]
-            for action in job.sub_actions[:job.sub_actions.index(cloned)]:
+            for action in actions[:new_index]:
                 new_row += 1 + len(action.sub_actions)
-        return new_row
+    else:
+        new_index = sub_action_index + delta
+        if 0 <= new_index < len(sub_actions):
+            new_row = 1 + new_index
+            for action in actions[:action_index]:
+                new_row += 1 + len(action.sub_actions)
+    return new_row
+
+
+def new_row_after_paste(action_row, actions, sub_actions, action_index, sub_action_index):
+    return new_row_after_insert(action_row, actions, sub_actions, action_index, sub_action_index, 0)
+
+
+def new_row_after_clone(job, ui_index, sub_action, cloned):
+    if sub_action:
+        new_row = ui_index + 1
+    else:
+        new_row = 0
+        for action in job.sub_actions[:job.sub_actions.index(cloned)]:
+            new_row += 1 + len(action.sub_actions)
+    return new_row
 
 
 class ProjectEditor(QMainWindow):
@@ -89,7 +63,6 @@ class ProjectEditor(QMainWindow):
 
     def set_project(self, project):
         self.project = project
-        self.job_list_model = JobListModel(project)
 
     def job_text(self, job):
         txt = job.params.get('name', '(job)')
@@ -115,11 +88,26 @@ class ProjectEditor(QMainWindow):
     def get_current_action(self):
         return self.get_action_at(self.action_list.currentRow())
 
+    def find_action_position(self, job_index, ui_index):
+        if not 0 <= job_index < len(self.project.jobs):
+            return (None, None, -1)
+        actions = self.project.jobs[job_index].sub_actions
+        counter = -1
+        for action in actions:
+            counter += 1
+            if counter == ui_index:
+                return (action, None, -1)
+            for sub_index, sub_action in enumerate(action.sub_actions):
+                counter += 1
+                if counter == ui_index:
+                    return (action, sub_action, sub_index)
+        return (None, None, -1)
+
     def get_action_at(self, action_row):
         job_row = self.job_list.currentRow()
         if job_row < 0 or action_row < 0:
             return (job_row, action_row, None, None, -1, -1)
-        parent_action, sub_action, sub_index = self.job_list_model.find_action_position(job_row, action_row)
+        parent_action, sub_action, sub_index = self.find_action_position(job_row, action_row)
         if not parent_action:
             return (job_row, action_row, None, None, -1, -1)
         job = self.project.jobs[job_row]
@@ -174,7 +162,7 @@ class ProjectEditor(QMainWindow):
                 if 0 <= new_index < len(sub_actions):
                     self.mark_as_modified()
                     sub_actions.insert(new_index, sub_actions.pop(sub_action_index))
-            new_row = self.job_list_model.new_row_after_insert(action_row, actions, sub_actions, action_index, sub_action_index, delta)
+            new_row = new_row_after_insert(action_row, actions, sub_actions, action_index, sub_action_index, delta)
             self.refresh_ui(job_row, new_row)
 
     def move_element_up(self):
@@ -203,18 +191,18 @@ class ProjectEditor(QMainWindow):
     def clone_action(self):
         job_index = self.job_list.currentRow()
         ui_index = self.action_list.currentRow()
-        parent_action, sub_action, sub_index = self.job_list_model.find_action_position(job_index, ui_index)
+        parent_action, sub_action, sub_index = self.find_action_position(job_index, ui_index)
         if not parent_action:
             return
         self.mark_as_modified()
+        job = self.project.jobs[job_index]
         if sub_action:
             cloned = sub_action.clone(CLONE_POSTFIX)
             parent_action.sub_actions.insert(sub_index + 1, cloned)
         else:
             cloned = parent_action.clone(CLONE_POSTFIX)
-            job = self.project.jobs[job_index]
             job.sub_actions.insert(job.sub_actions.index(parent_action) + 1, cloned)
-        new_row = self.job_list_model. new_row_after_clone(job_index, ui_index, sub_action, cloned)
+        new_row = new_row_after_clone(job, ui_index, sub_action, cloned)
         self.refresh_ui(job_index, new_row)
 
     def clone_element(self):
@@ -259,7 +247,7 @@ class ProjectEditor(QMainWindow):
                     action.pop_sub_action(sub_action_index)
                 else:
                     self.project.jobs[job_row].pop_sub_action(action_index)
-                new_row = self.job_list_model.new_row_after_delete(action_row, actions, sub_actions, action_index, sub_action_index)
+                new_row = new_row_after_delete(action_row, actions, sub_actions, action_index, sub_action_index)
                 self.refresh_ui(job_row, new_row)
             return current_action
         return None
@@ -401,7 +389,7 @@ class ProjectEditor(QMainWindow):
                     return
                 self.mark_as_modified()
                 sub_actions.insert(sub_action_index, self._copy_buffer)
-            new_row = self.job_list_model.new_row_after_paste(action_row, actions, sub_actions, action_index, sub_action_index)
+            new_row = new_row_after_paste(action_row, actions, sub_actions, action_index, sub_action_index)
             self.refresh_ui(job_row, new_row)
 
     def paste_element(self):
