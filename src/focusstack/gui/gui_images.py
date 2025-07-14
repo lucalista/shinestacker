@@ -38,9 +38,10 @@ class GuiPdfView(QPdfView):
             self.setDocument(self.pdf_document)
             first_page_size = self.pdf_document.pagePointSize(0)
             zoom_factor = GUI_IMG_WIDTH / first_page_size.width()
-            self.setZoomFactor(zoom_factor)
-            self.setFixedSize(int(first_page_size.width() * zoom_factor) + 1,
-                              int(first_page_size.height() * zoom_factor) + 1)
+            extra_zoom = 0.75 if running_under_windows() else 1.0
+            self.setZoomFactor(zoom_factor * extra_zoom)
+            self.setFixedSize(GUI_IMG_WIDTH,
+                              int(first_page_size.height() * zoom_factor))
         else:
             raise RuntimeError(f"Can't load file: {file_path}. Error code: {err}.")
         self.setStyleSheet('''

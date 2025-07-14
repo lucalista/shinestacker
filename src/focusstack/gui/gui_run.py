@@ -290,7 +290,7 @@ class RunWindow(QTextEditLogger):
         self.image_views.append(image_view)
         self.image_layout.addWidget(image_view)
         max_width = max(pv.size().width() for pv in self.image_views) if self.image_views else 0
-        needed_width = max_width + 15
+        needed_width = max_width + 20
         self.right_area.setFixedWidth(needed_width)
         self.image_area_widget.setFixedWidth(needed_width)
         self.right_area.updateGeometry()
