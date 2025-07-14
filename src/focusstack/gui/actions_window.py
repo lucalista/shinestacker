@@ -141,7 +141,7 @@ class ActionsWindow(ProjectEditor):
                 QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel
             )
             if reply == QMessageBox.Save:
-                self._save_project()
+                self.save_project()
                 return True
             elif reply == QMessageBox.Discard:
                 return True
