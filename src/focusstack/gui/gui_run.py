@@ -2,7 +2,7 @@ import time
 from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QProgressBar,
                                QMessageBox, QScrollArea, QSizePolicy, QFrame, QLabel)
 from PySide6.QtGui import QColor
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtCore import Signal, Slot
 from focusstack.config.constants import constants
 from focusstack.gui.gui_logging import LogWorker, QTextEditLogger, LOG_FONTS_STR
@@ -295,7 +295,7 @@ class RunWindow(QTextEditLogger):
         self.image_area_widget.setFixedWidth(needed_width)
         self.right_area.updateGeometry()
         self.image_area_widget.updateGeometry()
-#        self.right_area.verticalScrollBar().setValue(self.right_area.verticalScrollBar().maximum())
+        QTimer.singleShot(0, lambda: self.right_area.verticalScrollBar().setValue(self.right_area.verticalScrollBar().maximum()))
 
     @Slot(int, str, str, str)
     def handle_open_app(self, id, name, app, path):
@@ -311,6 +311,7 @@ class RunWindow(QTextEditLogger):
         self.image_area_widget.setFixedWidth(needed_width)
         self.right_area.updateGeometry()
         self.image_area_widget.updateGeometry()
+        QTimer.singleShot(0, lambda: self.right_area.verticalScrollBar().setValue(self.right_area.verticalScrollBar().maximum()))
 
 
 class RunWorker(LogWorker):
