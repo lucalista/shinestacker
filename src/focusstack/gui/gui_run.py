@@ -295,6 +295,7 @@ class RunWindow(QTextEditLogger):
         self.image_area_widget.setFixedWidth(needed_width)
         self.right_area.updateGeometry()
         self.image_area_widget.updateGeometry()
+#        self.right_area.verticalScrollBar().setValue(self.right_area.verticalScrollBar().maximum())
 
     @Slot(int, str, str, str)
     def handle_open_app(self, id, name, app, path):
