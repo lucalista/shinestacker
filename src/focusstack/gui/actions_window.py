@@ -69,7 +69,10 @@ class ActionsWindow(ProjectEditor):
             try:
                 file = open(file_path, 'r')
                 json_obj = json.load(file)
-                self.set_project(Project.from_dict(json_obj['project']))
+                project = Project.from_dict(json_obj['project'])
+                if project is None:
+                    raise RuntimeError(f"Project from file {file_path} produced a null project.")
+                self.set_project(project)
                 self._modified_project = False
                 self._current_file = file_path
                 self.update_title()

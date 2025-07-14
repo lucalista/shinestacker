@@ -16,19 +16,19 @@ def main_window(qtbot):
 def test_open_file_success(main_window, qtbot, mocker):
     project_data = {
         "project": [{
-            "type_name": "Job", 
+            "type_name": "Job",
             "params": {
-                "name": "test", 
-                "working_path": ".", 
+                "name": "test",
+                "working_path": ".",
                 "input_path": "."
-            }, 
+            },
             "sub_actions": []
-        }], 
+        }],
         "version": 1
     }
     with tempfile.NamedTemporaryFile(suffix='.fsp', delete=False) as tmp_file:
         tmp_path = Path(tmp_file.name)
-        tmp_file.write(json.dumps(project_data).encode('utf-8'))    
+        tmp_file.write(json.dumps(project_data).encode('utf-8'))
     try:
         mocker.patch(
             "PySide6.QtWidgets.QFileDialog.getOpenFileName",

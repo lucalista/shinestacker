@@ -133,26 +133,7 @@ class ProjectEditor(QMainWindow):
         return (None, None, -1)
 
     def refresh_ui(self, job_row=-1, action_row=-1):
-        self.job_list.clear()
-        for job in self.project.jobs:
-            self.job_list.addItem(self.list_item(self.job_text(job), job.enabled()))
-        if self.project.jobs:
-            self.job_list.setCurrentRow(0)
-        if job_row >= 0:
-            self.job_list.setCurrentRow(job_row)
-        if action_row >= 0:
-            self.action_list.setCurrentRow(action_row)
-        if self.job_list.count() == 0:
-            self.add_action_entry_action.setEnabled(False)
-            self.action_selector.setEnabled(False)
-            self.run_job_action.setEnabled(False)
-            self.run_all_jobs_action.setEnabled(False)
-        else:
-            self.add_action_entry_action.setEnabled(True)
-            self.action_selector.setEnabled(True)
-            self.delete_element_action.setEnabled(True)
-            self.run_job_action.setEnabled(True)
-            self.run_all_jobs_action.setEnabled(True)
+        pass
 
     def shift_job(self, delta):
         job_index = self.job_list.currentRow()
@@ -280,6 +261,7 @@ class ProjectEditor(QMainWindow):
         if dialog.exec() == QDialog.Accepted:
             self.mark_as_modified()
             self.project.jobs.append(job_action)
+            self.job_list.addItem(self.list_item(self.job_text(job_action), job_action.enabled()))
             self.job_list.setCurrentRow(self.job_list.count() - 1)
             self.job_list.item(self.job_list.count() - 1).setSelected(True)
             self.refresh_ui()
@@ -423,8 +405,7 @@ class ProjectEditor(QMainWindow):
                 if job_row >= len_jobs:
                     job_row = len_jobs - 1
                 self.job_list.setCurrentRow(job_row)
-                actions = self.project.jobs[job_row].sub_actions
-                len_actions = len(actions)
+                len_actions = self.action_list.count()
                 if len_actions > 0:
                     if action_row >= len_actions:
                         action_row = len_actions

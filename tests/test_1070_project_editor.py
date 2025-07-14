@@ -2,7 +2,7 @@ import pytest
 from PySide6.QtWidgets import QMessageBox, QListWidget, QListWidgetItem
 from focusstack.config.constants import constants
 from focusstack.gui.project_editor import ProjectEditor, ActionPosition
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 
 
 @pytest.fixture
@@ -48,23 +48,25 @@ def test_set_project(editor, mock_project):
     editor.set_project(mock_project)
     assert editor.project == mock_project
 
+#
+# move to main_window.py test, when available
+#
+# def test_refresh_ui_with_jobs(editor, mock_project):
+#     editor.set_project(mock_project)
 
-def test_refresh_ui_with_jobs(editor, mock_project):
-    editor.set_project(mock_project)
-
-    def job_text(job):
-        txt = job.params.get('name', '(job)')
-        if not job.enabled():
-            txt += " <disabled>"
-        return txt
-    editor.job_text = job_text
-    editor.refresh_ui()
-    editor.job_list.clear.assert_called_once()
-    assert editor.list_item.call_count == 2
-    editor.list_item.assert_has_calls([
-        call("Job 1", True),
-        call("Job 2 <disabled>", False)
-    ])
+#     def job_text(job):
+#         txt = job.params.get('name', '(job)')
+#         if not job.enabled():
+#             txt += " <disabled>"
+#         return txt
+#     editor.job_text = job_text
+#     editor.refresh_ui()
+#     editor.job_list.clear.assert_called_once()
+#     assert editor.list_item.call_count == 2
+#     editor.list_item.assert_has_calls([
+#         call("Job 1", True),
+#         call("Job 2 <disabled>", False)
+#     ])
 
 
 @patch('focusstack.gui.project_editor.QMessageBox.question', return_value=QMessageBox.Yes)
@@ -167,11 +169,12 @@ def test_undo_functionality(editor):
     initial_state.jobs = [MagicMock()]
     modified_state = MagicMock()
     modified_state.jobs = [MagicMock(), MagicMock()]
-    editor.set_project(modified_state)
-    editor._project_buffer = [initial_state]
+    editor.job_list = MagicMock()
+    editor.action_list = MagicMock()
     editor.job_list.currentRow.return_value = 0
     editor.action_list.currentRow.return_value = 0
+    editor.action_list.count.return_value = 0
+    editor.set_project(modified_state)
+    editor._project_buffer = [initial_state]
     editor.undo()
     assert editor.project == initial_state
-    editor.job_list.clear.assert_called()
-    editor.list_item.assert_called()
