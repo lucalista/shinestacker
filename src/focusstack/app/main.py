@@ -111,7 +111,13 @@ def main():
         app.setAttribute(Qt.AA_DontUseNativeMenuBar)
     else:
         disable_macos_special_menu_items()
-    app.setWindowIcon(QIcon(f'{get_app_base_path()}/ico/focus_stack.png'))
+    icon_path = f'{get_app_base_path()}'
+    if os.path.exists(f'{icon_path}/ico'):
+        icon_path = f'{icon_path}/ico'
+    else:
+        icon_path = f'{icon_path}/../ico'
+    icon_path = f'{icon_path}/focus_stack.png'
+    app.setWindowIcon(QIcon(icon_path))
     main_app = MainApp()
     app.main_app = main_app
     main_app.show()
