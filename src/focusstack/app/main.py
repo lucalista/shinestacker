@@ -2,6 +2,7 @@ import sys
 import os
 import logging
 import matplotlib
+import matplotlib.backends.backend_pdf
 matplotlib.use('agg')
 from PySide6.QtWidgets import QApplication, QMainWindow, QStackedWidget, QMenu
 from PySide6.QtGui import QAction, QIcon, QGuiApplication
