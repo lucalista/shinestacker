@@ -17,7 +17,8 @@ package_dir = "focusstack"
 sys_name = platform.system().lower()
 
 pyinstaller_cmd = ["pyinstaller", "--onedir", f"--name={app_name}", "--paths=src",
-                   f"--distpath=dist/{package_dir}", f"--collect-all={project_name}"]
+                   f"--distpath=dist/{package_dir}", f"--collect-all={project_name}",
+                   "--collect-data=imagecodecs", "--collect-submodules=imagecodecs", "--copy-metadata=imagecodecs"]
 if sys_name == 'darwin':
     pyinstaller_cmd += ["--windowed", "--icon=ico/focus_stack.icns"]
 elif sys_name == 'windows':
