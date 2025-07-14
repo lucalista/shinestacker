@@ -1,23 +1,23 @@
 import webbrowser
 import subprocess
 import os
-import platform
 from PySide6.QtWidgets import QSizePolicy, QVBoxLayout, QWidget, QLabel, QMainWindow
 from PySide6.QtPdf import QPdfDocument
 from PySide6.QtPdfWidgets import QPdfView
 from PySide6.QtCore import Qt, QMargins
 from PySide6.QtGui import QPixmap
+from focusstack.core.core_utils import running_under_windows, running_under_macos
 
 GUI_IMG_WIDTH = 250  # px
 
 
 def open_file(file_path):
     try:
-        if platform.system() == 'Darwin':       # macOS
+        if running_under_macos():
             subprocess.call(('open', file_path))
-        elif platform.system() == 'Windows':    # Windows
+        elif running_under_windows():
             os.startfile(file_path)
-        else:                                   # linux variants
+        else:
             subprocess.call(('xdg-open', file_path))
     except Exception:
         webbrowser.open("file://" + file_path)

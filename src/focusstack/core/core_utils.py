@@ -31,3 +31,15 @@ def get_app_base_path():
         sep = '\\' if (platform.system() == 'Windows') else '/'
         path = sep.join(os.path.dirname(os.path.abspath(__file__)).split(sep)[:-3])
     return path
+
+
+def running_under_windows() -> bool:
+    return platform.system().lower() == 'windows'
+
+
+def running_under_macos() -> bool:
+    return platform.system().lower() == "darwin"
+
+
+def running_under_linux() -> bool:
+    return platform.system().lower() == 'linux'
