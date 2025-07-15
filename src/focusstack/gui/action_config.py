@@ -445,10 +445,6 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
     ENERGY_OPTIONS = ['Laplacian', 'Sobel']
     MAP_TYPE_OPTIONS = ['Average', 'Maximum']
     FLOAT_OPTIONS = ['float 32 bits', 'float 64 bits']
-    STACK_ALGO_PYRAMID = 'Pyramid'
-    STACK_ALGO_DEPTH_MAP = 'Depth map'
-    STACK_ALGO_OPTIONS = [STACK_ALGO_PYRAMID, STACK_ALGO_DEPTH_MAP]
-    STACK_ALGO_DEFAULT = STACK_ALGO_PYRAMID
 
     def create_form(self, layout, action):
         super().create_form(layout, action)
@@ -466,7 +462,7 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
                                default=0, min=0, max=10)
         self.add_bold_label("Stacking algorithm:")
         combo = self.builder.add_field('stacker', FIELD_COMBO, 'Stacking algorithm', required=True,
-                                       options=self.STACK_ALGO_OPTIONS, default=self.STACK_ALGO_DEFAULT)
+                                       options=constants.STACK_ALGO_OPTIONS, default=constants.STACK_ALGO_DEFAULT)
         q_pyramid, q_depthmap = QWidget(), QWidget()
         for q in [q_pyramid, q_depthmap]:
             layout = QFormLayout()
