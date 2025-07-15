@@ -1,4 +1,5 @@
 from copy import deepcopy
+from focusstack.config.constants import constants
 
 
 class ActionConfig:
@@ -82,3 +83,56 @@ class Project:
             for s in j.sub_actions:
                 s.parent = j
         return p
+
+
+def get_action_working_path(action, get_name=False):
+    if action is None:
+        return '', ''
+    if action in constants.SUB_ACTION_TYPES:
+        return get_action_working_path(action.parent, True)
+    wp = action.params.get('working_path', '')
+    if wp != '':
+        return wp, (f" {action.params.get('name', '')} [{action.type_name}]" if get_name else '')
+    else:
+        return get_action_working_path(action.parent, True)
+
+
+def get_action_output_path(action, get_name=False):
+    if action is None:
+        return '', ''
+    if action.type_name in constants.SUB_ACTION_TYPES:
+        return get_action_output_path(action.parent, True)
+    name = action.params.get('name', '')
+    path = action.params.get('output_path', '')
+    if path == '':
+        path = name
+    return path, (f" {action.params.get('name', '')} [{action.type_name}]" if get_name else '')
+
+
+def get_action_input_path(action, get_name=False):
+    if action is None:
+        return '', ''
+    type_name = action.type_name
+    if type_name in constants.SUB_ACTION_TYPES:
+        return get_action_input_path(action.parent, True)
+    path = action.params.get('input_path', '')
+    if path == '':
+        if action.parent is None:
+            if type_name == constants.ACTION_JOB and len(action.sub_actions) > 0:
+                action = action.sub_actions[0]
+                path = action.params.get('input_path', '')
+                return path, f" {action.params.get('name', '')} [{action.type_name}]"
+            else:
+                return '', ''
+        else:
+            actions = action.parent.sub_actions
+            if action in actions:
+                i = actions.index(action)
+                if i == 0:
+                    return get_action_input_path(action.parent, True)
+                else:
+                    return get_action_output_path(actions[i - 1], True)
+            else:
+                return '', ''
+    else:
+        return path, (f" {action.params.get('name', '')} [{action.type_name}]" if get_name else '')

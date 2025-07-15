@@ -11,6 +11,7 @@ from focusstack.gui.actions_window import ActionsWindow
 from focusstack.gui.gui_logging import LogManager
 from focusstack.gui.gui_run import RunWindow, RunWorker
 from focusstack.gui.project_converter import ProjectConverter
+from focusstack.gui.project_model import get_action_working_path, get_action_input_path, get_action_output_path
 
 
 class JobLogWorker(RunWorker):
@@ -265,13 +266,13 @@ class MainWindow(ActionsWindow, LogManager):
             edit_config_action.triggered.connect(self.edit_current_action)
             menu.addAction(edit_config_action)
             menu.addSeparator()
-            self.current_action_working_path, name = self.get_action_working_path(current_action)
+            self.current_action_working_path, name = get_action_working_path(current_action)
             if self.current_action_working_path != '' and os.path.exists(self.current_action_working_path):
                 action_name = "Browse Working Path" + (f" > {name}" if name != '' else '')
                 self.browse_working_path_action = QAction(action_name)
                 self.browse_working_path_action.triggered.connect(self.browse_working_path_path)
                 menu.addAction(self.browse_working_path_action)
-            ip, name = self.get_action_input_path(current_action)
+            ip, name = get_action_input_path(current_action)
             if ip != '':
                 ips = ip.split(constants.PATH_SEPARATOR)
                 self.current_action_input_path = constants.PATH_SEPARATOR.join([f"{self.current_action_working_path}/{ip}" for ip in ips])
@@ -285,7 +286,7 @@ class MainWindow(ActionsWindow, LogManager):
                     self.browse_input_path_action = QAction(action_name)
                     self.browse_input_path_action.triggered.connect(self.browse_input_path_path)
                     menu.addAction(self.browse_input_path_action)
-            op, name = self.get_action_output_path(current_action)
+            op, name = get_action_output_path(current_action)
             if op != '':
                 self.current_action_output_path = f"{self.current_action_working_path}/{op}"
                 if os.path.exists(self.current_action_output_path):

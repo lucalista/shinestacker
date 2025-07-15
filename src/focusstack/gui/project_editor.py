@@ -468,26 +468,27 @@ class ProjectEditor(QMainWindow):
             if job_index >= len(self.project.jobs):
                 job_index = len(self.project.jobs) - 1
             action_index = self.action_list.currentRow()
-            job = self.project.jobs[job_index]
-            action_counter = -1
-            current_action = None
-            is_sub_action = False
-            for action in job.sub_actions:
-                action_counter += 1
-                if action_counter == action_index:
-                    current_action = action
-                    break
-                if len(action.sub_actions) > 0:
-                    for sub_action in action.sub_actions:
-                        action_counter += 1
-                        if action_counter == action_index:
-                            current_action = sub_action
-                            is_sub_action = True
-                            break
-                    if current_action:
+            if job_index >=0:
+                job = self.project.jobs[job_index]
+                action_counter = -1
+                current_action = None
+                is_sub_action = False
+                for action in job.sub_actions:
+                    action_counter += 1
+                    if action_counter == action_index:
+                        current_action = action
                         break
-            enable_sub_actions = current_action is not None and \
-                not is_sub_action and current_action.type_name == constants.ACTION_COMBO
-            self.set_enabled_sub_actions_gui(enable_sub_actions)
+                    if len(action.sub_actions) > 0:
+                        for sub_action in action.sub_actions:
+                            action_counter += 1
+                            if action_counter == action_index:
+                                current_action = sub_action
+                                is_sub_action = True
+                                break
+                        if current_action:
+                            break
+                enable_sub_actions = current_action is not None and \
+                    not is_sub_action and current_action.type_name == constants.ACTION_COMBO
+                self.set_enabled_sub_actions_gui(enable_sub_actions)
         else:
             self.set_enabled_sub_actions_gui(False)

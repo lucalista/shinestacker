@@ -7,6 +7,7 @@ from unittest.mock import patch
 from PySide6.QtWidgets import QMessageBox, QListWidgetItem
 from focusstack.gui.actions_window import ActionsWindow
 from focusstack.gui.project_model import Project
+from focusstack.gui.project_model import get_action_working_path, get_action_input_path, get_action_output_path
 
 project_data = {"project": [{"type_name": "Job", "params": {"name": "test", "working_path": ".", "input_path": ""}}], "version": 1}
 
@@ -137,9 +138,9 @@ def test_edit_action(actions_window, qtbot, sample_project):
 def test_path_methods(actions_window, sample_project):
     actions_window.set_project(sample_project)
     job = sample_project.jobs[0]
-    path, name = actions_window.get_action_working_path(job)
+    path, name = get_action_working_path(job)
     assert path == "."
-    path, name = actions_window.get_action_input_path(job)
+    path, name = get_action_input_path(job)
     assert path == ""
-    path, name = actions_window.get_action_output_path(job)
+    path, name = get_action_output_path(job)
     assert path == "test"
