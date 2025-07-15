@@ -2,10 +2,8 @@ import os.path
 import os
 import json
 import jsonpickle
-import subprocess
 from PySide6.QtWidgets import QMessageBox, QFileDialog, QListWidgetItem, QDialog
 from PySide6.QtGui import QColor, QIcon
-from focusstack.core.core_utils import running_under_windows, running_under_macos
 from focusstack.gui.project_model import Project
 from focusstack.config.constants import constants
 from focusstack.gui.gui_run import ColorPalette
@@ -202,26 +200,6 @@ class ActionsWindow(ProjectEditor):
                     return '', ''
         else:
             return path, (f" {action.params.get('name', '')} [{action.type_name}]" if get_name else '')
-
-    def browse_path(self, path):
-        ps = path.split(constants.PATH_SEPARATOR)
-        for p in ps:
-            if os.path.exists(p):
-                if running_under_windows():
-                    os.startfile(os.path.normpath(p))
-                elif running_under_macos():
-                    subprocess.run(['open', p])
-                else:
-                    subprocess.run(['xdg-open', p])
-
-    def browse_working_path_path(self):
-        self.browse_path(self.current_action_working_path)
-
-    def browse_input_path_path(self):
-        self.browse_path(self.current_action_input_path)
-
-    def browse_output_path_path(self):
-        self.browse_path(self.current_action_output_path)
 
     def on_job_edit(self, item):
         index = self.job_list.row(item)

@@ -1,9 +1,11 @@
 import os
+import subprocess
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QLabel, QMessageBox,
                                QSplitter, QToolBar, QMenu, QComboBox)
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication, QAction, QIcon
 from focusstack.config.constants import constants
+from focusstack.core.core_utils import running_under_windows, running_under_macos
 from focusstack.gui.project_model import Project
 from focusstack.gui.actions_window import ActionsWindow
 from focusstack.gui.gui_logging import LogManager
@@ -295,6 +297,26 @@ class MainWindow(ActionsWindow, LogManager):
             menu.addAction(self.run_job_action)
             menu.addAction(self.run_all_jobs_action)
             menu.exec(event.globalPos())
+
+    def browse_path(self, path):
+        ps = path.split(constants.PATH_SEPARATOR)
+        for p in ps:
+            if os.path.exists(p):
+                if running_under_windows():
+                    os.startfile(os.path.normpath(p))
+                elif running_under_macos():
+                    subprocess.run(['open', p])
+                else:
+                    subprocess.run(['xdg-open', p])
+
+    def browse_working_path_path(self):
+        self.browse_path(self.current_action_working_path)
+
+    def browse_input_path_path(self):
+        self.browse_path(self.current_action_input_path)
+
+    def browse_output_path_path(self):
+        self.browse_path(self.current_action_output_path)
 
     def refresh_ui(self, job_row=-1, action_row=-1):
         self.job_list.clear()
