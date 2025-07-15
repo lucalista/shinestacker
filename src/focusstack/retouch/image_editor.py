@@ -6,7 +6,7 @@ from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QRadi
 from PySide6.QtCore import Qt, QTimer, QEvent, QPoint
 from focusstack.algorithms.multilayer import write_multilayer_tiff_from_images
 from focusstack.config.constants import constants
-from focusstack.retouch.gui_constants import gui_constants
+from focusstack.config.gui_constants import gui_constants
 from focusstack.retouch.brush import Brush
 from focusstack.retouch.brush_controller import BrushController
 from focusstack.retouch.undo_manager import UndoManager

@@ -2,7 +2,7 @@ import math
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
 from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QCursor, QShortcut, QKeySequence, QRadialGradient
 from PySide6.QtCore import Qt, QRectF, QTime, QPoint, Signal
-from focusstack.retouch.gui_constants import gui_constants
+from focusstack.config.gui_constants import gui_constants
 from focusstack.retouch.brush_preview import BrushPreviewItem
 
 

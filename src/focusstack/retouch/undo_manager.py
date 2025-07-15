@@ -1,4 +1,4 @@
-from focusstack.retouch.gui_constants import gui_constants
+from focusstack.config.gui_constants import gui_constants
 
 
 class UndoManager:
