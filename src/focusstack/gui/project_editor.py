@@ -87,7 +87,7 @@ class ProjectEditor(QMainWindow):
         if not job.enabled():
             txt += DISABLED_TAG
         in_path = get_action_input_path(job)
-        return txt + (f" (📁 {in_path[0]} → 📁 ...)" if long_name else "")
+        return txt + (f" (📁 {in_path[0]} → 📂 ...)" if long_name else "")
 
     def action_text(self, action, is_sub_action=False, indent=True, long_name=False):
         txt = INDENT_SPACE if is_sub_action and indent else ""
@@ -97,7 +97,7 @@ class ProjectEditor(QMainWindow):
         if not action.enabled():
             txt += DISABLED_TAG
         in_path, out_path = get_action_input_path(action), get_action_output_path(action)
-        return txt + (f" (📁 {in_path[0]} → 📁 {out_path[0]})" if long_name else "")
+        return txt + (f" (📁 {in_path[0]} → 📂 {out_path[0]})" if long_name else "")
 
     def get_job_at(self, index):
         return None if index < 0 else self.project.jobs[index]
