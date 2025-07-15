@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from PySide6.QtWidgets import QMainWindow, QListWidget, QMessageBox, QDialog
 from focusstack.config.constants import constants
 from focusstack.gui.action_config import ActionConfig, ActionConfigDialog
+from focusstack.gui.project_model import get_action_input_path, get_action_output_path
+
 
 DISABLED_TAG = ""  # " <disabled>"
 INDENT_SPACE = "     "
@@ -80,20 +82,22 @@ class ProjectEditor(QMainWindow):
     def set_project(self, project):
         self.project = project
 
-    def job_text(self, job):
+    def job_text(self, job, long_name=False):
         txt = job.params.get('name', '(job)')
         if not job.enabled():
             txt += DISABLED_TAG
-        return txt
+        in_path = get_action_input_path(job)
+        return txt + (f" (📁 {in_path[0]} → 📁 ...)" if long_name else "")
 
-    def action_text(self, action, is_sub_action=False, indent=True):
+    def action_text(self, action, is_sub_action=False, indent=True, long_name=False):
         txt = INDENT_SPACE if is_sub_action and indent else ""
         if action.params.get('name', '') != '':
             txt += action.params["name"]
         txt += f" [{action.type_name}]"
         if not action.enabled():
             txt += DISABLED_TAG
-        return txt
+        in_path, out_path = get_action_input_path(action), get_action_output_path(action)
+        return txt + (f" (📁 {in_path[0]} → 📁 {out_path[0]})" if long_name else "")
 
     def get_job_at(self, index):
         return None if index < 0 else self.project.jobs[index]
@@ -261,7 +265,7 @@ class ProjectEditor(QMainWindow):
         if dialog.exec() == QDialog.Accepted:
             self.mark_as_modified()
             self.project.jobs.append(job_action)
-            self.job_list.addItem(self.list_item(self.job_text(job_action), job_action.enabled()))
+            self.job_list.addItem(self.list_item(self.job_text(job_action, long_name=True), job_action.enabled()))
             self.job_list.setCurrentRow(self.job_list.count() - 1)
             self.job_list.item(self.job_list.count() - 1).setSelected(True)
             self.refresh_ui()
@@ -282,7 +286,7 @@ class ProjectEditor(QMainWindow):
         if dialog.exec() == QDialog.Accepted:
             self.mark_as_modified()
             self.project.jobs[current_index].add_sub_action(action)
-            self.action_list.addItem(self.list_item(self.action_text(action), action.enabled()))
+            self.action_list.addItem(self.list_item(self.action_text(action, long_name=True), action.enabled()))
             self.delete_element_action.setEnabled(False)
 
     def add_action_CombinedActions(self):
@@ -452,10 +456,10 @@ class ProjectEditor(QMainWindow):
         if 0 <= index < len(self.project.jobs):
             job = self.project.jobs[index]
             for action in job.sub_actions:
-                self.action_list.addItem(self.list_item(self.action_text(action), action.enabled()))
+                self.action_list.addItem(self.list_item(self.action_text(action, long_name=True), action.enabled()))
                 if len(action.sub_actions) > 0:
                     for sub_action in action.sub_actions:
-                        self.action_list.addItem(self.list_item(self.action_text(sub_action, is_sub_action=True),
+                        self.action_list.addItem(self.list_item(self.action_text(sub_action, is_sub_action=True, long_name=True),
                                                                 sub_action.enabled()))
             self.update_delete_action_state()
 
@@ -468,7 +472,7 @@ class ProjectEditor(QMainWindow):
             if job_index >= len(self.project.jobs):
                 job_index = len(self.project.jobs) - 1
             action_index = self.action_list.currentRow()
-            if job_index >=0:
+            if job_index >= 0:
                 job = self.project.jobs[job_index]
                 action_counter = -1
                 current_action = None
