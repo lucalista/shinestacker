@@ -21,6 +21,9 @@ FIELD_TYPES = [FIELD_TEXT, FIELD_ABS_PATH, FIELD_REL_PATH, FIELD_FLOAT,
 
 
 class ActionConfigurator(ABC):
+    def __init__(self, expert=False):
+        self.expert = expert
+
     @abstractmethod
     def create_form(self, layout: QFormLayout, params: Dict[str, Any]):
         pass
@@ -349,18 +352,18 @@ class ActionConfigDialog(QDialog):
 
     def get_configurator(self, action_type: str) -> ActionConfigurator:
         configurators = {
-            constants.ACTION_JOB: JobConfigurator(),
-            constants.ACTION_COMBO: CombinedActionsConfigurator(),
-            constants.ACTION_NOISEDETECTION: NoiseDetectionConfigurator(),
-            constants.ACTION_FOCUSSTACK: FocusStackConfigurator(),
-            constants.ACTION_FOCUSSTACKBUNCH: FocusStackBunchConfigurator(),
-            constants.ACTION_MULTILAYER: MultiLayerConfigurator(),
-            constants.ACTION_MASKNOISE: MaskNoiseConfigurator(),
-            constants.ACTION_VIGNETTING: VignettingConfigurator(),
-            constants.ACTION_ALIGNFRAMES: AlignFramesConfigurator(),
-            constants.ACTION_BALANCEFRAMES: BalanceFramesConfigurator(),
+            constants.ACTION_JOB: JobConfigurator(self.expert()),
+            constants.ACTION_COMBO: CombinedActionsConfigurator(self.expert()),
+            constants.ACTION_NOISEDETECTION: NoiseDetectionConfigurator(self.expert()),
+            constants.ACTION_FOCUSSTACK: FocusStackConfigurator(self.expert()),
+            constants.ACTION_FOCUSSTACKBUNCH: FocusStackBunchConfigurator(self.expert()),
+            constants.ACTION_MULTILAYER: MultiLayerConfigurator(self.expert()),
+            constants.ACTION_MASKNOISE: MaskNoiseConfigurator(self.expert()),
+            constants.ACTION_VIGNETTING: VignettingConfigurator(self.expert()),
+            constants.ACTION_ALIGNFRAMES: AlignFramesConfigurator(self.expert()),
+            constants.ACTION_BALANCEFRAMES: BalanceFramesConfigurator(self.expert()),
         }
-        return configurators.get(action_type, DefaultActionConfigurator())
+        return configurators.get(action_type, DefaultActionConfigurator(self.expert()))
 
     def accept(self):
         self.parent()._project_buffer.append(self.parent().project.clone())
@@ -370,8 +373,14 @@ class ActionConfigDialog(QDialog):
         else:
             self.parent()._project_buffer.pop()
 
+    def expert(self):
+        return self.parent().expert_options
+
 
 class NoNameActionConfigurator(ActionConfigurator):
+    def __init__(self, expert=False):
+        super().__init__(expert)
+
     def update_params(self, params):
         return self.builder.update_params(params)
 
@@ -382,12 +391,18 @@ class NoNameActionConfigurator(ActionConfigurator):
 
 
 class DefaultActionConfigurator(NoNameActionConfigurator):
+    def __init__(self, expert=False):
+        super().__init__(expert)
+
     def create_form(self, layout, action, tag='Action'):
         self.builder = FieldBuilder(layout, action)
         self.builder.add_field('name', FIELD_TEXT, f'{tag} name', required=True)
 
 
 class JobConfigurator(DefaultActionConfigurator):
+    def __init__(self, expert=False):
+        super().__init__(expert)
+
     def create_form(self, layout, action):
         super().create_form(layout, action, "Job")
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
@@ -396,6 +411,9 @@ class JobConfigurator(DefaultActionConfigurator):
 
 
 class NoiseDetectionConfigurator(DefaultActionConfigurator):
+    def __init__(self, expert=False):
+        super().__init__(expert)
+
     def create_form(self, layout, action):
         super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True,
@@ -406,8 +424,9 @@ class NoiseDetectionConfigurator(DefaultActionConfigurator):
                                default=-1, min=-1, max=1000)
         self.builder.add_field('channel_thresholds', FIELD_INT_TUPLE, 'Noise threshold', required=False, size=3,
                                default=constants.DEFAULT_CHANNEL_THRESHOLDS, labels=constants.RGB_LABELS, min=[1] * 3, max=[1000] * 3)
-        self.builder.add_field('blur_size', FIELD_INT, 'Blur size (px)', required=False,
-                               default=constants.DEFAULT_BLUR_SIZE, min=1, max=50)
+        if self.expert:
+            self.builder.add_field('blur_size', FIELD_INT, 'Blur size (px)', required=False,
+                                   default=constants.DEFAULT_BLUR_SIZE, min=1, max=50)
         self.builder.add_field('file_name', FIELD_TEXT, 'File name', required=False,
                                default=constants.DEFAULT_NOISE_MAP_FILENAME,
                                placeholder=constants.DEFAULT_NOISE_MAP_FILENAME)
@@ -420,6 +439,9 @@ class NoiseDetectionConfigurator(DefaultActionConfigurator):
 
 
 class FocusStackBaseConfigurator(DefaultActionConfigurator):
+    def __init__(self, expert=False):
+        super().__init__(expert)
+
     ENERGY_OPTIONS = ['Laplacian', 'Sobel']
     MAP_TYPE_OPTIONS = ['Average', 'Maximum']
     FLOAT_OPTIONS = ['float 32 bits', 'float 64 bits']
@@ -430,11 +452,12 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
 
     def create_form(self, layout, action):
         super().create_form(layout, action)
-        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=False)
-        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
-                               placeholder='relative to working path')
-        self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
-                               placeholder='relative to working path')
+        if self.expert:
+            self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=False)
+            self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
+                                   placeholder='relative to working path')
+            self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
+                                   placeholder='relative to working path')
         self.builder.add_field('scratch_output_dir', FIELD_BOOL, 'Scratch output dir.',
                                required=False, default=True)
 
@@ -463,19 +486,20 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
             elif text == 'Depth map':
                 stacked.setCurrentWidget(q_depthmap)
         change()
-        self.builder.add_field('pyramid_min_size', FIELD_INT, 'Minimum size (px)',
-                               required=False, add_to_layout=q_pyramid.layout(),
-                               default=constants.DEFAULT_PY_MIN_SIZE, min=2, max=256)
-        self.builder.add_field('pyramid_kernel_size', FIELD_INT, 'Kernel size (px)',
-                               required=False, add_to_layout=q_pyramid.layout(),
-                               default=constants.DEFAULT_PY_KERNEL_SIZE, min=3, max=21)
-        self.builder.add_field('pyramid_gen_kernel', FIELD_FLOAT, 'Gen. kernel',
-                               required=False, add_to_layout=q_pyramid.layout(),
-                               default=constants.DEFAULT_PY_GEN_KERNEL, min=0.0, max=2.0)
-        self.builder.add_field('pyramid_float_type', FIELD_COMBO, 'Precision', required=False,
-                               add_to_layout=q_pyramid.layout(), options=self.FLOAT_OPTIONS, values=constants.VALID_FLOATS,
-                               default={k: v for k, v in
-                                        zip(constants.VALID_FLOATS, self.FLOAT_OPTIONS)}[constants.DEFAULT_PY_FLOAT])
+        if self.expert:
+            self.builder.add_field('pyramid_min_size', FIELD_INT, 'Minimum size (px)',
+                                   required=False, add_to_layout=q_pyramid.layout(),
+                                   default=constants.DEFAULT_PY_MIN_SIZE, min=2, max=256)
+            self.builder.add_field('pyramid_kernel_size', FIELD_INT, 'Kernel size (px)',
+                                   required=False, add_to_layout=q_pyramid.layout(),
+                                   default=constants.DEFAULT_PY_KERNEL_SIZE, min=3, max=21)
+            self.builder.add_field('pyramid_gen_kernel', FIELD_FLOAT, 'Gen. kernel',
+                                   required=False, add_to_layout=q_pyramid.layout(),
+                                   default=constants.DEFAULT_PY_GEN_KERNEL, min=0.0, max=2.0)
+            self.builder.add_field('pyramid_float_type', FIELD_COMBO, 'Precision', required=False,
+                                   add_to_layout=q_pyramid.layout(), options=self.FLOAT_OPTIONS, values=constants.VALID_FLOATS,
+                                   default={k: v for k, v in
+                                            zip(constants.VALID_FLOATS, self.FLOAT_OPTIONS)}[constants.DEFAULT_PY_FLOAT])
         self.builder.add_field('depthmap_energy', FIELD_COMBO, 'Energy', required=False,
                                add_to_layout=q_depthmap.layout(),
                                options=self.ENERGY_OPTIONS, values=constants.VALID_DM_ENERGY,
@@ -486,40 +510,49 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
                                options=self.MAP_TYPE_OPTIONS, values=constants.VALID_DM_MAP,
                                default={k: v for k, v in
                                         zip(constants.VALID_DM_MAP, self.MAP_TYPE_OPTIONS)}[constants.DEFAULT_DM_MAP])
-        self.builder.add_field('depthmap_kernel_size', FIELD_INT, 'Kernel size (px)',
-                               required=False, add_to_layout=q_depthmap.layout(),
-                               default=constants.DEFAULT_DM_KERNEL_SIZE, min=3, max=21)
-        self.builder.add_field('depthmap_blur_size', FIELD_INT, 'Blurl size (px)',
-                               required=False, add_to_layout=q_depthmap.layout(),
-                               default=constants.DEFAULT_DM_BLUR_SIZE, min=1, max=21)
-        self.builder.add_field('depthmap_smooth_size', FIELD_INT, 'Smooth size (px)',
-                               required=False, add_to_layout=q_depthmap.layout(),
-                               default=constants.DEFAULT_DM_SMOOTH_SIZE, min=0, max=256)
-        self.builder.add_field('depthmap_temperature', FIELD_FLOAT, 'Temperature', required=False,
-                               add_to_layout=q_depthmap.layout(), default=constants.DEFAULT_DM_TEMPERATURE, min=0, max=1, step=0.05)
-        self.builder.add_field('depthmap_levels', FIELD_INT, 'Levels', required=False,
-                               add_to_layout=q_depthmap.layout(), default=constants.DEFAULT_DM_LEVELS, min=2, max=6)
-        self.builder.add_field('depthmap_float_type', FIELD_COMBO, 'Precision', required=False,
-                               add_to_layout=q_depthmap.layout(), options=self.FLOAT_OPTIONS, values=constants.VALID_FLOATS,
-                               default={k: v for k, v in
-                                        zip(constants.VALID_FLOATS, self.FLOAT_OPTIONS)}[constants.DEFAULT_DM_FLOAT])
+        if self.expert:
+            self.builder.add_field('depthmap_kernel_size', FIELD_INT, 'Kernel size (px)',
+                                   required=False, add_to_layout=q_depthmap.layout(),
+                                   default=constants.DEFAULT_DM_KERNEL_SIZE, min=3, max=21)
+            self.builder.add_field('depthmap_blur_size', FIELD_INT, 'Blurl size (px)',
+                                   required=False, add_to_layout=q_depthmap.layout(),
+                                   default=constants.DEFAULT_DM_BLUR_SIZE, min=1, max=21)
+            self.builder.add_field('depthmap_smooth_size', FIELD_INT, 'Smooth size (px)',
+                                   required=False, add_to_layout=q_depthmap.layout(),
+                                   default=constants.DEFAULT_DM_SMOOTH_SIZE, min=0, max=256)
+            self.builder.add_field('depthmap_temperature', FIELD_FLOAT, 'Temperature', required=False,
+                                   add_to_layout=q_depthmap.layout(), default=constants.DEFAULT_DM_TEMPERATURE,
+                                   min=0, max=1, step=0.05)
+            self.builder.add_field('depthmap_levels', FIELD_INT, 'Levels', required=False,
+                                   add_to_layout=q_depthmap.layout(), default=constants.DEFAULT_DM_LEVELS, min=2, max=6)
+            self.builder.add_field('depthmap_float_type', FIELD_COMBO, 'Precision', required=False,
+                                   add_to_layout=q_depthmap.layout(), options=self.FLOAT_OPTIONS, values=constants.VALID_FLOATS,
+                                   default={k: v for k, v in
+                                            zip(constants.VALID_FLOATS, self.FLOAT_OPTIONS)}[constants.DEFAULT_DM_FLOAT])
         self.builder.layout.addRow(stacked)
         combo.currentIndexChanged.connect(change)
 
 
 class FocusStackConfigurator(FocusStackBaseConfigurator):
+    def __init__(self, expert=False):
+        super().__init__(expert)
+
     def create_form(self, layout, action):
         super().create_form(layout, action)
-        self.builder.add_field('exif_path', FIELD_REL_PATH, 'Exif data path', required=False,
-                               placeholder='relative to working path')
-        self.builder.add_field('prefix', FIELD_TEXT, 'Ouptut filename prefix', required=False,
-                               default=constants.DEFAULT_STACK_PREFIX, placeholder="_stack")
+        if self.expert:
+            self.builder.add_field('exif_path', FIELD_REL_PATH, 'Exif data path', required=False,
+                                   placeholder='relative to working path')
+            self.builder.add_field('prefix', FIELD_TEXT, 'Ouptut filename prefix', required=False,
+                                   default=constants.DEFAULT_STACK_PREFIX, placeholder="_stack")
         self.builder.add_field('plot_stack', FIELD_BOOL, 'Plot stack', required=False,
                                default=constants.DEFAULT_PLOT_STACK)
         super().common_fields(layout, action)
 
 
 class FocusStackBunchConfigurator(FocusStackBaseConfigurator):
+    def __init__(self, expert=False):
+        super().__init__(expert)
+
     def create_form(self, layout, action):
         super().create_form(layout, action)
         self.builder.add_field('frames', FIELD_INT, 'Frames', required=False,
@@ -532,15 +565,20 @@ class FocusStackBunchConfigurator(FocusStackBaseConfigurator):
 
 
 class MultiLayerConfigurator(DefaultActionConfigurator):
+    def __init__(self, expert=False):
+        super().__init__(expert)
+
     def create_form(self, layout, action):
         super().create_form(layout, action)
-        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=False)
-        self.builder.add_field('input_path', FIELD_REL_PATH, f'Input path (separate by {constants.PATH_SEPARATOR})', required=False,
-                               multiple_entries=True, placeholder='relative to working path')
-        self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
-                               placeholder='relative to working path')
-        self.builder.add_field('exif_path', FIELD_REL_PATH, 'Exif data path', required=False,
-                               placeholder='relative to working path')
+        if self.expert:
+            self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=False)
+            self.builder.add_field('input_path', FIELD_REL_PATH,
+                                   f'Input path (separate by {constants.PATH_SEPARATOR})', required=False,
+                                   multiple_entries=True, placeholder='relative to working path')
+            self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
+                                   placeholder='relative to working path')
+            self.builder.add_field('exif_path', FIELD_REL_PATH, 'Exif data path', required=False,
+                                   placeholder='relative to working path')
         self.builder.add_field('scratch_output_dir', FIELD_BOOL, 'Scratch output dir.',
                                required=False, default=True)
         self.builder.add_field('reverse_order', FIELD_BOOL, 'Reverse file order',
@@ -548,43 +586,56 @@ class MultiLayerConfigurator(DefaultActionConfigurator):
 
 
 class CombinedActionsConfigurator(DefaultActionConfigurator):
+    def __init__(self, expert=False):
+        super().__init__(expert)
+
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
-        self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=False)
-        self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
-                               must_exist=True, placeholder='relative to working path')
-        self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
-                               placeholder='relative to working path')
+        if self.expert:
+            self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=False)
+            self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
+                                   must_exist=True, placeholder='relative to working path')
+            self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
+                                   placeholder='relative to working path')
         self.builder.add_field('scratch_output_dir', FIELD_BOOL, 'Scratch output dir.',
                                required=False, default=True)
-        self.builder.add_field('plot_path', FIELD_REL_PATH, 'Plots path', required=False, default="plots",
-                               placeholder='relative to working path')
-        self.builder.add_field('resample', FIELD_INT, 'Resample frame stack', required=False,
-                               default=1, min=1, max=100)
-        self.builder.add_field('ref_idx', FIELD_INT, 'Reference frame index', required=False,
-                               default=-1, min=-1, max=1000)
-        self.builder.add_field('step_process', FIELD_BOOL, 'Step process', required=False, default=True)
+        if self.expert:
+            self.builder.add_field('plot_path', FIELD_REL_PATH, 'Plots path', required=False, default="plots",
+                                   placeholder='relative to working path')
+            self.builder.add_field('resample', FIELD_INT, 'Resample frame stack', required=False,
+                                   default=1, min=1, max=100)
+            self.builder.add_field('ref_idx', FIELD_INT, 'Reference frame index', required=False,
+                                   default=-1, min=-1, max=1000)
+            self.builder.add_field('step_process', FIELD_BOOL, 'Step process', required=False, default=True)
 
 
 class MaskNoiseConfigurator(NoNameActionConfigurator):
+    def __init__(self, expert=False):
+        super().__init__(expert)
+
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
         self.builder.add_field('noise_mask', FIELD_REL_PATH, 'Noise mask file', required=False,
                                path_type='file', must_exist=True,
                                default=constants.DEFAULT_NOISE_MAP_FILENAME, placeholder=constants.DEFAULT_NOISE_MAP_FILENAME)
-        self.builder.add_field('kernel_size', FIELD_INT, 'Kernel size', required=False,
-                               default=constants.DEFAULT_MN_KERNEL_SIZE, min=1, max=10)
-        self.builder.add_field('method', FIELD_COMBO, 'Interpolation method', required=False,
-                               options=['Mean', 'Median'], default='Mean')
+        if self.expert:
+            self.builder.add_field('kernel_size', FIELD_INT, 'Kernel size', required=False,
+                                   default=constants.DEFAULT_MN_KERNEL_SIZE, min=1, max=10)
+            self.builder.add_field('method', FIELD_COMBO, 'Interpolation method', required=False,
+                                   options=['Mean', 'Median'], default='Mean')
 
 
 class VignettingConfigurator(NoNameActionConfigurator):
+    def __init__(self, expert=False):
+        super().__init__(expert)
+
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
-        self.builder.add_field('r_steps', FIELD_INT, 'Radial steps', required=False,
-                               default=constants.DEFAULT_R_STEPS, min=1, max=1000)
-        self.builder.add_field('black_threshold', FIELD_INT, 'Black intensity threshold', required=False,
-                               default=constants.DEFAULT_BLACK_THRESHOLD, min=0, max=1000)
+        if self.expert:
+            self.builder.add_field('r_steps', FIELD_INT, 'Radial steps', required=False,
+                                   default=constants.DEFAULT_R_STEPS, min=1, max=1000)
+            self.builder.add_field('black_threshold', FIELD_INT, 'Black intensity threshold', required=False,
+                                   default=constants.DEFAULT_BLACK_THRESHOLD, min=0, max=1000)
         self.builder.add_field('max_correction', FIELD_FLOAT, 'Max. correction', required=False,
                                default=constants.DEFAULT_MAX_CORRECTION, min=0, max=1, step=0.05)
         self.add_bold_label("Miscellanea:")
@@ -598,40 +649,45 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
     TRANSFORM_OPTIONS = ['Rigid', 'Homography']
     MATCHING_METHOD_OPTIONS = ['K-nearest neighbors', 'Hamming distance']
 
+    def __init__(self, expert=False):
+        super().__init__(expert)
+
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
-        self.add_bold_label("Feature identification:")
-        self.builder.add_field('detector', FIELD_COMBO, 'Detector', required=False,
-                               options=['SIFT', 'ORB', 'SURF', 'AKAZE'], default=constants.DEFAULT_DETECTOR)
-        self.builder.add_field('descriptor', FIELD_COMBO, 'Descriptor', required=False,
-                               options=['SIFT', 'ORB', 'AKAZE'], default=constants.DEFAULT_DESCRIPTOR)
-        self.add_bold_label("Feature matching:")
-        self.builder.add_field('method', FIELD_COMBO, 'Method', required=False,
-                               options=self.MATCHING_METHOD_OPTIONS, values=constants.VALID_MATCHING_METHODS,
-                               default=constants.DEFAULT_MATCHING_METHOD)
-        self.builder.add_field('flann_idx_kdtree', FIELD_INT, 'Flann idx kdtree', required=False,
-                               default=constants.DEFAULT_FLANN_IDX_KDTREE, min=0, max=10)
-        self.builder.add_field('flann_trees', FIELD_INT, 'Flann trees', required=False,
-                               default=constants.DEFAULT_FLANN_TREES, min=0, max=10)
-        self.builder.add_field('flann_checks', FIELD_INT, 'Flann checks', required=False,
-                               default=constants.DEFAULT_FLANN_CHECKS, min=0, max=1000)
-        self.builder.add_field('threshold', FIELD_FLOAT, 'Threshold', required=False,
-                               default=constants.DEFAULT_ALIGN_THRESHOLD, min=0, max=1, step=0.05)
-        self.add_bold_label("Transform:")
-        self.builder.add_field('transform', FIELD_COMBO, 'Transform', required=False,
-                               options=self.TRANSFORM_OPTIONS, values=constants.VALID_TRANSFORMS,
-                               default=constants.DEFAULT_TRANSFORM)
-        self.builder.add_field('rans_threshold', FIELD_FLOAT, 'Homography RANS threshold', required=False,
-                               default=constants.DEFAULT_RANS_THRESHOLD, min=0, max=20, step=0.1)
-        self.add_bold_label("Border:")
-        self.builder.add_field('border_mode', FIELD_COMBO, 'Border mode', required=False,
-                               options=self.BORDER_MODE_OPTIONS, values=constants.VALID_BORDER_MODES,
-                               default=constants.DEFAULT_BORDER_MODE)
-        self.builder.add_field('border_value', FIELD_INT_TUPLE, 'Border value (if constant)', required=False, size=4,
-                               default=constants.DEFAULT_BORDER_VALUE, labels=constants.RGBA_LABELS,
-                               min=constants.DEFAULT_BORDER_VALUE, max=[255] * 4)
-        self.builder.add_field('border_blur', FIELD_FLOAT, 'Border blur', required=False,
-                               default=constants.DEFAULT_BORDER_BLUR, min=0, max=1000, step=1)
+        if self.expert:
+            self.add_bold_label("Feature identification:")
+            self.builder.add_field('detector', FIELD_COMBO, 'Detector', required=False,
+                                   options=['SIFT', 'ORB', 'SURF', 'AKAZE'], default=constants.DEFAULT_DETECTOR)
+            self.builder.add_field('descriptor', FIELD_COMBO, 'Descriptor', required=False,
+                                   options=['SIFT', 'ORB', 'AKAZE'], default=constants.DEFAULT_DESCRIPTOR)
+            self.add_bold_label("Feature matching:")
+            self.builder.add_field('method', FIELD_COMBO, 'Method', required=False,
+                                   options=self.MATCHING_METHOD_OPTIONS, values=constants.VALID_MATCHING_METHODS,
+                                   default=constants.DEFAULT_MATCHING_METHOD)
+            self.builder.add_field('flann_idx_kdtree', FIELD_INT, 'Flann idx kdtree', required=False,
+                                   default=constants.DEFAULT_FLANN_IDX_KDTREE, min=0, max=10)
+            self.builder.add_field('flann_trees', FIELD_INT, 'Flann trees', required=False,
+                                   default=constants.DEFAULT_FLANN_TREES, min=0, max=10)
+            self.builder.add_field('flann_checks', FIELD_INT, 'Flann checks', required=False,
+                                   default=constants.DEFAULT_FLANN_CHECKS, min=0, max=1000)
+            self.builder.add_field('threshold', FIELD_FLOAT, 'Threshold', required=False,
+                                   default=constants.DEFAULT_ALIGN_THRESHOLD, min=0, max=1, step=0.05)
+        if self.expert:
+            self.add_bold_label("Transform:")
+            self.builder.add_field('transform', FIELD_COMBO, 'Transform', required=False,
+                                   options=self.TRANSFORM_OPTIONS, values=constants.VALID_TRANSFORMS,
+                                   default=constants.DEFAULT_TRANSFORM)
+            self.builder.add_field('rans_threshold', FIELD_FLOAT, 'Homography RANS threshold', required=False,
+                                   default=constants.DEFAULT_RANS_THRESHOLD, min=0, max=20, step=0.1)
+            self.add_bold_label("Border:")
+            self.builder.add_field('border_mode', FIELD_COMBO, 'Border mode', required=False,
+                                   options=self.BORDER_MODE_OPTIONS, values=constants.VALID_BORDER_MODES,
+                                   default=constants.DEFAULT_BORDER_MODE)
+            self.builder.add_field('border_value', FIELD_INT_TUPLE, 'Border value (if constant)', required=False, size=4,
+                                   default=constants.DEFAULT_BORDER_VALUE, labels=constants.RGBA_LABELS,
+                                   min=constants.DEFAULT_BORDER_VALUE, max=[255] * 4)
+            self.builder.add_field('border_blur', FIELD_FLOAT, 'Border blur', required=False,
+                                   default=constants.DEFAULT_BORDER_BLUR, min=0, max=1000, step=1)
         self.add_bold_label("Miscellanea:")
         self.builder.add_field('plot_summary', FIELD_BOOL, 'Plot summary', required=False, default=False)
         self.builder.add_field('plot_matches', FIELD_BOOL, 'Plot matches', required=False, default=False)
@@ -641,15 +697,19 @@ class BalanceFramesConfigurator(NoNameActionConfigurator):
     CORRECTION_MAP_OPTIONS = ['Linear', 'Gamma', 'Match histograms']
     CHANNEL_OPTIONS = ['Luminosity', 'RGB', 'HSV', 'HLS']
 
+    def __init__(self, expert=False):
+        super().__init__(expert)
+
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
-        self.builder.add_field('mask_size', FIELD_FLOAT, 'Mask size', required=False,
-                               default=0, min=0, max=5, step=0.1)
-        self.builder.add_field('intensity_interval', FIELD_INT_TUPLE, 'Intensity range', required=False, size=2,
-                               default=[v for k, v in constants.DEFAULT_INTENSITY_INTERVAL.items()],
-                               labels=['min', 'max'], min=[-1] * 2, max=[65536] * 2)
-        self.builder.add_field('img_scale', FIELD_INT, 'Image resample', required=False,
-                               default=constants.DEFAULT_IMG_SCALE, min=1, max=256)
+        if self.expert:
+            self.builder.add_field('mask_size', FIELD_FLOAT, 'Mask size', required=False,
+                                   default=0, min=0, max=5, step=0.1)
+            self.builder.add_field('intensity_interval', FIELD_INT_TUPLE, 'Intensity range', required=False, size=2,
+                                   default=[v for k, v in constants.DEFAULT_INTENSITY_INTERVAL.items()],
+                                   labels=['min', 'max'], min=[-1] * 2, max=[65536] * 2)
+            self.builder.add_field('img_scale', FIELD_INT, 'Image resample', required=False,
+                                   default=constants.DEFAULT_IMG_SCALE, min=1, max=256)
         self.builder.add_field('corr_map', FIELD_COMBO, 'Correction map', required=False,
                                options=self.CORRECTION_MAP_OPTIONS, values=constants.VALID_BALANCE,
                                default='Linear')

@@ -66,8 +66,12 @@ def test_field_builder_add_field(form_layout, mock_action, qapp):
 
 
 def test_action_config_dialog(qtbot, mock_action):
-    dialog = ActionConfigDialog(mock_action)
-    qtbot.addWidget(dialog)
+    mock_parent = MagicMock()
+    mock_parent.expert_options = False
+    mock_action.type_name = "ProjectEditor"
+    with patch.object(ActionConfigDialog, 'parent', return_value=mock_parent):
+        dialog = ActionConfigDialog(mock_action)
+        qtbot.addWidget(dialog)
     assert dialog.windowTitle() == f"Configure {mock_action.type_name}"
     assert dialog.layout is not None
     assert isinstance(dialog.configurator, DefaultActionConfigurator)

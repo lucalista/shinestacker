@@ -45,6 +45,7 @@ class MainWindow(ActionsWindow, LogManager):
         menubar = self.menuBar()
         self.add_file_menu(menubar)
         self.add_edit_menu(menubar)
+        self.add_view_menu(menubar)
         self.add_job_menu(menubar)
         self.add_actions_menu(menubar)
         toolbar = QToolBar(self)
@@ -160,6 +161,15 @@ class MainWindow(ActionsWindow, LogManager):
         disable_all_action.setShortcut("Ctrl+Shift+B")
         disable_all_action.triggered.connect(self.disable_all)
         menu.addAction(disable_all_action)
+
+    def add_view_menu(self, menubar):
+        menu = menubar.addMenu("&View")
+        self.expert_options_action = QAction("Expert Options", self)
+        self.expert_options_action.setShortcut("Ctrl+Shift+X")
+        self.expert_options_action.triggered.connect(self.toggle_expert_options)
+        self.expert_options_action.setCheckable(True)
+        self.expert_options_action.setChecked(self.expert_options)
+        menu.addAction(self.expert_options_action)
 
     def add_job_menu(self, menubar):
         menu = menubar.addMenu("&Jobs")
@@ -346,6 +356,9 @@ class MainWindow(ActionsWindow, LogManager):
             for worker in self._workers:
                 worker.stop()
             self.close()
+
+    def toggle_expert_options(self):
+        self.expert_options = self.expert_options_action.isChecked()
 
     def before_thread_begins(self):
         self.run_job_action.setEnabled(False)

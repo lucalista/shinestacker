@@ -81,6 +81,7 @@ class ProjectEditor(QMainWindow):
         self.action_list = QListWidget()
         self.project = None
         self.job_list_model = None
+        self.expert_options = False
         self.script_dir = os.path.dirname(__file__)
 
     def set_project(self, project):
