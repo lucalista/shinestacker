@@ -229,7 +229,7 @@ class ImageEditor(QMainWindow):
             traceback.print_tb(e.__traceback__)
             QMessageBox.critical(self, "Save Error", f"Could not save file: {str(e)}")
 
-    def new_file(self):
+    def close_file(self):
         if self._check_unsaved_changes():
             self.master_layer = None
             self.blank_layer = None

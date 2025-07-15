@@ -51,7 +51,7 @@ class ActionsWindow(ProjectEditor):
         self._project_buffer.append(self.project.clone())
         self.update_title()
 
-    def new_project(self):
+    def close_project(self):
         if self._check_unsaved_changes():
             self.set_project(Project())
             self._current_file = None

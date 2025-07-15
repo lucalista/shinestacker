@@ -39,10 +39,10 @@ def mock_project_file():
         return f.name
 
 
-def test_new_project(actions_window, qtbot):
+def test_close_project(actions_window, qtbot):
     actions_window._modified_project = True
     actions_window._current_file = "test.fsp"
-    actions_window.new_project()
+    actions_window.close_project()
     assert actions_window._current_file is None
     assert actions_window._modified_project is False
     assert actions_window.job_list.count() == 0

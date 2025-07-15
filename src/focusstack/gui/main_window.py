@@ -84,10 +84,6 @@ class MainWindow(ActionsWindow, LogManager):
 
     def add_file_menu(self, menubar):
         menu = menubar.addMenu("&File")
-        new_action = QAction("&New", self)
-        new_action.setShortcut("Ctrl+N")
-        new_action.triggered.connect(self.new_project)
-        menu.addAction(new_action)
         open_action = QAction("&Open...", self)
         open_action.setShortcut("Ctrl+O")
         open_action.triggered.connect(self.open_project)
@@ -100,6 +96,10 @@ class MainWindow(ActionsWindow, LogManager):
         save_as_action.setShortcut("Ctrl+Shift+S")
         save_as_action.triggered.connect(self.save_project_as)
         menu.addAction(save_as_action)
+        close_action = QAction("&Close", self)
+        close_action.setShortcut("Ctrl+W")
+        close_action.triggered.connect(self.close_project)
+        menu.addAction(close_action)
 
     def add_edit_menu(self, menubar):
         menu = menubar.addMenu("&Edit")
