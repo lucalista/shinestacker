@@ -2,7 +2,8 @@ import pytest
 import time
 from unittest.mock import MagicMock, patch
 from PySide6.QtWidgets import QApplication
-from focusstack.gui.gui_run import (ColorEntry, ColorPalette, ColorButton,
+from focusstack.gui.colors import ColorEntry
+from focusstack.gui.gui_run import (ColorPalette, ColorButton,
                                     TimerProgressBar, RunWindow, RunWorker, constants)
 
 

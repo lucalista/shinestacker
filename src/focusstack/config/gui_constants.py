@@ -4,6 +4,7 @@ from PySide6.QtGui import QColor
 
 class _GuiConstants:
     GUI_IMG_WIDTH = 250  # px
+    DISABLED_TAG = ""  # " <disabled>"
 
     MIN_ZOOMED_IMG_WIDTH = 400
     MAX_ZOOMED_IMG_PX_SIZE = 50

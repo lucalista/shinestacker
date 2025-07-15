@@ -2,22 +2,16 @@ import os.path
 import os
 import json
 import jsonpickle
-from PySide6.QtWidgets import QMessageBox, QFileDialog, QListWidgetItem, QDialog
-from PySide6.QtGui import QColor, QIcon
+from PySide6.QtWidgets import QMessageBox, QFileDialog, QDialog
 from focusstack.gui.project_model import Project
 from focusstack.config.constants import constants
-from focusstack.gui.gui_run import ColorPalette
 from focusstack.gui.action_config import ActionConfigDialog
 from focusstack.gui.project_editor import ProjectEditor
-
-ENABLED_LIST_ITEM_COLOR = ColorPalette.DARK_BLUE.tuple()
-DISABLED_LIST_ITEM_COLOR = ColorPalette.DARK_RED.tuple()
 
 
 class ActionsWindow(ProjectEditor):
     def __init__(self):
         super().__init__()
-        self.script_dir = os.path.dirname(__file__)
         self._current_file = None
         self._modified_project = False
         self.update_title()
@@ -29,20 +23,6 @@ class ActionsWindow(ProjectEditor):
             if self._modified_project:
                 title += " *"
         self.window().setWindowTitle(title)
-
-    def get_icon(self, icon):
-        return QIcon(os.path.join(self.script_dir, f"img/{icon}.png"))
-
-    def list_item(self, text, enabled):
-        if enabled:
-            color = QColor(*ENABLED_LIST_ITEM_COLOR)
-            icon = self.get_icon("on")
-        else:
-            color = QColor(*DISABLED_LIST_ITEM_COLOR)
-            icon = self.get_icon("off")
-        item = QListWidgetItem(icon, text)
-        item.setForeground(color)
-        return item
 
     def mark_as_modified(self):
         self._modified_project = True

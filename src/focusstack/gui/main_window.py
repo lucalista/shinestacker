@@ -322,7 +322,7 @@ class MainWindow(ActionsWindow, LogManager):
     def refresh_ui(self, job_row=-1, action_row=-1):
         self.job_list.clear()
         for job in self.project.jobs:
-            self.job_list.addItem(self.list_item(self.job_text(job, long_name=True), job.enabled()))
+            self.add_list_item(self.job_list, self.job_text(job, long_name=True), job.enabled())
         if self.project.jobs:
             self.job_list.setCurrentRow(0)
         if job_row >= 0:

@@ -4,7 +4,7 @@ import tempfile
 import pytest
 import jsonpickle
 from unittest.mock import patch
-from PySide6.QtWidgets import QMessageBox, QListWidgetItem
+from PySide6.QtWidgets import QMessageBox
 from focusstack.gui.actions_window import ActionsWindow
 from focusstack.gui.project_model import Project
 from focusstack.gui.project_model import get_action_working_path, get_action_input_path, get_action_output_path
@@ -115,14 +115,6 @@ def test_open_project_with_missing_paths(actions_window, qtbot, mock_project_fil
             actions_window.open_project(mock_project_file)
             mock_warning.assert_not_called()
     os.unlink(mock_project_file)
-
-
-def test_list_item_creation(actions_window):
-    enabled_item = actions_window.list_item("Enabled", True)
-    disabled_item = actions_window.list_item("Disabled", False)
-    assert isinstance(enabled_item, QListWidgetItem)
-    assert isinstance(disabled_item, QListWidgetItem)
-    assert enabled_item.foreground().color() != disabled_item.foreground().color()
 
 
 def test_edit_action(actions_window, qtbot, sample_project):
