@@ -3,6 +3,8 @@ from PySide6.QtGui import QColor
 
 
 class _GuiConstants:
+    GUI_IMG_WIDTH = 250  # px
+
     MIN_ZOOMED_IMG_WIDTH = 400
     MAX_ZOOMED_IMG_PX_SIZE = 50
     MAX_UNDO_SIZE = 65535
@@ -20,11 +22,11 @@ class _GuiConstants:
     MIN_MOUSE_STEP_BRUSH_FRACTION = 0.25
     PAINT_REFRESH_TIMER = 50  # milliseconds
 
-    THUMB_WIDTH = 120
-    THUMB_HEIGHT = 80
-    IMG_WIDTH = 100
-    IMG_HEIGHT = 80
-    LABEL_HEIGHT = 20
+    THUMB_WIDTH = 120  # px
+    THUMB_HEIGHT = 80  # px
+    IMG_WIDTH = 100  # px
+    IMG_HEIGHT = 80  # px
+    LABEL_HEIGHT = 20  # px
 
     MAX_UNDO_STEPS = 50
 

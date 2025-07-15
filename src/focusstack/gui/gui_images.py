@@ -6,9 +6,8 @@ from PySide6.QtPdf import QPdfDocument
 from PySide6.QtPdfWidgets import QPdfView
 from PySide6.QtCore import Qt, QMargins
 from PySide6.QtGui import QPixmap
+from focusstack.config.gui_constants import gui_constants
 from focusstack.core.core_utils import running_under_windows, running_under_macos
-
-GUI_IMG_WIDTH = 250  # px
 
 
 def open_file(file_path):
@@ -37,10 +36,10 @@ class GuiPdfView(QPdfView):
         if err == QPdfDocument.Error.None_:
             self.setDocument(self.pdf_document)
             first_page_size = self.pdf_document.pagePointSize(0)
-            zoom_factor = GUI_IMG_WIDTH / first_page_size.width()
+            zoom_factor = gui_constants.GUI_IMG_WIDTH / first_page_size.width()
             extra_zoom = 0.75 if running_under_windows() else 1.0
             self.setZoomFactor(zoom_factor * extra_zoom)
-            self.setFixedSize(GUI_IMG_WIDTH,
+            self.setFixedSize(gui_constants.GUI_IMG_WIDTH,
                               int(first_page_size.height() * zoom_factor))
         else:
             raise RuntimeError(f"Can't load file: {file_path}. Error code: {err}.")
@@ -66,7 +65,7 @@ class GuiImageView(QWidget):
     def __init__(self, file_path, parent=None):
         super().__init__(parent)
         self.file_path = file_path
-        self.setFixedWidth(GUI_IMG_WIDTH)
+        self.setFixedWidth(gui_constants.GUI_IMG_WIDTH)
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
@@ -76,7 +75,7 @@ class GuiImageView(QWidget):
         self.setLayout(self.layout)
         pixmap = QPixmap(file_path)
         if pixmap:
-            scaled_pixmap = pixmap.scaledToWidth(GUI_IMG_WIDTH, Qt.SmoothTransformation)
+            scaled_pixmap = pixmap.scaledToWidth(gui_constants.GUI_IMG_WIDTH, Qt.SmoothTransformation)
             self.image_label.setPixmap(scaled_pixmap)
         else:
             raise RuntimeError(f"Can't load file: {file_path}.")
@@ -103,7 +102,7 @@ class GuiOpenApp(QWidget):
         super().__init__(parent)
         self.file_path = file_path
         self.app = app
-        self.setFixedWidth(GUI_IMG_WIDTH)
+        self.setFixedWidth(gui_constants.GUI_IMG_WIDTH)
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
@@ -113,7 +112,7 @@ class GuiOpenApp(QWidget):
         self.setLayout(self.layout)
         pixmap = QPixmap(file_path)
         if pixmap:
-            scaled_pixmap = pixmap.scaledToWidth(GUI_IMG_WIDTH, Qt.SmoothTransformation)
+            scaled_pixmap = pixmap.scaledToWidth(gui_constants.GUI_IMG_WIDTH, Qt.SmoothTransformation)
             self.image_label.setPixmap(scaled_pixmap)
         else:
             raise RuntimeError(f"Can't load file: {file_path}.")
