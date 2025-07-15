@@ -2,6 +2,7 @@ import logging
 import sys
 from pathlib import Path
 import re
+import datetime
 from focusstack.config.config import config
 from focusstack.core.core_utils import get_app_base_path
 if not config.DISABLE_TQDM:
@@ -44,7 +45,7 @@ class TqdmLoggingHandler(logging.StreamHandler):
             logging.StreamHandler.emit(self, record)
 
 
-def setup_logging(console_level=logging.INFO, file_level=logging.DEBUG, log_file=None,
+def setup_logging(console_level=logging.INFO, file_level=logging.DEBUG, log_file='',
                   disable_console=False):
     if hasattr(setup_logging, '_called'):
         return
@@ -62,7 +63,10 @@ def setup_logging(console_level=logging.INFO, file_level=logging.DEBUG, log_file
     tqdm_logger.handlers.clear()
     tqdm_logger.addHandler(tqdm_handler)
     tqdm_logger.propagate = False
-    if log_file:
+    if log_file is not None:
+        if log_file == '':
+            today = datetime.date.today().strftime("%Y-%m-%d")
+            log_file = f"logs/focusstack-{today}.log"
         if log_file[0] != '/':
             log_file = f'{get_app_base_path()}/{log_file}'
         Path(log_file).parent.mkdir(parents=True, exist_ok=True)
