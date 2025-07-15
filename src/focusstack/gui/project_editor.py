@@ -93,7 +93,9 @@ class ProjectEditor(QMainWindow):
         txt = INDENT_SPACE if is_sub_action and indent else ""
         if action.params.get('name', '') != '':
             txt += action.params["name"]
-        ico = "🌼 " if long_name else ""
+        ico = ""
+        if long_name:
+            ico = "🌺 " if is_sub_action else "🌼 "
         txt += f" [{ico}{action.type_name}]"
         if not action.enabled():
             txt += DISABLED_TAG
