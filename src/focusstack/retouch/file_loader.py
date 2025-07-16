@@ -1,5 +1,4 @@
 import numpy as np
-import tifffile
 import traceback
 import cv2
 from psdtags import PsdChannelId

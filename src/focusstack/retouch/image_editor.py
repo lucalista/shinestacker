@@ -1,5 +1,6 @@
 import traceback
 import numpy as np
+import cv2
 from PySide6.QtWidgets import (QMainWindow, QFileDialog, QMessageBox, QAbstractItemView,
                                QVBoxLayout, QLabel, QDialog, QApplication)
 from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QRadialGradient, QGuiApplication, QCursor
@@ -7,6 +8,7 @@ from PySide6.QtCore import Qt, QTimer, QEvent, QPoint
 from focusstack.algorithms.multilayer import write_multilayer_tiff_from_images
 from focusstack.config.constants import constants
 from focusstack.config.gui_constants import gui_constants
+from focusstack.algorithms.utils import write_img
 from focusstack.retouch.brush import Brush
 from focusstack.retouch.brush_controller import BrushController
 from focusstack.retouch.undo_manager import UndoManager
@@ -36,6 +38,10 @@ def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None
     return gradient
 
 
+FILE_TYPE_MULTI = 'multi'
+FILE_TYPE_MASTER = 'master'
+
+
 class ImageEditor(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -46,6 +52,7 @@ class ImageEditor(QMainWindow):
         self.view_mode = 'master'
         self.temp_view_individual = False
         self.current_file_path = ''
+        self.current_file_type = FILE_TYPE_MASTER
         self.exif_path = ''
         self.modified = False
         self.sort_order = 'original'
@@ -80,7 +87,7 @@ class ImageEditor(QMainWindow):
                 QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel
             )
             if reply == QMessageBox.Save:
-                self._save_file()
+                self.save_multilayer()
                 return True
             elif reply == QMessageBox.Discard:
                 return True
@@ -167,8 +174,15 @@ class ImageEditor(QMainWindow):
         self.loading_timer.stop()
         self.loading_dialog.hide()
         self.current_stack = stack
+        if len(stack) > 1:
+            self.current_file_type == FILE_TYPE_MULTI
+        else:
+            self.current_file_type == FILE_TYPE_MASTER
         self.current_labels = self.current_labels_unsorted = labels
+        if labels is None:
+            self.current_file_path = ''
         self.master_layer = master_layer
+        self.modified = False
         self.blank_layer = np.zeros(master_layer.shape[:2])
         self.update_thumbnails()
         self.change_layer(0)
@@ -190,14 +204,77 @@ class ImageEditor(QMainWindow):
         self.update_title()
 
     def save_file(self):
+        if self.current_file_type == FILE_TYPE_MASTER:
+            self.save_master()
+        elif self.current_file_type == FILE_TYPE_MULTI:
+            self.save_multilayer()
+        else:
+            raise ValueError(f"Invalid current file type: {self.current_file_type}")
+        print("saved file: ", self.current_file_type)
+
+    def save_multilayer(self):
         if self.current_stack is None:
             return
         if self.current_file_path != '':
-            self._save_to_path(self.current_file_path)
+            extension = self.current_file_path.split('.')[-1]
+            if extension in ['tif', 'tiff']:
+                self.save_multilayer_to_path(self.current_file_path)
+                return
+        self.save_multilayer_file_as()
+
+    def save_multilayer_as(self):
+        if self.current_stack is None:
+            return
+        path, _ = QFileDialog.getSaveFileName(self, "Save Image", "",
+                                              "TIFF Files (*.tif *.tiff);;All Files (*)")
+        if path:
+            if not path.lower().endswith(('.tif', '.tiff')):
+                path += '.tif'
+            self.save_multilayer_to_path(path)
+
+    def save_multilayer_to_path(self, path):
+        try:
+            master_layer = {'Master': self.master_layer}
+            individual_layers = {label: image for label, image in zip(self.current_labels, self.current_stack)}
+            write_multilayer_tiff_from_images({**master_layer, **individual_layers}, path, exif_path=self.exif_path)
+            self.current_file_path = path
+            self.current_file_type = FILE_TYPE_MULTI
             self.modified = False
             self.update_title()
-        else:
-            self.save_file_as()
+            self.statusBar().showMessage(f"Saved multilayer to: {path}")
+        except Exception as e:
+            traceback.print_tb(e.__traceback__)
+            QMessageBox.critical(self, "Save Error", f"Could not save file: {str(e)}")
+        print("saved multilayer file: ", self.current_file_type)
+
+    def save_master(self):
+        if self.master_layer is None:
+            return
+        if self.current_file_path != '':
+            self.save_master_to_path(self.current_file_path)
+            return
+        self.save_master_as()
+
+    def save_master_as(self):
+        if self.current_stack is None:
+            return
+        path, _ = QFileDialog.getSaveFileName(self, "Save Image", "",
+                                              "TIFF Files (*.tif *.tiff);;JPEG Files (*.jpg *.jpeg);;All Files (*)")
+        if path:
+            self.save_master_to_path(path)
+
+    def save_master_to_path(self, path):
+        try:
+            write_img(path, cv2.cvtColor(self.master_layer, cv2.COLOR_RGB2BGR))
+            self.current_file_path = path
+            self.current_file_type = FILE_TYPE_MASTER
+            self.modified = False
+            self.update_title()
+            self.statusBar().showMessage(f"Saved master layer to: {path}")
+        except Exception as e:
+            traceback.print_tb(e.__traceback__)
+            QMessageBox.critical(self, "Save Error", f"Could not save file: {str(e)}")
+        print("saved master file: ", self.current_file_type)
 
     def select_exif_path(self):
         if self.current_stack is None:
@@ -207,27 +284,6 @@ class ImageEditor(QMainWindow):
         if path:
             self.exif_path = path
             self.statusBar().showMessage(f"EXIF path set to {path}.")
-
-    def save_file_as(self):
-        if self.current_stack is None:
-            return
-        path, _ = QFileDialog.getSaveFileName(self, "Save Image", "",
-                                              "TIFF Files (*.tif *.tiff);;All Files (*)")
-        if path:
-            if not path.lower().endswith(('.tif', '.tiff')):
-                path += '.tiff'
-            self._save_to_path(path)
-            self.statusBar().showMessage(f"Saved: {path}")
-
-    def _save_to_path(self, path):
-        try:
-            master_layer = {'Master': self.master_layer}
-            individual_layers = {label: image for label, image in zip(self.current_labels, self.current_stack)}
-            write_multilayer_tiff_from_images({**master_layer, **individual_layers}, path, exif_path=self.exif_path)
-            self.statusBar().showMessage(f"Saved: {path}")
-        except Exception as e:
-            traceback.print_tb(e.__traceback__)
-            QMessageBox.critical(self, "Save Error", f"Could not save file: {str(e)}")
 
     def close_file(self):
         if self._check_unsaved_changes():
