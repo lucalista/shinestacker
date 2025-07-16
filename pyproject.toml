@@ -40,7 +40,7 @@ dev = [
 ]
 
 [project.scripts]
-focusstack-main = "focusstack.app.main:main"
+focusstack = "focusstack.app.main:main"
 focusstack-project = "focusstack.app.project:main"
 focusstack-retouch = "focusstack.app.retouch:main"
 
