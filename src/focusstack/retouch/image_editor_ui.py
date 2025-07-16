@@ -203,6 +203,8 @@ class ImageEditorUI(ImageEditor):
         file_menu.addAction("Save &Multilayer &As...", self.save_multilayer_as)
         file_menu.addAction("&Close", self.close_file, "Ctrl+W")
         file_menu.addSeparator()
+        file_menu.addAction("&Import frames", self.import_frames)
+        file_menu.addSeparator()
         file_menu.addAction("Select &EXIF path", self.select_exif_path)
 
         edit_menu = menubar.addMenu("&Edit")

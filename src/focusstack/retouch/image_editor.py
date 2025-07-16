@@ -8,7 +8,7 @@ from PySide6.QtCore import Qt, QTimer, QEvent, QPoint
 from focusstack.algorithms.multilayer import write_multilayer_tiff_from_images
 from focusstack.config.constants import constants
 from focusstack.config.gui_constants import gui_constants
-from focusstack.algorithms.utils import write_img
+from focusstack.algorithms.utils import read_img, write_img
 from focusstack.retouch.brush import Brush
 from focusstack.retouch.brush_controller import BrushController
 from focusstack.retouch.undo_manager import UndoManager
@@ -148,7 +148,7 @@ class ImageEditor(QMainWindow):
     def open_file(self, path=None):
         if path is None:
             path, _ = QFileDialog.getOpenFileName(
-                self, "Open Image", "", "Images (*.tif *.tiff *.png *.jpg)")
+                self, "Open Image", "", "Images (*.tif *.tiff *.jpg *.jpeg)")
         if not path:
             return
         self.current_file_path = path
@@ -202,6 +202,38 @@ class ImageEditor(QMainWindow):
     def mark_as_modified(self):
         self.modified = True
         self.update_title()
+
+    def import_frames(self):
+        file_paths, _ = QFileDialog.getOpenFileNames(self, "Select frames", "",
+                                                     "TIFF Images (*.tif *.tiff);;JPEG Images (*.jpg *.jpeg);;All Files (*)")
+        for path in file_paths:
+            try:
+                label = path.split("/")[-1].split(".")[0]
+                img = cv2.cvtColor(read_img(path), cv2.COLOR_BGR2RGB)
+                label_x = label
+                i = 0
+                while label_x in self.current_labels_unsorted:
+                    i += 1
+                    label_x = f"{label} ({i})"
+                self.current_labels_unsorted.append(label_x)
+                self.current_stack = np.insert(self.current_stack, -1, img, axis=0)
+                self.current_labels = self.current_labels_unsorted
+            except Exception as e:
+                traceback.print_tb(e.__traceback__)
+                QMessageBox.critical(self, "Error", str(e))
+                self.statusBar().showMessage(f"Error loading: {path}")
+                break
+        if self.sort_order == 'asc':
+            sorted_indices = sorted(range(len(self.current_labels)),
+                                    key=lambda i: self.current_labels[i].lower())
+        elif self.sort_order == 'desc':
+            sorted_indices = sorted(range(len(self.current_labels)),
+                                    key=lambda i: self.current_labels[i].lower(),
+                                    reverse=True)
+        if self.sort_order != 'original':
+            self.current_labels = [self.current_labels[i] for i in sorted_indices]
+            self.current_stack = self.current_stack[sorted_indices]
+        self.update_thumbnails()
 
     def save_file(self):
         if self.current_file_type == FILE_TYPE_MASTER:
