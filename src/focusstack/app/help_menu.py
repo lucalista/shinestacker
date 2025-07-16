@@ -8,6 +8,7 @@ def add_help_action(app):
     if help_menu:
         help_action = QAction("Online Help", app)
         help_action.triggered.connect(browse_website)
+        help_menu.addSeparator()
         help_menu.addAction(help_action)
 
 
