@@ -95,7 +95,7 @@ class ImageEditor(QMainWindow):
         self.sort_order = order
         if order == 'original':
             if self.current_file_path:
-                self.current_stack, self.current_labels = self.load_tiff_stack(self.current_file_path)
+                self.current_stack, self.current_labels = self.current_labels_unsorted
                 self.update_thumbnails()
                 if self.current_layer >= len(self.current_stack):
                     self.current_layer = len(self.current_stacke) - 1
@@ -167,7 +167,7 @@ class ImageEditor(QMainWindow):
         self.loading_timer.stop()
         self.loading_dialog.hide()
         self.current_stack = stack
-        self.current_labels = labels
+        self.current_labels = self.current_labels_unsorted = labels
         self.master_layer = master_layer
         self.blank_layer = np.zeros(master_layer.shape[:2])
         self.update_thumbnails()
