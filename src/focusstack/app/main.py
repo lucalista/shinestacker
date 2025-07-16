@@ -15,7 +15,7 @@ from focusstack.core.core_utils import get_app_base_path
 from focusstack.gui.main_window import MainWindow
 from focusstack.retouch.image_editor_ui import ImageEditorUI
 from focusstack.app.gui_utils import disable_macos_special_menu_items
-from focusstack.app.help_menu import add_help_menu
+from focusstack.app.help_menu import add_help_action
 from focusstack.app.about_dialog import show_about_dialog
 
 
@@ -35,8 +35,8 @@ class MainApp(QMainWindow):
         self.app_menu = self.create_menu()
         self.project_window.menuBar().insertMenu(self.project_window.menuBar().actions()[0], self.app_menu)
         self.retouch_window.menuBar().insertMenu(self.retouch_window.menuBar().actions()[0], self.app_menu)
-        add_help_menu(self.project_window)
-        add_help_menu(self.retouch_window)
+        add_help_action(self.project_window)
+        add_help_action(self.retouch_window)
         self.set_initial_app()
 
     def switch_to_project(self):

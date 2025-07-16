@@ -48,6 +48,7 @@ class MainWindow(ActionsWindow, LogManager):
         self.add_view_menu(menubar)
         self.add_job_menu(menubar)
         self.add_actions_menu(menubar)
+        self.add_help_menu(menubar)
         toolbar = QToolBar(self)
         self.addToolBar(Qt.TopToolBarArea, toolbar)
         self.fill_toolbar(toolbar)
@@ -227,6 +228,10 @@ class MainWindow(ActionsWindow, LogManager):
             self.sub_action_menu_entries.append(entry_action)
             add_sub_action_menu.addAction(entry_action)
         menu.addMenu(add_sub_action_menu)
+
+    def add_help_menu(self, menubar):
+        menu = menubar.addMenu("&Help")
+        menu.setObjectName("Help")
 
     def fill_toolbar(self, toolbar):
         toolbar.addAction(self.add_job_action)

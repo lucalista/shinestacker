@@ -295,6 +295,9 @@ class ImageEditorUI(ImageEditor):
         cursor_group.addAction(brush_action)
         cursor_group.setExclusive(True)
 
+        help_menu = menubar.addMenu("&Help")
+        help_menu.setObjectName("Help")
+
     def toggle_fullscreen(self, checked):
         if checked:
             self.window().showFullScreen()

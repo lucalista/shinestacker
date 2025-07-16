@@ -1,12 +1,14 @@
 import webbrowser
+from PySide6.QtWidgets import QMenu
 from PySide6.QtGui import QAction
 
 
-def add_help_menu(app):
-    menu = app.menuBar().addMenu("&Help")
-    help_action = QAction("Online Help", app)
-    help_action.triggered.connect(browse_website)
-    menu.addAction(help_action)
+def add_help_action(app):
+    help_menu = app.menuBar().findChild(QMenu, "Help")
+    if help_menu:
+        help_action = QAction("Online Help", app)
+        help_action.triggered.connect(browse_website)
+        help_menu.addAction(help_action)
 
 
 def browse_website():

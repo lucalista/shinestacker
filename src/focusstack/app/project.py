@@ -13,7 +13,7 @@ from focusstack.core.logging import setup_logging
 from focusstack.core.core_utils import get_app_base_path
 from focusstack.gui.main_window import MainWindow
 from focusstack.app.gui_utils import disable_macos_special_menu_items
-from focusstack.app.help_menu import add_help_menu
+from focusstack.app.help_menu import add_help_action
 from focusstack.app.about_dialog import show_about_dialog
 
 
@@ -22,7 +22,7 @@ class ProjectApp(MainWindow):
         super().__init__()
         self.app_menu = self.create_menu()
         self.menuBar().insertMenu(self.menuBar().actions()[0], self.app_menu)
-        add_help_menu(self)
+        add_help_action(self)
 
     def create_menu(self):
         app_menu = QMenu("FocusStack")
