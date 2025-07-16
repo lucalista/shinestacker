@@ -5,10 +5,11 @@ from PySide6.QtWidgets import (QMainWindow, QFileDialog, QMessageBox, QAbstractI
                                QVBoxLayout, QLabel, QDialog, QApplication)
 from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QRadialGradient, QGuiApplication, QCursor
 from PySide6.QtCore import Qt, QTimer, QEvent, QPoint
-from focusstack.algorithms.multilayer import write_multilayer_tiff_from_images
 from focusstack.config.constants import constants
 from focusstack.config.gui_constants import gui_constants
-from focusstack.algorithms.utils import read_img, write_img
+from focusstack.core.exceptions import ShapeError, BitDepthError
+from focusstack.algorithms.multilayer import write_multilayer_tiff_from_images
+from focusstack.algorithms.utils import read_img, write_img, validate_image
 from focusstack.retouch.brush import Brush
 from focusstack.retouch.brush_controller import BrushController
 from focusstack.retouch.undo_manager import UndoManager
@@ -175,6 +176,8 @@ class ImageEditor(QMainWindow):
         if labels is None:
             self.current_file_path = ''
         self.master_layer = master_layer
+        self.shape = np.array(master_layer).shape
+        self.dtype = master_layer.dtype
         self.modified = False
         self.blank_layer = np.zeros(master_layer.shape[:2])
         self.update_thumbnails()
@@ -203,6 +206,16 @@ class ImageEditor(QMainWindow):
             try:
                 label = path.split("/")[-1].split(".")[0]
                 img = cv2.cvtColor(read_img(path), cv2.COLOR_BGR2RGB)
+                try:
+                    validate_image(img, self.shape, self.dtype)
+                except ShapeError as e:
+                    QMessageBox.warning(self, "Import error", f"All flies must have the same shape. {str(e)}")
+                    return
+                except BitDepthError:
+                    pass
+                except Exception as e:
+                    traceback.print_tb(e.__traceback__)
+                    raise e
                 label_x = label
                 i = 0
                 while label_x in self.current_labels:
