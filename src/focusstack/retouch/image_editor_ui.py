@@ -5,6 +5,7 @@ from PySide6.QtGui import QGuiApplication
 from focusstack.config.gui_constants import gui_constants
 from focusstack.retouch.image_editor import ImageEditor
 from focusstack.retouch.image_viewer import ImageViewer
+from focusstack.retouch.shortcuts_help import ShortcutsHelp
 
 
 def brush_size_to_slider(size):
@@ -241,6 +242,7 @@ class ImageEditorUI(ImageEditor):
         view_menu.addAction(adapt_action)
 
         actual_size_action = QAction("Actual Size", self)
+        actual_size_action.setShortcut("Ctrl+=")
         actual_size_action.triggered.connect(self.image_viewer.actual_size)
         view_menu.addAction(actual_size_action)
         view_menu.addSeparator()
@@ -297,6 +299,13 @@ class ImageEditorUI(ImageEditor):
 
         help_menu = menubar.addMenu("&Help")
         help_menu.setObjectName("Help")
+        shortcuts_help_action = QAction("Shortcuts", self)
+        shortcuts_help_action.triggered.connect(self.shortcuts_help)
+        help_menu.addAction(shortcuts_help_action)
+
+    def shortcuts_help(self):
+        self._dialog = ShortcutsHelp(self)
+        self._dialog.exec()
 
     def toggle_fullscreen(self, checked):
         if checked:
