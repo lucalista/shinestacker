@@ -67,6 +67,8 @@ def main():
     window.show()
     if file_to_open:
         QTimer.singleShot(100, lambda: window.open_project(file_to_open))
+    else:
+        QTimer.singleShot(100, lambda: window.new_project())
     sys.exit(app.exec())
 
 

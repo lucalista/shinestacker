@@ -131,11 +131,13 @@ def main():
         if extension == 'fsp':
             main_app.switch_to_project()
             QTimer.singleShot(100, lambda: main_app.project_window.open_project(file_to_open))
-        elif extension in ['tif', 'tiff']:
+        elif extension in ['tif', 'tiff', 'jpg', 'jpeg']:
             main_app.switch_to_retouch()
             QTimer.singleShot(100, lambda: main_app.retouch_window.open_file(file_to_open))
         else:
             print(f"File extension: {extension} not supported.")
+    else:
+        QTimer.singleShot(100, lambda: main_app.project_window.new_project())
     sys.exit(app.exec())
 
 
