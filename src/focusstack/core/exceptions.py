@@ -33,12 +33,12 @@ class AlignmentError(FocusStackError):
 
 class BitDepthError(FocusStackError):
     def __init__(self, dtype_ref, dtype):
-        super().__init__("Images has type {}, expected {}.".format(dtype, dtype_ref))
+        super().__init__("Image has type {}, expected {}.".format(dtype, dtype_ref))
 
 
 class ShapeError(FocusStackError):
     def __init__(self, shape_ref, shape):
-        super().__init__("Images has shape ({}x{}), expected ({}x{}).".format(*shape[:2], *shape_ref[:2]))
+        super().__init__("Image has shape ({}x{}), expected ({}x{}).".format(*shape[:2], *shape_ref[:2]))
 
 
 class RunStopException(FocusStackError):
