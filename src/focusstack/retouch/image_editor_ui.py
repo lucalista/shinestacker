@@ -1,6 +1,6 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QListWidget, QListWidgetItem, QSlider
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QListWidget, QListWidgetItem, QSlider, QInputDialog
 from PySide6.QtGui import QShortcut, QKeySequence, QAction, QActionGroup
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import Qt, QSize, Signal
 from PySide6.QtGui import QGuiApplication
 from focusstack.config.gui_constants import gui_constants
 from focusstack.retouch.image_editor import ImageEditor
@@ -15,6 +15,21 @@ def brush_size_to_slider(size):
         return gui_constants.BRUSH_SIZE_SLIDER_MAX
     normalized = ((size - gui_constants.BRUSH_SIZES['min']) / gui_constants.BRUSH_SIZES['max']) ** (1 / gui_constants.BRUSH_GAMMA)
     return int(normalized * gui_constants.BRUSH_SIZE_SLIDER_MAX)
+
+
+class ClickableLabel(QLabel):
+    """QLabel personalizzata che emette un segnale quando viene doppio-clickata"""
+    doubleClicked = Signal()  # PySide6 usa Signal invece di pyqtSignal
+
+    def __init__(self, text, parent=None):
+        super().__init__(text, parent)
+        self.setMouseTracking(True)
+
+    def mouseDoubleClickEvent(self, event):
+        """Override del doppio click"""
+        if event.button() == Qt.LeftButton:
+            self.doubleClicked.emit()
+        super().mouseDoubleClickEvent(event)
 
 
 class ImageEditorUI(ImageEditor):
@@ -269,9 +284,6 @@ class ImageEditorUI(ImageEditor):
         sort_desc_action.triggered.connect(lambda: self.sort_layers('desc'))
         view_menu.addAction(sort_desc_action)
 
-        sort_original_action = QAction("Original Order", self)
-        sort_original_action.triggered.connect(lambda: self.sort_layers('original'))
-        view_menu.addAction(sort_original_action)
         view_menu.addSeparator()
 
         cursor_menu = view_menu.addMenu("Cursor Style")
@@ -320,7 +332,7 @@ class ImageEditorUI(ImageEditor):
         if self._check_unsaved_changes():
             self.close()
 
-    def _add_thumbnail_item(self, thumbnail, label, is_current):
+    def _add_thumbnail_item(self, thumbnail, label, i, is_current):
         item_widget = QWidget()
         layout = QVBoxLayout(item_widget)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -331,8 +343,9 @@ class ImageEditorUI(ImageEditor):
         thumbnail_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(thumbnail_label)
 
-        label_widget = QLabel(label)
+        label_widget = ClickableLabel(label)
         label_widget.setAlignment(Qt.AlignCenter)
+        label_widget.doubleClicked.connect(lambda: self._rename_label(label_widget, label, i))
         layout.addWidget(label_widget)
 
         item = QListWidgetItem()
@@ -342,6 +355,15 @@ class ImageEditorUI(ImageEditor):
 
         if is_current:
             self.thumbnail_list.setCurrentItem(item)
+
+    def _rename_label(self, label_widget, old_label, i):
+        new_label, ok = QInputDialog.getText(self.thumbnail_list, "Rename Label", "New label name:", text=old_label)
+        if ok and new_label and new_label != old_label:
+            label_widget.setText(new_label)
+            self._update_label_in_data(old_label, new_label, i)
+
+    def _update_label_in_data(self, old_label, new_label, i):
+        self.current_labels[i] = new_label
 
     def undo_last_brush(self):
         if self.undo_manager.undo(self.master_layer):

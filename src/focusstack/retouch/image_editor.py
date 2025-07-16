@@ -47,6 +47,7 @@ class ImageEditor(QMainWindow):
         super().__init__()
         self.current_stack = None
         self.master_layer = None
+        self.current_labels = None
         self.current_layer = 0
         self._brush_mask_cache = {}
         self.view_mode = 'master'
@@ -55,7 +56,6 @@ class ImageEditor(QMainWindow):
         self.current_file_type = FILE_TYPE_MASTER
         self.exif_path = ''
         self.modified = False
-        self.sort_order = 'original'
         self.installEventFilter(self)
         self.update_timer = QTimer(self)
         self.update_timer.setInterval(gui_constants.PAINT_REFRESH_TIMER)
@@ -99,15 +99,6 @@ class ImageEditor(QMainWindow):
     def sort_layers(self, order):
         if not hasattr(self, 'current_stack') or not hasattr(self, 'current_labels'):
             return
-        self.sort_order = order
-        if order == 'original':
-            if self.current_file_path:
-                self.current_stack, self.current_labels = self.current_labels_unsorted
-                self.update_thumbnails()
-                if self.current_layer >= len(self.current_stack):
-                    self.current_layer = len(self.current_stacke) - 1
-                self.change_layer(self.current_layer)
-            return
         master_index = -1
         master_label = None
         master_layer = None
@@ -119,14 +110,16 @@ class ImageEditor(QMainWindow):
                 self.current_stack = np.delete(self.current_stack, i, axis=0)
                 break
         if order == 'asc':
-            sorted_indices = sorted(range(len(self.current_labels)),
-                                    key=lambda i: self.current_labels[i].lower())
+            self.sorted_indices = sorted(range(len(self.current_labels)),
+                                         key=lambda i: self.current_labels[i].lower())
+        elif order == 'desc':
+            self.sorted_indices = sorted(range(len(self.current_labels)),
+                                         key=lambda i: self.current_labels[i].lower(),
+                                         reverse=True)
         else:
-            sorted_indices = sorted(range(len(self.current_labels)),
-                                    key=lambda i: self.current_labels[i].lower(),
-                                    reverse=True)
-        self.current_labels = [self.current_labels[i] for i in sorted_indices]
-        self.current_stack = self.current_stack[sorted_indices]
+            raise ValueError(f"Invalid sorting order: {order}")
+        self.current_labels = [self.current_labels[i] for i in self.sorted_indices]
+        self.current_stack = self.current_stack[self.sorted_indices]
         if master_index != -1:
             self.current_labels.insert(0, master_label)
             self.current_stack = np.insert(self.current_stack, 0, master_layer, axis=0)
@@ -178,7 +171,7 @@ class ImageEditor(QMainWindow):
             self.current_file_type == FILE_TYPE_MULTI
         else:
             self.current_file_type == FILE_TYPE_MASTER
-        self.current_labels = self.current_labels_unsorted = labels
+        self.current_labels = labels
         if labels is None:
             self.current_file_path = ''
         self.master_layer = master_layer
@@ -212,27 +205,16 @@ class ImageEditor(QMainWindow):
                 img = cv2.cvtColor(read_img(path), cv2.COLOR_BGR2RGB)
                 label_x = label
                 i = 0
-                while label_x in self.current_labels_unsorted:
+                while label_x in self.current_labels:
                     i += 1
                     label_x = f"{label} ({i})"
-                self.current_labels_unsorted.append(label_x)
+                self.current_labels.append(label_x)
                 self.current_stack = np.insert(self.current_stack, -1, img, axis=0)
-                self.current_labels = self.current_labels_unsorted
             except Exception as e:
                 traceback.print_tb(e.__traceback__)
                 QMessageBox.critical(self, "Error", str(e))
                 self.statusBar().showMessage(f"Error loading: {path}")
                 break
-        if self.sort_order == 'asc':
-            sorted_indices = sorted(range(len(self.current_labels)),
-                                    key=lambda i: self.current_labels[i].lower())
-        elif self.sort_order == 'desc':
-            sorted_indices = sorted(range(len(self.current_labels)),
-                                    key=lambda i: self.current_labels[i].lower(),
-                                    reverse=True)
-        if self.sort_order != 'original':
-            self.current_labels = [self.current_labels[i] for i in sorted_indices]
-            self.current_stack = self.current_stack[sorted_indices]
         self.update_thumbnails()
 
     def save_file(self):
@@ -394,9 +376,9 @@ class ImageEditor(QMainWindow):
             return
         for i, (layer, label) in enumerate(zip(self.current_stack, self.current_labels)):
             thumbnail = self.create_thumbnail(layer, thumb_size)
-            self._add_thumbnail_item(thumbnail, label, i == self.current_layer)
+            self._add_thumbnail_item(thumbnail, label, i, i == self.current_layer)
 
-    def _add_thumbnail_item(self, thumbnail, label, is_current):
+    def _add_thumbnail_item(self, thumbnail, label, i, is_current):
         pass
 
     def change_layer(self, layer_idx):
