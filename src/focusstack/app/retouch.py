@@ -19,7 +19,7 @@ class RetouchApp(ImageEditorUI):
 
     def create_menu(self):
         app_menu = QMenu("FocusStack")
-        about_action = QAction("About", self)
+        about_action = QAction("About FocusStack", self)
         about_action.triggered.connect(show_about_dialog)
         app_menu.addAction(about_action)
         app_menu.addSeparator()
