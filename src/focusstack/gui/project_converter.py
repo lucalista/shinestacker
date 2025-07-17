@@ -102,18 +102,18 @@ class ProjectConverter:
                 params['intensity_interval'] = {'min': i[0], 'max': i[1]}
             return BalanceFrames(**params)
         elif action_config.type_name == constants.ACTION_FOCUSSTACK or action_config.type_name == constants.ACTION_FOCUSSTACKBUNCH:
-            stacker = action_config.params.get('stacker', FocusStackBaseConfigurator.STACK_ALGO_DEFAULT)
-            if stacker == FocusStackBaseConfigurator.STACK_ALGO_PYRAMID:
+            stacker = action_config.params.get('stacker', constants.STACK_ALGO_DEFAULT)
+            if stacker == constants.STACK_ALGO_PYRAMID:
                 algo_dict, module_dict = self.filter_dict_keys(action_config.params, 'pyramid_')
                 stack_algo = PyramidStack(**algo_dict)
-            elif stacker == FocusStackBaseConfigurator.STACK_ALGO_DEPTH_MAP:
+            elif stacker == constants.STACK_ALGO_DEPTH_MAP:
                 algo_dict, module_dict = self.filter_dict_keys(action_config.params, 'depthmap_')
                 stack_algo = DepthMapStack(**algo_dict)
             else:
                 raise InvalidOptionError('stacker', stacker, f"valid options are: "
-                                         f"{FocusStackBaseConfigurator.STACK_ALGO_PYRAMID}, "
-                                         f"{FocusStackBaseConfigurator.STACK_ALGO_PYRAMID_BLOCK}, "
-                                         f"{FocusStackBaseConfigurator.STACK_ALGO_DEPTH_MAP}")
+                                         f"{constants.STACK_ALGO_PYRAMID}, "
+                                         f"{constants.STACK_ALGO_PYRAMID_BLOCK}, "
+                                         f"{constants.STACK_ALGO_DEPTH_MAP}")
             if action_config.type_name == constants.ACTION_FOCUSSTACK:
                 return FocusStack(**module_dict, stack_algo=stack_algo)
             elif action_config.type_name == constants.ACTION_FOCUSSTACKBUNCH:
