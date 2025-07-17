@@ -182,7 +182,5 @@ class MultiLayer(FrameMultiDirectory, JobBase):
             'write_msg': lambda path: self.print_message(colored(f"writing multilayer tiff file: {path}", "blue"))
         }
         write_multilayer_tiff(input_files, output_file, labels=None, exif_path=self.exif_path, callbacks=callbacks)
-        if config.COMBINED_APP:
-            self.callback('open_app', self.id, self.name, 'internal_retouch_app', output_file)
-        else:
-            self.callback('open_app', self.id, self.name, f'{constants.RETOUCH_APP}', output_file)
+        app = 'internal_retouch_app' if config.COMBINED_APP else f'{constants.RETOUCH_APP}'
+        self.callback('open_app', self.id, self.name, app, output_file)

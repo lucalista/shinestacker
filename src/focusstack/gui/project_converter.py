@@ -12,7 +12,6 @@ from focusstack.algorithms.pyramid import PyramidStack
 from focusstack.algorithms.depth_map import DepthMapStack
 from focusstack.algorithms.multilayer import MultiLayer
 from focusstack.gui.project_model import Project, ActionConfig
-from focusstack.gui.action_config import FocusStackBaseConfigurator
 
 
 class ProjectConverter:
