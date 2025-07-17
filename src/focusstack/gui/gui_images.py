@@ -132,7 +132,7 @@ class GuiOpenApp(QWidget):
         if event.button() == Qt.LeftButton:
             if self.app != 'internal_retouch_app':
                 try:
-                    os.system(f"{self.app} {self.file_path}")
+                    os.system(f"{self.app} {self.file_path} &")
                 except Exception as e:
                     raise RuntimeError(f"Can't open file {self.file_path} with app: {self.app}.\n{str(e)}")
             else:

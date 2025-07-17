@@ -10,7 +10,7 @@ from focusstack.config.gui_constants import gui_constants
 from focusstack.core.exceptions import ShapeError, BitDepthError
 from focusstack.algorithms.exif import get_exif, write_image_with_exif_data
 from focusstack.algorithms.multilayer import write_multilayer_tiff_from_images
-from focusstack.algorithms.utils import read_img, validate_image
+from focusstack.algorithms.utils import read_img, validate_image, get_img_metadata
 from focusstack.retouch.brush import Brush
 from focusstack.retouch.brush_controller import BrushController
 from focusstack.retouch.undo_manager import UndoManager
@@ -47,6 +47,8 @@ class ImageEditor(QMainWindow):
         self.master_layer = None
         self.current_labels = None
         self.current_layer = 0
+        self.shape = None
+        self.dtype = None
         self._brush_mask_cache = {}
         self.view_mode = 'master'
         self.temp_view_individual = False
@@ -62,6 +64,7 @@ class ImageEditor(QMainWindow):
         self.brush = Brush()
         self.brush_controller = BrushController(self.brush)
         self.undo_manager = UndoManager()
+        self.loader_thread = None
 
     def process_pending_updates(self):
         if self.needs_update:
@@ -165,9 +168,10 @@ class ImageEditor(QMainWindow):
         self.loading_timer.stop()
         self.loading_dialog.hide()
         self.current_stack = stack
-        self.current_labels = labels
         if labels is None:
-            self.current_file_path = ''
+            self.current_labels = [f'Layer {i:03d}' for i in range(len(stack))]
+        else:
+            self.current_labels = labels
         self.master_layer = master_layer
         self.shape = np.array(master_layer).shape
         self.dtype = master_layer.dtype
@@ -195,13 +199,20 @@ class ImageEditor(QMainWindow):
     def import_frames(self):
         file_paths, _ = QFileDialog.getOpenFileNames(self, "Select frames", "",
                                                      "TIFF Images (*.tif *.tiff);;JPEG Images (*.jpg *.jpeg);;All Files (*)")
+        if file_paths:
+            self.import_frames_from_files(file_paths)
+
+    def import_frames_from_files(self, file_paths):
         for path in file_paths:
             try:
                 label = path.split("/")[-1].split(".")[0]
                 img = cv2.cvtColor(read_img(path), cv2.COLOR_BGR2RGB)
+                if self.shape is None:
+                    self.shape, self.dtype = get_img_metadata(img)
                 try:
                     validate_image(img, self.shape, self.dtype)
                 except ShapeError as e:
+                    traceback.print_tb(e.__traceback__)
                     QMessageBox.warning(self, "Import error", f"All flies must have the same shape. {str(e)}")
                     return
                 except BitDepthError:
@@ -211,11 +222,17 @@ class ImageEditor(QMainWindow):
                     raise e
                 label_x = label
                 i = 0
-                while label_x in self.current_labels:
-                    i += 1
-                    label_x = f"{label} ({i})"
-                self.current_labels.append(label_x)
-                self.current_stack = np.insert(self.current_stack, -1, img, axis=0)
+                if self.current_labels:
+                    while label_x in self.current_labels:
+                        i += 1
+                        label_x = f"{label} ({i})"
+                    self.current_labels.append(label_x)
+                else:
+                    self.current_labels = [label_x]
+                if self.current_stack is not None:
+                    self.current_stack = np.insert(self.current_stack, -1, img, axis=0)
+                else:
+                    self.current_stack = np.array(img)
             except Exception as e:
                 traceback.print_tb(e.__traceback__)
                 QMessageBox.critical(self, "Error", str(e))

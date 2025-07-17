@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QL
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication, QAction, QIcon
 from focusstack.config.constants import constants
+from focusstack.config.config import config
 from focusstack.core.core_utils import running_under_windows, running_under_macos
 from focusstack.gui.colors import ColorPalette
 from focusstack.gui.project_model import Project
@@ -328,9 +329,9 @@ class MainWindow(ActionsWindow, LogManager):
             menu.addAction(self.run_all_jobs_action)
             if current_action.type_name == constants.ACTION_JOB:
                 menu.addSeparator()
-                self.list_job_retouch_path_action = QAction("Retouch path")
-                self.list_job_retouch_path_action.triggered.connect(lambda job: self.retouch_path(current_action))
-                menu.addAction(self.list_job_retouch_path_action)
+                self.job_retouch_path_action = QAction("Retouch path")
+                self.job_retouch_path_action.triggered.connect(lambda job: self.retouch_path(current_action))
+                menu.addAction(self.job_retouch_path_action)
             menu.exec(event.globalPos())
 
     def retouch_path(self, job):
@@ -344,7 +345,15 @@ class MainWindow(ActionsWindow, LogManager):
             stack_path += [bunches_path[0]]
         elif len(frames_path) > 0:
             stack_path += [frames_path[0]]
-        return stack_path
+        wp = get_action_working_path(job)[0]
+        if wp == '':
+            raise ValueError("Job has no working path specified.")
+        stack_path = [f"{wp}/{s}" for s in stack_path]
+        if not config.COMBINED_APP:
+            p = ";".join(stack_path)
+            os.system(f'{constants.RETOUCH_APP} -p "{p}" &')
+        else:
+            raise RuntimeError("Not implemented yet: retouch on multiple paths.")
 
     def browse_path(self, path):
         ps = path.split(constants.PATH_SEPARATOR)

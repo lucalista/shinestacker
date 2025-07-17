@@ -52,7 +52,7 @@ class FileLoader(QThread):
         if extension in ['jpg', 'jpeg']:
             try:
                 stack = np.array([cv2.cvtColor(read_img(path), cv2.COLOR_BGR2RGB)])
-                return stack, None
+                return stack, [path.split('/')[-1].split('.')[0]]
             except Exception as e:
                 traceback.print_tb(e.__traceback__)
                 return None, None
@@ -90,7 +90,7 @@ class FileLoader(QThread):
                 if str(e) == "TIFF file contains no ImageSourceData tag":
                     try:
                         stack = np.array([cv2.cvtColor(read_img(path), cv2.COLOR_BGR2RGB)])
-                        return stack, None
+                        return stack, [path.split('/')[-1].split('.')[0]]
                     except Exception as e:
                         traceback.print_tb(e.__traceback__)
                         return None, None

@@ -46,7 +46,7 @@ def get_img_metadata(img):
 
 def validate_image(img, expected_shape=None, expected_dtype=None):
     shape, dtype = get_img_metadata(img)
-    if expected_shape and shape != expected_shape:
+    if expected_shape and shape[:2] != expected_shape[:2]:
         raise ShapeError(shape, expected_shape)
     if expected_dtype and dtype != expected_dtype:
         raise BitDepthError(dtype, expected_dtype)

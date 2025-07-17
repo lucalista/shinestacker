@@ -1,5 +1,6 @@
 import sys
 import argparse
+import os
 from PySide6.QtWidgets import QApplication, QMenu
 from PySide6.QtGui import QIcon, QAction
 from PySide6.QtCore import Qt, QTimer, QEvent
@@ -70,10 +71,39 @@ Multiple directories can be specified separated by ';'.
     editor = RetouchApp()
     app.editor = editor
     editor.show()
-    if filename:
-        filenames = filename.split(';')
+
+    def open_files(filenames):
+        print(filenames)
         if len(filenames) == 1:
             QTimer.singleShot(100, lambda: editor.open_file(filenames[0]))
+        else:
+            def check_thread():
+                if editor.loader_thread is None or editor.loader_thread.isRunning():
+                    QTimer.singleShot(100, check_thread)
+                else:
+                    editor.import_frames_from_files(filenames[1:])
+            QTimer.singleShot(100, lambda: (
+                editor.open_file(filenames[0]),
+                QTimer.singleShot(100, check_thread)
+            ))
+    if filename:
+        filenames = filename.split(';')
+        open_files(filenames)
+    elif path:
+        reverse = False
+        paths = path.split(';')
+        filenames = []
+        for path in paths:
+            if os.path.exists(path) and os.path.isdir(path):
+                all_entries = os.listdir(path)
+                files = sorted([f for f in all_entries if os.path.isfile(os.path.join(path, f))],
+                               reverse=reverse)
+                full_paths = [os.path.join(path, f) for f in files]
+                filenames += full_paths
+            else:
+                print(f"path {path} is invalid", file=sys.stderr)
+                exit(1)
+        open_files(filenames)
     sys.exit(app.exec())
 
 
