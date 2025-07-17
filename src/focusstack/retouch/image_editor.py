@@ -237,7 +237,6 @@ class ImageEditor(QMainWindow):
             self.save_multilayer()
         else:
             raise ValueError(f"Invalid current file type: {self.current_file_type}")
-        print("saved file: ", self.current_file_type)
 
     def save_multilayer(self):
         if self.current_stack is None:
@@ -272,7 +271,6 @@ class ImageEditor(QMainWindow):
         except Exception as e:
             traceback.print_tb(e.__traceback__)
             QMessageBox.critical(self, "Save Error", f"Could not save file: {str(e)}")
-        print("saved multilayer file: ", self.current_file_type)
 
     def save_master(self):
         if self.master_layer is None:
@@ -301,7 +299,6 @@ class ImageEditor(QMainWindow):
         except Exception as e:
             traceback.print_tb(e.__traceback__)
             QMessageBox.critical(self, "Save Error", f"Could not save file: {str(e)}")
-        print("saved master file: ", self.current_file_type)
 
     def select_exif_path(self):
         if self.current_stack is None:
