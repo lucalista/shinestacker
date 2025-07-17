@@ -8,8 +8,9 @@ from PySide6.QtCore import Qt, QTimer, QEvent, QPoint
 from focusstack.config.constants import constants
 from focusstack.config.gui_constants import gui_constants
 from focusstack.core.exceptions import ShapeError, BitDepthError
+from focusstack.algorithms.exif import get_exif, write_image_with_exif_data
 from focusstack.algorithms.multilayer import write_multilayer_tiff_from_images
-from focusstack.algorithms.utils import read_img, write_img, validate_image
+from focusstack.algorithms.utils import read_img, validate_image
 from focusstack.retouch.brush import Brush
 from focusstack.retouch.brush_controller import BrushController
 from focusstack.retouch.undo_manager import UndoManager
@@ -51,6 +52,7 @@ class ImageEditor(QMainWindow):
         self.temp_view_individual = False
         self.current_file_path = ''
         self.exif_path = ''
+        self.exif_data = None
         self.modified = False
         self.installEventFilter(self)
         self.update_timer = QTimer(self)
@@ -83,7 +85,7 @@ class ImageEditor(QMainWindow):
                 QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel
             )
             if reply == QMessageBox.Save:
-                self.save_multilayer()
+                self.save_file()
                 return True
             elif reply == QMessageBox.Discard:
                 return True
@@ -284,7 +286,7 @@ class ImageEditor(QMainWindow):
 
     def save_master_to_path(self, path):
         try:
-            write_img(path, cv2.cvtColor(self.master_layer, cv2.COLOR_RGB2BGR))
+            write_image_with_exif_data(self.exif_data, cv2.cvtColor(self.master_layer, cv2.COLOR_RGB2BGR), path)
             self.current_file_path = path
             self.modified = False
             self.update_title()
@@ -296,11 +298,11 @@ class ImageEditor(QMainWindow):
     def select_exif_path(self):
         if self.current_stack is None:
             return
-        dialog = QFileDialog()
-        path = dialog.getExistingDirectory(None, "Select EXIF path")
+        path, _ = QFileDialog.getOpenFileName(None, "Select file with exif data")
         if path:
             self.exif_path = path
-            self.statusBar().showMessage(f"EXIF path set to {path}.")
+            self.exif_data = get_exif(path)
+            self.statusBar().showMessage(f"EXIF data extracted from {path}.")
 
     def close_file(self):
         if self._check_unsaved_changes():

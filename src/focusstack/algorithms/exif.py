@@ -8,6 +8,7 @@ from PIL.TiffImagePlugin import IFDRational
 from PIL.ExifTags import TAGS
 import logging
 import tifffile
+from focusstack.algorithms.utils import write_img
 
 IMAGEWIDTH = 256
 IMAGELENGTH = 257
@@ -147,9 +148,10 @@ def add_exif_data_to_jpg_file(exif, in_filenama, out_filename, verbose=False):
     return exif
 
 
-def save_image_with_exif_data(exif, image, out_filename, verbose=False):
+def write_image_with_exif_data(exif, image, out_filename, verbose=False):
     if exif is None:
-        raise Exception('No exif data provided.')
+        write_img(out_filename, image)
+        return None
     ext = out_filename.split(".")[-1]
     if verbose:
         print_exif(exif, ext)

@@ -124,10 +124,12 @@ def write_multilayer_tiff_from_images(image_dict, output_file, exif_path='', cal
             callback = callbacks.get('exif_msg', None)
             if callback:
                 callback(exif_path)
-        dirpath, _, fnames = next(os.walk(exif_path))
-        fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in constants.EXTENSIONS]
-        exif_filename = exif_path + '/' + fnames[0]
-        extra_tags, exif_tags = exif_extra_tags_for_tif(get_exif(exif_filename))
+        if os.path.isfile(exif_path):
+            extra_tags, exif_tags = exif_extra_tags_for_tif(get_exif(exif_path))
+        elif os.path.isdir(exif_path):
+            dirpath, _, fnames = next(os.walk(exif_path))
+            fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in constants.EXTENSIONS]
+            extra_tags, exif_tags = exif_extra_tags_for_tif(get_exif(exif_path + '/' + fnames[0]))
         tiff_tags['extratags'] += extra_tags
         tiff_tags = {**tiff_tags, **exif_tags}
     if callbacks:
