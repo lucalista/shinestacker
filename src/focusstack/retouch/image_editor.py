@@ -39,10 +39,6 @@ def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None
     return gradient
 
 
-FILE_TYPE_MULTI = 'multi'
-FILE_TYPE_MASTER = 'master'
-
-
 class ImageEditor(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -54,7 +50,6 @@ class ImageEditor(QMainWindow):
         self.view_mode = 'master'
         self.temp_view_individual = False
         self.current_file_path = ''
-        self.current_file_type = FILE_TYPE_MASTER
         self.exif_path = ''
         self.modified = False
         self.installEventFilter(self)
@@ -168,10 +163,6 @@ class ImageEditor(QMainWindow):
         self.loading_timer.stop()
         self.loading_dialog.hide()
         self.current_stack = stack
-        if len(stack) > 1:
-            self.current_file_type == FILE_TYPE_MULTI
-        else:
-            self.current_file_type == FILE_TYPE_MASTER
         self.current_labels = labels
         if labels is None:
             self.current_file_path = ''
@@ -231,12 +222,16 @@ class ImageEditor(QMainWindow):
         self.update_thumbnails()
 
     def save_file(self):
-        if self.current_file_type == FILE_TYPE_MASTER:
+        if self.save_master_only.isChecked():
             self.save_master()
-        elif self.current_file_type == FILE_TYPE_MULTI:
-            self.save_multilayer()
         else:
-            raise ValueError(f"Invalid current file type: {self.current_file_type}")
+            self.save_multilayer()
+
+    def save_file_as(self):
+        if self.save_master_only.isChecked():
+            self.save_master_as()
+        else:
+            self.save_multilayer_as()
 
     def save_multilayer(self):
         if self.current_stack is None:
@@ -264,7 +259,6 @@ class ImageEditor(QMainWindow):
             individual_layers = {label: image for label, image in zip(self.current_labels, self.current_stack)}
             write_multilayer_tiff_from_images({**master_layer, **individual_layers}, path, exif_path=self.exif_path)
             self.current_file_path = path
-            self.current_file_type = FILE_TYPE_MULTI
             self.modified = False
             self.update_title()
             self.statusBar().showMessage(f"Saved multilayer to: {path}")
@@ -292,7 +286,6 @@ class ImageEditor(QMainWindow):
         try:
             write_img(path, cv2.cvtColor(self.master_layer, cv2.COLOR_RGB2BGR))
             self.current_file_path = path
-            self.current_file_type = FILE_TYPE_MASTER
             self.modified = False
             self.update_title()
             self.statusBar().showMessage(f"Saved master layer to: {path}")
