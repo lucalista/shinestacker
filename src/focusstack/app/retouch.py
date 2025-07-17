@@ -1,4 +1,5 @@
 import sys
+import argparse
 from PySide6.QtWidgets import QApplication, QMenu
 from PySide6.QtGui import QIcon, QAction
 from PySide6.QtCore import Qt, QTimer, QEvent
@@ -42,20 +43,37 @@ class Application(QApplication):
 
 
 def main():
+    parser = argparse.ArgumentParser(
+        prog='focusstack-retouch',
+        description='Final retouch focus stack image from individual frames.',
+        epilog='This app is part of the focusstack package.')
+    parser.add_argument('-f', '--filename', nargs='?', help='''
+import frames from a list of file.
+Multiple files can be specified separated by ';'.
+''')
+    parser.add_argument('-p', '--path', nargs='?', help='''
+import frames from a list of directories.
+Multiple directories can be specified separated by ';'.
+''')
+    args = vars(parser.parse_args(sys.argv[1:]))
+    filename = args['filename']
+    path = args['path']
+    if filename and path:
+        print("can't specify both arguments --filename and --path", file=sys.stderr)
+        exit(1)
     app = Application(sys.argv)
     if config.DONT_USE_NATIVE_MENU:
         app.setAttribute(Qt.AA_DontUseNativeMenuBar)
     else:
         disable_macos_special_menu_items()
     app.setWindowIcon(QIcon(f'{get_app_base_path()}/ico/focus_stack.png'))
-    file_to_open = None
-    if len(sys.argv) > 1:
-        file_to_open = sys.argv[1]
     editor = RetouchApp()
     app.editor = editor
     editor.show()
-    if file_to_open:
-        QTimer.singleShot(100, lambda: editor.open_file(file_to_open))
+    if filename:
+        filenames = filename.split(';')
+        if len(filenames) == 1:
+            QTimer.singleShot(100, lambda: editor.open_file(filenames[0]))
     sys.exit(app.exec())
 
 

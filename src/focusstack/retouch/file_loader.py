@@ -1,6 +1,7 @@
 import numpy as np
 import traceback
 import cv2
+import os
 from psdtags import PsdChannelId
 from PySide6.QtCore import QThread, Signal
 from focusstack.algorithms.utils import read_img
@@ -40,9 +41,13 @@ class FileLoader(QThread):
             self.finished.emit(current_stack, current_labels, master_layer)
         except Exception as e:
             traceback.print_tb(e.__traceback__)
-            self.error.emit(f"Error loading file: {str(e)}")
+            self.error.emit(f"Error loading file:\n{str(e)}")
 
     def load_stack(self, path):
+        if not os.path.exists(path):
+            raise RuntimeError(f"Path {path} does not exist.")
+        if not os.path.isfile(path):
+            raise RuntimeError(f"Path {path} is not a file.")
         extension = path.split('.')[-1]
         if extension in ['jpg', 'jpeg']:
             try:
@@ -95,3 +100,5 @@ class FileLoader(QThread):
             except Exception as e:
                 traceback.print_tb(e.__traceback__)
                 return None, None
+        else:
+            return None, None

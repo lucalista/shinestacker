@@ -326,7 +326,25 @@ class MainWindow(ActionsWindow, LogManager):
             menu.addSeparator()
             menu.addAction(self.run_job_action)
             menu.addAction(self.run_all_jobs_action)
+            if current_action.type_name == constants.ACTION_JOB:
+                menu.addSeparator()
+                self.list_job_retouch_path_action = QAction("Retouch path")
+                self.list_job_retouch_path_action.triggered.connect(lambda job: self.retouch_path(current_action))
+                menu.addAction(self.list_job_retouch_path_action)
             menu.exec(event.globalPos())
+
+    def retouch_path(self, job):
+        frames_path = [get_action_output_path(action)[0]
+                       for action in job.sub_actions if action.type_name == constants.ACTION_COMBO]
+        bunches_path = [get_action_output_path(action)[0]
+                        for action in job.sub_actions if action.type_name == constants.ACTION_FOCUSSTACKBUNCH]
+        stack_path = [get_action_output_path(action)[0]
+                      for action in job.sub_actions if action.type_name == constants.ACTION_FOCUSSTACK]
+        if len(bunches_path) > 0:
+            stack_path += [bunches_path[0]]
+        elif len(frames_path) > 0:
+            stack_path += [frames_path[0]]
+        return stack_path
 
     def browse_path(self, path):
         ps = path.split(constants.PATH_SEPARATOR)
