@@ -6,6 +6,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication, QAction, QIcon
 from focusstack.config.constants import constants
 from focusstack.core.core_utils import running_under_windows, running_under_macos
+from focusstack.gui.colors import ColorPalette
 from focusstack.gui.project_model import Project
 from focusstack.gui.actions_window import ActionsWindow
 from focusstack.gui.gui_logging import LogManager
@@ -36,12 +37,21 @@ class ProjectLogWorker(RunWorker):
         return converter.run_project(self.project, self.id_str, self.callbacks)
 
 
+LIST_STYLE_SHEET = f"""
+    QListWidget::item:selected {{
+        background-color: #{ColorPalette.LIGHT_BLUE.hex()};;
+    }}
+"""
+
+
 class MainWindow(ActionsWindow, LogManager):
     def __init__(self):
         ActionsWindow.__init__(self)
         LogManager.__init__(self)
         self._windows = []
         self._workers = []
+        self.job_list.setStyleSheet(LIST_STYLE_SHEET)
+        self.action_list.setStyleSheet(LIST_STYLE_SHEET)
         menubar = self.menuBar()
         self.add_file_menu(menubar)
         self.add_edit_menu(menubar)
