@@ -254,16 +254,14 @@ class ActionsWindow(ProjectEditor):
     def edit_current_action(self):
         current_action = None
         job_row = self.job_list.currentRow()
-        sub_action_index = -1
         if 0 <= job_row < len(self.project.jobs):
             job = self.project.jobs[job_row]
             if self.job_list.hasFocus():
                 current_action = job
             elif self.action_list.hasFocus():
-                job_row, action_row, actions, sub_actions, action_index, sub_action_index = self.get_current_action()
-                if actions is not None:
-                    action = actions[action_index]
-                    current_action = action if sub_action_index == -1 else sub_actions[sub_action_index]
+                job_row, action_row, pos = self.get_current_action()
+                if pos.actions is not None:
+                    current_action = pos.action if not pos.is_sub_action else pos.sub_action
         if current_action is not None:
             self.edit_action(current_action)
 
