@@ -7,7 +7,7 @@ from focusstack.core.framework import JobBase
 from focusstack.core.exceptions import InvalidOptionError
 from focusstack.algorithms.utils import write_img
 from focusstack.algorithms.stack_framework import FrameDirectory, ActionList
-from focusstack.algorithms.exif import copy_exif
+from focusstack.algorithms.exif import copy_exif_from_file
 
 
 class FocusStackBase:
@@ -37,7 +37,7 @@ class FocusStackBase:
             dirpath, _, fnames = next(os.walk(self.exif_path))
             fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in constants.EXTENSIONS]
             exif_filename = f"{self.exif_path}/{fnames[0]}"
-            copy_exif(exif_filename, out_filename)
+            copy_exif_from_file(exif_filename, out_filename)
             self.sub_message_r(' ' * 60)
         if self.plot_stack:
             idx_str = "{:04d}".format(self.frame_count) if self.frame_count >= 0 else ''

@@ -3,7 +3,7 @@ import logging
 from PIL import Image
 from PIL.ExifTags import TAGS
 from focusstack.core.logging import setup_logging
-from focusstack.algorithms.exif import get_exif, copy_exif, print_exif
+from focusstack.algorithms.exif import get_exif, copy_exif_from_file, print_exif
 
 
 NO_TEST_TIFF_TAGS = ["XMLPacket", "Compression", "StripOffsets", "RowsPerStrip", "StripByteCounts", "ImageResources", "ExifOffset", 34665]
@@ -22,8 +22,8 @@ def test_exif_jpg():
         ext = out_filename.split(".")[-1]
         logger.info("======== Testing JPG EXIF ======== ")
         logger.info("*** Source JPG EXIF ***")
-        exif = copy_exif("input/img-jpg/0000.jpg", "input/img-jpg/0001.jpg",
-                         out_filename=out_filename, verbose=True)
+        exif = copy_exif_from_file("input/img-jpg/0000.jpg", "input/img-jpg/0001.jpg",
+                                   out_filename=out_filename, verbose=True)
         exif_copy = get_exif(out_filename)
         logger.info("*** Copy JPG EXIF ***")
         print_exif(exif_copy, ext)
@@ -57,8 +57,8 @@ def test_exif_tiff():
         out_filename = output_dir + "/0001.tif"
         logger.info("======== Testing TIFF EXIF ========")
         logging.getLogger(__name__).info("*** Source TIFF EXIF ***")
-        exif = copy_exif("input/img-tif/0000.tif", "input/img-tif/0001.tif",
-                         out_filename=out_filename, verbose=True)
+        exif = copy_exif_from_file("input/img-tif/0000.tif", "input/img-tif/0001.tif",
+                                   out_filename=out_filename, verbose=True)
         image = Image.open(out_filename)
         exif_copy = image.tag_v2 if hasattr(image, 'tag_v2') else image.getexif()
         ext = out_filename.split(".")[-1]

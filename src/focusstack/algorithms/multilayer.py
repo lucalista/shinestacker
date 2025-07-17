@@ -13,7 +13,7 @@ from focusstack.config.constants import constants
 from focusstack.config.config import config
 from focusstack.core.framework import JobBase
 from focusstack.algorithms.stack_framework import FrameMultiDirectory
-from focusstack.algorithms.exif import exif_extra_tags, get_exif
+from focusstack.algorithms.exif import exif_extra_tags_for_tif, get_exif
 
 
 def read_multilayer_tiff(input_file):
@@ -127,7 +127,7 @@ def write_multilayer_tiff_from_images(image_dict, output_file, exif_path='', cal
         dirpath, _, fnames = next(os.walk(exif_path))
         fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in constants.EXTENSIONS]
         exif_filename = exif_path + '/' + fnames[0]
-        extra_tags, exif_tags = exif_extra_tags(get_exif(exif_filename))
+        extra_tags, exif_tags = exif_extra_tags_for_tif(get_exif(exif_filename))
         tiff_tags['extratags'] += extra_tags
         tiff_tags = {**tiff_tags, **exif_tags}
     if callbacks:

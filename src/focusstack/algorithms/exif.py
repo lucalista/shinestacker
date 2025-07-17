@@ -30,7 +30,7 @@ NO_COPY_TIFF_TAGS_ID = [IMAGEWIDTH, IMAGELENGTH, RESOLUTIONX, RESOLUTIONY, BITSP
 NO_COPY_TIFF_TAGS = ["Compression", "StripOffsets", "RowsPerStrip", "StripByteCounts"]
 
 
-def extract_elcosed_data(data, head, foot):
+def extract_enclosed_data_for_jpg(data, head, foot):
     size = len(foot.decode('ascii'))
     xmp_start, xmp_end = data.find(head), data.find(foot)
     if xmp_start != -1 and xmp_end != -1:
@@ -49,7 +49,7 @@ def get_exif(exif_filename):
     elif ext == 'jpeg' or ext == 'jpg':
         exif_dict = image.getexif()
         with open(exif_filename, 'rb') as f:
-            data = extract_elcosed_data(f.read(), b'<?xpacket', b'<?xpacket end="w"?>')
+            data = extract_enclosed_data_for_jpg(f.read(), b'<?xpacket', b'<?xpacket end="w"?>')
             if data is not None:
                 exif_dict[XMLPACKET] = data
         return exif_dict
@@ -57,65 +57,7 @@ def get_exif(exif_filename):
         return image.getexif()
 
 
-def print_exif(exif, ext, hide_xml=True):
-    logger = logging.getLogger(__name__)
-    if exif is None:
-        raise Exception('Image has no exif data.')
-    else:
-        for tag_id in exif:
-            tag = TAGS.get(tag_id, tag_id)
-            if tag_id == XMLPACKET and hide_xml:
-                data = "<<< XML data >>>"
-            elif tag_id == IMAGERESOURCES or tag_id == INTERCOLORPROFILE:
-                data = "<<< Photoshop data >>>"
-            elif tag_id == STRIPOFFSETS:
-                data = "<<< Strip offsets >>>"
-            elif tag_id == STRIPBYTECOUNTS:
-                data = "<<< Strip byte counts >>>"
-            else:
-                data = exif.get(tag_id) if hasattr(exif, 'get') else exif[tag_id]
-            if isinstance(data, bytes):
-                try:
-                    data = data.decode()
-                except Exception:
-                    logger.warning(f"Print: can't decode EXIF tag {tag:25} [#{tag_id}]")
-                    data = '<<< *** decode error *** >>>'
-            if isinstance(data, IFDRational):
-                data = f"{data.numerator}/{data.denominator}"
-            logger.info(f"{tag:25} [#{tag_id:5d}]: {data}")
-
-
-def get_tiff_dtype_count(value):
-    if isinstance(value, str):
-        return 2, len(value) + 1  # ASCII string, (dtype=2), length + null terminator
-    elif isinstance(value, (bytes, bytearray)):
-        return 1, len(value)  # Binary data (dtype=1)
-    elif isinstance(value, (list, tuple, np.ndarray)):
-        if isinstance(value, np.ndarray):
-            dtype = value.dtype  # Array or sequence
-        else:
-            dtype = np.array(value).dtype  # Map numpy dtype to TIFF dtype
-        if dtype == np.uint8:
-            return 1, len(value)
-        elif dtype == np.uint16:
-            return 3, len(value)
-        elif dtype == np.uint32:
-            return 4, len(value)
-        elif dtype == np.float32:
-            return 11, len(value)
-        elif dtype == np.float64:
-            return 12, len(value)
-    elif isinstance(value, int):
-        if 0 <= value <= 65535:
-            return 3, 1  # uint16
-        else:
-            return 4, 1  # uint32
-    elif isinstance(value, float):
-        return 11, 1  # float64
-    return 2, len(str(value)) + 1  # Default for othre cases (ASCII string)
-
-
-def exif_extra_tags(exif):
+def exif_extra_tags_for_tif(exif):
     logger = logging.getLogger(__name__)
     res_x, res_y = exif.get(RESOLUTIONX), exif.get(RESOLUTIONY)
     if not (res_x is None or res_y is None):
@@ -150,18 +92,43 @@ def exif_extra_tags(exif):
                    'software': software, 'photometric': photometric}
 
 
-def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
+def get_tiff_dtype_count(value):
+    if isinstance(value, str):
+        return 2, len(value) + 1  # ASCII string, (dtype=2), length + null terminator
+    elif isinstance(value, (bytes, bytearray)):
+        return 1, len(value)  # Binary data (dtype=1)
+    elif isinstance(value, (list, tuple, np.ndarray)):
+        if isinstance(value, np.ndarray):
+            dtype = value.dtype  # Array or sequence
+        else:
+            dtype = np.array(value).dtype  # Map numpy dtype to TIFF dtype
+        if dtype == np.uint8:
+            return 1, len(value)
+        elif dtype == np.uint16:
+            return 3, len(value)
+        elif dtype == np.uint32:
+            return 4, len(value)
+        elif dtype == np.float32:
+            return 11, len(value)
+        elif dtype == np.float64:
+            return 12, len(value)
+    elif isinstance(value, int):
+        if 0 <= value <= 65535:
+            return 3, 1  # uint16
+        else:
+            return 4, 1  # uint32
+    elif isinstance(value, float):
+        return 11, 1  # float64
+    return 2, len(str(value)) + 1  # Default for othre cases (ASCII string)
+
+
+def copy_exif_data(exif, in_filename, out_filename=None, verbose=False):
     logger = logging.getLogger(__name__)
     ext = in_filename.split(".")[-1]
     if out_filename is None:
         out_filename = in_filename
-    if not os.path.isfile(exif_filename):
-        raise Exception("File does not exist: " + exif_filename)
-    if not os.path.isfile(in_filename):
-        raise Exception("File does not exist: " + in_filename)
-    exif = get_exif(exif_filename)
     if exif is None:
-        raise Exception('Image has no exif data.')
+        raise Exception('No exif data provided.')
     if verbose:
         print_exif(exif, ext)
     if ext == 'tiff' or ext == 'tif':
@@ -169,7 +136,7 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
     else:
         image_new = Image.open(in_filename)
     if ext == 'jpeg' or ext == 'jpg':
-        xmp_data = extract_elcosed_data(exif[XMLPACKET], b'<x:xmpmeta', b'</x:xmpmeta>')
+        xmp_data = extract_enclosed_data_for_jpg(exif[XMLPACKET], b'<x:xmpmeta', b'</x:xmpmeta>')
         with Image.open(in_filename) as image:
             with io.BytesIO() as buffer:
                 image.save(buffer, format="JPEG", exif=exif.tobytes(), quality=100)
@@ -186,9 +153,46 @@ def copy_exif(exif_filename, in_filename, out_filename=None, verbose=False):
                     f.write(updated_data)
     elif ext == 'tiff' or ext == 'tif':
         metadata = {"description": "image generated with focusstack package"}
-        extra_tags, exif_tags = exif_extra_tags(exif)
+        extra_tags, exif_tags = exif_extra_tags_for_tif(exif)
         tifffile.imwrite(out_filename, image_new, metadata=metadata, compression='adobe_deflate',
                          extratags=extra_tags, **exif_tags)
     elif ext == 'png':
         image_new.save(out_filename, 'PNG', exif=exif, quality=100)
     return exif
+
+
+def copy_exif_from_file(exif_filename, in_filename, out_filename=None, verbose=False):
+    if not os.path.isfile(exif_filename):
+        raise Exception("File does not exist: " + exif_filename)
+    if not os.path.isfile(in_filename):
+        raise Exception("File does not exist: " + in_filename)
+    exif = get_exif(exif_filename)
+    return copy_exif_data(exif, in_filename, out_filename, verbose)
+
+
+def print_exif(exif, ext, hide_xml=True):
+    logger = logging.getLogger(__name__)
+    if exif is None:
+        raise Exception('Image has no exif data.')
+    else:
+        for tag_id in exif:
+            tag = TAGS.get(tag_id, tag_id)
+            if tag_id == XMLPACKET and hide_xml:
+                data = "<<< XML data >>>"
+            elif tag_id == IMAGERESOURCES or tag_id == INTERCOLORPROFILE:
+                data = "<<< Photoshop data >>>"
+            elif tag_id == STRIPOFFSETS:
+                data = "<<< Strip offsets >>>"
+            elif tag_id == STRIPBYTECOUNTS:
+                data = "<<< Strip byte counts >>>"
+            else:
+                data = exif.get(tag_id) if hasattr(exif, 'get') else exif[tag_id]
+            if isinstance(data, bytes):
+                try:
+                    data = data.decode()
+                except Exception:
+                    logger.warning(f"Print: can't decode EXIF tag {tag:25} [#{tag_id}]")
+                    data = '<<< *** decode error *** >>>'
+            if isinstance(data, IFDRational):
+                data = f"{data.numerator}/{data.denominator}"
+            logger.info(f"{tag:25} [#{tag_id:5d}]: {data}")
