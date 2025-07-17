@@ -1,6 +1,7 @@
 import os
 import re
 import io
+import cv2
 import numpy as np
 from PIL import Image
 from PIL.TiffImagePlugin import IFDRational
@@ -122,8 +123,50 @@ def get_tiff_dtype_count(value):
     return 2, len(str(value)) + 1  # Default for othre cases (ASCII string)
 
 
-def copy_exif_data(exif, in_filename, out_filename=None, verbose=False):
+def add_exif_data_to_jpg_file(exif, in_filenama, out_filename, verbose=False):
     logger = logging.getLogger(__name__)
+    if exif is None:
+        raise Exception('No exif data provided.')
+    if verbose:
+        print_exif(exif, 'jpg')
+    xmp_data = extract_enclosed_data_for_jpg(exif[XMLPACKET], b'<x:xmpmeta', b'</x:xmpmeta>')
+    with Image.open(in_filenama) as image:
+        with io.BytesIO() as buffer:
+            image.save(buffer, format="JPEG", exif=exif.tobytes(), quality=100)
+            jpeg_data = buffer.getvalue()
+            if xmp_data is not None:
+                app1_marker_pos = jpeg_data.find(b'\xFF\xE1')
+                if app1_marker_pos == -1:
+                    app1_marker_pos = len(jpeg_data) - 2
+                updated_data = (jpeg_data[:app1_marker_pos] + b'\xFF\xE1' + len(xmp_data).to_bytes(2, 'big') + xmp_data + jpeg_data[app1_marker_pos:])
+            else:
+                logger.warning("Copy: can't find XMLPacket in JPG EXIF data")
+                updated_data = jpeg_data
+            with open(out_filename, 'wb') as f:
+                f.write(updated_data)
+    return exif
+
+
+def save_image_with_exif_data(exif, image, out_filename, verbose=False):
+    if exif is None:
+        raise Exception('No exif data provided.')
+    ext = out_filename.split(".")[-1]
+    if verbose:
+        print_exif(exif, ext)
+    if ext == 'jpeg' or ext == 'jpg':
+        cv2.imwrite(out_filename, image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+        add_exif_data_to_jpg_file(exif, out_filename, out_filename, verbose)
+    elif ext == 'tiff' or ext == 'tif':
+        metadata = {"description": "image generated with focusstack package"}
+        extra_tags, exif_tags = exif_extra_tags_for_tif(exif)
+        tifffile.imwrite(out_filename, image, metadata=metadata, compression='adobe_deflate',
+                         extratags=extra_tags, **exif_tags)
+    elif ext == 'png':
+        image.save(out_filename, 'PNG', exif=exif, quality=100)
+    return exif
+
+
+def save_exif_data(exif, in_filename, out_filename=None, verbose=False):
     ext = in_filename.split(".")[-1]
     if out_filename is None:
         out_filename = in_filename
@@ -136,21 +179,7 @@ def copy_exif_data(exif, in_filename, out_filename=None, verbose=False):
     else:
         image_new = Image.open(in_filename)
     if ext == 'jpeg' or ext == 'jpg':
-        xmp_data = extract_enclosed_data_for_jpg(exif[XMLPACKET], b'<x:xmpmeta', b'</x:xmpmeta>')
-        with Image.open(in_filename) as image:
-            with io.BytesIO() as buffer:
-                image.save(buffer, format="JPEG", exif=exif.tobytes(), quality=100)
-                jpeg_data = buffer.getvalue()
-                if xmp_data is not None:
-                    app1_marker_pos = jpeg_data.find(b'\xFF\xE1')
-                    if app1_marker_pos == -1:
-                        app1_marker_pos = len(jpeg_data) - 2
-                    updated_data = (jpeg_data[:app1_marker_pos] + b'\xFF\xE1' + len(xmp_data).to_bytes(2, 'big') + xmp_data + jpeg_data[app1_marker_pos:])
-                else:
-                    logger.warning("Copy: can't find XMLPacket in JPG EXIF data")
-                    updated_data = jpeg_data
-                with open(out_filename, 'wb') as f:
-                    f.write(updated_data)
+        add_exif_data_to_jpg_file(exif, in_filename, out_filename, verbose)
     elif ext == 'tiff' or ext == 'tif':
         metadata = {"description": "image generated with focusstack package"}
         extra_tags, exif_tags = exif_extra_tags_for_tif(exif)
@@ -161,13 +190,13 @@ def copy_exif_data(exif, in_filename, out_filename=None, verbose=False):
     return exif
 
 
-def copy_exif_from_file(exif_filename, in_filename, out_filename=None, verbose=False):
+def copy_exif_from_file_to_file(exif_filename, in_filename, out_filename=None, verbose=False):
     if not os.path.isfile(exif_filename):
         raise Exception("File does not exist: " + exif_filename)
     if not os.path.isfile(in_filename):
         raise Exception("File does not exist: " + in_filename)
     exif = get_exif(exif_filename)
-    return copy_exif_data(exif, in_filename, out_filename, verbose)
+    return save_exif_data(exif, in_filename, out_filename, verbose)
 
 
 def print_exif(exif, ext, hide_xml=True):
