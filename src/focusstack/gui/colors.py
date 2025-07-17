@@ -37,6 +37,3 @@ RED_BUTTON_STYLE = f"""
         color: #{ColorPalette.MEDIUM_RED.hex()};
     }}
 """
-
-ENABLED_LIST_ITEM_COLOR = ColorPalette.DARK_BLUE.tuple()
-DISABLED_LIST_ITEM_COLOR = ColorPalette.DARK_RED.tuple()
