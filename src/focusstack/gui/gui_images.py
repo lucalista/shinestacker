@@ -1,7 +1,7 @@
 import webbrowser
 import subprocess
 import os
-from PySide6.QtWidgets import QSizePolicy, QVBoxLayout, QWidget, QLabel, QMainWindow
+from PySide6.QtWidgets import QSizePolicy, QVBoxLayout, QWidget, QLabel, QStackedWidget
 from PySide6.QtPdf import QPdfDocument
 from PySide6.QtPdfWidgets import QPdfView
 from PySide6.QtCore import Qt, QMargins
@@ -132,12 +132,21 @@ class GuiOpenApp(QWidget):
         if event.button() == Qt.LeftButton:
             if self.app != 'internal_retouch_app':
                 try:
-                    os.system(f"{self.app} {self.file_path} &")
+                    os.system(f"{self.app} -f {self.file_path} &")
                 except Exception as e:
                     raise RuntimeError(f"Can't open file {self.file_path} with app: {self.app}.\n{str(e)}")
             else:
-                main_app = self.window()
-                if isinstance(main_app, QMainWindow):
-                    main_app.switch_to_retouch()
-                    main_app.retouch_window.open_file(self.file_path)
+                app = None
+                stacked_widget = self.parent().window().findChild(QStackedWidget)
+                if stacked_widget:
+                    for child in stacked_widget.children():
+                        if child.metaObject().className() == 'MainWindow':
+                            app = child
+                            break
+                    else:
+                        raise RuntimeError("MainWindow object not found")
+                if app:
+                    app.retouch_callback(self.file_path)
+                else:
+                    raise RuntimeError("MainWindow object not found")
         super().mouseReleaseEvent(event)

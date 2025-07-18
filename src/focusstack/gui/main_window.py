@@ -51,6 +51,7 @@ class MainWindow(ActionsWindow, LogManager):
         LogManager.__init__(self)
         self._windows = []
         self._workers = []
+        self.retouch_callback = None
         self.job_list.setStyleSheet(LIST_STYLE_SHEET)
         self.action_list.setStyleSheet(LIST_STYLE_SHEET)
         menubar = self.menuBar()
@@ -97,6 +98,9 @@ class MainWindow(ActionsWindow, LogManager):
         h_layout.addLayout(vbox_right)
         layout.addWidget(h_splitter)
         self.central_widget.setLayout(layout)
+
+    def set_retouch_callback(self, callback):
+        self.retouch_callback = callback
 
     def add_file_menu(self, menubar):
         menu = menubar.addMenu("&File")

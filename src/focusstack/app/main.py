@@ -29,6 +29,7 @@ class MainApp(QMainWindow):
         self.stacked_widget = QStackedWidget()
         self.setCentralWidget(self.stacked_widget)
         self.project_window = MainWindow()
+        self.project_window.set_retouch_callback(self.retouch_callback)
         self.retouch_window = ImageEditorUI()
         self.stacked_widget.addWidget(self.project_window)
         self.stacked_widget.addWidget(self.retouch_window)
@@ -96,6 +97,10 @@ class MainApp(QMainWindow):
             self.switch_to_retouch()
         else:
             self.switch_to_project()
+
+    def retouch_callback(self, filename):
+        self.switch_to_retouch()
+        self.retouch_window.open_file(filename)
 
 
 class Application(QApplication):

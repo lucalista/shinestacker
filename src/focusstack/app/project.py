@@ -63,6 +63,12 @@ def main():
             print(f"File not found: {file_to_open}")
             file_to_open = None
     window = ProjectApp()
+
+    def retouch_callback(filename):
+        app.switch_to_retouch()
+        app.retouch_window.open_file(filename)
+
+    window.set_retouch_callback(retouch_callback)
     app.window = window
     window.show()
     if file_to_open:

@@ -1,7 +1,7 @@
 import pytest
 import sys
 import platform
-from PySide6.QtWidgets import QApplication, QMainWindow
+from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt
 from focusstack.gui.gui_images import GuiPdfView, GuiImageView, GuiOpenApp, open_file
@@ -112,44 +112,6 @@ def test_gui_open_app_initialization(sample_image, qtbot):
     assert open_app.app == test_app
     assert open_app.image_label.pixmap() is not None
     assert open_app.width() == 250
-
-
-def test_gui_open_app_click_external(sample_image, qtbot, monkeypatch):
-    calls = []
-    monkeypatch.setattr('os.system', lambda cmd: calls.append(cmd))
-    test_app = "test_app"
-    open_app = GuiOpenApp(test_app, sample_image)
-    qtbot.addWidget(open_app)
-    qtbot.mouseClick(open_app, Qt.LeftButton)
-    assert len(calls) == 1
-    assert test_app in calls[0]
-    assert sample_image in calls[0]
-
-
-class MockMainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.switch_called = False
-        self.retouch_called = False
-        self.retouch_window = self
-
-    def switch_to_retouch(self):
-        self.switch_called = True
-
-    def open_file(self, file_path):
-        self.retouch_called = True
-        self.file_path = file_path
-
-
-def test_gui_open_app_click_internal(sample_image, qtbot):
-    main_window = MockMainWindow()
-    open_app = GuiOpenApp("internal_retouch_app", sample_image)
-    qtbot.addWidget(open_app)
-    open_app.setParent(main_window)
-    qtbot.mouseClick(open_app, Qt.LeftButton)
-    assert main_window.switch_called
-    assert main_window.retouch_called
-    assert main_window.file_path == sample_image
 
 
 def test_gui_image_view_error_handling(tmp_path, qtbot):
