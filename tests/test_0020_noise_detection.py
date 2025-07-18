@@ -35,7 +35,7 @@ def test_detect_fail_3():
 
 def test_detect():
     try:
-        job = StackJob("job", "./", input_path="input/img-noise", callbacks='tqdm')
+        job = StackJob("job", "../examples/", input_path="input/img-noise", callbacks='tqdm')
         job.add_action(NoiseDetection())
         job.run()
     except Exception:
@@ -44,7 +44,7 @@ def test_detect():
 
 def test_correct():
     try:
-        job = StackJob("job", "./", input_path="input/img-jpg", callbacks='tqdm')
+        job = StackJob("job", "../examples/", input_path="input/img-jpg", callbacks='tqdm')
         job.add_action(CombinedActions("noise", [MaskNoise()], output_path="output/img-noise-corr"))
         job.run()
     except Exception:

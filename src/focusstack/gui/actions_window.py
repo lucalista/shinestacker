@@ -123,6 +123,7 @@ class ActionsWindow(ProjectEditor):
         if file_path:
             try:
                 file = open(file_path, 'r')
+                os.chdir('/'.join(file_path.split('/')[:-1]))
                 json_obj = json.load(file)
                 project = Project.from_dict(json_obj['project'])
                 if project is None:

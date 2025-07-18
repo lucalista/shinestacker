@@ -6,7 +6,7 @@ from focusstack.algorithms.balance import BalanceFrames
 
 def test_hls_gamma():
     try:
-        job = StackJob("job", "./", input_path="input/img-jpg")
+        job = StackJob("job", "../examples", input_path="input/img-jpg")
         job.add_action(CombinedActions("align",
                                        [AlignFrames(),
                                         BalanceFrames(channel=constants.BALANCE_HLS,
@@ -19,7 +19,7 @@ def test_hls_gamma():
 
 def test_hsv():
     try:
-        job = StackJob("job", "./", input_path="input/img-jpg")
+        job = StackJob("job", "../examples", input_path="input/img-jpg")
         job.add_action(CombinedActions("align",
                                        [AlignFrames(),
                                         BalanceFrames(channel=constants.BALANCE_HSV)],
@@ -31,7 +31,7 @@ def test_hsv():
 
 def test_rgb():
     try:
-        job = StackJob("job", "./", input_path="input/img-jpg")
+        job = StackJob("job", "../examples", input_path="input/img-jpg")
         job.add_action(CombinedActions("align",
                                        [AlignFrames(),
                                         BalanceFrames(channel=constants.BALANCE_RGB)],
@@ -43,7 +43,7 @@ def test_rgb():
 
 def test_lumi():
     try:
-        job = StackJob("job", "./", input_path="input/img-jpg")
+        job = StackJob("job", "../examples", input_path="input/img-jpg")
         job.add_action(CombinedActions("align",
                                        [AlignFrames(), BalanceFrames(channel=constants.BALANCE_LUMI)],
                                        output_path="output/img-jpg-align-balance-lumi"))

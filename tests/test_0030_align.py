@@ -8,7 +8,7 @@ from focusstack.algorithms.align import align_images, AlignFrames, RAISE_ORB_ORB
 
 def test_align():
     try:
-        img_1, img_2 = [read_img(f"input/img-jpg/000{i}.jpg") for i in (2, 3)]
+        img_1, img_2 = [read_img(f"../examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
         n_good_matches, img_warp = align_images(img_1, img_2)
         assert img_warp is not None
         assert n_good_matches > 100
@@ -18,7 +18,7 @@ def test_align():
 
 def test_align_2():
     try:
-        img_1, img_2 = [read_img(f"input/img-jpg/000{i}.jpg") for i in (2, 3)]
+        img_1, img_2 = [read_img(f"../examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
         n_good_matches, img_warp = align_images(img_1, img_2,
                                                 feature_config={'detector': constants.DETECTOR_ORB,
                                                                 'descriptor': constants.DESCRIPTOR_SIFT})
@@ -30,7 +30,7 @@ def test_align_2():
 
 def test_align_3():
     try:
-        img_1, img_2 = [read_img(f"input/img-jpg/000{i}.jpg") for i in (2, 3)]
+        img_1, img_2 = [read_img(f"../examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
         n_good_matches, img_warp = align_images(img_1, img_2,
                                                 feature_config={'detector': constants.DETECTOR_ORB,
                                                                 'descriptor': constants.DESCRIPTOR_ORB},
@@ -43,7 +43,7 @@ def test_align_3():
 
 def test_align_4():
     try:
-        img_1, img_2 = [read_img(f"input/img-jpg/000{i}.jpg") for i in (2, 3)]
+        img_1, img_2 = [read_img(f"../examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
         n_good_matches, img_warp = align_images(img_1, img_2,
                                                 feature_config={'detector': constants.DETECTOR_ORB,
                                                                 'descriptor': constants.DESCRIPTOR_ORB},
@@ -58,7 +58,7 @@ def test_align_4():
 
 def test_jpg():
     try:
-        job = StackJob("job", "./", input_path="input/img-jpg", callbacks='tqdm')
+        job = StackJob("job", "../examples", input_path="input/img-jpg", callbacks='tqdm')
         job.add_action(CombinedActions("align-jpg", [AlignFrames(plot_summary=True)],
                                        output_path="output/img-jpg-align"))
         job.run()
@@ -68,7 +68,7 @@ def test_jpg():
 
 def test_tif():
     try:
-        job = StackJob("job", "./", input_path="input/img-tif", callbacks='tqdm')
+        job = StackJob("job", "../examples", input_path="input/img-tif", callbacks='tqdm')
         job.add_action(CombinedActions("align-tif", [AlignFrames(plot_summary=True)],
                                        output_path="output/img-tif-align"))
         job.run()

@@ -39,6 +39,7 @@ target_examples = dist_dir / package_dir / "examples"
 target_examples.mkdir(exist_ok=True)
 for project_file in ["project.fsp", "stack-from-frames.fsp"]:
     shutil.copy(examples_dir / project_file, target_examples)
+    shutil.copytree(examples_dir / 'input', target_examples / 'input', dirs_exist_ok=True)
 
 shutil.make_archive(
     base_name=str(dist_dir / "focusstack-release"),
