@@ -7,7 +7,7 @@ import matplotlib.backends.backend_pdf
 matplotlib.use('agg')
 from PySide6.QtWidgets import QApplication, QMainWindow, QStackedWidget, QMenu
 from PySide6.QtGui import QAction, QIcon, QGuiApplication
-from PySide6.QtCore import Qt, QTimer, QEvent
+from PySide6.QtCore import Qt, QEvent
 from focusstack.config.config import config
 config.init(DISABLE_TQDM=True, COMBINED_APP=True)
 from focusstack.config import constants
@@ -49,6 +49,7 @@ class MainApp(QMainWindow):
         self.switch_to_project_action.setEnabled(False)
         self.switch_to_retouch_action.setEnabled(True)
         self.project_window.update_title()
+        self.project_window.activateWindow()
         self.project_window.setFocus()
 
     def switch_to_retouch(self):
@@ -58,6 +59,7 @@ class MainApp(QMainWindow):
         self.switch_to_project_action.setEnabled(True)
         self.switch_to_retouch_action.setEnabled(False)
         self.retouch_window.update_title()
+        self.retouch_window.activateWindow()
         self.retouch_window.setFocus()
 
     def create_menu(self):
@@ -102,7 +104,10 @@ class MainApp(QMainWindow):
 
     def retouch_callback(self, filename):
         self.switch_to_retouch()
-        self.retouch_window.open_file(filename)
+        if isinstance(filename, list):
+            open_frames(self.retouch_window, None, ";".join(filename))
+        else:
+            self.retouch_window.open_file(filename)
 
 
 class Application(QApplication):
@@ -152,8 +157,8 @@ Multiple directories can be specified separated by ';'.
         filename = filenames[0]
         extension = filename.split('.')[-1]
         if len(filenames) == 1 and extension == 'fsp':
-            main_app.switch_to_project()
-            QTimer.singleShot(100, lambda: main_app.project_window.open_project(filename))
+            main_app.project_window.open_project(filename)
+            main_app.project_window.setFocus()
         else:
             main_app.switch_to_retouch()
             open_frames(main_app.retouch_window, filename, path)

@@ -357,7 +357,7 @@ class MainWindow(ActionsWindow, LogManager):
             p = ";".join(stack_path)
             os.system(f'{constants.RETOUCH_APP} -p "{p}" &')
         else:
-            raise RuntimeError("Not implemented yet: retouch on multiple paths.")
+            self.retouch_callback(stack_path)
 
     def browse_path(self, path):
         ps = path.split(constants.PATH_SEPARATOR)
