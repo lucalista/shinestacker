@@ -139,12 +139,16 @@ class ImageEditor(QMainWindow):
                 title += " *"
         self.window().setWindowTitle(title)
 
-    def open_file(self, path=None):
-        if path is None:
-            path, _ = QFileDialog.getOpenFileName(
-                self, "Open Image", "", "Images (*.tif *.tiff *.jpg *.jpeg)")
-        if not path:
+    def open_file(self, file_paths=None):
+        if file_paths is None:
+            file_paths, _ = QFileDialog.getOpenFileNames(
+                self, "Open Image", "", "Images (*.tif *.tiff *.jpg *.jpeg);;All Files (*)")
+        if not file_paths:
             return
+        if isinstance(file_paths, list) and len(file_paths) > 1:
+            self.import_frames_from_files(file_paths)
+            return
+        path = file_paths[0] if isinstance(file_paths, list) else file_paths
         self.current_file_path = path
         QGuiApplication.setOverrideCursor(QCursor(Qt.BusyCursor))
         self.loading_dialog = QDialog(self)
@@ -198,46 +202,56 @@ class ImageEditor(QMainWindow):
 
     def import_frames(self):
         file_paths, _ = QFileDialog.getOpenFileNames(self, "Select frames", "",
-                                                     "TIFF Images (*.tif *.tiff);;JPEG Images (*.jpg *.jpeg);;All Files (*)")
+                                                     "Images Images (*.tif *.tiff *.jpg *.jpeg);;All Files (*)")
         if file_paths:
             self.import_frames_from_files(file_paths)
 
     def import_frames_from_files(self, file_paths):
-        for path in file_paths:
-            try:
-                label = path.split("/")[-1].split(".")[0]
-                img = cv2.cvtColor(read_img(path), cv2.COLOR_BGR2RGB)
-                if self.shape is None:
-                    self.shape, self.dtype = get_img_metadata(img)
+        if file_paths is None or len(file_paths) == 0:
+            return
+        if self.current_stack is None and len(file_paths) > 0:
+            path = file_paths[0]
+            img = cv2.cvtColor(read_img(path), cv2.COLOR_BGR2RGB)
+            self.current_stack = np.array([img])
+            self.shape, self.dtype = get_img_metadata(img)
+            label = path.split("/")[-1].split(".")[0]
+            self.current_labels = [label]
+            if self.master_layer is None:
+                self.master_layer = img.copy()
+            self.blank_layer = np.zeros(self.master_layer.shape[:2])
+        if len(file_paths) > 1:
+            for path in file_paths[1:]:
                 try:
-                    validate_image(img, self.shape, self.dtype)
-                except ShapeError as e:
-                    traceback.print_tb(e.__traceback__)
-                    QMessageBox.warning(self, "Import error", f"All flies must have the same shape. {str(e)}")
-                    return
-                except BitDepthError:
-                    pass
-                except Exception as e:
-                    traceback.print_tb(e.__traceback__)
-                    raise e
-                label_x = label
-                i = 0
-                if self.current_labels:
+                    label = path.split("/")[-1].split(".")[0]
+                    img = cv2.cvtColor(read_img(path), cv2.COLOR_BGR2RGB)
+                    try:
+                        validate_image(img, self.shape, self.dtype)
+                    except ShapeError as e:
+                        traceback.print_tb(e.__traceback__)
+                        QMessageBox.warning(self, "Import error", f"All flies must have the same shape. {str(e)}")
+                        return
+                    except BitDepthError:
+                        pass
+                    except Exception as e:
+                        traceback.print_tb(e.__traceback__)
+                        raise e
+                    label_x = label
+                    i = 0
                     while label_x in self.current_labels:
                         i += 1
                         label_x = f"{label} ({i})"
                     self.current_labels.append(label_x)
-                else:
-                    self.current_labels = [label_x]
-                if self.current_stack is not None:
                     self.current_stack = np.insert(self.current_stack, -1, img, axis=0)
-                else:
-                    self.current_stack = np.array(img)
-            except Exception as e:
-                traceback.print_tb(e.__traceback__)
-                QMessageBox.critical(self, "Error", str(e))
-                self.statusBar().showMessage(f"Error loading: {path}")
-                break
+                except Exception as e:
+                    traceback.print_tb(e.__traceback__)
+                    QMessageBox.critical(self, "Error", str(e))
+                    self.statusBar().showMessage(f"Error loading: {path}")
+                    break
+        self.mark_as_modified()
+        self.change_layer(0)
+        self.image_viewer.reset_zoom()
+        self.thumbnail_list.setFocus()
+
         self.update_thumbnails()
 
     def save_file(self):
@@ -329,6 +343,7 @@ class ImageEditor(QMainWindow):
             self.master_layer = None
             self.current_layer = 0
             self.current_file_path = ''
+            self.modified = False
             self.display_master_layer()
             self.update_thumbnails()
             self.update_title()
