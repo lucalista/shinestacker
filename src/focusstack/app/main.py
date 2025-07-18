@@ -7,7 +7,7 @@ import matplotlib.backends.backend_pdf
 matplotlib.use('agg')
 from PySide6.QtWidgets import QApplication, QMainWindow, QStackedWidget, QMenu
 from PySide6.QtGui import QAction, QIcon, QGuiApplication
-from PySide6.QtCore import Qt, QEvent
+from PySide6.QtCore import Qt, QEvent, QTimer
 from focusstack.config.config import config
 config.init(DISABLE_TQDM=True, COMBINED_APP=True)
 from focusstack.config import constants
@@ -151,7 +151,7 @@ Multiple directories can be specified separated by ';'.
     app.main_app = main_app
     main_app.show()
     main_app.activateWindow()
-    main_app.raise_()
+
     if filename:
         filenames = filename.split(';')
         filename = filenames[0]
@@ -162,6 +162,7 @@ Multiple directories can be specified separated by ';'.
         else:
             main_app.switch_to_retouch()
             open_frames(main_app.retouch_window, filename, path)
+    QTimer.singleShot(100, lambda: main_app.setFocus())
     sys.exit(app.exec())
 
 

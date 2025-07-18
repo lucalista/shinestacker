@@ -245,7 +245,7 @@ class ActionsWindow(ProjectEditor):
                 if not is_sub_action:
                     self.set_enabled_sub_actions_gui(current_action.type_name == constants.ACTION_COMBO)
                 dialog = ActionConfigDialog(current_action, self)
-                if dialog.exec():
+                if dialog.exec() == QDialog.Accepted:
                     self.on_job_selected(job_index)
                     self.refresh_ui()
                     self.job_list.setCurrentRow(job_index)
@@ -267,6 +267,6 @@ class ActionsWindow(ProjectEditor):
 
     def edit_action(self, action):
         dialog = ActionConfigDialog(action, self)
-        if dialog.exec():
+        if dialog.exec() == QDialog.Accepted:
             self.on_job_selected(self.job_list.currentRow())
             self.mark_as_modified()
