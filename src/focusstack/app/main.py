@@ -145,6 +145,8 @@ Multiple directories can be specified separated by ';'.
     main_app = MainApp()
     app.main_app = main_app
     main_app.show()
+    main_app.activateWindow()
+    main_app.raise_()
     if filename:
         filenames = filename.split(';')
         filename = filenames[0]
