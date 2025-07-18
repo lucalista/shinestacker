@@ -17,7 +17,6 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "ansi2html",
     "imagecodecs",
     "ipywidgets",
     "jsonpickle",

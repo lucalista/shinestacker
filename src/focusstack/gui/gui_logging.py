@@ -3,7 +3,6 @@ import logging
 from PySide6.QtWidgets import QWidget, QTextEdit, QMessageBox, QStatusBar
 from PySide6.QtGui import QTextCursor, QTextOption, QFont
 from PySide6.QtCore import QThread, QObject, Signal, Slot, Qt
-from ansi2html import Ansi2HTMLConverter
 from focusstack.config.constants import constants
 
 LOG_FONTS = ['Monaco', 'Menlo', ' Lucida Console', 'Courier New', 'Courier', 'monospace']
@@ -13,11 +12,47 @@ LOG_FONTS_STR = ", ".join(LOG_FONTS)
 class SimpleHtmlFormatter(logging.Formatter):
     ANSI_ESCAPE = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
     COLOR_MAP = {
-        'DEBUG': '#5c85d6',    # Blu chiaro
-        'INFO': '#50c878',     # Verde
-        'WARNING': '#ffcc00',  # Giallo
-        'ERROR': '#ff3333',    # Rosso
-        'CRITICAL': '#cc0066'  # Rosso scuro
+        'DEBUG': '#5c85d6',    # light blue
+        'INFO': '#50c878',     # green
+        'WARNING': '#ffcc00',  # yellow
+        'ERROR': '#ff3333',    # red
+        'CRITICAL': '#cc0066'  # dark red
+    }
+    ANSI_COLORS = {
+        # Reset
+        '\x1b[0m': '</span>',
+        '\x1b[m': '</span>',
+        # Colori base (30-37)
+        '\x1b[30m': '<span style="color:#000000">',  # black
+        '\x1b[31m': '<span style="color:#ff0000">',  # red
+        '\x1b[32m': '<span style="color:#00ff00">',  # green
+        '\x1b[33m': '<span style="color:#ffff00">',  # yellow
+        '\x1b[34m': '<span style="color:#0000ff">',  # blue
+        '\x1b[35m': '<span style="color:#ff00ff">',  # magenta
+        '\x1b[36m': '<span style="color:#00ffff">',  # cyan
+        '\x1b[37m': '<span style="color:#ffffff">',  # white
+        # Brilliant colors (90-97)
+        '\x1b[90m': '<span style="color:#555555">',
+        '\x1b[91m': '<span style="color:#ff5555">',
+        '\x1b[92m': '<span style="color:#55ff55">',
+        '\x1b[93m': '<span style="color:#ffff55">',
+        '\x1b[94m': '<span style="color:#5555ff">',
+        '\x1b[95m': '<span style="color:#ff55ff">',
+        '\x1b[96m': '<span style="color:#55ffff">',
+        '\x1b[97m': '<span style="color:#ffffff">',
+        # Background (40-47)
+        '\x1b[40m': '<span style="background-color:#000000">',
+        '\x1b[41m': '<span style="background-color:#ff0000">',
+        '\x1b[42m': '<span style="background-color:#00ff00">',
+        '\x1b[43m': '<span style="background-color:#ffff00">',
+        '\x1b[44m': '<span style="background-color:#0000ff">',
+        '\x1b[45m': '<span style="background-color:#ff00ff">',
+        '\x1b[46m': '<span style="background-color:#00ffff">',
+        '\x1b[47m': '<span style="background-color:#ffffff">',
+        # Styles
+        '\x1b[1m': '<span style="font-weight:bold">',  # bold
+        '\x1b[3m': '<span style="font-style:italic">',  # italis
+        '\x1b[4m': '<span style="text-decoration:underline">',  # underline
     }
 
     def __init__(self, fmt=None, datefmt=None, style='%'):
@@ -28,9 +63,9 @@ class SimpleHtmlFormatter(logging.Formatter):
     def format(self, record):
         levelname = record.levelname
         message = super().format(record)
-        converter = Ansi2HTMLConverter(inline=True, scheme="solarized")
         message = message.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-        message = converter.convert(message, full=False)
+        for ansi_code, html_tag in self.ANSI_COLORS.items():
+            message = message.replace(ansi_code, html_tag)
         message = self.ANSI_ESCAPE.sub('', message).replace("\r", "").rstrip()
         color = self.COLOR_MAP.get(levelname, '#000000')
         return f'''

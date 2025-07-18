@@ -92,7 +92,6 @@ Running in jupyter notebook requires the following packages:
 
 The GUI requires the following python modules:
 
-* ansi2html
 * jsonpickle
 * PySide6
 * webbrowser
