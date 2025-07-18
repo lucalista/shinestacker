@@ -332,13 +332,15 @@ class MainWindow(ActionsWindow, LogManager):
             menu.addAction(self.run_job_action)
             menu.addAction(self.run_all_jobs_action)
             if current_action.type_name == constants.ACTION_JOB:
-                menu.addSeparator()
-                self.job_retouch_path_action = QAction("Retouch path")
-                self.job_retouch_path_action.triggered.connect(lambda job: self.retouch_path(current_action))
-                menu.addAction(self.job_retouch_path_action)
+                retouch_path = self.get_retouch_path(current_action)
+                if len(retouch_path) > 0:
+                    menu.addSeparator()
+                    self.job_retouch_path_action = QAction("Retouch path")
+                    self.job_retouch_path_action.triggered.connect(lambda job: self.run_retouch_path(current_action, retouch_path))
+                    menu.addAction(self.job_retouch_path_action)
             menu.exec(event.globalPos())
 
-    def retouch_path(self, job):
+    def get_retouch_path(self, job):
         frames_path = [get_action_output_path(action)[0]
                        for action in job.sub_actions if action.type_name == constants.ACTION_COMBO]
         bunches_path = [get_action_output_path(action)[0]
@@ -353,11 +355,14 @@ class MainWindow(ActionsWindow, LogManager):
         if wp == '':
             raise ValueError("Job has no working path specified.")
         stack_path = [f"{wp}/{s}" for s in stack_path]
+        return stack_path
+
+    def run_retouch_path(self, job, retouch_path):
         if not config.COMBINED_APP:
-            p = ";".join(stack_path)
+            p = ";".join(retouch_path)
             os.system(f'{constants.RETOUCH_APP} -p "{p}" &')
         else:
-            self.retouch_callback(stack_path)
+            self.retouch_callback(retouch_path)
 
     def browse_path(self, path):
         ps = path.split(constants.PATH_SEPARATOR)
