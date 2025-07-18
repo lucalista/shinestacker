@@ -1,6 +1,7 @@
 import sys
 import os
 import logging
+import argparse
 import matplotlib
 import matplotlib.backends.backend_pdf
 matplotlib.use('agg')
@@ -17,6 +18,7 @@ from focusstack.retouch.image_editor_ui import ImageEditorUI
 from focusstack.app.gui_utils import disable_macos_special_menu_items
 from focusstack.app.help_menu import add_help_action
 from focusstack.app.about_dialog import show_about_dialog
+from focusstack.app.open_frames import open_frames
 
 
 class MainApp(QMainWindow):
@@ -111,6 +113,22 @@ class Application(QApplication):
 
 
 def main():
+    parser = argparse.ArgumentParser(
+        prog='focusstack-retouch',
+        description='Final retouch focus stack image from individual frames.',
+        epilog='This app is part of the focusstack package.')
+    parser.add_argument('-f', '--filename', nargs='?', help='''
+if a single file is specified, it can be either a project or an image.
+Multiple frames can be specified as a list of files.
+Multiple files can be specified separated by ';'.
+''')
+    parser.add_argument('-p', '--path', nargs='?', help='''
+import frames from one or more of directories.
+Multiple directories can be specified separated by ';'.
+''')
+    args = vars(parser.parse_args(sys.argv[1:]))
+    filename = args['filename']
+    path = args['path']
     setup_logging(console_level=logging.DEBUG, file_level=logging.DEBUG, disable_console=True)
     app = Application(sys.argv)
     if config.DONT_USE_NATIVE_MENU:
@@ -127,24 +145,16 @@ def main():
     main_app = MainApp()
     app.main_app = main_app
     main_app.show()
-    file_to_open = None
-    if len(sys.argv) > 1:
-        file_to_open = sys.argv[1]
-        if not os.path.isfile(file_to_open):
-            print(f"File not found: {file_to_open}")
-            file_to_open = None
-    if file_to_open:
-        extension = file_to_open.split('.')[-1]
-        if extension == 'fsp':
+    if filename:
+        filenames = filename.split(';')
+        filename = filenames[0]
+        extension = filename.split('.')[-1]
+        if len(filenames) == 1 and extension == 'fsp':
             main_app.switch_to_project()
-            QTimer.singleShot(100, lambda: main_app.project_window.open_project(file_to_open))
-        elif extension in ['tif', 'tiff', 'jpg', 'jpeg']:
-            main_app.switch_to_retouch()
-            QTimer.singleShot(100, lambda: main_app.retouch_window.open_file(file_to_open))
+            QTimer.singleShot(100, lambda: main_app.project_window.open_project(filename))
         else:
-            print(f"File extension: {extension} not supported.")
-    else:
-        QTimer.singleShot(100, lambda: main_app.project_window.new_project())
+            main_app.switch_to_retouch()
+            open_frames(main_app.retouch_window, filename, path)
     sys.exit(app.exec())
 
 

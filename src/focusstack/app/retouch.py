@@ -1,15 +1,15 @@
 import sys
 import argparse
-import os
 from PySide6.QtWidgets import QApplication, QMenu
 from PySide6.QtGui import QIcon, QAction
-from PySide6.QtCore import Qt, QTimer, QEvent
+from PySide6.QtCore import Qt, QEvent
 from focusstack.retouch.image_editor_ui import ImageEditorUI
 from focusstack.core.core_utils import get_app_base_path
 from focusstack.config.config import config
 from focusstack.app.gui_utils import disable_macos_special_menu_items
 from focusstack.app.help_menu import add_help_action
 from focusstack.app.about_dialog import show_about_dialog
+from focusstack.app.open_frames import open_frames
 
 
 class RetouchApp(ImageEditorUI):
@@ -49,11 +49,11 @@ def main():
         description='Final retouch focus stack image from individual frames.',
         epilog='This app is part of the focusstack package.')
     parser.add_argument('-f', '--filename', nargs='?', help='''
-import frames from a list of file.
+import frames from files.
 Multiple files can be specified separated by ';'.
 ''')
     parser.add_argument('-p', '--path', nargs='?', help='''
-import frames from a list of directories.
+import frames from one or more of directories.
 Multiple directories can be specified separated by ';'.
 ''')
     args = vars(parser.parse_args(sys.argv[1:]))
@@ -71,39 +71,7 @@ Multiple directories can be specified separated by ';'.
     editor = RetouchApp()
     app.editor = editor
     editor.show()
-
-    def open_files(filenames):
-        print(filenames)
-        if len(filenames) == 1:
-            QTimer.singleShot(100, lambda: editor.open_file(filenames[0]))
-        else:
-            def check_thread():
-                if editor.loader_thread is None or editor.loader_thread.isRunning():
-                    QTimer.singleShot(100, check_thread)
-                else:
-                    editor.import_frames_from_files(filenames[1:])
-            QTimer.singleShot(100, lambda: (
-                editor.open_file(filenames[0]),
-                QTimer.singleShot(100, check_thread)
-            ))
-    if filename:
-        filenames = filename.split(';')
-        open_files(filenames)
-    elif path:
-        reverse = False
-        paths = path.split(';')
-        filenames = []
-        for path in paths:
-            if os.path.exists(path) and os.path.isdir(path):
-                all_entries = os.listdir(path)
-                files = sorted([f for f in all_entries if os.path.isfile(os.path.join(path, f))],
-                               reverse=reverse)
-                full_paths = [os.path.join(path, f) for f in files]
-                filenames += full_paths
-            else:
-                print(f"path {path} is invalid", file=sys.stderr)
-                exit(1)
-        open_files(filenames)
+    open_frames(editor, filename, path)
     sys.exit(app.exec())
 
 
