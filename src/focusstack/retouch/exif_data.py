@@ -53,7 +53,13 @@ class ExifData(QDialog):
             shortcuts['Warning:': 'no EXIF data found']
         else:
             data = exif_dict(self.exif)
-        for k, (t, d) in data.items():
-            if isinstance(d, IFDRational):
-                d = f"{d.numerator}/{d.denominator}"
-            self.layout.addRow(f"<b>{k}:</b>", QLabel(f"{d}"))
+        if len(data) > 0:
+            for k, (t, d) in data.items():
+                if isinstance(d, IFDRational):
+                    d = f"{d.numerator}/{d.denominator}"
+                else:
+                    d = f"{d}"
+                if "<<<" not in d and k != 'IPTCNAA':
+                    self.layout.addRow(f"<b>{k}:</b>", QLabel(d))
+        else:
+            self.layout.addRow("-", QLabel("Empty EXIF dictionary"))
