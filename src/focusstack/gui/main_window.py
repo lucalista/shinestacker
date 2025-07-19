@@ -1,12 +1,12 @@
 import os
 import subprocess
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QLabel, QMessageBox,
-                               QSplitter, QToolBar, QMenu, QComboBox)
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QGuiApplication, QAction, QIcon
+                               QSplitter, QToolBar, QMenu, QComboBox, QStackedWidget)
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QGuiApplication, QAction, QIcon, QPixmap
 from focusstack.config.constants import constants
 from focusstack.config.config import config
-from focusstack.core.core_utils import running_under_windows, running_under_macos
+from focusstack.core.core_utils import running_under_windows, running_under_macos, get_app_base_path
 from focusstack.gui.colors import ColorPalette
 from focusstack.gui.project_model import Project
 from focusstack.gui.actions_window import ActionsWindow
@@ -45,6 +45,81 @@ LIST_STYLE_SHEET = f"""
 """
 
 
+class TabWidgetWithPlaceholder(QWidget):
+    # Segnali aggiuntivi per mantenere la compatibilità
+    currentChanged = Signal(int)
+    tabCloseRequested = Signal(int)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.layout = QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.stacked_widget = QStackedWidget()
+        self.layout.addWidget(self.stacked_widget)
+        self.tab_widget = QTabWidget()
+        self.stacked_widget.addWidget(self.tab_widget)
+        self.placeholder = QLabel()
+        self.placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        rel_path = 'ico/focus_stack_bkg.png'
+        icon_path = f'{get_app_base_path()}/{rel_path}'
+        if not os.path.exists(icon_path):
+            icon_path = f'{self.get_app_base_path()}/../{rel_path}'
+        if os.path.exists(icon_path):
+            pixmap = QPixmap(icon_path)
+            # Ridimensiona mantenendo le proporzioni (es. max 400x400)
+            pixmap = pixmap.scaled(250, 250, Qt.AspectRatioMode.KeepAspectRatio,
+                                   Qt.TransformationMode.SmoothTransformation)
+            self.placeholder.setPixmap(pixmap)
+        else:
+            self.placeholder.setText("Run logs will appear here.")
+        self.stacked_widget.addWidget(self.placeholder)
+        self.tab_widget.currentChanged.connect(self._on_current_changed)
+        self.tab_widget.tabCloseRequested.connect(self._on_tab_close_requested)
+        self.update_placeholder_visibility()
+
+    def _on_current_changed(self, index):
+        self.currentChanged.emit(index)
+        self.update_placeholder_visibility()
+
+    def _on_tab_close_requested(self, index):
+        self.tabCloseRequested.emit(index)
+        self.update_placeholder_visibility()
+
+    def update_placeholder_visibility(self):
+        if self.tab_widget.count() == 0:
+            self.stacked_widget.setCurrentIndex(1)
+        else:
+            self.stacked_widget.setCurrentIndex(0)
+
+    def addTab(self, widget, label):
+        result = self.tab_widget.addTab(widget, label)
+        self.update_placeholder_visibility()
+        return result
+
+    def removeTab(self, index):
+        result = self.tab_widget.removeTab(index)
+        self.update_placeholder_visibility()
+        return result
+
+    def count(self):
+        return self.tab_widget.count()
+
+    def setCurrentIndex(self, index):
+        return self.tab_widget.setCurrentIndex(index)
+
+    def currentIndex(self):
+        return self.tab_widget.currentIndex()
+
+    def currentWidget(self):
+        return self.tab_widget.currentWidget()
+
+    def widget(self, index):
+        return self.tab_widget.widget(index)
+
+    def indexOf(self, widget):
+        return self.tab_widget.indexOf(widget)
+
+
 class MainWindow(ActionsWindow, LogManager):
     def __init__(self):
         ActionsWindow.__init__(self)
@@ -78,7 +153,7 @@ class MainWindow(ActionsWindow, LogManager):
         top_widget = QWidget()
         top_widget.setLayout(h_layout)
         h_splitter.addWidget(top_widget)
-        self.tab_widget = QTabWidget()
+        self.tab_widget = TabWidgetWithPlaceholder()
         self.tab_widget.resize(1000, 500)
         h_splitter.addWidget(self.tab_widget)
         self.job_list.currentRowChanged.connect(self.on_job_selected)
