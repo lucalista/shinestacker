@@ -183,6 +183,7 @@ class ImageEditor(QMainWindow):
         self.modified = False
         self.blank_layer = np.zeros(master_layer.shape[:2])
         self.update_thumbnails()
+        self.image_viewer.setup_brush_cursor()
         self.change_layer(0)
         self.image_viewer.reset_zoom()
         self.statusBar().showMessage(f"Loaded: {self.current_file_path}")
@@ -347,7 +348,7 @@ class ImageEditor(QMainWindow):
             self.current_layer = 0
             self.current_file_path = ''
             self.modified = False
-            self.display_master_layer()
+            self.image_viewer.clear_image()
             self.update_thumbnails()
             self.update_title()
 
