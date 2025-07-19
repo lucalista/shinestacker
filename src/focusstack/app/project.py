@@ -1,3 +1,4 @@
+import os
 import sys
 import logging
 import argparse
@@ -9,6 +10,7 @@ from PySide6.QtGui import QIcon, QAction
 from PySide6.QtCore import Qt, QTimer, QEvent
 from focusstack.config.config import config
 config.init(DISABLE_TQDM=True)
+from focusstack.config.constants import constants
 from focusstack.core.logging import setup_logging
 from focusstack.core.core_utils import get_app_base_path
 from focusstack.gui.main_window import MainWindow
@@ -23,6 +25,7 @@ class ProjectApp(MainWindow):
         self.app_menu = self.create_menu()
         self.menuBar().insertMenu(self.menuBar().actions()[0], self.app_menu)
         add_help_action(self)
+        self.set_retouch_callback(self._retouch_callback)
 
     def create_menu(self):
         app_menu = QMenu("FocusStack")
@@ -39,6 +42,10 @@ class ProjectApp(MainWindow):
         exit_action.triggered.connect(self.quit)
         app_menu.addAction(exit_action)
         return app_menu
+
+    def _retouch_callback(self, filename):
+        p = ";".join(filename)
+        os.system(f'{constants.RETOUCH_APP} -p "{p}" &')
 
 
 class Application(QApplication):
@@ -66,11 +73,6 @@ project filename.
     app.setWindowIcon(QIcon(f'{get_app_base_path()}/ico/focus_stack.png'))
     window = ProjectApp()
 
-    def retouch_callback(filename):
-        app.switch_to_retouch()
-        app.retouch_window.open_file(filename)
-
-    window.set_retouch_callback(retouch_callback)
     app.window = window
     window.show()
     filename = args['filename']

@@ -5,7 +5,6 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QL
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QGuiApplication, QAction, QIcon, QPixmap
 from focusstack.config.constants import constants
-from focusstack.config.config import config
 from focusstack.core.core_utils import running_under_windows, running_under_macos, get_app_base_path
 from focusstack.gui.colors import ColorPalette
 from focusstack.gui.project_model import Project
@@ -433,11 +432,7 @@ class MainWindow(ActionsWindow, LogManager):
         return stack_path
 
     def run_retouch_path(self, job, retouch_path):
-        if not config.COMBINED_APP:
-            p = ";".join(retouch_path)
-            os.system(f'{constants.RETOUCH_APP} -p "{p}" &')
-        else:
-            self.retouch_callback(retouch_path)
+        self.retouch_callback(retouch_path)
 
     def browse_path(self, path):
         ps = path.split(constants.PATH_SEPARATOR)
