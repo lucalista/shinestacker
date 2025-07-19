@@ -40,7 +40,6 @@ class MainApp(QMainWindow):
         self.retouch_window.menuBar().insertMenu(self.retouch_window.menuBar().actions()[0], self.app_menu)
         add_help_action(self.project_window)
         add_help_action(self.retouch_window)
-        self.set_initial_app()
 
     def switch_to_project(self):
         self.switch_app(0)
@@ -95,13 +94,6 @@ class MainApp(QMainWindow):
     def switch_app(self, index):
         self.stacked_widget.setCurrentIndex(index)
 
-    def set_initial_app(self):
-        import sys
-        if "--retouch-window" in sys.argv:
-            self.switch_to_retouch()
-        else:
-            self.switch_to_project()
-
     def retouch_callback(self, filename):
         self.switch_to_retouch()
         if isinstance(filename, list):
@@ -130,6 +122,9 @@ Multiple files can be specified separated by ';'.
     parser.add_argument('-p', '--path', nargs='?', help='''
 import frames from one or more of directories.
 Multiple directories can be specified separated by ';'.
+''')
+    parser.add_argument('-r', '--retouch', action='store_true', help='''
+open retouch window at startup instead of project windows.
 ''')
     args = vars(parser.parse_args(sys.argv[1:]))
     filename = args['filename']
@@ -162,6 +157,13 @@ Multiple directories can be specified separated by ';'.
         else:
             main_app.switch_to_retouch()
             open_frames(main_app.retouch_window, filename, path)
+    else:
+        retouch = args['retouch']
+        if retouch:
+            main_app.switch_to_retouch()
+        else:
+            main_app.switch_to_project()
+            QTimer.singleShot(100, lambda: main_app.project_window.new_project())
     QTimer.singleShot(100, lambda: main_app.setFocus())
     sys.exit(app.exec())
 
