@@ -63,7 +63,7 @@ class TabWidgetWithPlaceholder(QWidget):
         rel_path = 'ico/focus_stack_bkg.png'
         icon_path = f'{get_app_base_path()}/{rel_path}'
         if not os.path.exists(icon_path):
-            icon_path = f'{self.get_app_base_path()}/../{rel_path}'
+            icon_path = f'{get_app_base_path()}/../{rel_path}'
         if os.path.exists(icon_path):
             pixmap = QPixmap(icon_path)
             # Ridimensiona mantenendo le proporzioni (es. max 400x400)
