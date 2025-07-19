@@ -1,4 +1,3 @@
-import re
 import logging
 from PySide6.QtWidgets import QWidget, QTextEdit, QMessageBox, QStatusBar
 from PySide6.QtGui import QTextCursor, QTextOption, QFont
@@ -10,7 +9,6 @@ LOG_FONTS_STR = ", ".join(LOG_FONTS)
 
 
 class SimpleHtmlFormatter(logging.Formatter):
-    ANSI_ESCAPE = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
     COLOR_MAP = {
         'DEBUG': '#5c85d6',    # light blue
         'INFO': '#50c878',     # green
@@ -69,7 +67,7 @@ class SimpleHtmlFormatter(logging.Formatter):
         message = message.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
         for ansi_code, html_tag in self.ANSI_COLORS.items():
             message = message.replace(ansi_code, html_tag)
-        message = self.ANSI_ESCAPE.sub('', message).replace("\r", "").rstrip()
+        message = constants.ANSI_ESCAPE.sub('', message).replace("\r", "").rstrip()
         color = self.COLOR_MAP.get(levelname, '#000000')
         return f'''
         <div style="margin: 2px 0; font-family: {LOG_FONTS_STR};">

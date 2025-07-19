@@ -1,9 +1,9 @@
 import logging
 import sys
 from pathlib import Path
-import re
 import datetime
 from focusstack.config.config import config
+from focusstack.config.constants import constants
 from focusstack.core.core_utils import get_app_base_path
 if not config.DISABLE_TQDM:
     from tqdm import tqdm
@@ -25,11 +25,9 @@ class ConsoleFormatter(logging.Formatter):
 
 
 class FileFormatter(logging.Formatter):
-    ANSI_ESCAPE = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-
     def format(self, record):
         fmt = f"[%(levelname).3s %(asctime)s] %(message)s"  # noqa
-        return self.ANSI_ESCAPE.sub('', logging.Formatter(fmt).format(record).replace("\r", "").rstrip())
+        return constants.ANSI_ESCAPE.sub('', logging.Formatter(fmt).format(record).replace("\r", "").rstrip())
 
 
 class TqdmLoggingHandler(logging.StreamHandler):

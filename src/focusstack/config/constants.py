@@ -1,4 +1,5 @@
 import sys
+import re
 
 
 class _Constants:
@@ -9,6 +10,8 @@ class _Constants:
     NUM_UINT16 = 65536
     MAX_UINT8 = 255
     MAX_UINT16 = 65535
+
+    ANSI_ESCAPE = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 
     ACTION_JOB = "Job"
     ACTION_COMBO = "CombinedActions"
