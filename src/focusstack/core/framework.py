@@ -132,7 +132,7 @@ class JobBase:
 
 
 class Job(JobBase):
-    def __init__(self, name, logger_name=None, log_file="logs/focusstack.log", callbacks=None, **kwargs):
+    def __init__(self, name, logger_name=None, log_file='', callbacks=None, **kwargs):
         JobBase.__init__(self, name, **kwargs)
         self.action_counter = 0
         self.__actions = []
