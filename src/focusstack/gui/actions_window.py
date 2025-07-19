@@ -3,6 +3,7 @@ import os
 import json
 import jsonpickle
 from PySide6.QtWidgets import QMessageBox, QFileDialog, QDialog
+from focusstack.core.core_utils import get_app_base_path
 from focusstack.gui.project_model import Project
 from focusstack.config.constants import constants
 from focusstack.gui.project_model import ActionConfig
@@ -43,6 +44,7 @@ class ActionsWindow(ProjectEditor):
     def new_project(self):
         if not self._check_unsaved_changes():
             return
+        os.chdir(get_app_base_path())
         self._current_file = None
         self._modified_project = False
         self.update_title()
