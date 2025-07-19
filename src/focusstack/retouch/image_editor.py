@@ -15,6 +15,7 @@ from focusstack.retouch.brush import Brush
 from focusstack.retouch.brush_controller import BrushController
 from focusstack.retouch.undo_manager import UndoManager
 from focusstack.retouch.file_loader import FileLoader
+from focusstack.retouch.exif_data import ExifData
 
 
 def slider_to_brush_size(slider_val):
@@ -334,6 +335,8 @@ class ImageEditor(QMainWindow):
             self.exif_path = path
             self.exif_data = get_exif(path)
             self.statusBar().showMessage(f"EXIF data extracted from {path}.")
+        self._exif_dialog = ExifData(self.exif_data, self)
+        self._exif_dialog.exec()
 
     def close_file(self):
         if self._check_unsaved_changes():
