@@ -120,7 +120,7 @@ class Application(QApplication):
 def main():
     parser = argparse.ArgumentParser(
         prog='focusstack-retouch',
-        description='Final retouch focus stack image from individual frames.',
+        description='Focus stacking App.',
         epilog='This app is part of the focusstack package.')
     parser.add_argument('-f', '--filename', nargs='?', help='''
 if a single file is specified, it can be either a project or an image.

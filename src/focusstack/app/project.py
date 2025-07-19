@@ -1,6 +1,6 @@
 import sys
 import logging
-import os
+import argparse
 import matplotlib
 import matplotlib.backends.backend_pdf
 matplotlib.use('agg')
@@ -49,6 +49,14 @@ class Application(QApplication):
 
 
 def main():
+    parser = argparse.ArgumentParser(
+        prog='focusstack-project',
+        description='Manage and run focus stack jobs.',
+        epilog='This app is part of the focusstack package.')
+    parser.add_argument('-f', '--filename', nargs='?', help='''
+project filename.
+''')
+    args = vars(parser.parse_args(sys.argv[1:]))
     setup_logging(console_level=logging.DEBUG, file_level=logging.DEBUG, disable_console=True)
     app = Application(sys.argv)
     if config.DONT_USE_NATIVE_MENU:
@@ -56,12 +64,6 @@ def main():
     else:
         disable_macos_special_menu_items()
     app.setWindowIcon(QIcon(f'{get_app_base_path()}/ico/focus_stack.png'))
-    file_to_open = None
-    if len(sys.argv) > 1:
-        file_to_open = sys.argv[1]
-        if not os.path.isfile(file_to_open):
-            print(f"File not found: {file_to_open}")
-            file_to_open = None
     window = ProjectApp()
 
     def retouch_callback(filename):
@@ -71,8 +73,9 @@ def main():
     window.set_retouch_callback(retouch_callback)
     app.window = window
     window.show()
-    if file_to_open:
-        QTimer.singleShot(100, lambda: window.open_project(file_to_open))
+    filename = args['filename']
+    if filename:
+        QTimer.singleShot(100, lambda: window.open_project(filename))
     else:
         QTimer.singleShot(100, lambda: window.new_project())
     sys.exit(app.exec())
