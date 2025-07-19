@@ -35,6 +35,8 @@ class ImageViewer(QGraphicsView):
         self.setScene(self.scene)
         self.pixmap_item = QGraphicsPixmapItem()
         self.scene.addItem(self.pixmap_item)
+        self.pixmap_item.setPixmap(QPixmap())
+        self.scene.setBackgroundBrush(QBrush(QColor(120, 120, 120)))
         self.zoom_factor = 1.0
         self.min_scale = 0.0
         self.max_scale = 0.0
