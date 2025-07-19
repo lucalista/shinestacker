@@ -86,15 +86,19 @@ class ProjectEditor(QMainWindow):
     def set_project(self, project):
         self.project = project
 
-    def job_text(self, job, long_name=False):
-        txt = f"<b>{job.params.get('name', '(job)')}</b>"
+    def job_text(self, job, long_name=False, html=False):
+        txt = f"{job.params.get('name', '(job)')}"
+        if html:
+            txt = f"<b>{txt}</b>"
         in_path = get_action_input_path(job)
         return txt + (f" [Job: 📁 {in_path[0]} → 📂 ...]" if long_name else "")
 
-    def action_text(self, action, is_sub_action=False, indent=True, long_name=False):
+    def action_text(self, action, is_sub_action=False, indent=True, long_name=False, html=False):
         txt = INDENT_SPACE if is_sub_action and indent else ""
         if action.params.get('name', '') != '':
-            txt += f"<b>{action.params['name']}</b>"
+            txt += f"{action.params['name']}"
+            if html:
+                txt = f"<b>{txt}</b>"
         in_path, out_path = get_action_input_path(action), get_action_output_path(action)
         return f"{txt} [{action.type_name}" + (f": 📁 <i>{in_path[0]}</i> → 📂 <i>{out_path[0]}</i>]" if long_name and not is_sub_action else "]")
 
@@ -264,7 +268,7 @@ class ProjectEditor(QMainWindow):
         if dialog.exec() == QDialog.Accepted:
             self.mark_as_modified()
             self.project.jobs.append(job_action)
-            self.add_list_item(self.job_list, self.job_text(job_action, long_name=True), job_action.enabled())
+            self.add_list_item(self.job_list, job_action, False)
             self.job_list.setCurrentRow(self.job_list.count() - 1)
             self.job_list.item(self.job_list.count() - 1).setSelected(True)
             self.refresh_ui()
@@ -285,15 +289,17 @@ class ProjectEditor(QMainWindow):
         if dialog.exec() == QDialog.Accepted:
             self.mark_as_modified()
             self.project.jobs[current_index].add_sub_action(action)
-            self.add_list_item(self.action_list, self.action_text(action, long_name=True), action.enabled())
+            self.add_list_item(self.action_list, action, False)
             self.delete_element_action.setEnabled(False)
 
-    def add_list_item(self, widget_list, text, enabled):
+    def add_list_item(self, widget_list, action, is_sub_action):
+        text = self.action_text(action, long_name=True, html=True, is_sub_action=is_sub_action)
         item = QListWidgetItem()
         item.setText('')
         item.setData(Qt.ItemDataRole.UserRole, True)
         widget_list.addItem(item)
-        html_text = f"✅ <span style='color:#{ColorPalette.DARK_BLUE.hex()};'>{text}</span>" if enabled \
+        html_text = f"✅ <span style='color:#{ColorPalette.DARK_BLUE.hex()};'>{text}</span>" \
+                    if action.enabled() \
                     else f"❌<span style='color:#{ColorPalette.DARK_RED.hex()};'>{text}</span>"
         label = QLabel(html_text)
         widget_list.setItemWidget(item, label)
@@ -468,12 +474,10 @@ class ProjectEditor(QMainWindow):
         if 0 <= index < len(self.project.jobs):
             job = self.project.jobs[index]
             for action in job.sub_actions:
-                self.add_list_item(self.action_list, self.action_text(action, long_name=True), action.enabled())
+                self.add_list_item(self.action_list, action, False)
                 if len(action.sub_actions) > 0:
                     for sub_action in action.sub_actions:
-                        self.add_list_item(self.action_list,
-                                           self.action_text(sub_action, is_sub_action=True, long_name=True),
-                                           sub_action.enabled())
+                        self.add_list_item(self.action_list, sub_action, True)
             self.update_delete_action_state()
 
     def update_delete_action_state(self):

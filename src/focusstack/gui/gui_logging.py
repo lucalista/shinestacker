@@ -18,37 +18,40 @@ class SimpleHtmlFormatter(logging.Formatter):
         'ERROR': '#ff3333',    # red
         'CRITICAL': '#cc0066'  # dark red
     }
+    FF = '80'
+    OO = '00'
+    MM = '40'
     ANSI_COLORS = {
         # Reset
         '\x1b[0m': '</span>',
         '\x1b[m': '</span>',
         # Colori base (30-37)
-        '\x1b[30m': '<span style="color:#000000">',  # black
-        '\x1b[31m': '<span style="color:#ff0000">',  # red
-        '\x1b[32m': '<span style="color:#00ff00">',  # green
-        '\x1b[33m': '<span style="color:#ffff00">',  # yellow
-        '\x1b[34m': '<span style="color:#0000ff">',  # blue
-        '\x1b[35m': '<span style="color:#ff00ff">',  # magenta
-        '\x1b[36m': '<span style="color:#00ffff">',  # cyan
-        '\x1b[37m': '<span style="color:#ffffff">',  # white
+        '\x1b[30m': f'<span style="color:#{OO}{OO}{OO}">',  # black
+        '\x1b[31m': f'<span style="color:#{FF}{OO}{OO}">',  # red
+        '\x1b[32m': f'<span style="color:#{OO}{FF}{OO}">',  # green
+        '\x1b[33m': f'<span style="color:#{FF}{FF}{OO}">',  # yellow
+        '\x1b[34m': f'<span style="color:#{OO}{OO}{FF}">',  # blue
+        '\x1b[35m': f'<span style="color:#{FF}{OO}{FF}">',  # magenta
+        '\x1b[36m': f'<span style="color:#{OO}{FF}{FF}">',  # cyan
+        '\x1b[37m': f'<span style="color:#{FF}{FF}{FF}">',  # white
         # Brilliant colors (90-97)
-        '\x1b[90m': '<span style="color:#555555">',
-        '\x1b[91m': '<span style="color:#ff5555">',
-        '\x1b[92m': '<span style="color:#55ff55">',
-        '\x1b[93m': '<span style="color:#ffff55">',
-        '\x1b[94m': '<span style="color:#5555ff">',
-        '\x1b[95m': '<span style="color:#ff55ff">',
-        '\x1b[96m': '<span style="color:#55ffff">',
-        '\x1b[97m': '<span style="color:#ffffff">',
+        '\x1b[90m': f'<span style="color:#{MM}{MM}{MM}">',
+        '\x1b[91m': f'<span style="color:#{FF}{MM}{MM}">',
+        '\x1b[92m': f'<span style="color:#{MM}{FF}{MM}">',
+        '\x1b[93m': f'<span style="color:#{FF}{FF}{MM}">',
+        '\x1b[94m': f'<span style="color:#{MM}{MM}{FF}">',
+        '\x1b[95m': f'<span style="color:#{FF}{MM}{FF}">',
+        '\x1b[96m': f'<span style="color:#{MM}{FF}{FF}">',
+        '\x1b[97m': f'<span style="color:#{FF}{FF}{FF}">',
         # Background (40-47)
-        '\x1b[40m': '<span style="background-color:#000000">',
-        '\x1b[41m': '<span style="background-color:#ff0000">',
-        '\x1b[42m': '<span style="background-color:#00ff00">',
-        '\x1b[43m': '<span style="background-color:#ffff00">',
-        '\x1b[44m': '<span style="background-color:#0000ff">',
-        '\x1b[45m': '<span style="background-color:#ff00ff">',
-        '\x1b[46m': '<span style="background-color:#00ffff">',
-        '\x1b[47m': '<span style="background-color:#ffffff">',
+        '\x1b[40m': f'<span style="background-color:#{OO}{OO}{OO}">',
+        '\x1b[41m': f'<span style="background-color:#{FF}{OO}{OO}">',
+        '\x1b[42m': f'<span style="background-color:#{OO}{FF}{OO}">',
+        '\x1b[43m': f'<span style="background-color:#{FF}{FF}{OO}">',
+        '\x1b[44m': f'<span style="background-color:#{OO}{OO}{FF}">',
+        '\x1b[45m': f'<span style="background-color:#{FF}{OO}{FF}">',
+        '\x1b[46m': f'<span style="background-color:#{OO}{FF}{FF}">',
+        '\x1b[47m': f'<span style="background-color:#{FF}{FF}{FF}">',
         # Styles
         '\x1b[1m': '<span style="font-weight:bold">',  # bold
         '\x1b[3m': '<span style="font-style:italic">',  # italis
