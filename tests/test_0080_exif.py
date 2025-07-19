@@ -19,14 +19,13 @@ def test_exif_jpg():
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
         out_filename = output_dir + "/0001.jpg"
-        ext = out_filename.split(".")[-1]
         logger.info("======== Testing JPG EXIF ======== ")
         logger.info("*** Source JPG EXIF ***")
         exif = copy_exif_from_file_to_file("../examples/input/img-jpg/0000.jpg", "../examples/input/img-jpg/0001.jpg",
                                            out_filename=out_filename, verbose=True)
         exif_copy = get_exif(out_filename)
         logger.info("*** Copy JPG EXIF ***")
-        print_exif(exif_copy, ext)
+        print_exif(exif_copy)
         for tag, tag_copy in zip(exif, exif_copy):
             data, data_copy = exif.get(tag), exif_copy.get(tag_copy)
             if isinstance(data, bytes):
@@ -61,9 +60,8 @@ def test_exif_tiff():
                                            out_filename=out_filename, verbose=True)
         image = Image.open(out_filename)
         exif_copy = image.tag_v2 if hasattr(image, 'tag_v2') else image.getexif()
-        ext = out_filename.split(".")[-1]
         logging.getLogger(__name__).info("*** Copy TIFF EXIF ***")
-        print_exif(exif_copy, ext)
+        print_exif(exif_copy)
         meta, meta_copy = {}, {}
         for tag_id, tag_id_copy in zip(exif, exif_copy):
             tag = TAGS.get(tag_id, tag_id)

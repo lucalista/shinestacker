@@ -1,8 +1,10 @@
 import os
+from PIL.TiffImagePlugin import IFDRational
 from PySide6.QtWidgets import QFormLayout, QHBoxLayout, QPushButton, QDialog, QLabel
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt
 from focusstack.core.core_utils import get_app_base_path
+from focusstack.algorithms.exif import exif_dict
 
 
 class ExifData(QDialog):
@@ -45,10 +47,13 @@ class ExifData(QDialog):
         spacer = QLabel("")
         spacer.setFixedHeight(10)
         self.layout.addRow(spacer)
-        shortcuts = {
-            "EXIF data": "to be implemented soon...",
-        }
-
         self.add_bold_label("EXIF data")
-        for k, v in shortcuts.items():
-            self.layout.addRow(f"<b>{k}:</b>", QLabel(v))
+        shortcuts = {}
+        if self.exif is None:
+            shortcuts['Warning:': 'no EXIF data found']
+        else:
+            data = exif_dict(self.exif)
+        for k, (t, d) in data.items():
+            if isinstance(d, IFDRational):
+                d = f"{d.numerator}/{d.denominator}"
+            self.layout.addRow(f"<b>{k}:</b>", QLabel(f"{d}"))

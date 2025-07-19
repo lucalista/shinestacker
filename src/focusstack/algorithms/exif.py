@@ -129,7 +129,7 @@ def add_exif_data_to_jpg_file(exif, in_filenama, out_filename, verbose=False):
     if exif is None:
         raise Exception('No exif data provided.')
     if verbose:
-        print_exif(exif, 'jpg')
+        print_exif(exif)
     xmp_data = extract_enclosed_data_for_jpg(exif[XMLPACKET], b'<x:xmpmeta', b'</x:xmpmeta>')
     with Image.open(in_filenama) as image:
         with io.BytesIO() as buffer:
@@ -154,7 +154,7 @@ def write_image_with_exif_data(exif, image, out_filename, verbose=False):
         return None
     ext = out_filename.split(".")[-1]
     if verbose:
-        print_exif(exif, ext)
+        print_exif(exif)
     if ext == 'jpeg' or ext == 'jpg':
         cv2.imwrite(out_filename, image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
         add_exif_data_to_jpg_file(exif, out_filename, out_filename, verbose)
@@ -175,7 +175,7 @@ def save_exif_data(exif, in_filename, out_filename=None, verbose=False):
     if exif is None:
         raise Exception('No exif data provided.')
     if verbose:
-        print_exif(exif, ext)
+        print_exif(exif)
     if ext == 'tiff' or ext == 'tif':
         image_new = tifffile.imread(in_filename)
     else:
@@ -201,29 +201,37 @@ def copy_exif_from_file_to_file(exif_filename, in_filename, out_filename=None, v
     return save_exif_data(exif, in_filename, out_filename, verbose)
 
 
-def print_exif(exif, ext, hide_xml=True):
-    logger = logging.getLogger(__name__)
+def exif_dict(exif, hide_xml=True):
     if exif is None:
+        return None
+    exif_data = {}
+    for tag_id in exif:
+        tag = TAGS.get(tag_id, tag_id)
+        if tag_id == XMLPACKET and hide_xml:
+            data = "<<< XML data >>>"
+        elif tag_id == IMAGERESOURCES or tag_id == INTERCOLORPROFILE:
+            data = "<<< Photoshop data >>>"
+        elif tag_id == STRIPOFFSETS:
+            data = "<<< Strip offsets >>>"
+        elif tag_id == STRIPBYTECOUNTS:
+            data = "<<< Strip byte counts >>>"
+        else:
+            data = exif.get(tag_id) if hasattr(exif, 'get') else exif[tag_id]
+        if isinstance(data, bytes):
+            try:
+                data = data.decode()
+            except Exception:
+                pass
+        exif_data[tag] = (tag_id, data)
+    return exif_data
+
+
+def print_exif(exif, hide_xml=True):
+    exif_data = exif_dict(exif, hide_xml)
+    if exif_data is None:
         raise Exception('Image has no exif data.')
-    else:
-        for tag_id in exif:
-            tag = TAGS.get(tag_id, tag_id)
-            if tag_id == XMLPACKET and hide_xml:
-                data = "<<< XML data >>>"
-            elif tag_id == IMAGERESOURCES or tag_id == INTERCOLORPROFILE:
-                data = "<<< Photoshop data >>>"
-            elif tag_id == STRIPOFFSETS:
-                data = "<<< Strip offsets >>>"
-            elif tag_id == STRIPBYTECOUNTS:
-                data = "<<< Strip byte counts >>>"
-            else:
-                data = exif.get(tag_id) if hasattr(exif, 'get') else exif[tag_id]
-            if isinstance(data, bytes):
-                try:
-                    data = data.decode()
-                except Exception:
-                    logger.warning(f"Print: can't decode EXIF tag {tag:25} [#{tag_id}]")
-                    data = '<<< *** decode error *** >>>'
-            if isinstance(data, IFDRational):
-                data = f"{data.numerator}/{data.denominator}"
-            logger.info(f"{tag:25} [#{tag_id:5d}]: {data}")
+    logger = logging.getLogger(__name__)
+    for tag, (tag_id, data) in exif_data.items():
+        if isinstance(data, IFDRational):
+            data = f"{data.numerator}/{data.denominator}"
+        logger.info(f"{tag:25} [#{tag_id:5d}]: {data}")
