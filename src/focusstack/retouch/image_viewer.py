@@ -72,6 +72,7 @@ class ImageViewer(QGraphicsView):
             self.scale(self.zoom_factor, self.zoom_factor)
         self.empty = False
         self.setFocus()
+        self.activateWindow()
 
     def clear_image(self):
         self.scene.clear()
