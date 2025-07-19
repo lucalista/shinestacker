@@ -1,6 +1,7 @@
 import os
 import sys
 import platform
+from termcolor import colored
 from focusstack.config.config import config
 
 if not config.DISABLE_TQDM:
@@ -38,6 +39,10 @@ def get_app_base_path():
     elif __file__:
         path = sep.join(os.path.dirname(os.path.abspath(__file__)).split(sep)[:-3])
     return path
+
+
+def colored_msg(*args, **kwargs):
+    return colored(*args, **kwargs, force_color=True)
 
 
 def running_under_windows() -> bool:

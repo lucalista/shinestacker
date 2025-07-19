@@ -74,6 +74,7 @@ To run the GUI, from the main package directory run:
 * python version 3.12. With python 3.13, when closing the applications, it crashes in in the garbage colleciton phase for an unknown reason.
 
 The following python modules:
+* argparse
 * imagecodecs
 * matplotlib
 * numpy

@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-from termcolor import colored
+from focusstack.core.core_utils import colored_msg
 from focusstack.config.constants import constants
 from focusstack.core.exceptions import RunStopException, ImageLoadError, InvalidOptionError
 from focusstack.algorithms.utils import read_img, get_img_metadata, validate_image
@@ -23,7 +23,7 @@ class PyramidBase:
             raise InvalidOptionError("float_type", float_type, details=" valid values are FLOAT_32 and FLOAT_64")
 
     def print_message(self, msg):
-        self.process.sub_message_r(colored(msg, "light_blue"))
+        self.process.sub_message_r(colored_msg(msg, "light_blue"))
 
     def steps_per_frame(self):
         return 1
