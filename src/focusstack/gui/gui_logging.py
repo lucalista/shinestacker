@@ -89,7 +89,6 @@ class SimpleHtmlHandler(QObject, logging.Handler):
     def emit(self, record):
         try:
             msg = self.format(record)
-            # self.log_signal.emit(msg)
             self.html_signal.emit(msg)
         except Exception as e:
             logging.error(f"Logging error: {e}")
@@ -181,9 +180,7 @@ class LogManager:
     def last_id_str(self):
         return self.last_gui_logger.id_str() if self.last_gui_logger else ""
 
-    def add_gui_logger(self, gui_logger):
-        if not isinstance(gui_logger, GuiLogger):
-            raise ValueError("Only GuyLogger instances can be added")
+    def add_gui_logger(self, gui_logger: GuiLogger):
         self.gui_loggers[gui_logger.id] = gui_logger
         self.last_gui_logger = gui_logger
 
