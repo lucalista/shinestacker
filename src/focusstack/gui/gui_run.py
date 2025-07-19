@@ -1,12 +1,12 @@
 import time
 from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QProgressBar,
-                               QMessageBox, QScrollArea, QSizePolicy, QFrame, QLabel)
+                               QMessageBox, QScrollArea, QSizePolicy, QFrame, QLabel, QComboBox)
 from PySide6.QtGui import QColor
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtCore import Signal, Slot
 from focusstack.config.constants import constants
 from focusstack.config.gui_constants import gui_constants
-from focusstack.gui.colors import RED_BUTTON_STYLE
+from focusstack.gui.colors import RED_BUTTON_STYLE, BLUE_BUTTON_STYLE, BLUE_COMBO_STYLE
 from focusstack.gui.gui_logging import LogWorker, QTextEditLogger, LOG_FONTS_STR
 from focusstack.gui.gui_images import GuiPdfView, GuiImageView, GuiOpenApp
 from focusstack.gui.colors import ColorPalette
@@ -126,8 +126,9 @@ class TimerProgressBar(QProgressBar):
 
 
 class RunWindow(QTextEditLogger):
-    def __init__(self, labels, stop_worker_callback, close_window_callback, parent):
+    def __init__(self, labels, stop_worker_callback, close_window_callback, retouch_paths, parent):
         QTextEditLogger.__init__(self, parent)
+        self.retouch_paths = retouch_paths
         self.stop_worker_callback = stop_worker_callback
         self.close_window_callback = close_window_callback
         self.row_widget_id = 0
@@ -178,14 +179,30 @@ class RunWindow(QTextEditLogger):
         self.image_area_widget.setFixedWidth(0)
         layout.addLayout(output_layout)
 
+        n_paths = len(self.retouch_paths)
+        if n_paths == 1:
+            self.retouch_widget = QPushButton(f"Retouch {self.retouch_paths[0][0]}")
+            self.retouch_widget.setStyleSheet(BLUE_BUTTON_STYLE)
+            self.retouch_widget.setEnabled(False)
+            self.retouch_widget.clicked.connect(lambda: self.retouch(self.retouch_paths[0]))
+            self.status_bar.addPermanentWidget(self.retouch_widget)
+        elif n_paths > 1:
+            options = ["Retouch:"] + [f"{path[0]}" for path in self.retouch_paths]
+            self.retouch_widget = QComboBox()
+            self.retouch_widget.setStyleSheet(BLUE_COMBO_STYLE)
+            self.retouch_widget.addItems(options)
+            self.retouch_widget.setEnabled(False)
+            self.retouch_widget.currentIndexChanged.connect(lambda: self.retouch(self.retouch_paths[self.retouch_widget.currentIndex() - 1]))
+            self.status_bar.addPermanentWidget(self.retouch_widget)
+
         self.stop_button = QPushButton("Stop")
-        self.setStyleSheet(RED_BUTTON_STYLE)
+        self.stop_button.setStyleSheet(RED_BUTTON_STYLE)
         self.stop_button.clicked.connect(self.stop_worker)
         self.status_bar.addPermanentWidget(self.stop_button)
 
         self.close_button = QPushButton("Close")
         self.close_button.setEnabled(False)
-        self.setStyleSheet(RED_BUTTON_STYLE)
+        self.close_button.setStyleSheet(RED_BUTTON_STYLE)
         self.close_button.clicked.connect(self.close_window)
         self.status_bar.addPermanentWidget(self.close_button)
 
@@ -194,6 +211,21 @@ class RunWindow(QTextEditLogger):
 
     def stop_worker(self):
         self.stop_worker_callback(self.id_str())
+
+    def retouch(self, path):
+
+        def find_parent(widget, class_name):
+            current = widget
+            while current is not None:
+                if current.__class__.__name__ == class_name:
+                    return current
+                current = current.parent()
+            return None
+        parent = find_parent(self, "MainWindow")
+        if parent:
+            parent.retouch_callback(path[1])
+        else:
+            raise RuntimeError("Can't find MainWindow parent.")
 
     def close_window(self):
         confirm = QMessageBox()

@@ -37,3 +37,21 @@ RED_BUTTON_STYLE = f"""
         color: #{ColorPalette.MEDIUM_RED.hex()};
     }}
 """
+
+BLUE_BUTTON_STYLE = f"""
+    QPushButton {{
+        color: #{ColorPalette.DARK_BLUE.hex()};
+    }}
+    QPushButton:disabled {{
+        color: #{ColorPalette.MEDIUM_BLUE.hex()};
+    }}
+"""
+
+BLUE_COMBO_STYLE = f"""
+    QComboBox {{
+        color: #{ColorPalette.DARK_BLUE.hex()};
+    }}
+    QComboBox:disabled {{
+        color: #{ColorPalette.MEDIUM_BLUE.hex()};
+    }}
+"""

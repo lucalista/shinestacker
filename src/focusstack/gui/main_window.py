@@ -508,11 +508,13 @@ class MainWindow(ActionsWindow, LogManager):
         self.run_all_jobs_action.setEnabled(True)
         self.get_tab_at_position(id_str).close_button.setEnabled(True)
         self.get_tab_at_position(id_str).stop_button.setEnabled(False)
+        self.get_tab_at_position(id_str).retouch_widget.setEnabled(True)
 
-    def create_new_window(self, title, labels=[]):
+    def create_new_window(self, title, labels, retouch_paths):
         new_window = RunWindow(labels,
                                lambda id_str: self.stop_worker(self.get_tab_position(id_str)),
                                lambda id_str: self.close_window(self.get_tab_position(id_str)),
+                               retouch_paths,
                                self)
         self.tab_widget.addTab(new_window, title)
         self.tab_widget.setCurrentIndex(self.tab_widget.count() - 1)
@@ -559,8 +561,12 @@ class MainWindow(ActionsWindow, LogManager):
         if current_index >= 0:
             job = self.project.jobs[current_index]
             if job.enabled():
+                job_name = job.params["name"]
                 labels = [[(self.action_text(a), a.enabled()) for a in job.sub_actions]]
-                new_window, id_str = self.create_new_window("Job: " + job.params["name"], labels)
+                r = self.get_retouch_path(job)
+                retouch_paths = [] if len(r) == 0 else [(job_name, r)]
+                new_window, id_str = self.create_new_window("Job: " + job_name,
+                                                            labels, retouch_paths)
                 worker = JobLogWorker(job, id_str)
                 self.connect_signals(worker, new_window)
                 self.start_thread(worker)
@@ -574,7 +580,13 @@ class MainWindow(ActionsWindow, LogManager):
         project_name = ".".join(self.current_file_name().split(".")[:-1])
         if project_name == '':
             project_name = '[new]'
-        new_window, id_str = self.create_new_window("Project: " + project_name, labels)
+        retouch_paths = []
+        for job in self.project.jobs:
+            r = self.get_retouch_path(job)
+            if len(r) > 0:
+                retouch_paths.append((job.params["name"], r))
+        new_window, id_str = self.create_new_window("Project: " + project_name,
+                                                    labels, retouch_paths)
         worker = ProjectLogWorker(self.project, id_str)
         self.connect_signals(worker, new_window)
         self.start_thread(worker)
