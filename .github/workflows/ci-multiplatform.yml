@@ -32,4 +32,4 @@ jobs:
 
       - name: Run non-GUI tests (test_00*.py)
         working-directory: tests
-        run: pytest test_00*.py -v --disable-warnings
+        run: pytest "test_00*.py" -v --disable-warnings
