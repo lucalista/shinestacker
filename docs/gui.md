@@ -1,12 +1,12 @@
 ### Graphical User Intreface
 
-The GUI can start either from a console command line if the python package is donwloaded and installed:
+* If the python package is donwloaded and installed, the GUI can start either from a console command line :
 
 ```console
 > focusstack
 ```
 
-If the app is dowloaded from the (releases page)[https://github.com/lucalista/focusstack/releases], after the  ```zip``` archive is uncompressed, the user can just double-click the app icon:
+* If the app is dowloaded from the (releases page)[https://github.com/lucalista/focusstack/releases], after the  ```zip``` archive is uncompressed, the user can just double-click the app icon:
 
 <img src='../img/gui-finder.png' width="300">
 
