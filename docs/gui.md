@@ -1,6 +1,6 @@
 ### Graphical User Intreface
 
-The GUI can start either from a consome command line if the python package is donwloaded and installed:
+The GUI can start either from a console command line if the python package is donwloaded and installed:
 
 ```console
 > focusstack
