@@ -111,6 +111,6 @@ pip install ipywidgets
 | Issue    |  Workaround    |
 |----------|----------------|
 | Balance modes ```HSV```/```HLS``` fail with 16-bit images | convert to 8-bit or use ```RGB``` or luminosity |
-|  ```denoise>0``` crashes with TIFFs (see [here](https://stackoverflow.com/questions/76647895/opencv-fastnlmeansdenoisingmulti-should-support-16-bit-images-but-does-it) | set ```denoise=0```or use JPEG sources
+|  ```denoise>0``` crashes with TIFFs (see [here](https://stackoverflow.com/questions/76647895/opencv-fastnlmeansdenoisingmulti-should-support-16-bit-images-but-does-it)) | set ```denoise=0```or use JPEG sources
 | PNG support untested  | Convert to TIFF/JPEG first |
 | GUI tests limited     | Report bugs as GitHub issuse |
