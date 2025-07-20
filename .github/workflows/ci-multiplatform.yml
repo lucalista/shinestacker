@@ -33,7 +33,4 @@ jobs:
       - name: Run non-GUI tests (test_00*.py)
         working-directory: tests
         run: >
-          python3 -c "import glob, \
-          pytest, sys; \
-          sys.exit(pytest.main(glob.glob('test_00*.py') + \
-          ['-v', '--disable-warnings']))"
+          python3 -c "import glob, pytest, sys; sys.exit(pytest.main(glob.glob('test_00*.py') + ['-v', '--disable-warnings']))"
