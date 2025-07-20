@@ -9,7 +9,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QStackedWidget, QMenu
 from PySide6.QtGui import QAction, QIcon, QGuiApplication
 from PySide6.QtCore import Qt, QEvent, QTimer
 from focusstack.config.config import config
-config.init(DISABLE_TQDM=True, COMBINED_APP=True, DONT_USE_NATIVE_MENU=False)
+config.init(DISABLE_TQDM=True, COMBINED_APP=True, DONT_USE_NATIVE_MENU=True)
 from focusstack.config import constants
 from focusstack.core.logging import setup_logging
 from focusstack.core.core_utils import get_app_base_path
