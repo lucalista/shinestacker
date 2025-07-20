@@ -26,7 +26,8 @@ _DEFAULT_ALIGNMENT_CONFIG = {
     'rans_threshold': constants.DEFAULT_RANS_THRESHOLD,
     'border_mode': constants.DEFAULT_BORDER_MODE,
     'border_value': constants.DEFAULT_BORDER_VALUE,
-    'border_blur': constants.DEFAULT_BORDER_BLUR
+    'border_blur': constants.DEFAULT_BORDER_BLUR,
+    'subsample': constants.DEFAULT_ALIGN_SUBSAMPLE
 }
 
 _cv2_border_mode_map = {
@@ -85,17 +86,20 @@ def detect_and_compute(img_0, img_1, feature_config=None, matching_config=None):
     return kp_0, kp_1, get_good_matches(des_0, des_1, matching_config)
 
 
-def find_transform(src_pts, dst_pts, transform=constants.DEFAULT_TRANSFORM, rans_threshold=constants.DEFAULT_RANS_THRESHOLD):
+def find_transform(src_pts, dst_pts, transform=constants.DEFAULT_TRANSFORM,
+                   rans_threshold=constants.DEFAULT_RANS_THRESHOLD):
     if transform == constants.ALIGN_HOMOGRAPHY:
         transf = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, rans_threshold)
     elif transform == constants.ALIGN_RIGID:
-        transf = cv2.estimateAffinePartial2D(src_pts, dst_pts, method=cv2.RANSAC, ransacReprojThreshold=rans_threshold)
+        transf = cv2.estimateAffinePartial2D(src_pts, dst_pts, method=cv2.RANSAC,
+                                             ransacReprojThreshold=rans_threshold)
     else:
         raise InvalidOptionError("transform", transform)
     return transf
 
 
-def align_images(img_1, img_0, feature_config=None, matching_config=None, alignment_config=None, plot_path=None, callbacks=None):
+def align_images(img_1, img_0, feature_config=None, matching_config=None, alignment_config=None,
+                 plot_path=None, callbacks=None):
     feature_config = {**_DEFAULT_FEATURE_CONFIG, **(feature_config or {})}
     matching_config = {**_DEFAULT_MATCHING_CONFIG, **(matching_config or {})}
     alignment_config = {**_DEFAULT_ALIGNMENT_CONFIG, **(alignment_config or {})}
@@ -107,18 +111,24 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
     validate_image(img_0, *get_img_metadata(img_1))
     if callbacks and 'message' in callbacks.keys():
         callbacks['message']()
-    kp_0, kp_1, good_matches = detect_and_compute(img_0, img_1, feature_config, matching_config)
+
+    subsample = alignment_config['subsample']
+    img_0_sub = img_0[::subsample, ::subsample] if subsample > 1 else img_0
+    img_1_sub = img_1[::subsample, ::subsample] if subsample > 1 else img_1
+
+    kp_0, kp_1, good_matches = detect_and_compute(img_0_sub, img_1_sub, feature_config, matching_config)
     n_good_matches = len(good_matches)
     if callbacks and 'matches_message' in callbacks.keys():
         callbacks['matches_message'](n_good_matches)
     img_warp = None
     if n_good_matches >= min_matches:
+        transform = alignment_config['transform']
         src_pts = np.float32([kp_0[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
         dst_pts = np.float32([kp_1[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
-        M, msk = find_transform(src_pts, dst_pts, alignment_config['transform'], alignment_config['rans_threshold'])
+        M, msk = find_transform(src_pts, dst_pts, transform, alignment_config['rans_threshold'])
         if plot_path is not None:
             matches_mask = msk.ravel().tolist()
-            img_match = cv2.cvtColor(cv2.drawMatches(img_8bit(img_0), kp_0, img_8bit(img_1),
+            img_match = cv2.cvtColor(cv2.drawMatches(img_8bit(img_0_sub), kp_0, img_8bit(img_1_sub),
                                                      kp_1, good_matches, None, matchColor=(0, 255, 0),
                                                      singlePointColor=None, matchesMask=matches_mask,
                                                      flags=2), cv2.COLOR_BGR2RGB)
@@ -127,20 +137,46 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
             plt.savefig(plot_path)
             if callbacks and 'save_plot' in callbacks.keys():
                 callbacks['save_plot'](plot_path)
+
         h, w = img_0.shape[:2]
+        h_sub, w_sub = img_0_sub.shape[:2]
+        if subsample > 1:
+            if transform == constants.ALIGN_HOMOGRAPHY:
+                low_size = np.float32([[0, 0], [0, h_sub], [w_sub, h_sub], [w_sub, 0]])
+                high_size = np.float32([[0, 0], [0, h], [w, h], [w, 0]])
+                scale_up = cv2.getPerspectiveTransform(low_size, high_size)
+                scale_down = cv2.getPerspectiveTransform(high_size, low_size)
+                M = scale_up @ M @ scale_down
+            elif transform == constants.ALIGN_RIGID:
+                M_rigid_3x3 = np.vstack([M, [0.0, 0.0, 1.0]])
+                scale_up = np.array([
+                    [1.0 / subsample, 0.0, 0.0],
+                    [0.0, 1.0 / subsample, 0.0],
+                    [0.0, 0.0, 1.0]
+                ])
+                scale_down = np.array([
+                    [float(subsample), 0.0, 0.0],
+                    [0.0, float(subsample), 0.0],
+                    [0.0, 0.0, 1.0]
+                ])
+                M = (scale_up @ M_rigid_3x3 @ scale_down)[:2, :]
+            else:
+                raise InvalidOptionError("transform", transform)
+
         if callbacks and 'align_message' in callbacks.keys():
             callbacks['align_message']()
+        img_mask = np.ones_like(img_0, dtype=np.uint8)
         if alignment_config['transform'] == constants.ALIGN_HOMOGRAPHY:
             img_warp = cv2.warpPerspective(img_0, M, (w, h),
                                            borderMode=cv2_border_mode, borderValue=alignment_config['border_value'])
             if alignment_config['border_mode'] == constants.BORDER_REPLICATE_BLUR:
-                mask = cv2.warpPerspective(np.ones_like(img_0, dtype=np.uint8), M, (w, h),
+                mask = cv2.warpPerspective(img_mask, M, (w, h),
                                            borderMode=cv2.BORDER_CONSTANT, borderValue=0)
         elif alignment_config['transform'] == constants.ALIGN_RIGID:
-            img_warp = cv2.warpAffine(img_0, M, (img_0.shape[1], img_0.shape[0]),
+            img_warp = cv2.warpAffine(img_0, M, (w, h),
                                       borderMode=cv2_border_mode, borderValue=alignment_config['border_value'])
             if alignment_config['border_mode'] == constants.BORDER_REPLICATE_BLUR:
-                mask = cv2.warpAffine(np.ones_like(img_0, dtype=np.uint8), M, (w, h),
+                mask = cv2.warpAffine(img_mask, M, (w, h),
                                       borderMode=cv2.BORDER_CONSTANT, borderValue=0)
         if alignment_config['border_mode'] == constants.BORDER_REPLICATE_BLUR:
             if callbacks and 'blur_message' in callbacks.keys():

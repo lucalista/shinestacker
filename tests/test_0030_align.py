@@ -56,6 +56,16 @@ def test_align_4():
         assert False
 
 
+def test_align_rescale():
+    try:
+        img_1, img_2 = [read_img(f"../examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
+        n_good_matches, img_warp = align_images(img_1, img_2, alignment_config={'subsample': 4})
+        assert img_warp is not None
+        assert n_good_matches > 10
+    except Exception:
+        assert False
+
+
 def test_jpg():
     try:
         job = StackJob("job", "../examples", input_path="input/img-jpg", callbacks='tqdm')
@@ -78,6 +88,7 @@ def test_tif():
 
 if __name__ == '__main__':
     test_align()
+    test_align_rescale()
     test_align_2()
     test_align_3()
     test_align_4()

@@ -113,7 +113,7 @@ class Correction:
         self.intensity_interval = intensity_interval
         self.plot_histograms = plot_histograms
         self.plot_summary = plot_summary
-        self.subsample = constants.DEFAULT_subsample if subsample == -1 else subsample
+        self.subsample = constants.DEFAULT_BALANCE_SUBSAMPLE if subsample == -1 else subsample
         self.corr_map = corr_map
         self.channels = channels
 
@@ -141,8 +141,9 @@ class Correction:
             mask_radius = (min(width, height) * self.mask_size / 2)
             image_sel = image[(xv - width / 2) ** 2 + (yv - height / 2) ** 2 <= mask_radius ** 2]
         hist, bins = np.histogram((image_sel if self.subsample == 1
-                                   else image_sel[::self.subsample][::self.subsample]),
-                                  bins=np.linspace(-0.5, self.num_pixel_values - 0.5, self.num_pixel_values + 1))
+                                   else image_sel[::self.subsample, ::self.subsample]),
+                                  bins=np.linspace(-0.5, self.num_pixel_values - 0.5,
+                                                   self.num_pixel_values + 1))
         return hist
 
     def balance(self, image, idx):
@@ -323,9 +324,9 @@ class BalanceFrames(SubAction):
     def __init__(self, enabled=True, **kwargs):
         super().__init__(enabled=enabled)
         corr_map = kwargs.get('corr_map', constants.DEFAULT_CORR_MAP)
-        subsample = kwargs.get('subsample', constants.DEFAULT_SUBSAMPLE)
+        subsample = kwargs.get('subsample', constants.DEFAULT_BALANCE_SUBSAMPLE)
         channel = kwargs.pop('channel', constants.DEFAULT_CHANNEL)
-        kwargs['subsample'] = (1 if corr_map == constants.BALANCE_MATCH_HIST else constants.DEFAULT_subsample) if subsample == -1 else subsample
+        kwargs['subsample'] = (1 if corr_map == constants.BALANCE_MATCH_HIST else constants.DEFAULT_BALANCE_SUBSAMPLE) if subsample == -1 else subsample
         self.mask_size = kwargs.get('mask_size', 0)
         self.plot_summary = kwargs.get('plot_summary', False)
         if channel == constants.BALANCE_LUMI:

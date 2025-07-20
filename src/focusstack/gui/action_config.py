@@ -675,6 +675,8 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
                                    default=constants.DEFAULT_TRANSFORM)
             self.builder.add_field('rans_threshold', FIELD_FLOAT, 'Homography RANS threshold', required=False,
                                    default=constants.DEFAULT_RANS_THRESHOLD, min=0, max=20, step=0.1)
+            self.builder.add_field('subsample', FIELD_INT, 'Subsample factor', required=False,
+                                   default=constants.DEFAULT_ALIGN_SUBSAMPLE, min=0, max=10)
             self.add_bold_label("Border:")
             self.builder.add_field('border_mode', FIELD_COMBO, 'Border mode', required=False,
                                    options=self.BORDER_MODE_OPTIONS, values=constants.VALID_BORDER_MODES,
@@ -705,7 +707,7 @@ class BalanceFramesConfigurator(NoNameActionConfigurator):
                                    default=[v for k, v in constants.DEFAULT_INTENSITY_INTERVAL.items()],
                                    labels=['min', 'max'], min=[-1] * 2, max=[65536] * 2)
             self.builder.add_field('subsample', FIELD_INT, 'Subsample factor', required=False,
-                                   default=constants.DEFAULT_SUBSAMPLE, min=1, max=256)
+                                   default=constants.DEFAULT_BALANCE_SUBSAMPLE, min=1, max=256)
         self.builder.add_field('corr_map', FIELD_COMBO, 'Correction map', required=False,
                                options=self.CORRECTION_MAP_OPTIONS, values=constants.VALID_BALANCE,
                                default='Linear')
