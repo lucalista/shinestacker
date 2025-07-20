@@ -28,7 +28,6 @@ jobs:
       - Name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools
-	  pip install pytest
           pip install -e .[dev]
 
       - name: Run non-GUI tests (test_00*.py)
