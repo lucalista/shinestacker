@@ -8,7 +8,7 @@ FocusStack GUI processes focus-bracketed images in two phases:
 * Retouch (layer-based refinement)"
 
 The batch processing supports image alignment, color and luminosity balance, vignetting removal,
-noisy picel masking. See (the main documentation)[main.md] for more details about details and installation.
+noisy picel masking. See [the main documentation](main.md) for more details about details and installation.
 
 ## Starting
 
@@ -66,9 +66,7 @@ During processing:
 
 * Real-time logs appear in new tab
 * Progress bar shows current action
-* Thumbnails generate for completed stages
-
-Different actions can optionally display istograms or other intermediate results.
+* Thumbnails generate for completed stages (images, histograms)
 
 When the job finishes, a *Retouch* button is enabled, which opens the output image into the retouch area.
 
