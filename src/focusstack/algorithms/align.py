@@ -28,6 +28,7 @@ _DEFAULT_ALIGNMENT_CONFIG = {
     'border_value': constants.DEFAULT_BORDER_VALUE,
     'border_blur': constants.DEFAULT_BORDER_BLUR,
     'subsample': constants.DEFAULT_ALIGN_SUBSAMPLE,
+    'fast_subsampling': constants.DEFAULT_ALIGN_FAST_SUBSAMPLING,
     'ecc_refinement': constants.DEFAULT_ECC_REFINEMENT,
     'ecc_gauss_filt_size': constants.DEFAULT_ECC_GAUSS_FILT_SIZE,
     'ecc_criteria': (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_MAX_ITER, 100, 1e-7),
@@ -116,10 +117,15 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
         callbacks['message']()
 
     subsample = alignment_config['subsample']
-    img_0_sub = img_0[::subsample, ::subsample] if subsample > 1 else img_0
-    img_1_sub = img_1[::subsample, ::subsample] if subsample > 1 else img_1
-
-    kp_0, kp_1, good_matches = detect_and_compute(img_0_sub, img_1_sub, feature_config, matching_config)
+    if subsample:
+        if alignment_config['fast_subsampling']:
+            img_0_sub, img_1_sub = img_0[::subsample, ::subsample], img_1[::subsample, ::subsample]
+        else:
+            img_0_sub = cv2.resize(img_0, (0, 0), fx=1 / subsample, fy=1 / subsample, interpolation=cv2.INTER_AREA)
+            img_1_sub = cv2.resize(img_0, (0, 0), fx=1 / subsample, fy=1 / subsample, interpolation=cv2.INTER_AREA)
+        kp_0, kp_1, good_matches = detect_and_compute(img_0_sub, img_1_sub, feature_config, matching_config)
+    else:
+        img_0_sub, img_1_sub = img_0, img_1
     n_good_matches = len(good_matches)
     if callbacks and 'matches_message' in callbacks.keys():
         callbacks['matches_message'](n_good_matches)

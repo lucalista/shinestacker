@@ -54,6 +54,7 @@ Arguments for the constructor ```AlignFrames``` of are:
   * ```ALIGN_HOMOGRAPHY```: allow full perspective correction. This should be used for images taken with hand camera.
 * ```rans_threshold``` (optional, default: 5.0): parameter used if ```ALIGN_HOMOGRAPHY``` is choosen as tansformation, see [Feature Matching + Homography to find Objects](https://docs.opencv.org/3.4/d1/de0/tutorial_py_feature_homography.html) for more details.
 * ```subsample``` (optional, default: 4): subsample image for faster alignment. Faster, but alignment could be less accurate.
+* ```fast_subsampling``` (optiona, default: ```False```): perform fast image subsampling without interpolation. Used if ```subsample``` is set to ```True```.
 * ```ecc_refinement```: (optional, default: ```False```): refine alignment with [ECC transform](https://amroamroamro.github.io/mexopencv/matlab/cv.findTransformECC.html).
 * ```ecc_gauss_filt_size```: (optiona, default: 5): size of gaussial filter for ECC transform. Used if ```ecc_refinement``` is set to ```True```.
 * ```border_mode``` (optional, default: ```BORDER_REPLICATE_BLUR```): border mode. See [Adding borders to your images](https://docs.opencv.org/3.4/dc/da3/tutorial_copyMakeBorder.html) for more details.  Possible values are:
