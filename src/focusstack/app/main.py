@@ -110,7 +110,6 @@ class Application(QApplication):
 
 
 def main():
-    sys.stdout = open(sys.stdout.fileno(), mode='w', encoding='utf8', buffering=1)
     parser = argparse.ArgumentParser(
         prog='focusstack-retouch',
         description='Focus stacking App.',
