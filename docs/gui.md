@@ -1,14 +1,14 @@
-# Graphical User Intreface
+# Graphical User Interface
 
 ## Introduction
-
-FocusStack GUI processes focus-bracketed images in two phases:
-
-* Project (batch processing)
-* Retouch (layer-based refinement)"
+FocusStack processes focus-bracketed images in two phases:
+* **Project**: Batch processing (alignment/balancing/stacking)
+* **Retouch**: Layer-based refinement
+> [!NOTE]
+> Advanced processing details in [main documentation](main.md).
 
 The batch processing supports image alignment, color and luminosity balance, vignetting removal,
-noisy picel masking. See [the main documentation](main.md) for more details about details and installation.
+noisy picel masking.
 
 ## Starting
 
@@ -18,7 +18,7 @@ noisy picel masking. See [the main documentation](main.md) for more details abou
 > focusstack
 ```
 
-* If the app is dowloaded from the (releases page)[https://github.com/lucalista/focusstack/releases], after the  ```zip``` archive is uncompressed, the user can just double-click the app icon:
+* If the app is dowloaded from the [releases page](https://github.com/lucalista/focusstack/releases), after the  ```zip``` archive is uncompressed, the user can just double-click the app icon:
 
 <img src='../img/gui-finder.png' width="300">
 
@@ -29,7 +29,7 @@ The GUI has two main working areas:
 * *Project* 
 * *Retouch*
 
-Switcing from *Project* to *Retouch* can be done from the *FocusStack* main menu.
+Switching from *Project* to *Retouch* can be done from the *FocusStack* main menu.
 
 ## Project area
 
@@ -37,24 +37,28 @@ When the app starts, it proposes to create a new project.
 
 <img src='../img/gui-project-new.png' width="600">
 
-### Creating a new project
-1. Select source folder (JPEG/TIFF, 8/16-bit)
-2. Intermediate folders auto-create in parent directory
-3. Configure job actions (alignment/balancing/...)
+### Creating Projects
+1. Select source folder (JPEG/TIFF 8/16-bit)
+2. Configure job actions (auto-saved in project file)
+3. Run processing:
+   - Real-time logs & progress bar
+   - Thumbnail previews for each stage
 
 <img src='../img/flow-diagram.png' width="600">
 
+> **Large Set Tip**: For 100+ images:
+> - Split into 10-15 image "bunches" 
+> - Set frame overlap (default: 2 frames)
+> - Combine intermediate results later
 
-Up to 100 images or more can be processed, but consider that combining multiple images may require
-large amout of RAM. It may be more convenient, and also more practical, to combine *bunches*
-of 10 to 15 images, and then fuse the interemediate images into the final focus-stacked image.
-This option is supported. It is possible to specify the number of frames per bunch, and how many
-frames of each bunch overlap with the following one.
+> 💡 **RAM Warning**: >15 images may need 16GB+ RAM. Use smaller batches if needed.
 
 The newly created project consists in a single job that contains more actions.
 Each action produces a folder as output that has, by default, the action's name.
 Some actions can be combined in order to produce a single intermediate output.
 This is the case for alignment, balancing, etc.
+
+**Action Outputs**: 📁 `aligned-balanced/` | 📁 `bunches/` | 📁 `stacked/`
 
 > **Pro Tip**: Duplicate jobs when processing similar image sets to save configuration time. 
 
@@ -76,15 +80,19 @@ When the job finishes, a *Retouch* button is enabled, which opens the output ima
 
 In the retouch area it is possible to apply the final correction to the stacked image.
 
-By default, the stacked frames together with the focus-stacked image are opened.
+### Retouch Workflow
 
-Using a configurable brush, it is possible to copy small areas from a specific layer, including
-the focus-stacked image, to the master layer in order to correct small decects, like dust grains
-in front of the main subject, artifacts and so on.
+Retouch stacking artifacts using layer-based editing:
 
-The retouched master image can be saved either individually or as multilayer TIFF file (in general
-much heavier) for further editing. It is also possible to manually import source layers in case
-the user prefers to avoid managing heavy TIFF files.
+1. **Navigate**: 
+   - Mouse wheel or [Ctrl +]/[Ctrl -] to zoom | Space bar + mouse to pan
+   - Up/Down arros switch source layers
+2. **Correct**:
+   - Adjust brush size, hardness, opacity and flow with cursors
+   - Paint from source layers to master
+3. **Export**:
+   - ✅ Final image: Single TIFF/JPEG 
+   - 🗂️ Editable: Multilayer TIFF (large)
 
 ## Final retouch
 
