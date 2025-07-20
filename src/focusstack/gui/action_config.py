@@ -59,17 +59,57 @@ class FieldBuilder:
             widget = self.create_combo_field(tag, **kwargs)
         else:
             raise ValueError(f"Unknown field type: {field_type}")
+        if 'default' in kwargs:
+            default_value = kwargs['default']
+        else:
+            if field_type == FIELD_TEXT:
+                default_value = kwargs.get('placeholder', '')
+            elif field_type in (FIELD_ABS_PATH, FIELD_REL_PATH):
+                default_value = kwargs.get('placeholder', '')
+            elif field_type == FIELD_FLOAT:
+                default_value = kwargs.get('default', 0.0)
+            elif field_type == FIELD_INT:
+                default_value = kwargs.get('default', 0)
+            elif field_type == FIELD_INT_TUPLE:
+                default_value = kwargs.get('default', [0] * kwargs.get('size', 1))
+            elif field_type == FIELD_BOOL:
+                default_value = kwargs.get('default', False)
+            elif field_type == FIELD_COMBO:
+                default_value = kwargs.get('default', kwargs.get('options', [''])[0] if 'options' in kwargs else '')
         self.fields[tag] = {
             'widget': widget,
             'type': field_type,
             'label': label,
             'required': required,
+            'default_value': default_value,
             **kwargs
         }
         if add_to_layout is None:
             add_to_layout = self.layout
         add_to_layout.addRow(f"{label}:", widget)
         return widget
+
+    def reset_to_defaults(self):
+        for tag, field in self.fields.items():
+            if tag not in ['name', 'working_path', 'input_path', 'output_path', 'exif_path', 'plot_path']:
+                default = field['default_value']
+                widget = field['widget']
+                if field['type'] == FIELD_TEXT:
+                    widget.setText(default)
+                elif field['type'] in (FIELD_ABS_PATH, FIELD_REL_PATH):
+                    self.get_path_widget(widget).setText(default)
+                elif field['type'] == FIELD_FLOAT:
+                    widget.setValue(default)
+                elif field['type'] == FIELD_BOOL:
+                    widget.setChecked(default)
+                elif field['type'] == FIELD_INT:
+                    widget.setValue(default)
+                elif field['type'] == FIELD_INT_TUPLE:
+                    for i in range(field['size']):
+                        spinbox = widget.layout().itemAt(1 + i * 2).widget()
+                        spinbox.setValue(default[i])
+                elif field['type'] == FIELD_COMBO:
+                    widget.setCurrentText(default)
 
     def get_path_widget(self, widget):
         return widget.layout().itemAt(0).widget()
@@ -344,8 +384,11 @@ class ActionConfigDialog(QDialog):
         ok_button = QPushButton("OK")
         ok_button.setFocus()
         cancel_button = QPushButton("Cancel")
+        reset_button = QPushButton("Reset")
         button_box.addWidget(ok_button)
         button_box.addWidget(cancel_button)
+        button_box.addWidget(reset_button)
+        reset_button.clicked.connect(self.reset_to_defaults)
         self.layout.addRow(button_box)
         ok_button.clicked.connect(self.accept)
         cancel_button.clicked.connect(self.reject)
@@ -373,6 +416,11 @@ class ActionConfigDialog(QDialog):
         else:
             self.parent()._project_buffer.pop()
 
+    def reset_to_defaults(self):
+        builder = self.configurator.get_builder()
+        if builder:
+            builder.reset_to_defaults()
+
     def expert(self):
         return self.parent().expert_options
 
@@ -380,6 +428,9 @@ class ActionConfigDialog(QDialog):
 class NoNameActionConfigurator(ActionConfigurator):
     def __init__(self, expert=False):
         super().__init__(expert)
+
+    def get_builder(self):
+        return self.builder
 
     def update_params(self, params):
         return self.builder.update_params(params)
