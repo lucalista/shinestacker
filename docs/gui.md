@@ -44,7 +44,7 @@ When the app starts, it proposes to create a new project.
    - Real-time logs & progress bar
    - Thumbnail previews for each stage
 
-<img src='../img/flow-diagram.png' width="600">
+<img src='../img/flow-diagram.png' width="600" alt="FocusStack workflow: Source images → Alignment → Balancing → Stacking">
 
 > **Large Set Tip**: For 100+ images:
 > - Split into 10-15 image "bunches" 
@@ -66,11 +66,9 @@ It is possible to run a single job, or all jobs within a project.
 
 <img src='../img/gui-project-run.png' width="600">
 
-During processing:
-
-* Real-time logs appear in new tab
-* Progress bar shows current action
-* Thumbnails generate for completed stages (images, histograms)
+1. Job progress bar
+2. Real-time log viewer
+3. Retouch button (enabled after processing)
 
 When the job finishes, a *Retouch* button is enabled, which opens the output image into the retouch area.
 
@@ -85,14 +83,24 @@ In the retouch area it is possible to apply the final correction to the stacked 
 Retouch stacking artifacts using layer-based editing:
 
 1. **Navigate**: 
-   - Mouse wheel or [Ctrl +]/[Ctrl -] to zoom | Space bar + mouse to pan
-   - Up/Down arros switch source layers
+   - Zoom or pan within the image
+   - Switch from master layer to source layers
 2. **Correct**:
    - Adjust brush size, hardness, opacity and flow with cursors
    - Paint from source layers to master
 3. **Export**:
    - ✅ Final image: Single TIFF/JPEG 
    - 🗂️ Editable: Multilayer TIFF (large)
+
+| Action              | Shortcut                  |
+|---------------------|---------------------------|
+| Zoom in             | `Ctrl` + `+`              |
+| Zoom out            | `Ctrl` + `-`              |
+| Pan                 | `Space` + mouse drag      |
+| Layer navigation    | `Up`/`Down` arrows        |
+| View master layer   | `M`                       |
+| View source layer   | `L`                       |
+| Fast `M`/`L` switch | `X`                       |
 
 ## Final retouch
 
