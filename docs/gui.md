@@ -1,4 +1,16 @@
-### Graphical User Intreface
+# Graphical User Intreface
+
+## Introduction
+
+FocusStack GUI processes focus-bracketed images in two phases:
+
+* Project (batch processing)
+* Retouch (layer-based refinement)"
+
+The batch processing supports image alignment, color and luminosity balance, vignetting removal,
+noisy picel masking. See (the main documentation)[main.md] for more details about details and installation.
+
+## Starting
 
 * If the python package is donwloaded and installed, the GUI can start either from a console command line :
 
@@ -10,7 +22,7 @@
 
 <img src='../img/gui-finder.png' width="300">
 
-Note that under Windows the app is located inside the *focusstack* folder, and on macOS and Linux outside.
+**Platform Tip**: Windows apps are inside `/focusstack/`, macOS/Linux apps are directly in the uncompressed folder.
 
 The GUI has two main working areas: 
 
@@ -25,28 +37,36 @@ When the app starts, it proposes to create a new project.
 
 <img src='../img/gui-project-new.png' width="600">
 
-The first thing to do is to select the folder that contains the source images, 
-that can be either in jpeg or tiff format, but with 8 bit or 16 bit depth.
+### Creating a new project
+1. Select source folder (JPEG/TIFF, 8/16-bit)
+2. Intermediate folders auto-create in parent directory
+3. Configure job actions (alignment/balancing/...)
 
-More folders will be created with intermediate processing stages, located in the same parent folder
-that contains the selected source image folder.
+<img src='../img/flow-diagram.png' width="600">
+
+
+Up to 100 images or more can be processed, but consider that combining multiple images may require
+large amout of RAM. It may be more convenient, and also more practical, to combine *bunches*
+of 10 to 15 images, and then fuse the interemediate images into the final focus-stacked image.
+This option is supported. It is possible to specify the number of frames per bunch, and how many
+frames of each bunch overlap with the following one.
 
 The newly created project consists in a single job that contains more actions.
 Each action produces a folder as output that has, by default, the action's name.
 Some actions can be combined in order to produce a single intermediate output.
 This is the case for alignment, balancing, etc.
 
-More jobs can be added within the same project. For instance, if the same processing has
-to be applied to multiple source folders, a job can be duplicated and the input folder can be
-modifed in each folder.
+> **Pro Tip**: Duplicate jobs when processing similar image sets to save configuration time. 
 
 It is possible to run a single job, or all jobs within a project.
 
 <img src='../img/gui-project-run.png' width="600">
 
-When the job runs, a log tab is created and the running can be monitored.
+During processing:
 
-When intermediate results are provided, optionally clickable thumbnail are shown, like in the above image.
+* Real-time logs appear in new tab
+* Progress bar shows current action
+* Thumbnails generate for completed stages
 
 Different actions can optionally display istograms or other intermediate results.
 
@@ -62,7 +82,7 @@ By default, the stacked frames together with the focus-stacked image are opened.
 
 Using a configurable brush, it is possible to copy small areas from a specific layer, including
 the focus-stacked image, to the master layer in order to correct small decects, like dust grains
-in front of the main subject, artiefacts and so on.
+in front of the main subject, artifacts and so on.
 
 The retouched master image can be saved either individually or as multilayer TIFF file (in general
 much heavier) for further editing. It is also possible to manually import source layers in case
