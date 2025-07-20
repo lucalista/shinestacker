@@ -53,7 +53,7 @@ import frames from files.
 Multiple files can be specified separated by ';'.
 ''')
     parser.add_argument('-p', '--path', nargs='?', help='''
-import frames from one or more of directories.
+import frames from one or more directories.
 Multiple directories can be specified separated by ';'.
 ''')
     args = vars(parser.parse_args(sys.argv[1:]))
