@@ -8,7 +8,7 @@ FocusStack processes focus-bracketed images in two phases:
 > Advanced processing details in [main documentation](main.md).
 
 The batch processing supports image alignment, color and luminosity balance, vignetting removal,
-noisy picel masking.
+noisy pixel masking.
 
 ## Starting
 
@@ -53,7 +53,7 @@ When the app starts, it proposes to create a new project.
 
 > 💡 **RAM Warning**: >15 images may need 16GB+ RAM. Use smaller batches if needed.
 
-The newly created project consists in a single job that contains more actions.
+The newly created project consists of a single job that contains more actions.
 Each action produces a folder as output that has, by default, the action's name.
 Some actions can be combined in order to produce a single intermediate output (alignment, balancing, etc.).
 
@@ -77,37 +77,52 @@ When the job finishes, a *Retouch* button is enabled, which opens the output ima
 
 <img src='../img/gui-retouch.png' width="600">
 
-In the retouch area it is possible to apply the final correction to the stacked image.
+### Brush Properties
+Adjust in the top toolbar:
+- **Size**: Brush diameter (px)
+- **Hardness**: Edge softness (0-100%)
+- **Opacity**: Paint transparency
+- **Flow**: Paint accumulation rate
+
+> 💡 Pro Tip: Use low opacity/flow (20-40%) for subtle corrections
 
 ### Retouch Workflow
 
-Retouch stacking artifacts using layer-based editing:
-
 1. **Navigate**: 
-   - Zoom or pan within the image
-   - Switch from master layer to source layers
-2. **Correct**:
-   - Adjust brush size, hardness, opacity and flow with cursors
-   - Paint from source layers to master
+   - Zoom/pan to defect area
+   - Toggle between master/source (`X`)
+2. **Correct defects/artifacts**:**:
+   - Select source layer with clean area
+   - Adjust brush properties (size/hardness/opacity)
+   - Paint over defects
+   - Use `Ctrl+Z` to undo strokes
+3. **Verify**:
+   - Toggle master view (`M`) to check results
+   - Compare before/after with `L`/`M` toggle
 3. **Export**:
    - ✅ Final image: Single TIFF/JPEG 
    - 🗂️ Editable: Multilayer TIFF (large)
 
 | Action              | Shortcut                  |
 |---------------------|---------------------------|
-| Zoom in             | `Ctrl` + `+`              |
-| Zoom out            | `Ctrl` + `-`              |
+| Zoom in/out         | `Ctrl` + `+`/`- or mouse wheel          |
+| Reset view          | `Ctrl` + `0`              |
 | Pan                 | `Space` + mouse drag      |
-| Layer navigation    | `Up`/`Down` arrows        |
+| Prev./next layer    | `Up`/`Down` arrows        |
 | View master layer   | `M`                       |
 | View source layer   | `L`                       |
-| Fast `M`/`L` switch | `X`                       |
+| Toggle master ↔ source | `X`                    |
 
 See help menu for complete list of shortcuts.
+
+**Export Formats**:
+- `Single TIFF`: Final image (recommended)
+- `Multilayer TIFF`: Preserves all layers (large file)
+- `JPEG`: For quick preview (not recommended for editing)
 
 ## Final retouch
 
 The final retouch, including color and luminosity balance, sharpness enhancement and
-so on can be applied with your favurite image processing application, like [GIMP](https://www.gimp.org/)
+so on can be applied with your favorite image processing application, like [GIMP](https://www.gimp.org/)
 or other.
 
