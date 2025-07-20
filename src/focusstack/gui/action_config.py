@@ -677,7 +677,7 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
                                    default=constants.DEFAULT_RANS_THRESHOLD, min=0, max=20, step=0.1)
             self.builder.add_field('subsample', FIELD_INT, 'Subsample factor', required=False,
                                    default=constants.DEFAULT_ALIGN_SUBSAMPLE, min=0, max=256)
-            self.builder.add_field('fast_subsampling', FIELD_BOOL, 'Accurate subsampling', required=False,
+            self.builder.add_field('fast_subsampling', FIELD_BOOL, 'Fast subsampling', required=False,
                                    default=constants.DEFAULT_ALIGN_FAST_SUBSAMPLING)
             self.builder.add_field('ecc_refinement', FIELD_BOOL, 'ECC refinement', required=False,
                                    default=constants.DEFAULT_ECC_REFINEMENT)
