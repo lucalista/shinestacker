@@ -1,4 +1,4 @@
-### Alignment and registration: scale, tanslation and rotation correction, or full perspective correction
+# Alignment and registration: scale, tanslation and rotation correction, or full perspective correction
 
 ```python
 job.add_action(Actions("align", [AlignFrames(*options)])
