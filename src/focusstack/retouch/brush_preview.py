@@ -120,8 +120,7 @@ class BrushPreviewItem(QGraphicsPixmapItem):
             x_start, y_start = max(0, x), max(0, y)
             self.setPos(x_start, y_start)
             self.show()
-        except Exception as e:
-            print(f"Preview error: {str(e)}")
+        except Exception:
             import traceback
             traceback.print_exc()
             self.hide()

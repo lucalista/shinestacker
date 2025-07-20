@@ -107,6 +107,7 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
     feature_config = {**_DEFAULT_FEATURE_CONFIG, **(feature_config or {})}
     matching_config = {**_DEFAULT_MATCHING_CONFIG, **(matching_config or {})}
     alignment_config = {**_DEFAULT_ALIGNMENT_CONFIG, **(alignment_config or {})}
+
     try:
         cv2_border_mode = _cv2_border_mode_map[alignment_config['border_mode']]
     except KeyError:
@@ -172,55 +173,55 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
             else:
                 raise InvalidOptionError("transform", transform)
 
-            if alignment_config['ecc_refinement']:
-                if callbacks and 'ecc_message' in callbacks.keys():
-                    callbacks['ecc_message']()
-                img0_gray = img_bw_8bit(img_0)
-                img1_gray = img_bw_8bit(img_1)
-                try:
-                    if transform == constants.ALIGN_HOMOGRAPHY:
-                        M_init = M.astype(np.float32)
-                        cc, M_refined = cv2.findTransformECC(
-                            templateImage=img1_gray,
-                            inputImage=img0_gray,
-                            warpMatrix=M_init,
-                            motionType=cv2.MOTION_HOMOGRAPHY,
-                            criteria=alignment_config['ecc_criteria'],
-                            inputMask=None,
-                            gaussFiltSize=alignment_config['ecc_gauss_filt_size']
-                        )
-                        M = M_refined
-                    elif transform == constants.ALIGN_RIGID:
-                        M_init = np.eye(2, 3, dtype=np.float32)
-                        a, b, tx = M[0]
-                        c, d, ty = M[1]
-                        # scale = np.sqrt(a * a + b * b)
-                        angle = np.arctan2(b, a) * 180 / np.pi
-                        M_init[0, 0] = np.cos(np.radians(angle))
-                        M_init[0, 1] = -np.sin(np.radians(angle))
-                        M_init[1, 0] = np.sin(np.radians(angle))
-                        M_init[1, 1] = np.cos(np.radians(angle))
-                        M_init[0, 2] = tx
-                        M_init[1, 2] = ty
-                        cc, M_refined = cv2.findTransformECC(
-                            templateImage=img1_gray,
-                            inputImage=img0_gray,
-                            warpMatrix=M_init,
-                            motionType=cv2.MOTION_EUCLIDEAN,
-                            criteria=alignment_config['ecc_criteria'],
-                            inputMask=None,
-                            gaussFiltSize=alignment_config['ecc_gauss_filt_size']
-                        )
-                        cos_theta = M_refined[0, 0]
-                        sin_theta = M_refined[1, 0]
-                        tx = M_refined[0, 2]
-                        ty = M_refined[1, 2]
-                        M = np.array([
-                            [cos_theta, -sin_theta, tx],
-                            [sin_theta, cos_theta, ty]
-                        ], dtype=np.float32)
-                except cv2.error:
-                    raise RuntimeError("ECC refinement failed.")
+        if alignment_config['ecc_refinement']:
+            if callbacks and 'ecc_message' in callbacks.keys():
+                callbacks['ecc_message']()
+            img0_gray = img_bw_8bit(img_0)
+            img1_gray = img_bw_8bit(img_1)
+            try:
+                if transform == constants.ALIGN_HOMOGRAPHY:
+                    M_init = M.astype(np.float32)
+                    cc, M_refined = cv2.findTransformECC(
+                        templateImage=img1_gray,
+                        inputImage=img0_gray,
+                        warpMatrix=M_init,
+                        motionType=cv2.MOTION_HOMOGRAPHY,
+                        criteria=alignment_config['ecc_criteria'],
+                        inputMask=None,
+                        gaussFiltSize=alignment_config['ecc_gauss_filt_size']
+                    )
+                    M = M_refined
+                elif transform == constants.ALIGN_RIGID:
+                    M_init = np.eye(2, 3, dtype=np.float32)
+                    a, b, tx = M[0]
+                    c, d, ty = M[1]
+                    # scale = np.sqrt(a * a + b * b)
+                    angle = np.arctan2(b, a) * 180 / np.pi
+                    M_init[0, 0] = np.cos(np.radians(angle))
+                    M_init[0, 1] = -np.sin(np.radians(angle))
+                    M_init[1, 0] = np.sin(np.radians(angle))
+                    M_init[1, 1] = np.cos(np.radians(angle))
+                    M_init[0, 2] = tx
+                    M_init[1, 2] = ty
+                    cc, M_refined = cv2.findTransformECC(
+                        templateImage=img1_gray,
+                        inputImage=img0_gray,
+                        warpMatrix=M_init,
+                        motionType=cv2.MOTION_EUCLIDEAN,
+                        criteria=alignment_config['ecc_criteria'],
+                        inputMask=None,
+                        gaussFiltSize=alignment_config['ecc_gauss_filt_size']
+                    )
+                    cos_theta = M_refined[0, 0]
+                    sin_theta = M_refined[1, 0]
+                    tx = M_refined[0, 2]
+                    ty = M_refined[1, 2]
+                    M = np.array([
+                        [cos_theta, -sin_theta, tx],
+                        [sin_theta, cos_theta, ty]
+                    ], dtype=np.float32)
+            except cv2.error:
+                raise RuntimeError("ECC refinement failed.")
 
         if callbacks and 'align_message' in callbacks.keys():
             callbacks['align_message']()

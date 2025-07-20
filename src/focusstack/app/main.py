@@ -126,6 +126,9 @@ Multiple directories can be specified separated by ';'.
     parser.add_argument('-r', '--retouch', action='store_true', help='''
 open retouch window at startup instead of project windows.
 ''')
+    parser.add_argument('-x', '--expert', action='store_true', help='''
+expert options are visible by default.
+''')
     args = vars(parser.parse_args(sys.argv[1:]))
     filename = args['filename']
     path = args['path']
@@ -147,6 +150,8 @@ open retouch window at startup instead of project windows.
     main_app.show()
     main_app.activateWindow()
 
+    if args['expert']:
+        main_app.project_window.set_expert_options()
     if filename:
         filenames = filename.split(';')
         filename = filenames[0]

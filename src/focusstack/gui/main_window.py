@@ -485,6 +485,10 @@ class MainWindow(ActionsWindow, LogManager):
     def toggle_expert_options(self):
         self.expert_options = self.expert_options_action.isChecked()
 
+    def set_expert_options(self):
+        self.expert_options_action.setChecked(True)
+        self.expert_options = True
+
     def before_thread_begins(self):
         self.run_job_action.setEnabled(False)
         self.run_all_jobs_action.setEnabled(False)

@@ -63,6 +63,9 @@ def main():
     parser.add_argument('-f', '--filename', nargs='?', help='''
 project filename.
 ''')
+    parser.add_argument('-x', '--expert', action='store_true', help='''
+expert options are visible by default.
+''')
     args = vars(parser.parse_args(sys.argv[1:]))
     setup_logging(console_level=logging.DEBUG, file_level=logging.DEBUG, disable_console=True)
     app = Application(sys.argv)
@@ -72,7 +75,8 @@ project filename.
         disable_macos_special_menu_items()
     app.setWindowIcon(QIcon(f'{get_app_base_path()}/ico/focus_stack.png'))
     window = ProjectApp()
-
+    if args['expert']:
+        window.set_expert_options()
     app.window = window
     window.show()
     filename = args['filename']

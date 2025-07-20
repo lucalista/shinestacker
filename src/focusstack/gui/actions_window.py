@@ -2,6 +2,7 @@ import os.path
 import os
 import json
 import jsonpickle
+import traceback
 from PySide6.QtWidgets import QMessageBox, QFileDialog, QDialog
 from focusstack.core.core_utils import get_app_base_path
 from focusstack.gui.project_model import Project
@@ -125,7 +126,9 @@ class ActionsWindow(ProjectEditor):
         if file_path:
             try:
                 file = open(file_path, 'r')
-                os.chdir('/'.join(file_path.split('/')[:-1]))
+                pp = file_path.split('/')
+                if len(pp) > 1:
+                    os.chdir('/'.join(pp[:-1]))
                 json_obj = json.load(file)
                 project = Project.from_dict(json_obj['project'])
                 if project is None:
@@ -138,6 +141,7 @@ class ActionsWindow(ProjectEditor):
                 if self.job_list.count() > 0:
                     self.job_list.setCurrentRow(0)
             except Exception as e:
+                traceback.print_tb(e.__traceback__)
                 QMessageBox.critical(self, "Error", f"Cannot open file {file_path}:\n{str(e)}")
             if len(self.project.jobs) > 0:
                 self.job_list.setCurrentRow(0)
