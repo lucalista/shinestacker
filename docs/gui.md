@@ -1,12 +1,16 @@
 ### Graphical User Intreface
 
-The GUI can start either from a consome command line, or dowloading the application from the (releases page)[https://github.com/lucalista/focusstack/releases] as ```zip``` archive.
-
-Via console, the GUI starts with:
+The GUI can start either from a consome command line if the python package is donwloaded and installed:
 
 ```console
 > focusstack
 ```
+
+If the app is dowloaded from the (releases page)[https://github.com/lucalista/focusstack/releases], after the  ```zip``` archive is uncompressed, the user can just double-click the app icon:
+
+<img src='../img/gui-finder.png' width="300">
+
+Note that under Windows the app is located inside the *focusstack* folder.
 
 The GUI has two main working areas: *Project* and *Retouch*. 
 Switcing from *Project* to *Retouch* can be done with the *FocusStack* main menu.
