@@ -66,6 +66,16 @@ def test_align_rescale():
         assert False
 
 
+def test_align_ecc():
+    try:
+        img_1, img_2 = [read_img(f"../examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
+        n_good_matches, img_warp = align_images(img_1, img_2, alignment_config={'ecc_refinement': True})
+        assert img_warp is not None
+        assert n_good_matches > 10
+    except Exception:
+        assert False
+
+
 def test_jpg():
     try:
         job = StackJob("job", "../examples", input_path="input/img-jpg", callbacks='tqdm')

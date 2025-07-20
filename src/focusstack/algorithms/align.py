@@ -27,7 +27,10 @@ _DEFAULT_ALIGNMENT_CONFIG = {
     'border_mode': constants.DEFAULT_BORDER_MODE,
     'border_value': constants.DEFAULT_BORDER_VALUE,
     'border_blur': constants.DEFAULT_BORDER_BLUR,
-    'subsample': constants.DEFAULT_ALIGN_SUBSAMPLE
+    'subsample': constants.DEFAULT_ALIGN_SUBSAMPLE,
+    'ecc_refinement': constants.DEFAULT_ECC_REFINEMENT,
+    'ecc_gauss_filt_size': constants.DEFAULT_ECC_GAUSS_FILT_SIZE,
+    'ecc_criteria': (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_MAX_ITER, 100, 1e-7),
 }
 
 _cv2_border_mode_map = {
@@ -163,6 +166,56 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
             else:
                 raise InvalidOptionError("transform", transform)
 
+            if alignment_config['ecc_refinement']:
+                if callbacks and 'ecc_message' in callbacks.keys():
+                    callbacks['ecc_message']()
+                img0_gray = img_bw_8bit(img_0)
+                img1_gray = img_bw_8bit(img_1)
+                try:
+                    if transform == constants.ALIGN_HOMOGRAPHY:
+                        M_init = M.astype(np.float32)
+                        cc, M_refined = cv2.findTransformECC(
+                            templateImage=img1_gray,
+                            inputImage=img0_gray,
+                            warpMatrix=M_init,
+                            motionType=cv2.MOTION_HOMOGRAPHY,
+                            criteria=alignment_config['ecc_criteria'],
+                            inputMask=None,
+                            gaussFiltSize=alignment_config['ecc_gauss_filt_size']
+                        )
+                        M = M_refined
+                    elif transform == constants.ALIGN_RIGID:
+                        M_init = np.eye(2, 3, dtype=np.float32)
+                        a, b, tx = M[0]
+                        c, d, ty = M[1]
+                        # scale = np.sqrt(a * a + b * b)
+                        angle = np.arctan2(b, a) * 180 / np.pi
+                        M_init[0, 0] = np.cos(np.radians(angle))
+                        M_init[0, 1] = -np.sin(np.radians(angle))
+                        M_init[1, 0] = np.sin(np.radians(angle))
+                        M_init[1, 1] = np.cos(np.radians(angle))
+                        M_init[0, 2] = tx
+                        M_init[1, 2] = ty
+                        cc, M_refined = cv2.findTransformECC(
+                            templateImage=img1_gray,
+                            inputImage=img0_gray,
+                            warpMatrix=M_init,
+                            motionType=cv2.MOTION_EUCLIDEAN,
+                            criteria=alignment_config['ecc_criteria'],
+                            inputMask=None,
+                            gaussFiltSize=alignment_config['ecc_gauss_filt_size']
+                        )
+                        cos_theta = M_refined[0, 0]
+                        sin_theta = M_refined[1, 0]
+                        tx = M_refined[0, 2]
+                        ty = M_refined[1, 2]
+                        M = np.array([
+                            [cos_theta, -sin_theta, tx],
+                            [sin_theta, cos_theta, ty]
+                        ], dtype=np.float32)
+                except cv2.error:
+                    raise RuntimeError("ECC refinement failed.")
+
         if callbacks and 'align_message' in callbacks.keys():
             callbacks['align_message']()
         img_mask = np.ones_like(img_0, dtype=np.uint8)
@@ -218,6 +271,7 @@ class AlignFrames(SubAction):
             'message': lambda: self.process.sub_message_r(': find matches'),
             'matches_message': lambda n: self.process.sub_message_r(f": matches: {n}"),
             'align_message': lambda: self.process.sub_message_r(': align images'),
+            'ecc_message': lambda: self.process.sub_message_r(": ecc refinement"),
             'blur_message': lambda: self.process.sub_message_r(': blur borders'),
             'save_plot': lambda plot_path: self.process.callback('save_plot', self.process.id,
                                                                  f"{self.process.name}: matches\nframe {idx_str}", plot_path)
