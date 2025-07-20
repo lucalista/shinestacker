@@ -5,15 +5,7 @@
 <img src='img/flies.gif' width="400">  <img src='img/flies_stack.jpg' width="400">
 
 ## Documentation
-- [Quick start and introduction](docs/main.md)
-- [Graphical User Interface](docs/gui.md)
-- [Job creation and processing pipeline](docs/job.md)
-- [Image alignment](docs/alignment.md)
-- [Luminosity and color balancing](docs/balancing.md)
-- [Stacking algorithms](docs/focus_stacking.md)
-- [Multilayer image](docs/multilayer.md)
-- [Noisy pixel masking](docs/noise.md)
-- [Vignetting correction](docs/vignetting.md)
+- [Main documentation page](docs/main.md)
 
 ### Credits:
 
