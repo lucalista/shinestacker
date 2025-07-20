@@ -57,13 +57,13 @@ To run the GUI, from the main package directory run:
 
 ## Documentation
 - [Job creation and processing pipeline](../docs/job.md)
+- [Graphical User Interface](../docs/gui.md)
 - [Image alignment](../docs/alignment.md)
 - [Luminosity and color balancing](../docs/balancing.md)
 - [Stacking algorithms](../docs/focus_stacking.md)
 - [Multilayer image](../docs/multilayer.md)
 - [Noisy pixel masking](../docs/noise.md)
 - [Vignetting correction](../docs/vignetting.md)
-- [Graphical User Interface](../docs/gui.md)
 
 ## Requirements
 

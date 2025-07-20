@@ -6,6 +6,7 @@
 
 ## Documentation
 - [Quick start and introduction](docs/main.md)
+- [Graphical User Interface](docs/gui.md)
 - [Job creation and processing pipeline](docs/job.md)
 - [Image alignment](docs/alignment.md)
 - [Luminosity and color balancing](docs/balancing.md)
