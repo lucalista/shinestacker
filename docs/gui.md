@@ -10,10 +10,14 @@
 
 <img src='../img/gui-finder.png' width="300">
 
-Note that under Windows the app is located inside the *focusstack* folder.
+Note that under Windows the app is located inside the *focusstack* folder, and on macOS and Linux outside.
 
-The GUI has two main working areas: *Project* and *Retouch*. 
-Switcing from *Project* to *Retouch* can be done with the *FocusStack* main menu.
+The GUI has two main working areas: 
+
+* *Project* 
+* *Retouch*
+
+Switcing from *Project* to *Retouch* can be done from the *FocusStack* main menu.
 
 ## Project area
 
