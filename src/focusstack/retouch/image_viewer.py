@@ -8,8 +8,8 @@ from focusstack.retouch.brush_preview import BrushPreviewItem
 
 def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None, outer_color=None, opacity=100):
     gradient = QRadialGradient(center_x, center_y, float(radius))
-    inner = inner_color if inner_color is not None else gui_constants.BRUSH_COLORS['inner']
-    outer = outer_color if outer_color is not None else gui_constants.BRUSH_COLORS['gradient_end']
+    inner = inner_color if inner_color is not None else QColor(*gui_constants.BRUSH_COLORS['inner'])
+    outer = outer_color if outer_color is not None else QColor(*gui_constants.BRUSH_COLORS['gradient_end'])
     inner_with_opacity = QColor(inner)
     inner_with_opacity.setAlpha(int(float(inner.alpha()) * float(opacity) / 100.0))
     if hardness < 100:
@@ -210,8 +210,8 @@ class ImageViewer(QGraphicsView):
 
     def setup_brush_cursor(self):
         self.setCursor(Qt.BlankCursor)
-        pen = QPen(gui_constants.BRUSH_COLORS['pen'], 1)
-        brush = QBrush(gui_constants.BRUSH_COLORS['cursor_inner'])
+        pen = QPen(QColor(*gui_constants.BRUSH_COLORS['pen']), 1)
+        brush = QBrush(QColor(*gui_constants.BRUSH_COLORS['cursor_inner']))
         self.brush_cursor = self.scene.addEllipse(0, 0, self.brush.size, self.brush.size, pen, brush)
         self.brush_cursor.setZValue(1000)
         self.brush_cursor.hide()
@@ -246,7 +246,7 @@ class ImageViewer(QGraphicsView):
             self.brush_cursor.show()
 
     def _setup_outline_style(self):
-        self.brush_cursor.setPen(QPen(gui_constants.BRUSH_COLORS['pen'],
+        self.brush_cursor.setPen(QPen(QColor(*gui_constants.BRUSH_COLORS['pen']),
                                       gui_constants.BRUSH_LINE_WIDTH / self.zoom_factor))
         self.brush_cursor.setBrush(Qt.NoBrush)
 
@@ -254,11 +254,11 @@ class ImageViewer(QGraphicsView):
         gradient = create_brush_gradient(
             center_x, center_y, radius,
             self.brush.hardness,
-            inner_color=gui_constants.BRUSH_COLORS['inner'],
-            outer_color=gui_constants.BRUSH_COLORS['gradient_end'],
+            inner_color=QColor(*gui_constants.BRUSH_COLORS['inner']),
+            outer_color=QColor(*gui_constants.BRUSH_COLORS['gradient_end']),
             opacity=self.brush.opacity
         )
-        self.brush_cursor.setPen(QPen(gui_constants.BRUSH_COLORS['pen'],
+        self.brush_cursor.setPen(QPen(QColor(*gui_constants.BRUSH_COLORS['pen']),
                                       gui_constants.BRUSH_LINE_WIDTH / self.zoom_factor))
         self.brush_cursor.setBrush(QBrush(gradient))
 

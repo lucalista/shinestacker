@@ -1,5 +1,4 @@
 import math
-from PySide6.QtGui import QColor
 
 
 class _GuiConstants:
@@ -22,13 +21,13 @@ class _GuiConstants:
     NEW_PROJECT_MULTI_LAYER = False
 
     BRUSH_COLORS = {
-        'outer': QColor(255, 0, 0, 200),
-        'inner': QColor(255, 0, 0, 150),
-        'gradient_end': QColor(255, 0, 0, 0),
-        'pen': QColor(255, 0, 0, 150),
-        'preview': QColor(255, 180, 180),
-        'cursor_inner': QColor(255, 0, 0, 120),
-        'preview_inner': QColor(255, 255, 255, 150)
+        'outer': (255, 0, 0, 200),
+        'inner': (255, 0, 0, 150),
+        'gradient_end': (255, 0, 0, 0),
+        'pen': (255, 0, 0, 150),
+        'preview': (255, 180, 180),
+        'cursor_inner': (255, 0, 0, 120),
+        'preview_inner': (255, 255, 255, 150)
     }
 
     MIN_MOUSE_STEP_BRUSH_FRACTION = 0.25

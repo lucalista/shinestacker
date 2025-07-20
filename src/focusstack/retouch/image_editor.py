@@ -26,8 +26,8 @@ def slider_to_brush_size(slider_val):
 
 def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None, outer_color=None, opacity=100):
     gradient = QRadialGradient(center_x, center_y, float(radius))
-    inner = inner_color if inner_color is not None else gui_constants.BRUSH_COLORS['inner']
-    outer = outer_color if outer_color is not None else gui_constants.BRUSH_COLORS['gradient_end']
+    inner = inner_color if inner_color is not None else QColor(*gui_constants.BRUSH_COLORS['inner'])
+    outer = outer_color if outer_color is not None else QColor(*gui_constants.BRUSH_COLORS['gradient_end'])
     inner_with_opacity = QColor(inner)
     inner_with_opacity.setAlpha(int(float(inner.alpha()) * float(opacity) / 100.0))
     if hardness < 100:
@@ -512,18 +512,18 @@ class ImageEditor(QMainWindow):
             gradient = create_brush_gradient(
                 center_x, center_y, radius,
                 self.brush.hardness,
-                inner_color=gui_constants.BRUSH_COLORS['inner'],
-                outer_color=gui_constants.BRUSH_COLORS['gradient_end'],
+                inner_color=QColor(*gui_constants.BRUSH_COLORS['inner']),
+                outer_color=QColor(*gui_constants.BRUSH_COLORS['gradient_end']),
                 opacity=self.brush.opacity
             )
             painter.setBrush(QBrush(gradient))
-            painter.setPen(QPen(gui_constants.BRUSH_COLORS['outer'], gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
+            painter.setPen(QPen(QColor(*gui_constants.BRUSH_COLORS['outer']), gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
         elif self.image_viewer.cursor_style == 'outline':
             painter.setBrush(Qt.NoBrush)
-            painter.setPen(QPen(gui_constants.BRUSH_COLORS['outer'], gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
+            painter.setPen(QPen(QColor(*gui_constants.BRUSH_COLORS['outer']), gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
         else:
-            painter.setBrush(QBrush(gui_constants.BRUSH_COLORS['cursor_inner']))
-            painter.setPen(QPen(gui_constants.BRUSH_COLORS['pen'], gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
+            painter.setBrush(QBrush(QColor(*gui_constants.BRUSH_COLORS['cursor_inner'])))
+            painter.setPen(QPen(QColor(*gui_constants.BRUSH_COLORS['pen']), gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
         painter.drawEllipse(QPoint(center_x, center_y), radius, radius)
         if self.image_viewer.cursor_style == 'preview':
             painter.setPen(QPen(QColor(0, 0, 160)))
