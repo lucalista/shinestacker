@@ -704,8 +704,8 @@ class BalanceFramesConfigurator(NoNameActionConfigurator):
             self.builder.add_field('intensity_interval', FIELD_INT_TUPLE, 'Intensity range', required=False, size=2,
                                    default=[v for k, v in constants.DEFAULT_INTENSITY_INTERVAL.items()],
                                    labels=['min', 'max'], min=[-1] * 2, max=[65536] * 2)
-            self.builder.add_field('img_scale', FIELD_INT, 'Image resample', required=False,
-                                   default=constants.DEFAULT_IMG_SCALE, min=1, max=256)
+            self.builder.add_field('subsample', FIELD_INT, 'Subsample factor', required=False,
+                                   default=constants.DEFAULT_SUBSAMPLE, min=1, max=256)
         self.builder.add_field('corr_map', FIELD_COMBO, 'Correction map', required=False,
                                options=self.CORRECTION_MAP_OPTIONS, values=constants.VALID_BALANCE,
                                default='Linear')
