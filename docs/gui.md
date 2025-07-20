@@ -116,9 +116,11 @@ Adjust in the top toolbar:
 See help menu for complete list of shortcuts.
 
 **Export Formats**:
-- `Single TIFF`: Final image (recommended)
-- `Multilayer TIFF`: Preserves all layers (large file)
-- `JPEG`: For quick preview (not recommended for editing)
+- Single TIFF: Final image (highest quality)
+- Single JPEG: For web and quick preview (lower quality)
+- Multilayer TIFF: Preserves all layers (large file)
+
+* EXIF data can be imported from source images and saved with final file.
 
 ## Final retouch
 
