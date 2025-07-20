@@ -59,7 +59,7 @@ Some actions can be combined in order to produce a single intermediate output (a
 
 **Action Outputs**: 📁 `aligned-balanced/` | 📁 `bunches/` | 📁 `stacked/`
 
-> **Pro Tip**: Duplicate jobs when processing similar image sets to save configuration time. 
+> **Pro Tip**: Duplicate jobs when processing similar image sets to save configuration time. You can run multiple jobs in sequence.
 
 It is possible to run a single job, or all jobs within a project.
 
