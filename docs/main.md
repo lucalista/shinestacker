@@ -39,7 +39,7 @@ pip install -e .
 Launch GUI
 
 ```bash
-focus_stacking
+focusstack
 ```
 
 Follow [GUI guide](gui.md) for batch processing and retouching.
