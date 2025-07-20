@@ -55,8 +55,7 @@ When the app starts, it proposes to create a new project.
 
 The newly created project consists in a single job that contains more actions.
 Each action produces a folder as output that has, by default, the action's name.
-Some actions can be combined in order to produce a single intermediate output.
-This is the case for alignment, balancing, etc.
+Some actions can be combined in order to produce a single intermediate output (alignment, balancing, etc.).
 
 **Action Outputs**: 📁 `aligned-balanced/` | 📁 `bunches/` | 📁 `stacked/`
 
@@ -65,6 +64,8 @@ This is the case for alignment, balancing, etc.
 It is possible to run a single job, or all jobs within a project.
 
 <img src='../img/gui-project-run.png' width="600">
+
+### Project Run Tabs
 
 1. Job progress bar
 2. Real-time log viewer
@@ -101,6 +102,8 @@ Retouch stacking artifacts using layer-based editing:
 | View master layer   | `M`                       |
 | View source layer   | `L`                       |
 | Fast `M`/`L` switch | `X`                       |
+
+See help menu for complete list of shortcuts.
 
 ## Final retouch
 
