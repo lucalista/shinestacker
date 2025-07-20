@@ -179,7 +179,7 @@ class RunWindow(QTextEditLogger):
         self.image_area_widget.setFixedWidth(0)
         layout.addLayout(output_layout)
 
-        n_paths = len(self.retouch_paths)
+        n_paths = len(self.retouch_paths) if self.retouch_paths else 0
         if n_paths == 1:
             self.retouch_widget = QPushButton(f"Retouch {self.retouch_paths[0][0]}")
             self.retouch_widget.setStyleSheet(BLUE_BUTTON_STYLE)

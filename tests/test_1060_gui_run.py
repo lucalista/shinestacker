@@ -77,7 +77,7 @@ class TestRunWindow:
     @pytest.fixture
     def run_window(self, qapp):
         labels = [[("Action1", True), ("Action2", False)]]
-        return RunWindow(labels, lambda x: None, lambda x: None, None)
+        return RunWindow(labels, lambda x: None, lambda x: None, None, None)
 
     def test_initialization(self, run_window):
         assert len(run_window.color_widgets) == 1
@@ -119,7 +119,7 @@ class TestIntegration:
     @pytest.fixture
     def integrated_system(self, qapp):
         labels = [[("Action1", True)]]
-        window = RunWindow(labels, lambda x: None, lambda x: None, None)
+        window = RunWindow(labels, lambda x: None, lambda x: None, None, None)
         worker = RunWorker("test_id")
         worker.do_run = MagicMock(return_value=(constants.RUN_COMPLETED, ""))
         worker.before_action_signal.connect(window.handle_before_action)
