@@ -120,6 +120,7 @@ See help menu for complete list of shortcuts.
 - Single JPEG: For web and quick preview (lower quality)
 - Multilayer TIFF: Preserves all layers (large file)
 
+**EXIF metadata**:
 * EXIF data can be imported from source images and saved with final file.
 
 ## Final retouch
