@@ -44,8 +44,8 @@ When the app starts, it proposes to create a new project.
    - Real-time logs & progress bar
    - Thumbnail previews for each stage
 
-<img src='../img/flow-diagram.png' width="600" alt="FocusStack workflow: Source images → Alignment → Balancing → Stacking">
-
+<img src='../img/flow-diagram.png' width="900" alt="FocusStack workflow: Source images → Alignment → Balancing → Stacking">
+9
 > **Large Set Tip**: For 100+ images:
 > - Split into 10-15 image "bunches" 
 > - Set frame overlap (default: 2 frames)
