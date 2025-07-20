@@ -30,7 +30,7 @@ class RetouchApp(ImageEditorUI):
         if config.DONT_USE_NATIVE_MENU:
             quit_txt, quit_short = "&Quit", "Ctrl+Q"
         else:
-            quit_txt, quit_short = "Shut dw&wn", "Ctrl+W"
+            quit_txt, quit_short = "Shut dw&wn", "Ctrl+Q"
         exit_action = QAction(quit_txt, self)
         exit_action.setShortcut(quit_short)
         exit_action.triggered.connect(self.quit)
