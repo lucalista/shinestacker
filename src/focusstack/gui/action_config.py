@@ -65,7 +65,7 @@ class FieldBuilder:
             if field_type == FIELD_TEXT:
                 default_value = kwargs.get('placeholder', '')
             elif field_type in (FIELD_ABS_PATH, FIELD_REL_PATH):
-                default_value = kwargs.get('placeholder', '')
+                default_value = ''
             elif field_type == FIELD_FLOAT:
                 default_value = kwargs.get('default', 0.0)
             elif field_type == FIELD_INT:
