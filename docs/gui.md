@@ -18,7 +18,7 @@ noisy pixel masking.
 > focusstack
 ```
 
-* If the app is dowloaded from the [releases page](https://github.com/lucalista/focusstack/releases), after the  ```zip``` archive is uncompressed, the user can just double-click the app icon:
+* If the app is dowloaded from the [releases page](https://github.com/lucalista/focusstack/releases), after the  ```zip``` archive is uncompressed, just double-click the app icon.
 
 <img src='../img/gui-finder.png' width="300">
 
