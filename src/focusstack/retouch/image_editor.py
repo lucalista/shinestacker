@@ -67,6 +67,23 @@ class ImageEditor(QMainWindow):
         self.undo_manager = UndoManager()
         self.loader_thread = None
 
+    def keyPressEvent(self, event):
+        if self.image_viewer.empty:
+            return
+        elif event.text() == '[':
+            self.decrease_brush_size()
+            return
+        elif event.text() == ']':
+            self.increase_brush_size()
+            return
+        elif event.text() == '{':
+            self.decrease_brush_hardness()
+            return
+        elif event.text() == '}':
+            self.increase_brush_hardness()
+            return
+        super().keyPressEvent(event)
+
     def process_pending_updates(self):
         if self.needs_update:
             self.display_master_layer()
@@ -482,6 +499,26 @@ class ImageEditor(QMainWindow):
         self.update_brush_thumb()
         self.image_viewer.update_brush_cursor()
         self.clear_brush_cache()
+
+    def increase_brush_size(self, amount=5):
+        val = self.brush_size_slider.value()
+        self.brush_size_slider.setValue(min(val + amount, self.brush_size_slider.maximum()))
+        self.update_brush_size(val)
+
+    def decrease_brush_size(self, amount=5):
+        val = self.brush_size_slider.value()
+        self.brush_size_slider.setValue(max(val - amount, self.brush_size_slider.minimum()))
+        self.update_brush_size(val)
+
+    def increase_brush_hardness(self, amount=2):
+        val = self.hardness_slider.value()
+        self.hardness_slider.setValue(min(val + amount, self.hardness_slider.maximum()))
+        self.update_brush_hardness(val)
+
+    def decrease_brush_hardness(self, amount=2):
+        val = self.hardness_slider.value()
+        self.hardness_slider.setValue(max(val - amount, self.hardness_slider.minimum()))
+        self.update_brush_hardness(val)
 
     def update_brush_hardness(self, hardness):
         self.brush.hardness = hardness

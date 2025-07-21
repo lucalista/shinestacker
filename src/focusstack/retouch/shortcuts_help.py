@@ -59,8 +59,12 @@ class ShortcutsHelp(QDialog):
             "Ctrl + -": "zoom out",
             "Ctrl + 0": "adapt to screen",
             "Ctrl + =": "actual size",
+            "[": "increase brush size",
+            "]": "decrease brush size",
+            "{": "increase brush hardness",
+            "}": "decrease brush hardness"
         }
 
         self.add_bold_label("Shortcuts list")
         for k, v in shortcuts.items():
-            self.layout.addRow(f"<b>{k}:</b>", QLabel(v))
+            self.layout.addRow(f"<b>{k}</b>", QLabel(v))
