@@ -49,13 +49,10 @@ EFFECTS = {
 def color_str(text, color=None, background=None, attrs=None):
     text_colored = text
     if color is not None:
-        color_code = COLORS[color]
-        text_colored = f"\033[{color_code}m{text_colored}"
+        text_colored = f"\033[{COLORS[color]}m{text_colored}"
     if background is not None:
-        bg_code = BG_COLORS[background]
-        text_colored = f"\033[{bg_code}m{text_colored}"
+        text_colored = f"\033[{BG_COLORS[background]}m{text_colored}"
     if attrs is not None:
         for attr in attrs:
-            attr_code = EFFECTS[attr]
-            text_colored = f"\033[{attr_code}m{text_colored}"
+            text_colored = f"\033[{EFFECTS[attr]}m{text_colored}"
     return text_colored + "\033[0m"
