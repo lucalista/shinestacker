@@ -273,6 +273,8 @@ class ImageViewer(QGraphicsView):
         self.brush_cursor.setBrush(QBrush(gradient))
 
     def enterEvent(self, event):
+        self.activateWindow()
+        self.setFocus()
         if not self.empty:
             self.setCursor(Qt.BlankCursor)
             if self.brush_cursor:
