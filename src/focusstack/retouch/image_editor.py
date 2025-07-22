@@ -280,9 +280,9 @@ class ImageEditor(QMainWindow):
                 msg = QMessageBox()
                 msg.setIcon(QMessageBox.Critical)
                 msg.setWindowTitle("Import error")
-                msg.setText(f"Error loading file.\n{str(e)}")
+                msg.setText(f"Error loading file: {path}.\n{str(e)}")
                 msg.exec()
-                self.statusBar().showMessage(f"Error loading: {path}")
+                self.statusBar().showMessage(f"Error loading file: {path}")
                 break
         self.mark_as_modified()
         self.change_layer(0)
