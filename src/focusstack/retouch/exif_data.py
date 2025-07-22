@@ -50,7 +50,7 @@ class ExifData(QDialog):
         self.add_bold_label("EXIF data")
         shortcuts = {}
         if self.exif is None:
-            shortcuts['Warning:': 'no EXIF data found']
+            shortcuts['Warning:'] = 'no EXIF data found'
         else:
             data = exif_dict(self.exif)
         if len(data) > 0:

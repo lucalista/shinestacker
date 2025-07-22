@@ -163,6 +163,9 @@ class ImageEditor(QMainWindow):
                 self, "Open Image", "", "Images (*.tif *.tiff *.jpg *.jpeg);;All Files (*)")
         if not file_paths:
             return
+        if self.loader_thread and self.loader_thread.isRunning():
+            if not self.loader_thread.wait(10000):
+                raise RuntimeError("Loading timeout error.")
         if isinstance(file_paths, list) and len(file_paths) > 1:
             self.import_frames_from_files(file_paths)
             return
@@ -260,7 +263,7 @@ class ImageEditor(QMainWindow):
                         i += 1
                         label_x = f"{label} ({i})"
                     self.current_labels.append(label_x)
-                    self.current_stack = np.insert(self.current_stack, -1, img, axis=0)
+                    self.current_stack = np.append(self.current_stack, [img], axis=0)
                 except Exception as e:
                     traceback.print_tb(e.__traceback__)
                     QMessageBox.critical(self, "Error", str(e))
