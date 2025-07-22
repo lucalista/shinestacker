@@ -251,12 +251,18 @@ class ImageEditor(QMainWindow):
                 try:
                     validate_image(img, self.shape, self.dtype)
                 except ShapeError as e:
-                    traceback.print_tb(e.__traceback__)
-                    QMessageBox.warning(self, "Import error", f"All flies must have the same shape.\n{str(e)}")
+                    msg = QMessageBox()
+                    msg.setIcon(QMessageBox.Critical)
+                    msg.setWindowTitle("Import error")
+                    msg.setText(f"All files must have the same shape.\n{str(e)}")
+                    msg.exec()
                     return
                 except BitDepthError as e:
-                    traceback.print_tb(e.__traceback__)
-                    QMessageBox.warning(self, "Import error", f"All flies must have the same bit depth.\n{str(e)}")
+                    msg = QMessageBox()
+                    msg.setIcon(QMessageBox.Critical)
+                    msg.setWindowTitle("Import error")
+                    msg.setText(f"All flies must have the same bit depth.\n{str(e)}")
+                    msg.exec()
                     return
                 except Exception as e:
                     traceback.print_tb(e.__traceback__)
