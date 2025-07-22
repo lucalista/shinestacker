@@ -28,7 +28,6 @@ dependencies = [
     "psdtags",
     "PySide6",
     "scipy",
-    "termcolor",
     "tifffile",
     "tqdm",
     "setuptools-scm"

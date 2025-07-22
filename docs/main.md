@@ -94,7 +94,7 @@ job.run()
 
 ### Core processing
 ```bash
-pip install imagecodecs matplotlib numpy opencv-python pillow psdtags scipy setuptools-scm termcolor tifffile tqdm
+pip install imagecodecs matplotlib numpy opencv-python pillow psdtags scipy setuptools-scm tifffile tqdm
 ```
 # GUI support
 ```bash
