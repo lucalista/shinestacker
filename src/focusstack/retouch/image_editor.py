@@ -277,7 +277,11 @@ class ImageEditor(QMainWindow):
                 self.current_stack = np.append(self.current_stack, [img], axis=0)
             except Exception as e:
                 traceback.print_tb(e.__traceback__)
-                QMessageBox.critical(self, "Error", str(e))
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Critical)
+                msg.setWindowTitle("Import error")
+                msg.setText(f"Error loading file.\n{str(e)}")
+                msg.exec()
                 self.statusBar().showMessage(f"Error loading: {path}")
                 break
         self.mark_as_modified()
