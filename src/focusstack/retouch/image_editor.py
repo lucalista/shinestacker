@@ -229,11 +229,9 @@ class ImageEditor(QMainWindow):
             self.import_frames_from_files(file_paths)
 
     def import_frames_from_files(self, file_paths):
-        print("file paths", file_paths)
         if file_paths is None or len(file_paths) == 0:
             return
         if self.current_stack is None and len(file_paths) > 0:
-            print("load first paths", file_paths)
             path = file_paths[0]
             img = cv2.cvtColor(read_img(path), cv2.COLOR_BGR2RGB)
             self.current_stack = np.array([img])
@@ -247,7 +245,6 @@ class ImageEditor(QMainWindow):
         else:
             next_paths = file_paths
         for path in next_paths:
-            print("next paths", next_paths)
             try:
                 label = path.split("/")[-1].split(".")[0]
                 img = cv2.cvtColor(read_img(path), cv2.COLOR_BGR2RGB)
