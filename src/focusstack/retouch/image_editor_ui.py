@@ -316,7 +316,7 @@ class ImageEditorUI(ImageEditor):
 
         help_menu = menubar.addMenu("&Help")
         help_menu.setObjectName("Help")
-        shortcuts_help_action = QAction("Shortcuts", self)
+        shortcuts_help_action = QAction("Shortcuts and mouse", self)
         shortcuts_help_action.triggered.connect(self.shortcuts_help)
         help_menu.addAction(shortcuts_help_action)
 
