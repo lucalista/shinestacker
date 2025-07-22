@@ -229,9 +229,11 @@ class ImageEditor(QMainWindow):
             self.import_frames_from_files(file_paths)
 
     def import_frames_from_files(self, file_paths):
+        print("file paths", file_paths)
         if file_paths is None or len(file_paths) == 0:
             return
         if self.current_stack is None and len(file_paths) > 0:
+            print("load first paths", file_paths)
             path = file_paths[0]
             img = cv2.cvtColor(read_img(path), cv2.COLOR_BGR2RGB)
             self.current_stack = np.array([img])
@@ -241,34 +243,37 @@ class ImageEditor(QMainWindow):
             if self.master_layer is None:
                 self.master_layer = img.copy()
             self.blank_layer = np.zeros(self.master_layer.shape[:2])
-        if len(file_paths) > 1:
-            for path in file_paths[1:]:
+            next_paths = file_paths[1:]
+        else:
+            next_paths = file_paths
+        for path in next_paths:
+            print("next paths", next_paths)
+            try:
+                label = path.split("/")[-1].split(".")[0]
+                img = cv2.cvtColor(read_img(path), cv2.COLOR_BGR2RGB)
                 try:
-                    label = path.split("/")[-1].split(".")[0]
-                    img = cv2.cvtColor(read_img(path), cv2.COLOR_BGR2RGB)
-                    try:
-                        validate_image(img, self.shape, self.dtype)
-                    except ShapeError as e:
-                        traceback.print_tb(e.__traceback__)
-                        QMessageBox.warning(self, "Import error", f"All flies must have the same shape. {str(e)}")
-                        return
-                    except BitDepthError:
-                        pass
-                    except Exception as e:
-                        traceback.print_tb(e.__traceback__)
-                        raise e
-                    label_x = label
-                    i = 0
-                    while label_x in self.current_labels:
-                        i += 1
-                        label_x = f"{label} ({i})"
-                    self.current_labels.append(label_x)
-                    self.current_stack = np.append(self.current_stack, [img], axis=0)
+                    validate_image(img, self.shape, self.dtype)
+                except ShapeError as e:
+                    traceback.print_tb(e.__traceback__)
+                    QMessageBox.warning(self, "Import error", f"All flies must have the same shape. {str(e)}")
+                    return
+                except BitDepthError:
+                    pass
                 except Exception as e:
                     traceback.print_tb(e.__traceback__)
-                    QMessageBox.critical(self, "Error", str(e))
-                    self.statusBar().showMessage(f"Error loading: {path}")
-                    break
+                    raise e
+                label_x = label
+                i = 0
+                while label_x in self.current_labels:
+                    i += 1
+                    label_x = f"{label} ({i})"
+                self.current_labels.append(label_x)
+                self.current_stack = np.append(self.current_stack, [img], axis=0)
+            except Exception as e:
+                traceback.print_tb(e.__traceback__)
+                QMessageBox.critical(self, "Error", str(e))
+                self.statusBar().showMessage(f"Error loading: {path}")
+                break
         self.mark_as_modified()
         self.change_layer(0)
         self.image_viewer.reset_zoom()
