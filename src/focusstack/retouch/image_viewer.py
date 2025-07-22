@@ -49,6 +49,7 @@ class ImageViewer(QGraphicsView):
         self.brush_cursor = None
         self.setMouseTracking(True)
         self.space_pressed = False
+        self.control_pressed = False
         self.setDragMode(QGraphicsView.NoDrag)
         self.scrolling = False
         self.dragging = False
@@ -98,6 +99,8 @@ class ImageViewer(QGraphicsView):
             self.temp_view_requested.emit(True)
             self.update_brush_cursor()
             return
+        if event.key() == Qt.Key_Control and not self.scrolling:
+            self.control_pressed = True
         super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event):
@@ -113,6 +116,8 @@ class ImageViewer(QGraphicsView):
         elif event.key() == Qt.Key_X:
             self.temp_view_requested.emit(False)
             return
+        if event.key() == Qt.Key_Control:
+            self.control_pressed = False
         super().keyReleaseEvent(event)
 
     def mousePressEvent(self, event):
@@ -192,20 +197,25 @@ class ImageViewer(QGraphicsView):
     def wheelEvent(self, event):
         if self.empty:
             return
-        zoom_in_factor = 1.10
-        zoom_out_factor = 1 / zoom_in_factor
-        current_scale = self.get_current_scale()
-        if event.angleDelta().y() > 0:  # Zoom in
-            new_scale = current_scale * zoom_in_factor
-            if new_scale <= self.max_scale:
-                self.scale(zoom_in_factor, zoom_in_factor)
-                self.zoom_factor = new_scale
-        else:  # Zoom out
-            new_scale = current_scale * zoom_out_factor
-            if new_scale >= self.min_scale:
-                self.scale(zoom_out_factor, zoom_out_factor)
-                self.zoom_factor = new_scale
-
+        if self.control_pressed:
+            if event.angleDelta().y() > 0:
+                self.image_editor.decrease_brush_size()
+            else:
+                self.image_editor.increase_brush_size()
+        else:
+            zoom_in_factor = 1.10
+            zoom_out_factor = 1 / zoom_in_factor
+            current_scale = self.get_current_scale()
+            if event.angleDelta().y() > 0:  # Zoom in
+                new_scale = current_scale * zoom_in_factor
+                if new_scale <= self.max_scale:
+                    self.scale(zoom_in_factor, zoom_in_factor)
+                    self.zoom_factor = new_scale
+            else:  # Zoom out
+                new_scale = current_scale * zoom_out_factor
+                if new_scale >= self.min_scale:
+                    self.scale(zoom_out_factor, zoom_out_factor)
+                    self.zoom_factor = new_scale
         self.update_brush_cursor()
 
     def setup_brush_cursor(self):

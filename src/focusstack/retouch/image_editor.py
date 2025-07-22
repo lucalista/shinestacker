@@ -84,6 +84,17 @@ class ImageEditor(QMainWindow):
             return
         super().keyPressEvent(event)
 
+    def keyReleaseEvent(self, event):
+        super().keyPressEvent(event)
+
+    def wheelEvent(self, event):
+        if self.shift_pressed:
+            if event.angleDelta().y() > 0:
+                self.increase_brush_size()
+            else:
+                self.decrease_brush_size()
+        super().wheelEvent(event)
+
     def process_pending_updates(self):
         if self.needs_update:
             self.display_master_layer()
