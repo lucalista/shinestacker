@@ -7,6 +7,7 @@ from .. config.config import config
 config.init(DISABLE_TQDM=True, DONT_USE_NATIVE_MENU=True)
 from .. core.core_utils import get_app_base_path
 from .. config.config import config
+from .. config.constants import constants
 from .. retouch.image_editor_ui import ImageEditorUI
 from .gui_utils import disable_macos_special_menu_items
 from .help_menu import add_help_action
@@ -22,8 +23,8 @@ class RetouchApp(ImageEditorUI):
         add_help_action(self)
 
     def create_menu(self):
-        app_menu = QMenu("FocusStack")
-        about_action = QAction("About FocusStack", self)
+        app_menu = QMenu(constants.APP_STRING)
+        about_action = QAction(f"About {constants.APP_STRING}", self)
         about_action.triggered.connect(show_about_dialog)
         app_menu.addAction(about_action)
         app_menu.addSeparator()
@@ -49,7 +50,7 @@ def main():
     parser = argparse.ArgumentParser(
         prog='focusstack-retouch',
         description='Final retouch focus stack image from individual frames.',
-        epilog='This app is part of the focusstack package.')
+        epilog=f'This app is part of the {constants.APP_STRING} package.')
     parser.add_argument('-f', '--filename', nargs='?', help='''
 import frames from files.
 Multiple files can be specified separated by ';'.

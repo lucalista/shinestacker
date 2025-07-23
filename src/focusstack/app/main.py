@@ -62,7 +62,7 @@ class MainApp(QMainWindow):
         self.retouch_window.setFocus()
 
     def create_menu(self):
-        app_menu = QMenu("FocusStack")
+        app_menu = QMenu(constants.APP_STRING)
         self.switch_to_project_action = QAction("Project", self)
         self.switch_to_project_action.setCheckable(True)
         self.switch_to_project_action.triggered.connect(self.switch_to_project)
@@ -72,7 +72,7 @@ class MainApp(QMainWindow):
         app_menu.addAction(self.switch_to_project_action)
         app_menu.addAction(self.switch_to_retouch_action)
         app_menu.addSeparator()
-        about_action = QAction("About FocusStack", self)
+        about_action = QAction(f"About {constants.APP_STRING}", self)
         about_action.triggered.connect(show_about_dialog)
         app_menu.addAction(about_action)
         app_menu.addSeparator()

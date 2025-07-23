@@ -64,7 +64,7 @@ def setup_logging(console_level=logging.INFO, file_level=logging.DEBUG, log_file
     if log_file is not None:
         if log_file == '':
             today = datetime.date.today().strftime("%Y-%m-%d")
-            log_file = f"logs/focusstack-{today}.log"
+            log_file = f"logs/{constants.APP_STRING.lower()}-{today}.log"
         if log_file[0] != '/':
             log_file = f'{get_app_base_path()}/{log_file}'
         Path(log_file).parent.mkdir(parents=True, exist_ok=True)

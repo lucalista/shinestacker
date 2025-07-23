@@ -4,6 +4,7 @@ import re
 
 class _Constants:
     APP_TITLE = "Focus Stack"
+    APP_STRING = "FocusStack"
     EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
     NUM_UINT8 = 256

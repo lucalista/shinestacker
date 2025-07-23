@@ -28,8 +28,8 @@ class ProjectApp(MainWindow):
         self.set_retouch_callback(self._retouch_callback)
 
     def create_menu(self):
-        app_menu = QMenu("FocusStack")
-        about_action = QAction("About FocusStack", self)
+        app_menu = QMenu(constants.APP_STRING)
+        about_action = QAction(f"About {constants.APP_STRING}", self)
         about_action.triggered.connect(show_about_dialog)
         app_menu.addAction(about_action)
         app_menu.addSeparator()
@@ -59,7 +59,7 @@ def main():
     parser = argparse.ArgumentParser(
         prog='focusstack-project',
         description='Manage and run focus stack jobs.',
-        epilog='This app is part of the focusstack package.')
+        epilog=f'This app is part of the {constants.APP_STRING} package.')
     parser.add_argument('-f', '--filename', nargs='?', help='''
 project filename.
 ''')

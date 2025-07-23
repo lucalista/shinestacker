@@ -8,6 +8,7 @@ from PIL.TiffImagePlugin import IFDRational
 from PIL.ExifTags import TAGS
 import logging
 import tifffile
+from .. config.constants import constants
 from .utils import write_img
 
 IMAGEWIDTH = 256
@@ -159,7 +160,7 @@ def write_image_with_exif_data(exif, image, out_filename, verbose=False):
         cv2.imwrite(out_filename, image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
         add_exif_data_to_jpg_file(exif, out_filename, out_filename, verbose)
     elif ext == 'tiff' or ext == 'tif':
-        metadata = {"description": "image generated with focusstack package"}
+        metadata = {"description": f"image generated with {constants.APP_STRING} package"}
         extra_tags, exif_tags = exif_extra_tags_for_tif(exif)
         tifffile.imwrite(out_filename, image, metadata=metadata, compression='adobe_deflate',
                          extratags=extra_tags, **exif_tags)
@@ -183,7 +184,7 @@ def save_exif_data(exif, in_filename, out_filename=None, verbose=False):
     if ext == 'jpeg' or ext == 'jpg':
         add_exif_data_to_jpg_file(exif, in_filename, out_filename, verbose)
     elif ext == 'tiff' or ext == 'tif':
-        metadata = {"description": "image generated with focusstack package"}
+        metadata = {"description": f"image generated with {constants.APP_STRING} package"}
         extra_tags, exif_tags = exif_extra_tags_for_tif(exif)
         tifffile.imwrite(out_filename, image_new, metadata=metadata, compression='adobe_deflate',
                          extratags=extra_tags, **exif_tags)
