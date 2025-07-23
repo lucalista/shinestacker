@@ -118,15 +118,15 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
         callbacks['message']()
 
     subsample = alignment_config['subsample']
-    if subsample:
+    if subsample > 1:
         if alignment_config['fast_subsampling']:
             img_0_sub, img_1_sub = img_0[::subsample, ::subsample], img_1[::subsample, ::subsample]
         else:
             img_0_sub = cv2.resize(img_0, (0, 0), fx=1 / subsample, fy=1 / subsample, interpolation=cv2.INTER_AREA)
-            img_1_sub = cv2.resize(img_0, (0, 0), fx=1 / subsample, fy=1 / subsample, interpolation=cv2.INTER_AREA)
-        kp_0, kp_1, good_matches = detect_and_compute(img_0_sub, img_1_sub, feature_config, matching_config)
+            img_1_sub = cv2.resize(img_1, (0, 0), fx=1 / subsample, fy=1 / subsample, interpolation=cv2.INTER_AREA)
     else:
         img_0_sub, img_1_sub = img_0, img_1
+    kp_0, kp_1, good_matches = detect_and_compute(img_0_sub, img_1_sub, feature_config, matching_config)
     n_good_matches = len(good_matches)
     if callbacks and 'matches_message' in callbacks.keys():
         callbacks['matches_message'](n_good_matches)
@@ -244,6 +244,8 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
             mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
             blurred_warp = cv2.GaussianBlur(img_warp, (21, 21), sigmaX=alignment_config['border_blur'])
             img_warp[mask == 0] = blurred_warp[mask == 0]
+
+            delta = img_warp - img_0
     return n_good_matches, img_warp
 
 
