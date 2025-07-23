@@ -134,6 +134,7 @@ expert options are visible by default.
     path = args['path']
     setup_logging(console_level=logging.DEBUG, file_level=logging.DEBUG, disable_console=True)
     app = Application(sys.argv)
+
     if config.DONT_USE_NATIVE_MENU:
         app.setAttribute(Qt.AA_DontUseNativeMenuBar)
     else:
@@ -149,7 +150,6 @@ expert options are visible by default.
     app.main_app = main_app
     main_app.show()
     main_app.activateWindow()
-
     if args['expert']:
         main_app.project_window.set_expert_options()
     if filename:

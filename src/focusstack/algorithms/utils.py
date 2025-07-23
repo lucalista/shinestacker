@@ -41,6 +41,7 @@ def img_bw_8bit(img):
     else:
         raise ValueError(f"Unsupported image format: {img.shape}")
 
+
 def img_bw(img):
     return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 

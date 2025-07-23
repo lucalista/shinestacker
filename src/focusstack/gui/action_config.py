@@ -729,13 +729,13 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
                                    options=self.METHOD_OPTIONS, values=constants.VALID_ALIGN_METHODS,
                                    default=constants.DEFAULT_ALIGN_METHOD)
             self.builder.add_field('rans_threshold', FIELD_FLOAT, 'RANSAC threshold (px)', required=False,
-                                   default=constants.DEFAULT_RANS_THRESHOLD, min=0, max=20, step=0.1)          
+                                   default=constants.DEFAULT_RANS_THRESHOLD, min=0, max=20, step=0.1)
             self.builder.add_field('refine_iters', FIELD_INT, 'Refinement iterations (Rigid)', required=False,
                                    default=constants.DEFAULT_REFINE_ITERS, min=0, max=1000)
             self.builder.add_field('max_iters', FIELD_INT, 'Max. iterations (Homography)', required=False,
                                    default=constants.DEFAULT_ALIGN_MAX_ITERS, min=0, max=5000)
             self.builder.add_field('subsample', FIELD_INT, 'Subsample factor', required=False,
-                                   default=constants.DEFAULT_ALIGN_SUBSAMPLE, min=0, max=256) 
+                                   default=constants.DEFAULT_ALIGN_SUBSAMPLE, min=0, max=256)
             self.builder.add_field('fast_subsampling', FIELD_BOOL, 'Fast subsampling', required=False,
                                    default=constants.DEFAULT_ALIGN_FAST_SUBSAMPLING)
             self.add_bold_label("Border:")
