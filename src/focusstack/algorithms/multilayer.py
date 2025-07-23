@@ -169,7 +169,8 @@ class MultiLayer(FrameMultiDirectory, JobBase):
         if len(files) == 0:
             self.print_message(color_str("no input in {} specified path{}:"
                                          " ".format(len(paths),
-                                                      's' if len(paths) > 1 else '') + ", ".join([f"'{p}'" for p in paths]), "red"), level=logging.WARNING)
+                                                    's' if len(paths) > 1 else '') + ", ".join([f"'{p}'" for p in paths]), "red"),
+                               level=logging.WARNING)
             return
         self.print_message(color_str("merging frames in " + self.folder_list_str(), "blue"))
         input_files = [f"{self.working_path}/{f}" for f in files]
