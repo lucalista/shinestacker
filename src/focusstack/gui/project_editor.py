@@ -8,7 +8,7 @@ from .colors import ColorPalette
 from .action_config import ActionConfig, ActionConfigDialog
 from .project_model import get_action_input_path, get_action_output_path
 
-INDENT_SPACE = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+INDENT_SPACE = "&nbsp;&nbsp;&nbsp;↪&nbsp;&nbsp;&nbsp;"
 CLONE_POSTFIX = " (clone)"
 
 
@@ -300,7 +300,7 @@ class ProjectEditor(QMainWindow):
         widget_list.addItem(item)
         html_text = f"✅ <span style='color:#{ColorPalette.DARK_BLUE.hex()};'>{text}</span>" \
                     if action.enabled() \
-                    else f"❌<span style='color:#{ColorPalette.DARK_RED.hex()};'>{text}</span>"
+                    else f"❌ <span style='color:#{ColorPalette.DARK_RED.hex()};'>{text}</span>"
         label = QLabel(html_text)
         widget_list.setItemWidget(item, label)
 
