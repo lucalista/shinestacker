@@ -205,7 +205,7 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
             mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
             blurred_warp = cv2.GaussianBlur(img_warp, (21, 21), sigmaX=alignment_config['border_blur'])
             img_warp[mask == 0] = blurred_warp[mask == 0]
-    return n_good_matches, img_warp
+    return n_good_matches, M, img_warp
 
 
 class AlignFrames(SubAction):
@@ -248,7 +248,7 @@ class AlignFrames(SubAction):
             plot_path = f"{self.process.working_path}/{self.process.plot_path}/{self.process.name}-matches-{idx_str}.pdf"
         else:
             plot_path = None
-        n_good_matches, img = align_images(
+        n_good_matches, M, img = align_images(
             img_1, img_0,
             feature_config=self.feature_config,
             matching_config=self.matching_config,

@@ -9,7 +9,7 @@ from focusstack.algorithms.align import align_images, AlignFrames, RAISE_ORB_ORB
 def test_align():
     try:
         img_1, img_2 = [read_img(f"../examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
-        n_good_matches, img_warp = align_images(img_1, img_2)
+        n_good_matches, M, img_warp = align_images(img_1, img_2)
         assert img_warp is not None
         assert n_good_matches > 100
     except Exception:
@@ -19,9 +19,9 @@ def test_align():
 def test_align_2():
     try:
         img_1, img_2 = [read_img(f"../examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
-        n_good_matches, img_warp = align_images(img_1, img_2,
-                                                feature_config={'detector': constants.DETECTOR_ORB,
-                                                                'descriptor': constants.DESCRIPTOR_SIFT})
+        n_good_matches, M, img_warp = align_images(img_1, img_2,
+                                                   feature_config={'detector': constants.DETECTOR_ORB,
+                                                                   'descriptor': constants.DESCRIPTOR_SIFT})
         assert img_warp is not None
         assert n_good_matches > 100
     except Exception:
@@ -31,10 +31,10 @@ def test_align_2():
 def test_align_3():
     try:
         img_1, img_2 = [read_img(f"../examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
-        n_good_matches, img_warp = align_images(img_1, img_2,
-                                                feature_config={'detector': constants.DETECTOR_ORB,
-                                                                'descriptor': constants.DESCRIPTOR_ORB},
-                                                matching_config={'match_method': constants.MATCHING_NORM_HAMMING})
+        n_good_matches, M, img_warp = align_images(img_1, img_2,
+                                                   feature_config={'detector': constants.DETECTOR_ORB,
+                                                                   'descriptor': constants.DESCRIPTOR_ORB},
+                                                   matching_config={'match_method': constants.MATCHING_NORM_HAMMING})
         assert img_warp is not None
         assert n_good_matches > 100
     except Exception:
@@ -44,10 +44,10 @@ def test_align_3():
 def test_align_4():
     try:
         img_1, img_2 = [read_img(f"../examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
-        n_good_matches, img_warp = align_images(img_1, img_2,
-                                                feature_config={'detector': constants.DETECTOR_ORB,
-                                                                'descriptor': constants.DESCRIPTOR_ORB},
-                                                matching_config={'match_method': constants.MATCHING_KNN})
+        n_good_matches, M, img_warp = align_images(img_1, img_2,
+                                                   feature_config={'detector': constants.DETECTOR_ORB,
+                                                                   'descriptor': constants.DESCRIPTOR_ORB},
+                                                   matching_config={'match_method': constants.MATCHING_KNN})
         assert img_warp is not None
         assert n_good_matches > 100
     except RuntimeError as e:
@@ -59,7 +59,7 @@ def test_align_4():
 def test_align_rescale():
     try:
         img_1, img_2 = [read_img(f"../examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
-        n_good_matches, img_warp = align_images(img_1, img_2, alignment_config={'subsample': 4})
+        n_good_matches, M, img_warp = align_images(img_1, img_2, alignment_config={'subsample': 4})
         assert img_warp is not None
         assert n_good_matches > 10
     except Exception:
@@ -69,7 +69,7 @@ def test_align_rescale():
 def test_align_ecc():
     try:
         img_1, img_2 = [read_img(f"../examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
-        n_good_matches, img_warp = align_images(img_1, img_2, alignment_config={'ecc_refinement': True})
+        n_good_matches, M, img_warp = align_images(img_1, img_2, alignment_config={'ecc_refinement': True})
         assert img_warp is not None
         assert n_good_matches > 10
     except Exception:
