@@ -2,10 +2,10 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel,
 from PySide6.QtGui import QShortcut, QKeySequence, QAction, QActionGroup
 from PySide6.QtCore import Qt, QSize, Signal
 from PySide6.QtGui import QGuiApplication
-from focusstack.config.gui_constants import gui_constants
-from focusstack.retouch.image_editor import ImageEditor
-from focusstack.retouch.image_viewer import ImageViewer
-from focusstack.retouch.shortcuts_help import ShortcutsHelp
+from .. config.gui_constants import gui_constants
+from .image_editor import ImageEditor
+from .image_viewer import ImageViewer
+from .shortcuts_help import ShortcutsHelp
 
 
 def brush_size_to_slider(size):

@@ -4,15 +4,15 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QL
                                QSplitter, QToolBar, QMenu, QComboBox, QStackedWidget)
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QGuiApplication, QAction, QIcon, QPixmap
-from focusstack.config.constants import constants
-from focusstack.core.core_utils import running_under_windows, running_under_macos, get_app_base_path
-from focusstack.gui.colors import ColorPalette
-from focusstack.gui.project_model import Project
-from focusstack.gui.actions_window import ActionsWindow
-from focusstack.gui.gui_logging import LogManager
-from focusstack.gui.gui_run import RunWindow, RunWorker
-from focusstack.gui.project_converter import ProjectConverter
-from focusstack.gui.project_model import get_action_working_path, get_action_input_path, get_action_output_path
+from .. config.constants import constants
+from .. core.core_utils import running_under_windows, running_under_macos, get_app_base_path
+from .colors import ColorPalette
+from .project_model import Project
+from .actions_window import ActionsWindow
+from .gui_logging import LogManager
+from .gui_run import RunWindow, RunWorker
+from .project_converter import ProjectConverter
+from .project_model import get_action_working_path, get_action_input_path, get_action_output_path
 
 
 class JobLogWorker(RunWorker):

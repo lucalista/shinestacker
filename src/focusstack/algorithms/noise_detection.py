@@ -4,15 +4,15 @@ import matplotlib.pyplot as plt
 import logging
 import os
 import errno
-from focusstack.config.config import config
-from focusstack.config.constants import constants
-from focusstack.core.colors import color_str
-from focusstack.core.exceptions import ImageLoadError
-from focusstack.core.framework import JobBase
-from focusstack.core.core_utils import make_tqdm_bar
-from focusstack.core.exceptions import RunStopException
-from focusstack.algorithms.stack_framework import FrameMultiDirectory, SubAction
-from focusstack.algorithms.utils import read_img, save_plot, get_img_metadata, validate_image
+from .. config.config import config
+from .. config.constants import constants
+from .. core.colors import color_str
+from .. core.exceptions import ImageLoadError
+from .. core.framework import JobBase
+from .. core.core_utils import make_tqdm_bar
+from .. core.exceptions import RunStopException
+from .stack_framework import FrameMultiDirectory, SubAction
+from .utils import read_img, save_plot, get_img_metadata, validate_image
 
 MAX_NOISY_PIXELS = 1000
 

@@ -3,15 +3,15 @@ import argparse
 from PySide6.QtWidgets import QApplication, QMenu
 from PySide6.QtGui import QIcon, QAction
 from PySide6.QtCore import Qt, QEvent
-from focusstack.config.config import config
+from .. config.config import config
 config.init(DISABLE_TQDM=True, DONT_USE_NATIVE_MENU=True)
-from focusstack.core.core_utils import get_app_base_path
-from focusstack.config.config import config
-from focusstack.app.gui_utils import disable_macos_special_menu_items
-from focusstack.app.help_menu import add_help_action
-from focusstack.app.about_dialog import show_about_dialog
-from focusstack.app.open_frames import open_frames
-from focusstack.retouch.image_editor_ui import ImageEditorUI
+from .. core.core_utils import get_app_base_path
+from .. config.config import config
+from .. retouch.image_editor_ui import ImageEditorUI
+from .gui_utils import disable_macos_special_menu_items
+from .help_menu import add_help_action
+from .about_dialog import show_about_dialog
+from .open_frames import open_frames
 
 
 class RetouchApp(ImageEditorUI):

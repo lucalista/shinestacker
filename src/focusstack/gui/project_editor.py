@@ -3,10 +3,10 @@ from dataclasses import dataclass
 from PySide6.QtWidgets import QMainWindow, QListWidget, QMessageBox, QDialog, QListWidgetItem, QLabel
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt
-from focusstack.config.constants import constants
-from focusstack.gui.colors import ColorPalette
-from focusstack.gui.action_config import ActionConfig, ActionConfigDialog
-from focusstack.gui.project_model import get_action_input_path, get_action_output_path
+from .. config.constants import constants
+from .colors import ColorPalette
+from .action_config import ActionConfig, ActionConfigDialog
+from .project_model import get_action_input_path, get_action_output_path
 
 INDENT_SPACE = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
 CLONE_POSTFIX = " (clone)"

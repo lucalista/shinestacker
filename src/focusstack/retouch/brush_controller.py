@@ -1,6 +1,6 @@
 import numpy as np
-from focusstack.config.constants import constants
-from focusstack.retouch.brush_preview import create_brush_mask
+from .. config.constants import constants
+from .brush_preview import create_brush_mask
 
 
 class BrushController:

@@ -1,4 +1,4 @@
-from focusstack.config.gui_constants import gui_constants
+from .. config.gui_constants import gui_constants
 
 
 class Brush:

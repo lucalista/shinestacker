@@ -1,10 +1,10 @@
 import time
 import logging
-from focusstack.core.colors import color_str
-from focusstack.config.config import config
-from focusstack.core.logging import setup_logging
-from focusstack.core.core_utils import make_tqdm_bar
-from focusstack.core.exceptions import RunStopException
+from .. config.config import config
+from .colors import color_str
+from .logging import setup_logging
+from .core_utils import make_tqdm_bar
+from .exceptions import RunStopException
 
 LINE_UP = "\r\033[A"
 trailing_spaces = " " * 30

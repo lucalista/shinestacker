@@ -1,7 +1,7 @@
 import os
 import sys
 import platform
-from focusstack.config.config import config
+from .. config.config import config
 
 if not config.DISABLE_TQDM:
     from tqdm import tqdm

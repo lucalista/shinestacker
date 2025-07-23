@@ -1,13 +1,13 @@
 import numpy as np
 import cv2
 import os
-from focusstack.core.colors import color_str
-from focusstack.config.constants import constants
-from focusstack.core.framework import JobBase
-from focusstack.core.exceptions import InvalidOptionError
-from focusstack.algorithms.utils import write_img
-from focusstack.algorithms.stack_framework import FrameDirectory, ActionList
-from focusstack.algorithms.exif import copy_exif_from_file_to_file
+from .. config.constants import constants
+from .. core.colors import color_str
+from .. core.framework import JobBase
+from .. core.exceptions import InvalidOptionError
+from .utils import write_img
+from .stack_framework import FrameDirectory, ActionList
+from .exif import copy_exif_from_file_to_file
 
 
 class FocusStackBase:

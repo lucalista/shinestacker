@@ -1,5 +1,5 @@
 # flake8: noqa F401
-from focusstack.config.constants import constants
+from .. config.constants import constants
 from .stack_framework import StackJob, CombinedActions
 from .align import AlignFrames
 from .balance import BalanceFrames

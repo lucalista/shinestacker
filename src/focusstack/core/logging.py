@@ -2,9 +2,9 @@ import logging
 import sys
 from pathlib import Path
 import datetime
-from focusstack.config.config import config
-from focusstack.config.constants import constants
-from focusstack.core.core_utils import get_app_base_path
+from .. config.config import config
+from .. config.constants import constants
+from .core_utils import get_app_base_path
 if not config.DISABLE_TQDM:
     from tqdm import tqdm
 

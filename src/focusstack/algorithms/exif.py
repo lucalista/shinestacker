@@ -8,7 +8,7 @@ from PIL.TiffImagePlugin import IFDRational
 from PIL.ExifTags import TAGS
 import logging
 import tifffile
-from focusstack.algorithms.utils import write_img
+from .utils import write_img
 
 IMAGEWIDTH = 256
 IMAGELENGTH = 257

@@ -3,8 +3,8 @@ import os
 import numpy as np
 import logging
 import matplotlib.pyplot as plt
-from focusstack.config.config import config
-from focusstack.core.exceptions import ShapeError, BitDepthError
+from .. config.config import config
+from .. core.exceptions import ShapeError, BitDepthError
 
 
 def read_img(file_path):

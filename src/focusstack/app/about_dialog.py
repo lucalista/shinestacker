@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QMessageBox
 from PySide6.QtCore import Qt
-from focusstack import __version__
+from .. import __version__
 
 
 def show_about_dialog():

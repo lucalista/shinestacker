@@ -2,11 +2,11 @@ import matplotlib.pyplot as plt
 import cv2
 import numpy as np
 import logging
-from focusstack.config.constants import constants
-from focusstack.core.exceptions import AlignmentError, InvalidOptionError
-from focusstack.algorithms.utils import img_8bit, img_bw_8bit, save_plot
-from focusstack.algorithms.utils import get_img_metadata, validate_image
-from focusstack.algorithms.stack_framework import SubAction
+from .. config.constants import constants
+from .. core.exceptions import AlignmentError, InvalidOptionError
+from .utils import img_8bit, img_bw_8bit, save_plot
+from .utils import get_img_metadata, validate_image
+from .stack_framework import SubAction
 
 _DEFAULT_FEATURE_CONFIG = {
     'detector': constants.DEFAULT_DETECTOR,

@@ -5,17 +5,17 @@ from PySide6.QtWidgets import (QMainWindow, QFileDialog, QMessageBox, QAbstractI
                                QVBoxLayout, QLabel, QDialog, QApplication)
 from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QRadialGradient, QGuiApplication, QCursor
 from PySide6.QtCore import Qt, QTimer, QEvent, QPoint
-from focusstack.config.constants import constants
-from focusstack.config.gui_constants import gui_constants
-from focusstack.core.exceptions import ShapeError, BitDepthError
-from focusstack.algorithms.exif import get_exif, write_image_with_exif_data
-from focusstack.algorithms.multilayer import write_multilayer_tiff_from_images
-from focusstack.algorithms.utils import read_img, validate_image, get_img_metadata
-from focusstack.retouch.brush import Brush
-from focusstack.retouch.brush_controller import BrushController
-from focusstack.retouch.undo_manager import UndoManager
-from focusstack.retouch.file_loader import FileLoader
-from focusstack.retouch.exif_data import ExifData
+from .. config.constants import constants
+from .. config.gui_constants import gui_constants
+from .. core.exceptions import ShapeError, BitDepthError
+from .. algorithms.exif import get_exif, write_image_with_exif_data
+from .. algorithms.multilayer import write_multilayer_tiff_from_images
+from .. algorithms.utils import read_img, validate_image, get_img_metadata
+from .brush import Brush
+from .brush_controller import BrushController
+from .undo_manager import UndoManager
+from .file_loader import FileLoader
+from .exif_data import ExifData
 
 
 def slider_to_brush_size(slider_val):

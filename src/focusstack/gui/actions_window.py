@@ -4,13 +4,13 @@ import json
 import jsonpickle
 import traceback
 from PySide6.QtWidgets import QMessageBox, QFileDialog, QDialog
-from focusstack.core.core_utils import get_app_base_path
-from focusstack.gui.project_model import Project
-from focusstack.config.constants import constants
-from focusstack.gui.project_model import ActionConfig
-from focusstack.gui.action_config import ActionConfigDialog
-from focusstack.gui.project_editor import ProjectEditor
-from focusstack.gui.new_project import NewProjectDialog
+from .. core.core_utils import get_app_base_path
+from .. config.constants import constants
+from .project_model import ActionConfig
+from .action_config import ActionConfigDialog
+from .project_editor import ProjectEditor
+from .new_project import NewProjectDialog
+from .project_model import Project
 
 
 class ActionsWindow(ProjectEditor):

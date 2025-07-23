@@ -4,12 +4,12 @@ from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, Q
 from PySide6.QtGui import QColor
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtCore import Signal, Slot
-from focusstack.config.constants import constants
-from focusstack.config.gui_constants import gui_constants
-from focusstack.gui.colors import RED_BUTTON_STYLE, BLUE_BUTTON_STYLE, BLUE_COMBO_STYLE
-from focusstack.gui.gui_logging import LogWorker, QTextEditLogger, LOG_FONTS_STR
-from focusstack.gui.gui_images import GuiPdfView, GuiImageView, GuiOpenApp
-from focusstack.gui.colors import ColorPalette
+from .. config.constants import constants
+from .. config.gui_constants import gui_constants
+from .colors import RED_BUTTON_STYLE, BLUE_BUTTON_STYLE, BLUE_COMBO_STYLE
+from .gui_logging import LogWorker, QTextEditLogger, LOG_FONTS_STR
+from .gui_images import GuiPdfView, GuiImageView, GuiOpenApp
+from .colors import ColorPalette
 
 
 class ColorButton(QPushButton):

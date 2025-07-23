@@ -4,8 +4,8 @@ import cv2
 import os
 from psdtags import PsdChannelId
 from PySide6.QtCore import QThread, Signal
-from focusstack.algorithms.utils import read_img
-from focusstack.algorithms.multilayer import read_multilayer_tiff
+from .. algorithms.utils import read_img
+from .. algorithms.multilayer import read_multilayer_tiff
 
 
 class FileLoader(QThread):

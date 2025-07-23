@@ -1,9 +1,9 @@
 import numpy as np
 import cv2
-from focusstack.core.colors import color_str
-from focusstack.config.constants import constants
-from focusstack.core.exceptions import RunStopException, ImageLoadError, InvalidOptionError
-from focusstack.algorithms.utils import read_img, get_img_metadata, validate_image
+from .. config.constants import constants
+from .. core.colors import color_str
+from .. core.exceptions import RunStopException, ImageLoadError, InvalidOptionError
+from .utils import read_img, get_img_metadata, validate_image
 
 
 class PyramidBase:

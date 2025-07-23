@@ -5,8 +5,8 @@ from PySide6.QtWidgets import (QWidget, QPushButton, QHBoxLayout, QFileDialog, Q
                                QMessageBox, QSizePolicy, QStackedWidget, QDialog, QFormLayout,
                                QLineEdit, QSpinBox, QDoubleSpinBox, QCheckBox, QTreeView, QAbstractItemView, QListView)
 from PySide6.QtCore import Qt
-from focusstack.config.constants import constants
-from focusstack.gui.project_model import ActionConfig
+from .. config.constants import constants
+from .project_model import ActionConfig
 
 FIELD_TEXT = 'text'
 FIELD_ABS_PATH = 'abs_path'

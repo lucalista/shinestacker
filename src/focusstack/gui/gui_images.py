@@ -6,8 +6,8 @@ from PySide6.QtPdf import QPdfDocument
 from PySide6.QtPdfWidgets import QPdfView
 from PySide6.QtCore import Qt, QMargins
 from PySide6.QtGui import QPixmap
-from focusstack.config.gui_constants import gui_constants
-from focusstack.core.core_utils import running_under_windows, running_under_macos
+from .. config.gui_constants import gui_constants
+from .. core.core_utils import running_under_windows, running_under_macos
 
 
 def open_file(file_path):

@@ -8,12 +8,12 @@ from psdtags import (PsdBlendMode, PsdChannel, PsdChannelId, PsdClippingType, Ps
                      PsdCompressionType, PsdEmpty, PsdFilterMask, PsdFormat, PsdKey, PsdLayer,
                      PsdLayerFlag, PsdLayerMask, PsdLayers, PsdRectangle, PsdString, PsdUserMask,
                      TiffImageSourceData, overlay)
-from focusstack.config.constants import constants
-from focusstack.config.config import config
-from focusstack.core.colors import color_str
-from focusstack.core.framework import JobBase
-from focusstack.algorithms.stack_framework import FrameMultiDirectory
-from focusstack.algorithms.exif import exif_extra_tags_for_tif, get_exif
+from .. config.constants import constants
+from .. config.config import config
+from .. core.colors import color_str
+from .. core.framework import JobBase
+from .stack_framework import FrameMultiDirectory
+from .exif import exif_extra_tags_for_tif, get_exif
 
 
 def read_multilayer_tiff(input_file):

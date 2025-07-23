@@ -3,10 +3,10 @@ import cv2
 import matplotlib.pyplot as plt
 from scipy.optimize import bisect
 from scipy.interpolate import interp1d
-from focusstack.config.constants import constants
-from focusstack.core.exceptions import InvalidOptionError
-from focusstack.algorithms.utils import read_img, save_plot
-from focusstack.algorithms.stack_framework import SubAction
+from .. config.constants import constants
+from .. core.exceptions import InvalidOptionError
+from .utils import read_img, save_plot
+from .stack_framework import SubAction
 
 
 class CorrectionMapBase:

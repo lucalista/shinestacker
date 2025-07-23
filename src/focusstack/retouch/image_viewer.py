@@ -2,8 +2,8 @@ import math
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
 from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QCursor, QShortcut, QKeySequence, QRadialGradient
 from PySide6.QtCore import Qt, QRectF, QTime, QPoint, Signal
-from focusstack.config.gui_constants import gui_constants
-from focusstack.retouch.brush_preview import BrushPreviewItem
+from .. config.gui_constants import gui_constants
+from .brush_preview import BrushPreviewItem
 
 
 def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None, outer_color=None, opacity=100):

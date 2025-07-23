@@ -1,11 +1,11 @@
 import logging
 import os
-from focusstack.core.colors import color_str
-from focusstack.config.constants import constants
-from focusstack.core.framework import Job, ActionList
-from focusstack.core.core_utils import check_path_exists
-from focusstack.core.exceptions import ShapeError, BitDepthError, RunStopException
-from focusstack.algorithms.utils import read_img, write_img
+from .. config.constants import constants
+from .. core.colors import color_str
+from .. core.framework import Job, ActionList
+from .. core.core_utils import check_path_exists
+from .. core.exceptions import ShapeError, BitDepthError, RunStopException
+from .utils import read_img, write_img
 
 
 class StackJob(Job):

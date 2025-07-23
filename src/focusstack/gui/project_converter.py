@@ -1,17 +1,17 @@
 import logging
 import traceback
-from focusstack.config.constants import constants
-from focusstack.core.exceptions import InvalidOptionError, RunStopException
-from focusstack.algorithms.stack_framework import StackJob, CombinedActions
-from focusstack.algorithms.noise_detection import NoiseDetection, MaskNoise
-from focusstack.algorithms.vignetting import Vignetting
-from focusstack.algorithms.align import AlignFrames
-from focusstack.algorithms.balance import BalanceFrames
-from focusstack.algorithms.stack import FocusStack, FocusStackBunch
-from focusstack.algorithms.pyramid import PyramidStack
-from focusstack.algorithms.depth_map import DepthMapStack
-from focusstack.algorithms.multilayer import MultiLayer
-from focusstack.gui.project_model import Project, ActionConfig
+from .. config.constants import constants
+from .. core.exceptions import InvalidOptionError, RunStopException
+from .. algorithms.stack_framework import StackJob, CombinedActions
+from .. algorithms.noise_detection import NoiseDetection, MaskNoise
+from .. algorithms.vignetting import Vignetting
+from .. algorithms.align import AlignFrames
+from .. algorithms.balance import BalanceFrames
+from .. algorithms.stack import FocusStack, FocusStackBunch
+from .. algorithms.pyramid import PyramidStack
+from .. algorithms.depth_map import DepthMapStack
+from .. algorithms.multilayer import MultiLayer
+from .project_model import Project, ActionConfig
 
 
 class ProjectConverter:

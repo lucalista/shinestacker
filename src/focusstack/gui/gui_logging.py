@@ -2,7 +2,7 @@ import logging
 from PySide6.QtWidgets import QWidget, QTextEdit, QMessageBox, QStatusBar
 from PySide6.QtGui import QTextCursor, QTextOption, QFont
 from PySide6.QtCore import QThread, QObject, Signal, Slot, Qt
-from focusstack.config.constants import constants
+from .. config.constants import constants
 
 LOG_FONTS = ['Monaco', 'Menlo', ' Lucida Console', 'Courier New', 'Courier', 'monospace']
 LOG_FONTS_STR = ", ".join(LOG_FONTS)

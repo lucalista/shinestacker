@@ -1,5 +1,5 @@
 from copy import deepcopy
-from focusstack.config.constants import constants
+from .. config.constants import constants
 
 
 class ActionConfig:

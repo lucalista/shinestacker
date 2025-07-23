@@ -3,10 +3,10 @@ import logging
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit, fsolve
-from focusstack.core.colors import color_str
-from focusstack.config.constants import constants
-from focusstack.algorithms.utils import img_8bit, save_plot
-from focusstack.algorithms.stack_framework import SubAction
+from .. core.colors import color_str
+from .. config.constants import constants
+from .utils import img_8bit, save_plot
+from .stack_framework import SubAction
 
 CLIP_EXP = 10
 
