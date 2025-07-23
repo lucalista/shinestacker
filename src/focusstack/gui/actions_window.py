@@ -17,6 +17,7 @@ class ActionsWindow(ProjectEditor):
     def __init__(self):
         super().__init__()
         self._current_file = None
+        self._current_file_wd = ''
         self._modified_project = False
         self.update_title()
 
@@ -125,6 +126,7 @@ class ActionsWindow(ProjectEditor):
             file_path, _ = QFileDialog.getOpenFileName(self, "Open Project", "", "Project Files (*.fsp);;All Files (*)")
         if file_path:
             try:
+                self._current_file_wd = '' if os.path.isabs(file_path) else os.getcwd()
                 file = open(file_path, 'r')
                 pp = file_path.split('/')
                 if len(pp) > 1:
@@ -181,6 +183,7 @@ class ActionsWindow(ProjectEditor):
         if file_path:
             if not file_path.endswith('.fsp'):
                 file_path += '.fsp'
+            self._current_file_wd = ''
             self.do_save(file_path)
             self._current_file = file_path
             self._modified_project = False
@@ -192,7 +195,8 @@ class ActionsWindow(ProjectEditor):
                 'project': self.project.to_dict(),
                 'version': 1
             })
-            f = open(file_path, 'w')
+            path = f"{self._current_file_wd}/{file_path}" if self._current_file_wd != '' else file_path
+            f = open(path, 'w')
             f.write(json_obj)
             self._modified_project = False
         except Exception as e:
