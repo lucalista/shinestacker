@@ -34,7 +34,7 @@ def test_align_3():
         n_good_matches, img_warp = align_images(img_1, img_2,
                                                 feature_config={'detector': constants.DETECTOR_ORB,
                                                                 'descriptor': constants.DESCRIPTOR_ORB},
-                                                matching_config={'method': constants.MATCHING_NORM_HAMMING})
+                                                matching_config={'match_method': constants.MATCHING_NORM_HAMMING})
         assert img_warp is not None
         assert n_good_matches > 100
     except Exception:
@@ -47,7 +47,7 @@ def test_align_4():
         n_good_matches, img_warp = align_images(img_1, img_2,
                                                 feature_config={'detector': constants.DETECTOR_ORB,
                                                                 'descriptor': constants.DESCRIPTOR_ORB},
-                                                matching_config={'method': constants.MATCHING_KNN})
+                                                matching_config={'match_method': constants.MATCHING_KNN})
         assert img_warp is not None
         assert n_good_matches > 100
     except RuntimeError as e:

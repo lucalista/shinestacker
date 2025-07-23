@@ -14,7 +14,7 @@ _DEFAULT_FEATURE_CONFIG = {
 }
 
 _DEFAULT_MATCHING_CONFIG = {
-    'method': constants.DEFAULT_MATCHING_METHOD,
+    'match_method': constants.DEFAULT_MATCHING_METHOD,
     'flann_idx_kdtree': constants.DEFAULT_FLANN_IDX_KDTREE,
     'flann_trees': constants.DEFAULT_FLANN_TREES,
     'flann_checks': constants.DEFAULT_FLANN_CHECKS,
@@ -23,6 +23,7 @@ _DEFAULT_MATCHING_CONFIG = {
 
 _DEFAULT_ALIGNMENT_CONFIG = {
     'transform': constants.DEFAULT_TRANSFORM,
+    'align_method': constants.DEFAULT_ALIGN_METHOD,
     'rans_threshold': constants.DEFAULT_RANS_THRESHOLD,
     'border_mode': constants.DEFAULT_BORDER_MODE,
     'border_value': constants.DEFAULT_BORDER_VALUE,
@@ -43,16 +44,19 @@ RAISE_ORB_ORB_HAMMING = "align: detector ORB and descriptor ORB require match me
 
 def get_good_matches(des_0, des_1, matching_config=None):
     matching_config = {**_DEFAULT_MATCHING_CONFIG, **(matching_config or {})}
-    matching_config_method = matching_config['method']
-    if matching_config_method == constants.MATCHING_KNN:
+    match_method = matching_config['match_method']
+    good_matches = []
+    if match_method == constants.MATCHING_KNN:
         flann = cv2.FlannBasedMatcher(
             dict(algorithm=matching_config['flann_idx_kdtree'], trees=matching_config['flann_trees']),
             dict(checks=matching_config['flann_checks']))
         matches = flann.knnMatch(des_0, des_1, k=2)
         good_matches = [m for m, n in matches if m.distance < matching_config['threshold'] * n.distance]
-    elif matching_config_method == constants.MATCHING_NORM_HAMMING:
+    elif match_method == constants.MATCHING_NORM_HAMMING:
         bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
         good_matches = sorted(bf.match(des_0, des_1), key=lambda x: x.distance)
+    else:
+        raise InvalidOptionError('match_method', match_method, f". Valid options are: {constants.MATCHING_KNN}, {constants.MATCHING_NORM_HAMMING}")
     return good_matches
 
 
@@ -76,7 +80,7 @@ def detect_and_compute(img_0, img_1, feature_config=None, matching_config=None):
     feature_config_detector = feature_config['detector']
     feature_config_descriptor = feature_config['descriptor']
     if feature_config_detector == constants.DETECTOR_ORB and \
-       feature_config_descriptor == constants.DESCRIPTOR_ORB and matching_config['method'] != constants.MATCHING_NORM_HAMMING:
+       feature_config_descriptor == constants.DESCRIPTOR_ORB and matching_config['match_method'] != constants.MATCHING_NORM_HAMMING:
         raise RuntimeError(RAISE_ORB_ORB_HAMMING)
     if feature_config_detector == feature_config_descriptor and \
        feature_config_detector in (constants.DETECTOR_SIFT, constants.DETECTOR_AKAZE):
@@ -89,12 +93,21 @@ def detect_and_compute(img_0, img_1, feature_config=None, matching_config=None):
 
 
 def find_transform(src_pts, dst_pts, transform=constants.DEFAULT_TRANSFORM,
+                   method=constants.DEFAULT_ALIGN_METHOD,
                    rans_threshold=constants.DEFAULT_RANS_THRESHOLD):
+    if method == 'RANSAC':
+        cv2_method = cv2.RANSAC
+    elif method == 'LMEDS':
+        cv2_method = cv2.LMEDS
+    else:
+        raise InvalidOptionError('align_method', method, f". Valid options are: {constants.ALIGN_RANSAC}, {constants.ALIGN_LMEDS}")
     if transform == constants.ALIGN_HOMOGRAPHY:
-        result = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, rans_threshold)
+        result = cv2.findHomography(src_pts, dst_pts, cv2_method, rans_threshold)
     elif transform == constants.ALIGN_RIGID:
-        result = cv2.estimateAffinePartial2D(src_pts, dst_pts, method=cv2.RANSAC,
-                                             ransacReprojThreshold=rans_threshold)
+        result = cv2.estimateAffinePartial2D(src_pts, dst_pts, method=cv2_method,
+                                             ransacReprojThreshold=rans_threshold,
+                                             confidence=0.999,
+                                             refineIters=100)
     else:
         raise InvalidOptionError("transform", transform)
     return result
@@ -133,8 +146,7 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
         transform = alignment_config['transform']
         src_pts = np.float32([kp_0[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
         dst_pts = np.float32([kp_1[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
-        M, msk = find_transform(src_pts, dst_pts, transform, alignment_config['rans_threshold'])
-
+        M, msk = find_transform(src_pts, dst_pts, transform, alignment_config['align_method'], alignment_config['rans_threshold'])
         if plot_path is not None:
             matches_mask = msk.ravel().tolist()
             img_match = cv2.cvtColor(cv2.drawMatches(img_8bit(img_0_sub), kp_0, img_8bit(img_1_sub),

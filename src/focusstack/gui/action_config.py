@@ -694,6 +694,7 @@ class VignettingConfigurator(NoNameActionConfigurator):
 class AlignFramesConfigurator(NoNameActionConfigurator):
     BORDER_MODE_OPTIONS = ['Constant', 'Replicate', 'Replicate and blur']
     TRANSFORM_OPTIONS = ['Rigid', 'Homography']
+    METHOD_OPTIONS = ['Random Sample Consensus (RANSAC)', 'Least Median (LMEDS)']
     MATCHING_METHOD_OPTIONS = ['K-nearest neighbors', 'Hamming distance']
 
     def __init__(self, expert=False):
@@ -708,7 +709,7 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
             self.builder.add_field('descriptor', FIELD_COMBO, 'Descriptor', required=False,
                                    options=['SIFT', 'ORB', 'AKAZE'], default=constants.DEFAULT_DESCRIPTOR)
             self.add_bold_label("Feature matching:")
-            self.builder.add_field('method', FIELD_COMBO, 'Method', required=False,
+            self.builder.add_field('match_method', FIELD_COMBO, 'Match method', required=False,
                                    options=self.MATCHING_METHOD_OPTIONS, values=constants.VALID_MATCHING_METHODS,
                                    default=constants.DEFAULT_MATCHING_METHOD)
             self.builder.add_field('flann_idx_kdtree', FIELD_INT, 'Flann idx kdtree', required=False,
@@ -724,6 +725,9 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
             self.builder.add_field('transform', FIELD_COMBO, 'Transform', required=False,
                                    options=self.TRANSFORM_OPTIONS, values=constants.VALID_TRANSFORMS,
                                    default=constants.DEFAULT_TRANSFORM)
+            self.builder.add_field('align_method', FIELD_COMBO, 'Align method', required=False,
+                                   options=self.METHOD_OPTIONS, values=constants.VALID_ALIGN_METHODS,
+                                   default=constants.DEFAULT_ALIGN_METHOD)
             self.builder.add_field('rans_threshold', FIELD_FLOAT, 'Homography RANS threshold', required=False,
                                    default=constants.DEFAULT_RANS_THRESHOLD, min=0, max=20, step=0.1)
             self.builder.add_field('subsample', FIELD_INT, 'Subsample factor', required=False,

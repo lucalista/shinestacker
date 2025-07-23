@@ -24,14 +24,14 @@ Arguments for the constructor ```AlignFrames``` of are:
 ```matching_config``` (optional, default; ```None```): a dictionary specifying the following parameters, with the corresponding default values:
 ```python
 {
-    'method': MATCHING_KNN,
+    'match_method': MATCHING_KNN,
     'flann_idx_kdtree': 2,
     'flann_trees': 5,
     'flann_checks': 50,
     'threshold': 0.75
 }
 ```
-* ```method``` (optional): the method used to find matches. See [Feature Matching](https://docs.opencv.org/4.x/dc/dc3/tutorial_py_matcher.html) for more details. Possible values are:
+* ```match_method``` (optional): the method used to find matches. See [Feature Matching](https://docs.opencv.org/4.x/dc/dc3/tutorial_py_matcher.html) for more details. Possible values are:
   * ```MATCHING_KNN``` (default): [Feature Matching with FLANN](https://docs.opencv.org/3.4/d5/d6f/tutorial_feature_flann_matcher.html)
   * ```MATCHING_NORM_HAMMING```: [Use Hamming distance](https://docs.opencv.org/4.x/d2/de8/group__core__array.html#ggad12cefbcb5291cf958a85b4b67b6149fa4b063afd04aebb8dd07085a1207da727)
 * ```flann_idx_kdtree``` (optional, default: 2): parameter used by the FLANN matching algorithm.
@@ -43,6 +43,7 @@ Arguments for the constructor ```AlignFrames``` of are:
 ```python
 {
     'transform': ALIGN_RIGID,
+    'align_methid': RANSAC,
     'rans_threshold': 5.0,
     'border_mode': BORDER_REPLICATE_BLUR,
     'border_value': (0, 0, 0, 0),
@@ -52,11 +53,12 @@ Arguments for the constructor ```AlignFrames``` of are:
 * ```transform``` (optional): the transformation applied to register images. Possible values are:
   * ```ALIGN_RIGID``` (default): allow scale, tanslation and rotation correction. This should be used for image acquired with tripode or microscope.
   * ```ALIGN_HOMOGRAPHY```: allow full perspective correction. This should be used for images taken with hand camera.
+* ```align_method``` (optional): the method used to find matches. Valid options are:
+  * ```RANSAC``` (*Random Sample Consensus*)
+  * ```LMEDS``` (*Least Medians of Squares*)
 * ```rans_threshold``` (optional, default: 5.0): parameter used if ```ALIGN_HOMOGRAPHY``` is choosen as tansformation, see [Feature Matching + Homography to find Objects](https://docs.opencv.org/3.4/d1/de0/tutorial_py_feature_homography.html) for more details.
 * ```subsample``` (optional, default: 4): subsample image for faster alignment. Faster, but alignment could be less accurate.
 * ```fast_subsampling``` (optiona, default: ```False```): perform fast image subsampling without interpolation. Used if ```subsample``` is set to ```True```.
-* ```ecc_refinement```: (optional, default: ```False```): refine alignment with [ECC transform](https://amroamroamro.github.io/mexopencv/matlab/cv.findTransformECC.html).
-* ```ecc_gauss_filt_size```: (optiona, default: 5): size of gaussial filter for ECC transform. Used if ```ecc_refinement``` is set to ```True```.
 * ```border_mode``` (optional, default: ```BORDER_REPLICATE_BLUR```): border mode. See [Adding borders to your images](https://docs.opencv.org/3.4/dc/da3/tutorial_copyMakeBorder.html) for more details.  Possible values are:
   * ```BORDER_CONSTANT```: pad the image with a constant value. The border value is specified with the parameter ```border_value```.
   * ```BORDER_REPLICATE```: the rows and columns at the very edge of the original are replicated to the extra border.
