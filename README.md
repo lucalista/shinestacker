@@ -9,7 +9,7 @@
 
 # Credits:
 
-The main pyramid stack algorithm was inspired by the [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar. The latest implementation was rewritten from hte original code that was used under permission of the author for initial versions of this package.
+The main pyramid stack algorithm was inspired by the [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar. The latest implementation was rewritten from the original code that was used under permission of the author for initial versions of this package.
 
 # Resources
 
