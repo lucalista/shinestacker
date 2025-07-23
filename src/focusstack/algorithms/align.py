@@ -148,6 +148,7 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
     if callbacks and 'matches_message' in callbacks.keys():
         callbacks['matches_message'](n_good_matches)
     img_warp = None
+    M = None
     if n_good_matches >= min_matches:
         transform = alignment_config['transform']
         src_pts = np.float32([kp_0[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
