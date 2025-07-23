@@ -730,10 +730,6 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
                                    default=constants.DEFAULT_ALIGN_SUBSAMPLE, min=0, max=256)
             self.builder.add_field('fast_subsampling', FIELD_BOOL, 'Fast subsampling', required=False,
                                    default=constants.DEFAULT_ALIGN_FAST_SUBSAMPLING)
-            self.builder.add_field('ecc_refinement', FIELD_BOOL, 'ECC refinement', required=False,
-                                   default=constants.DEFAULT_ECC_REFINEMENT)
-            self.builder.add_field('ecc_gauss_filt_size', FIELD_INT, 'ECC gaussian filter size (px)', required=False,
-                                   default=constants.DEFAULT_ECC_GAUSS_FILT_SIZE, min=1, max=32)
             self.add_bold_label("Border:")
             self.builder.add_field('border_mode', FIELD_COMBO, 'Border mode', required=False,
                                    options=self.BORDER_MODE_OPTIONS, values=constants.VALID_BORDER_MODES,

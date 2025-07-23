@@ -28,11 +28,9 @@ _DEFAULT_ALIGNMENT_CONFIG = {
     'border_value': constants.DEFAULT_BORDER_VALUE,
     'border_blur': constants.DEFAULT_BORDER_BLUR,
     'subsample': constants.DEFAULT_ALIGN_SUBSAMPLE,
-    'fast_subsampling': constants.DEFAULT_ALIGN_FAST_SUBSAMPLING,
-    'ecc_refinement': constants.DEFAULT_ECC_REFINEMENT,
-    'ecc_gauss_filt_size': constants.DEFAULT_ECC_GAUSS_FILT_SIZE,
-    'ecc_criteria': (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_MAX_ITER, 100, 1e-7),
+    'fast_subsampling': constants.DEFAULT_ALIGN_FAST_SUBSAMPLING
 }
+
 
 _cv2_border_mode_map = {
     constants.BORDER_CONSTANT: cv2.BORDER_CONSTANT,
@@ -93,13 +91,13 @@ def detect_and_compute(img_0, img_1, feature_config=None, matching_config=None):
 def find_transform(src_pts, dst_pts, transform=constants.DEFAULT_TRANSFORM,
                    rans_threshold=constants.DEFAULT_RANS_THRESHOLD):
     if transform == constants.ALIGN_HOMOGRAPHY:
-        transf = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, rans_threshold)
+        result = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, rans_threshold)
     elif transform == constants.ALIGN_RIGID:
-        transf = cv2.estimateAffinePartial2D(src_pts, dst_pts, method=cv2.RANSAC,
+        result = cv2.estimateAffinePartial2D(src_pts, dst_pts, method=cv2.RANSAC,
                                              ransacReprojThreshold=rans_threshold)
     else:
         raise InvalidOptionError("transform", transform)
-    return transf
+    return result
 
 
 def align_images(img_1, img_0, feature_config=None, matching_config=None, alignment_config=None,
@@ -136,6 +134,7 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
         src_pts = np.float32([kp_0[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
         dst_pts = np.float32([kp_1[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
         M, msk = find_transform(src_pts, dst_pts, transform, alignment_config['rans_threshold'])
+
         if plot_path is not None:
             matches_mask = msk.ravel().tolist()
             img_match = cv2.cvtColor(cv2.drawMatches(img_8bit(img_0_sub), kp_0, img_8bit(img_1_sub),
@@ -147,7 +146,6 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
             plt.savefig(plot_path)
             if callbacks and 'save_plot' in callbacks.keys():
                 callbacks['save_plot'](plot_path)
-
         h, w = img_0.shape[:2]
         h_sub, w_sub = img_0_sub.shape[:2]
         if subsample > 1:
@@ -158,71 +156,14 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
                 scale_down = cv2.getPerspectiveTransform(high_size, low_size)
                 M = scale_up @ M @ scale_down
             elif transform == constants.ALIGN_RIGID:
-                M_rigid_3x3 = np.vstack([M, [0.0, 0.0, 1.0]])
-                scale_up = np.array([
-                    [1.0 / subsample, 0.0, 0.0],
-                    [0.0, 1.0 / subsample, 0.0],
-                    [0.0, 0.0, 1.0]
-                ])
-                scale_down = np.array([
-                    [float(subsample), 0.0, 0.0],
-                    [0.0, float(subsample), 0.0],
-                    [0.0, 0.0, 1.0]
-                ])
-                M = (scale_up @ M_rigid_3x3 @ scale_down)[:2, :]
+                rotation = M[:2, :2]
+                translation = M[:, 2]
+                translation_fullres = translation * subsample
+                M = np.empty((2, 3), dtype=np.float32)
+                M[:2, :2] = rotation
+                M[:, 2] = translation_fullres
             else:
                 raise InvalidOptionError("transform", transform)
-
-        if alignment_config['ecc_refinement']:
-            if callbacks and 'ecc_message' in callbacks.keys():
-                callbacks['ecc_message']()
-            img0_gray = img_bw_8bit(img_0)
-            img1_gray = img_bw_8bit(img_1)
-            try:
-                if transform == constants.ALIGN_HOMOGRAPHY:
-                    M_init = M.astype(np.float32)
-                    cc, M_refined = cv2.findTransformECC(
-                        templateImage=img1_gray,
-                        inputImage=img0_gray,
-                        warpMatrix=M_init,
-                        motionType=cv2.MOTION_HOMOGRAPHY,
-                        criteria=alignment_config['ecc_criteria'],
-                        inputMask=None,
-                        gaussFiltSize=alignment_config['ecc_gauss_filt_size']
-                    )
-                    M = M_refined
-                elif transform == constants.ALIGN_RIGID:
-                    M_init = np.eye(2, 3, dtype=np.float32)
-                    a, b, tx = M[0]
-                    c, d, ty = M[1]
-                    # scale = np.sqrt(a * a + b * b)
-                    angle = np.arctan2(b, a) * 180 / np.pi
-                    M_init[0, 0] = np.cos(np.radians(angle))
-                    M_init[0, 1] = -np.sin(np.radians(angle))
-                    M_init[1, 0] = np.sin(np.radians(angle))
-                    M_init[1, 1] = np.cos(np.radians(angle))
-                    M_init[0, 2] = tx
-                    M_init[1, 2] = ty
-                    cc, M_refined = cv2.findTransformECC(
-                        templateImage=img1_gray,
-                        inputImage=img0_gray,
-                        warpMatrix=M_init,
-                        motionType=cv2.MOTION_EUCLIDEAN,
-                        criteria=alignment_config['ecc_criteria'],
-                        inputMask=None,
-                        gaussFiltSize=alignment_config['ecc_gauss_filt_size']
-                    )
-                    cos_theta = M_refined[0, 0]
-                    sin_theta = M_refined[1, 0]
-                    tx = M_refined[0, 2]
-                    ty = M_refined[1, 2]
-                    M = np.array([
-                        [cos_theta, -sin_theta, tx],
-                        [sin_theta, cos_theta, ty]
-                    ], dtype=np.float32)
-            except cv2.error:
-                raise RuntimeError("ECC refinement failed.")
-
         if callbacks and 'align_message' in callbacks.keys():
             callbacks['align_message']()
         img_mask = np.ones_like(img_0, dtype=np.uint8)
@@ -244,8 +185,6 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
             mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
             blurred_warp = cv2.GaussianBlur(img_warp, (21, 21), sigmaX=alignment_config['border_blur'])
             img_warp[mask == 0] = blurred_warp[mask == 0]
-
-            delta = img_warp - img_0
     return n_good_matches, img_warp
 
 
