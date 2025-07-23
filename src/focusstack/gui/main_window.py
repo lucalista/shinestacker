@@ -510,9 +510,11 @@ class MainWindow(ActionsWindow, LogManager):
     def do_handle_end_message(self, status, id_str, message):
         self.run_job_action.setEnabled(True)
         self.run_all_jobs_action.setEnabled(True)
-        self.get_tab_at_position(id_str).close_button.setEnabled(True)
-        self.get_tab_at_position(id_str).stop_button.setEnabled(False)
-        self.get_tab_at_position(id_str).retouch_widget.setEnabled(True)
+        tab = self.get_tab_at_position(id_str)
+        tab.close_button.setEnabled(True)
+        tab.stop_button.setEnabled(False)
+        if hasattr(tab, 'retouch_widget') and tab.retouch_widget is not None:
+            tab.retouch_widget.setEnabled(True)
 
     def create_new_window(self, title, labels, retouch_paths):
         new_window = RunWindow(labels,
