@@ -33,8 +33,13 @@ def img_8bit(img):
 
 
 def img_bw_8bit(img):
-    return cv2.cvtColor(img_8bit(img), cv2.COLOR_BGR2GRAY)
-
+    img = img_8bit(img)
+    if len(img.shape) == 3:
+        return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    elif len(img.shape) == 2:
+        return img
+    else:
+        raise ValueError(f"Unsupported image format: {img.shape}")
 
 def img_bw(img):
     return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
