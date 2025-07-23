@@ -1,5 +1,5 @@
-from termcolor import colored
 import time
+from focusstack.core.colors import color_str
 from focusstack.core.framework import Job, JobBase, ActionList
 
 
@@ -8,7 +8,7 @@ class Action1(JobBase):
         JobBase.__init__(self, "action 1")
 
     def run(self):
-        self.print_message(colored("run 1", "blue", attrs=["bold"]))
+        self.print_message(color_str("run 1", "blue", "bold"))
         time.sleep(0.5)
 
 
@@ -17,7 +17,7 @@ class Action2(JobBase):
         JobBase.__init__(self, "action 2")
 
     def run(self):
-        self.print_message(colored("run 2", "blue", attrs=["bold"]))
+        self.print_message(color_str("run 2", "blue", "bold"))
         time.sleep(0.7)
 
 
@@ -30,7 +30,7 @@ class MyActionList(ActionList):
         self.set_counts(10)
 
     def run_step(self):
-        self.print_message_r(colored("action: {}".format(self.count), "blue"))
+        self.print_message_r(color_str("action: {}".format(self.count), "blue"))
         time.sleep(0.1)
 
 
