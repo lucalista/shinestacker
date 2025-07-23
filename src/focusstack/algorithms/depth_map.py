@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 from focusstack.config.constants import constants
-from focusstack.core.core_utils import colored_msg
+from focusstack.core.colors import color_str
 from focusstack.core.exceptions import ImageLoadError, InvalidOptionError, RunStopException
 from focusstack.algorithms.utils import read_img, get_img_metadata, validate_image, img_bw
 
@@ -32,7 +32,7 @@ class DepthMapStack:
         return 2
 
     def print_message(self, msg):
-        self.process.sub_message_r(colored_msg(msg, "light_blue"))
+        self.process.sub_message_r(color_str(msg, "light_blue"))
 
     def get_sobel_map(self, gray_images):
         energies = np.zeros(gray_images.shape, dtype=self.float_type)

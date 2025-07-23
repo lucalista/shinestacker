@@ -1,6 +1,6 @@
 import time
 import logging
-from focusstack.core.core_utils import colored_msg
+from focusstack.core.colors import color_str
 from focusstack.config.config import config
 from focusstack.core.logging import setup_logging
 from focusstack.core.core_utils import make_tqdm_bar
@@ -82,18 +82,18 @@ class JobBase:
     def run(self):
         self.__t0 = time.time()
         if not self.enabled:
-            self.get_logger().warning(colored_msg(self.name + ": entire job disabled", 'red'))
+            self.get_logger().warning(color_str(self.name + ": entire job disabled", 'red'))
         self.callback('before_action', self.id, self.name)
         self.run_core()
         self.callback('after_action', self.id, self.name)
         self.get_logger().info(
-            colored_msg(self.name + ": ",
-                        "green", attrs=["bold"]) + colored_msg("elapsed "
-                                                               "time: {}".format(elapsed_time_str(self.__t0)),
-                                                               "green") + trailing_spaces)
+            color_str(self.name + ": ",
+                      "green", "bold") + color_str("elapsed "
+                                                   "time: {}".format(elapsed_time_str(self.__t0)),
+                                                   "green") + trailing_spaces)
         self.get_logger().info(
-            colored_msg(self.name + ": ",
-                        "green", attrs=["bold"]) + colored_msg("completed", "green") + trailing_spaces)
+            color_str(self.name + ": ",
+                      "green", "bold") + color_str("completed", "green") + trailing_spaces)
 
     def get_logger(self, tqdm=False):
         if config.DISABLE_TQDM:
@@ -112,11 +112,11 @@ class JobBase:
     def print_message(self, msg='', level=logging.INFO, end=None, begin='', tqdm=False):
         if config.DISABLE_TQDM:
             tqdm = False
-        self.base_message = colored_msg(self.name, "blue", attrs=["bold"])
+        self.base_message = color_str(self.name, "blue", "bold")
         if msg != '':
             self.base_message += (': ' + msg)
         self.set_terminator(tqdm, end)
-        self.get_logger(tqdm).log(level, begin + colored_msg(self.base_message, 'blue', attrs=['bold']) + trailing_spaces)
+        self.get_logger(tqdm).log(level, begin + color_str(self.base_message, 'blue', 'bold') + trailing_spaces)
         self.set_terminator(tqdm)
 
     def sub_message(self, msg, level=logging.INFO, end=None, begin='', tqdm=False):
@@ -166,7 +166,7 @@ class Job(JobBase):
                 if not self.enabled:
                     z.append("job")
                 msg = " and ".join(z)
-                self.get_logger().warning(colored_msg(a.name + f": {msg} disabled", 'red'))
+                self.get_logger().warning(color_str(a.name + f": {msg} disabled", 'red'))
             else:
                 if self.callback('check_running', self.id, self.name) is False:
                     raise RunStopException(self.name)

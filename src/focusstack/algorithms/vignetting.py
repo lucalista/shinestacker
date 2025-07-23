@@ -3,7 +3,7 @@ import logging
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit, fsolve
-from focusstack.core.core_utils import colored_msg
+from focusstack.core.colors import color_str
 from focusstack.config.constants import constants
 from focusstack.algorithms.utils import img_8bit, save_plot
 from focusstack.algorithms.stack_framework import SubAction
@@ -50,7 +50,7 @@ class Vignetting(SubAction):
             res = curve_fit(Vignetting.sigmoid, r_valid, i_valid,
                             p0=[np.max(i_valid), 0.01, np.median(r_valid)])[0]
         except Exception:
-            self.process.sub_message(colored_msg(": could not find vignetting model", "red"), level=logging.WARNING)
+            self.process.sub_message(color_str(": could not find vignetting model", "red"), level=logging.WARNING)
             res = None
         return res
 
@@ -69,7 +69,7 @@ class Vignetting(SubAction):
         return np.clip(image / vignette, 0, 255 if image.dtype == np.uint8 else 65535).astype(image.dtype)
 
     def run_frame(self, idx, ref_idx, img_0):
-        self.process.sub_message_r(colored_msg(": compute vignetting"))
+        self.process.sub_message_r(color_str(": compute vignetting", "light_blue"))
         img = cv2.cvtColor(img_8bit(img_0), cv2.COLOR_BGR2GRAY)
         radii, intensities = self.radial_mean_intensity(img)
         pars = self.fit_sigmoid(radii, intensities)
@@ -96,7 +96,7 @@ class Vignetting(SubAction):
         for i, p in enumerate(self.percentiles):
             self.corrections[i][idx] = fsolve(lambda x: Vignetting.sigmoid(x, *pars) / self.v0 - p, r0_fit)[0]
         if self.apply_correction:
-            self.process.sub_message_r(colored_msg(": correct vignetting"))
+            self.process.sub_message_r(color_str(": correct vignetting", "light_blue"))
             return self.correct_vignetting(img_0, pars)
         else:
             return img_0

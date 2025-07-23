@@ -18,22 +18,22 @@ COLORS = {
 }
 
 BG_COLORS = {
-    "black": 40,
-    "red": 41,
-    "green": 42,
-    "yellow": 43,
-    "blue": 44,
-    "magenta": 45,
-    "cyan": 46,
-    "light_grey": 47,
-    "dark_grey": 100,
-    "light_red": 101,
-    "light_green": 102,
-    "light_yellow": 103,
-    "light_blue": 104,
-    "light_magenta": 105,
-    "light_cyan": 106,
-    "white": 107,
+    "bg_black": 40,
+    "bg_red": 41,
+    "bg_green": 42,
+    "bg_yellow": 43,
+    "bg_blue": 44,
+    "bg_magenta": 45,
+    "bg_cyan": 46,
+    "bg_light_grey": 47,
+    "bg_dark_grey": 100,
+    "bg_light_red": 101,
+    "bg_light_green": 102,
+    "bg_light_yellow": 103,
+    "bg_light_blue": 104,
+    "bg_light_magenta": 105,
+    "bg_light_cyan": 106,
+    "bg_white": 107,
 }
 
 EFFECTS = {
@@ -46,13 +46,15 @@ EFFECTS = {
 }
 
 
-def color_str(text, color=None, background=None, attrs=None):
+def color_str(text, *args):
     text_colored = text
-    if color is not None:
-        text_colored = f"\033[{COLORS[color]}m{text_colored}"
-    if background is not None:
-        text_colored = f"\033[{BG_COLORS[background]}m{text_colored}"
-    if attrs is not None:
-        for attr in attrs:
-            text_colored = f"\033[{EFFECTS[attr]}m{text_colored}"
+    for arg in args:
+        if arg in COLORS.keys():
+            text_colored = f"\033[{COLORS[arg]}m{text_colored}"
+        elif arg in BG_COLORS.keys():
+            text_colored = f"\033[{BG_COLORS[arg]}m{text_colored}"
+        elif arg in EFFECTS.keys():
+            text_colored = f"\033[{EFFECTS[arg]}m{text_colored}"
+        else:
+            raise ValueError(f"Color or effect not supported: {arg}")
     return text_colored + "\033[0m"

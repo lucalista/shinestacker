@@ -1,6 +1,6 @@
 import logging
 import os
-from focusstack.core.core_utils import colored_msg
+from focusstack.core.colors import color_str
 from focusstack.config.constants import constants
 from focusstack.core.framework import Job, ActionList
 from focusstack.core.core_utils import check_path_exists
@@ -37,8 +37,8 @@ class FramePaths:
     def set_filelist(self):
         self.filenames = self.folder_filelist(self.input_full_path)
         file_list = self.input_full_path.replace(self.working_path, '').lstrip('/')
-        self.print_message(colored_msg(": {} files ".format(len(self.filenames)) + "in folder: " + file_list, 'blue'))
-        self.print_message(colored_msg("focus stacking", 'blue'))
+        self.print_message(color_str(": {} files ".format(len(self.filenames)) + "in folder: " + file_list, 'blue'))
+        self.print_message(color_str("focus stacking", 'blue'))
 
     def init(self, job):
         if self.working_path == '':
@@ -58,7 +58,7 @@ class FramePaths:
                         if os.path.isfile(file_path):
                             os.remove(file_path)
                 else:
-                    self.print_message(colored_msg(f": output directory {self.output_path} not empty, files may be overwritten or merged with existing ones.", 'yellow'), level=logging.WARNING) # noqa
+                    self.print_message(color_str(f": output directory {self.output_path} not empty, files may be overwritten or merged with existing ones.", 'yellow'), level=logging.WARNING) # noqa
         if self.plot_path == '':
             self.plot_path = self.working_path + ('' if self.working_path[-1] == '/' else '/') + self.plot_path
             if not os.path.exists(self.plot_path):
@@ -131,7 +131,7 @@ class FrameMultiDirectory:
                     filelist = filelist[0::self.resample]
                 files += filelist
             if len(files) == 0:
-                self.print_message(colored_msg(f"input folder {p} does not contain any image", "red"), level=logging.WARNING)
+                self.print_message(color_str(f"input folder {p} does not contain any image", "red"), level=logging.WARNING)
         return files
 
     def init(self, job):
@@ -173,8 +173,8 @@ class FramesRefActions(FrameDirectory, ActionList):
             self.__idx_step = +1
         ll = len(self.filenames)
         self.print_message_r(
-            colored_msg("step {}/{}: process file: {}, reference: {}".format(self.count, ll, self.filenames[self.__idx],
-                                                                             self.filenames[self.__ref_idx]), "blue"))
+            color_str("step {}/{}: process file: {}, reference: {}".format(self.count, ll, self.filenames[self.__idx],
+                                                                           self.filenames[self.__ref_idx]), "blue"))
         self.run_frame(self.__idx, self.__ref_idx)
         if self.__idx < ll:
             if self.step_process:
@@ -223,10 +223,10 @@ class CombinedActions(FramesRefActions):
         if img is None:
             raise Exception("Invalid file: " + self.input_full_path + "/" + filename)
         if len(self.__actions) == 0:
-            self.sub_message(colored_msg(": no actions specified.", "red"), level=logging.WARNING)
+            self.sub_message(color_str(": no actions specified.", "red"), level=logging.WARNING)
         for a in self.__actions:
             if not a.enabled:
-                self.get_logger().warning(colored_msg(self.base_message + ": sub-action disabled", 'red'))
+                self.get_logger().warning(color_str(self.base_message + ": sub-action disabled", 'red'))
             else:
                 if self.callback('check_running', self.id, self.name) is False:
                     raise RunStopException(self.name)

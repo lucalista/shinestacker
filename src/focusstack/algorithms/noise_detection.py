@@ -6,7 +6,7 @@ import os
 import errno
 from focusstack.config.config import config
 from focusstack.config.constants import constants
-from focusstack.core.core_utils import colored_msg
+from focusstack.core.colors import color_str
 from focusstack.core.exceptions import ImageLoadError
 from focusstack.core.framework import JobBase
 from focusstack.core.core_utils import make_tqdm_bar
@@ -68,7 +68,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
                 raise RunStopException(self.name)
 
     def run_core(self):
-        self.print_message(colored_msg("map noisy pixels from frames in " + self.folder_list_str(), "blue"))
+        self.print_message(color_str("map noisy pixels from frames in " + self.folder_list_str(), "blue"))
         files = self.folder_filelist()
         in_paths = [self.working_path + "/" + f for f in files]
         n_frames = min(len(in_paths), self.max_frames) if self.max_frames > 0 else len(in_paths)
@@ -82,7 +82,7 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
                 raise RunStopException(self.name)
         mean_img = mean_image(
             file_paths=in_paths, max_frames=self.max_frames,
-            message_callback=lambda path: self.print_message_r(colored_msg(f"reading frame: {path.split('/')[-1]}", "blue")),
+            message_callback=lambda path: self.print_message_r(color_str(f"reading frame: {path.split('/')[-1]}", "blue")),
             progress_callback=progress_callback)
         if not config.DISABLE_TQDM:
             self.bar.close()

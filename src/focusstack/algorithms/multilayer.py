@@ -10,7 +10,7 @@ from psdtags import (PsdBlendMode, PsdChannel, PsdChannelId, PsdClippingType, Ps
                      TiffImageSourceData, overlay)
 from focusstack.config.constants import constants
 from focusstack.config.config import config
-from focusstack.core.core_utils import colored_msg
+from focusstack.core.colors import color_str
 from focusstack.core.framework import JobBase
 from focusstack.algorithms.stack_framework import FrameMultiDirectory
 from focusstack.algorithms.exif import exif_extra_tags_for_tif, get_exif
@@ -163,23 +163,23 @@ class MultiLayer(FrameMultiDirectory, JobBase):
         else:
             raise Exception("input_path option must contain a path or an array of paths")
         if len(paths) == 0:
-            self.print_message(colored_msg("no input paths specified", "red"), level=logging.WARNING)
+            self.print_message(color_str("no input paths specified", "red"), level=logging.WARNING)
             return
         files = self.folder_filelist()
         if len(files) == 0:
-            self.print_message(colored_msg("no input in {} specified path{}:"
-                                           " ".format(len(paths),
+            self.print_message(color_str("no input in {} specified path{}:"
+                                         " ".format(len(paths),
                                                       's' if len(paths) > 1 else '') + ", ".join([f"'{p}'" for p in paths]), "red"), level=logging.WARNING)
             return
-        self.print_message(colored_msg("merging frames in " + self.folder_list_str(), "blue"))
+        self.print_message(color_str("merging frames in " + self.folder_list_str(), "blue"))
         input_files = [f"{self.working_path}/{f}" for f in files]
-        self.print_message(colored_msg("frames: " + ", ".join([i.split("/")[-1] for i in files]), "blue"))
-        self.print_message(colored_msg("reading files", "blue"))
+        self.print_message(color_str("frames: " + ", ".join([i.split("/")[-1] for i in files]), "blue"))
+        self.print_message(color_str("reading files", "blue"))
         filename = ".".join(files[0].split("/")[-1].split(".")[:-1])
         output_file = f"{self.working_path}/{self.output_path}/{filename}.tif"
         callbacks = {
-            'exif_msg': lambda path: self.print_message(colored_msg(f"copying exif data from path: {path}", "blue")),
-            'write_msg': lambda path: self.print_message(colored_msg(f"writing multilayer tiff file: {path}", "blue"))
+            'exif_msg': lambda path: self.print_message(color_str(f"copying exif data from path: {path}", "blue")),
+            'write_msg': lambda path: self.print_message(color_str(f"writing multilayer tiff file: {path}", "blue"))
         }
         write_multilayer_tiff(input_files, output_file, labels=None, exif_path=self.exif_path, callbacks=callbacks)
         app = 'internal_retouch_app' if config.COMBINED_APP else f'{constants.RETOUCH_APP}'
