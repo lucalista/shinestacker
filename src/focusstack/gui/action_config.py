@@ -723,24 +723,50 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
                                    default=constants.DEFAULT_ALIGN_THRESHOLD, min=0, max=1, step=0.05)
         if self.expert:
             self.add_bold_label("Transform:")
-            self.builder.add_field('transform', FIELD_COMBO, 'Transform', required=False,
-                                   options=self.TRANSFORM_OPTIONS, values=constants.VALID_TRANSFORMS,
-                                   default=constants.DEFAULT_TRANSFORM)
-            self.builder.add_field('align_method', FIELD_COMBO, 'Align method', required=False,
-                                   options=self.METHOD_OPTIONS, values=constants.VALID_ALIGN_METHODS,
-                                   default=constants.DEFAULT_ALIGN_METHOD)
-            self.builder.add_field('rans_threshold', FIELD_FLOAT, 'RANSAC threshold (px)', required=False,
-                                   default=constants.DEFAULT_RANS_THRESHOLD, min=0, max=20, step=0.1)
+            transform = self.builder.add_field('transform', FIELD_COMBO, 'Transform', required=False,
+                                               options=self.TRANSFORM_OPTIONS, values=constants.VALID_TRANSFORMS,
+                                               default=constants.DEFAULT_TRANSFORM)
+            method = self.builder.add_field('align_method', FIELD_COMBO, 'Align method', required=False,
+                                            options=self.METHOD_OPTIONS, values=constants.VALID_ALIGN_METHODS,
+                                            default=constants.DEFAULT_ALIGN_METHOD)
+            rans_threshold = self.builder.add_field('rans_threshold', FIELD_FLOAT, 'RANSAC threshold (px)', required=False,
+                                                    default=constants.DEFAULT_RANS_THRESHOLD, min=0, max=20, step=0.1)
+
+            def change_method():
+                text = method.currentText()
+                if text == self.METHOD_OPTIONS[0]:
+                    rans_threshold.setEnabled(True)
+                elif text == self.METHOD_OPTIONS[1]:
+                    rans_threshold.setEnabled(False)
+            method.currentIndexChanged.connect(change_method)
+            change_method()
             self.builder.add_field('align_confidence', FIELD_FLOAT, 'Confidence (%)', required=False, decimals=1,
                                    default=constants.DEFAULT_ALIGN_CONFIDENCE, min=70.0, max=100.0, step=0.1)
-            self.builder.add_field('refine_iters', FIELD_INT, 'Refinement iterations (Rigid)', required=False,
-                                   default=constants.DEFAULT_REFINE_ITERS, min=0, max=1000)
-            self.builder.add_field('max_iters', FIELD_INT, 'Max. iterations (Homography)', required=False,
-                                   default=constants.DEFAULT_ALIGN_MAX_ITERS, min=0, max=5000)
-            self.builder.add_field('subsample', FIELD_INT, 'Subsample factor', required=False,
-                                   default=constants.DEFAULT_ALIGN_SUBSAMPLE, min=0, max=256)
-            self.builder.add_field('fast_subsampling', FIELD_BOOL, 'Fast subsampling', required=False,
-                                   default=constants.DEFAULT_ALIGN_FAST_SUBSAMPLING)
+
+            refine_iters = self.builder.add_field('refine_iters', FIELD_INT, 'Refinement iterations (Rigid)', required=False,
+                                                  default=constants.DEFAULT_REFINE_ITERS, min=0, max=1000)
+            max_iters = self.builder.add_field('max_iters', FIELD_INT, 'Max. iterations (Homography)', required=False,
+                                               default=constants.DEFAULT_ALIGN_MAX_ITERS, min=0, max=5000)
+
+            def change_transform():
+                text = transform.currentText()
+                if text == self.TRANSFORM_OPTIONS[0]:
+                    refine_iters.setEnabled(True)
+                    max_iters.setEnabled(False)
+                elif text == self.TRANSFORM_OPTIONS[1]:
+                    refine_iters.setEnabled(False)
+                    max_iters.setEnabled(True)
+            transform.currentIndexChanged.connect(change_transform)
+            change_transform()
+            subsample = self.builder.add_field('subsample', FIELD_INT, 'Subsample factor', required=False,
+                                               default=constants.DEFAULT_ALIGN_SUBSAMPLE, min=0, max=256)
+            fast_subsampling = self.builder.add_field('fast_subsampling', FIELD_BOOL, 'Fast subsampling', required=False,
+                                                      default=constants.DEFAULT_ALIGN_FAST_SUBSAMPLING)
+
+            def change_subsample():
+                fast_subsampling.setEnabled(subsample.value() > 1)
+            subsample.valueChanged.connect(change_subsample)
+            change_subsample()
             self.add_bold_label("Border:")
             self.builder.add_field('border_mode', FIELD_COMBO, 'Border mode', required=False,
                                    options=self.BORDER_MODE_OPTIONS, values=constants.VALID_BORDER_MODES,
