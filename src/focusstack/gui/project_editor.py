@@ -91,15 +91,29 @@ class ProjectEditor(QMainWindow):
         if html:
             txt = f"<b>{txt}</b>"
         in_path = get_action_input_path(job)
-        return txt + (f" [🟢 Job: 📁 {in_path[0]} → 📂 ...]" if long_name else "")
+        return txt + (f" [⚙️ Job: 📁 {in_path[0]} → 📂 ...]" if long_name else "")
 
     def action_text(self, action, is_sub_action=False, indent=True, long_name=False, html=False):
+        icon_map = {
+            constants.ACTION_COMBO: '⚡',
+            constants.ACTION_NOISEDETECTION: '🌫️',
+            constants.ACTION_FOCUSSTACK: '🌅',
+            constants.ACTION_FOCUSSTACKBUNCH: '💶',
+            constants.ACTION_MULTILAYER: '🥞',
+            constants.ACTION_MASKNOISE: '👹',
+            constants.ACTION_VIGNETTING: '🧿',
+            constants.ACTION_ALIGNFRAMES: '📐',
+            constants.ACTION_BALANCEFRAMES: '🌈'
+        }
+        ico = icon_map.get(action.type_name, '')
         if is_sub_action:
             txt = INDENT_SPACE
-            ico = '🟣'
+            if ico == '':
+                ico = '🟣'
         else:
             txt = ''
-            ico = '🔵'
+            if ico == '':
+                ico = '🔵'
         if action.params.get('name', '') != '':
             txt += f"{action.params['name']}"
             if html:
