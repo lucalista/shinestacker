@@ -308,7 +308,7 @@ class ProjectEditor(QMainWindow):
         widget_list.addItem(item)
         html_text = f"✅ <span style='color:#{ColorPalette.DARK_BLUE.hex()};'>{text}</span>" \
                     if action.enabled() \
-                    else f"❌ <span style='color:#{ColorPalette.DARK_RED.hex()};'>{text}</span>"
+                    else f"🚫 <span style='color:#{ColorPalette.DARK_RED.hex()};'>{text}</span>"
         label = QLabel(html_text)
         widget_list.setItemWidget(item, label)
 
