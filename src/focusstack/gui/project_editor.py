@@ -91,16 +91,21 @@ class ProjectEditor(QMainWindow):
         if html:
             txt = f"<b>{txt}</b>"
         in_path = get_action_input_path(job)
-        return txt + (f" [Job: 📁 {in_path[0]} → 📂 ...]" if long_name else "")
+        return txt + (f" [🟢 Job: 📁 {in_path[0]} → 📂 ...]" if long_name else "")
 
     def action_text(self, action, is_sub_action=False, indent=True, long_name=False, html=False):
-        txt = INDENT_SPACE if is_sub_action and indent else ""
+        if is_sub_action:
+            txt = INDENT_SPACE
+            ico = '🟣'
+        else:
+            txt = ''
+            ico = '🔵'
         if action.params.get('name', '') != '':
             txt += f"{action.params['name']}"
             if html:
                 txt = f"<b>{txt}</b>"
         in_path, out_path = get_action_input_path(action), get_action_output_path(action)
-        return f"{txt} [{action.type_name}" + (f": 📁 <i>{in_path[0]}</i> → 📂 <i>{out_path[0]}</i>]" if long_name and not is_sub_action else "]")
+        return f"{txt} [{ico} {action.type_name}" + (f": 📁 <i>{in_path[0]}</i> → 📂 <i>{out_path[0]}</i>]" if long_name and not is_sub_action else "]")
 
     def get_job_at(self, index):
         return None if index < 0 else self.project.jobs[index]
@@ -293,7 +298,10 @@ class ProjectEditor(QMainWindow):
             self.delete_element_action.setEnabled(False)
 
     def add_list_item(self, widget_list, action, is_sub_action):
-        text = self.action_text(action, long_name=True, html=True, is_sub_action=is_sub_action)
+        if action.type_name == constants.ACTION_JOB:
+            text = self.job_text(action, long_name=True, html=True)
+        else:
+            text = self.action_text(action, long_name=True, html=True, is_sub_action=is_sub_action)
         item = QListWidgetItem()
         item.setText('')
         item.setData(Qt.ItemDataRole.UserRole, True)
