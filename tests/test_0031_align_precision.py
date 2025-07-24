@@ -9,6 +9,7 @@ from focusstack.config.constants import constants
 from focusstack.algorithms.align import align_images
 np.random.seed(123456)
 
+
 def create_test_image(size=(512, 512), color=False):
     if color:
         img = np.zeros((*size, 3), dtype=np.uint8)

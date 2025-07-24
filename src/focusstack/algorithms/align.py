@@ -26,6 +26,7 @@ _DEFAULT_ALIGNMENT_CONFIG = {
     'align_method': constants.DEFAULT_ALIGN_METHOD,
     'rans_threshold': constants.DEFAULT_RANS_THRESHOLD,
     'refine_iters': constants.DEFAULT_REFINE_ITERS,
+    'align_confidence': constants.DEFAULT_ALIGN_CONFIDENCE,
     'max_iters': constants.DEFAULT_ALIGN_MAX_ITERS,
     'border_mode': constants.DEFAULT_BORDER_MODE,
     'border_value': constants.DEFAULT_BORDER_VALUE,
@@ -98,6 +99,7 @@ def find_transform(src_pts, dst_pts, transform=constants.DEFAULT_TRANSFORM,
                    method=constants.DEFAULT_ALIGN_METHOD,
                    rans_threshold=constants.DEFAULT_RANS_THRESHOLD,
                    max_iters=constants.DEFAULT_ALIGN_MAX_ITERS,
+                   align_confidence=constants.DEFAULT_ALIGN_CONFIDENCE,
                    refine_iters=constants.DEFAULT_REFINE_ITERS):
     if method == 'RANSAC':
         cv2_method = cv2.RANSAC
@@ -112,7 +114,7 @@ def find_transform(src_pts, dst_pts, transform=constants.DEFAULT_TRANSFORM,
     elif transform == constants.ALIGN_RIGID:
         result = cv2.estimateAffinePartial2D(src_pts, dst_pts, method=cv2_method,
                                              ransacReprojThreshold=rans_threshold,
-                                             confidence=0.999,
+                                             confidence=align_confidence / 100.0,
                                              refineIters=refine_iters)
     else:
         raise InvalidOptionError("transform", transform)
@@ -155,7 +157,7 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
         dst_pts = np.float32([kp_1[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
         M, msk = find_transform(src_pts, dst_pts, transform, alignment_config['align_method'],
                                 alignment_config['rans_threshold'], alignment_config['max_iters'],
-                                alignment_config['refine_iters'])
+                                alignment_config['align_confidence'], alignment_config['refine_iters'])
         if plot_path is not None:
             matches_mask = msk.ravel().tolist()
             img_match = cv2.cvtColor(cv2.drawMatches(img_8bit(img_0_sub), kp_0, img_8bit(img_1_sub),

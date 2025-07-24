@@ -317,10 +317,11 @@ class FieldBuilder:
         container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         return container
 
-    def create_float_field(self, tag, default=0.0, min=0.0, max=1.0, step=0.1, **kwargs):
+    def create_float_field(self, tag, default=0.0, min=0.0, max=1.0, step=0.1, decimals=1, **kwargs):
         spin = QDoubleSpinBox()
         spin.setValue(self.action.params.get(tag, default))
         spin.setRange(min, max)
+        spin.setDecimals(decimals)
         spin.setSingleStep(step)
         return spin
 
@@ -730,6 +731,8 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
                                    default=constants.DEFAULT_ALIGN_METHOD)
             self.builder.add_field('rans_threshold', FIELD_FLOAT, 'RANSAC threshold (px)', required=False,
                                    default=constants.DEFAULT_RANS_THRESHOLD, min=0, max=20, step=0.1)
+            self.builder.add_field('align_confidence', FIELD_FLOAT, 'Confidence (%)', required=False, decimals=1,
+                                   default=constants.DEFAULT_ALIGN_CONFIDENCE, min=70.0, max=100.0, step=0.1)
             self.builder.add_field('refine_iters', FIELD_INT, 'Refinement iterations (Rigid)', required=False,
                                    default=constants.DEFAULT_REFINE_ITERS, min=0, max=1000)
             self.builder.add_field('max_iters', FIELD_INT, 'Max. iterations (Homography)', required=False,
