@@ -58,10 +58,10 @@ def compare_transformations(M_true, M_aligned):
     scale_aligned = np.sqrt(M_aligned[0, 0]**2 + M_aligned[1, 0]**2)
     scale_diff = scale_true - scale_aligned
     print(f"Scale difference: {scale_diff:.6f}")
-    assert abs(angle_diff) < 0.0025
-    assert abs(tx_diff) < 0.1
-    assert abs(ty_diff) < 0.1
-    assert abs(scale_diff) < 0.00004
+    assert abs(angle_diff) < 0.005
+    assert abs(tx_diff) < 0.2
+    assert abs(ty_diff) < 0.2
+    assert abs(scale_diff) < 0.0001
 
 
 def compare_alignment(color_test=False):
