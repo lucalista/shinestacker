@@ -693,6 +693,8 @@ class VignettingConfigurator(NoNameActionConfigurator):
 
 
 class AlignFramesConfigurator(NoNameActionConfigurator):
+    DETECTOR_OPTIONS = ['SIFT', 'ORB', 'SURF', 'AKAZE']
+    DESCRIPTOR_OPTIONS = ['SIFT', 'ORB', 'AKAZE']
     BORDER_MODE_OPTIONS = ['Constant', 'Replicate', 'Replicate and blur']
     TRANSFORM_OPTIONS = ['Rigid', 'Homography']
     METHOD_OPTIONS = ['Random Sample Consensus (RANSAC)', 'Least Median (LMEDS)']
@@ -703,15 +705,17 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
 
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
+        self.detector_field = 0
+        self.descriptor_field = 0
         if self.expert:
             self.add_bold_label("Feature identification:")
-            self.builder.add_field('detector', FIELD_COMBO, 'Detector', required=False,
-                                   options=['SIFT', 'ORB', 'SURF', 'AKAZE'], default=constants.DEFAULT_DETECTOR)
-            self.builder.add_field('descriptor', FIELD_COMBO, 'Descriptor', required=False,
-                                   options=['SIFT', 'ORB', 'AKAZE'], default=constants.DEFAULT_DESCRIPTOR)
+            self.detector_field = self.builder.add_field('detector', FIELD_COMBO, 'Detector', required=False,
+                                                         options=self.DETECTOR_OPTIONS, default=constants.DEFAULT_DETECTOR)
+            self.descriptor_field = self.builder.add_field('descriptor', FIELD_COMBO, 'Descriptor', required=False,
+                                                           options=self.DESCRIPTOR_OPTIONS, default=constants.DEFAULT_DESCRIPTOR)
             self.add_bold_label("Feature matching:")
-            self.builder.add_field('match_method', FIELD_COMBO, 'Match method', required=False,
-                                   options=self.MATCHING_METHOD_OPTIONS, values=constants.VALID_MATCHING_METHODS,
+            self.matching_method_field = self.builder.add_field('match_method', FIELD_COMBO, 'Match method', required=False,
+                                                                options=self.MATCHING_METHOD_OPTIONS, values=constants.VALID_MATCHING_METHODS,
                                    default=constants.DEFAULT_MATCHING_METHOD)
             self.builder.add_field('flann_idx_kdtree', FIELD_INT, 'Flann idx kdtree', required=False,
                                    default=constants.DEFAULT_FLANN_IDX_KDTREE, min=0, max=10)
@@ -780,6 +784,20 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
         self.builder.add_field('plot_summary', FIELD_BOOL, 'Plot summary', required=False, default=False)
         self.builder.add_field('plot_matches', FIELD_BOOL, 'Plot matches', required=False, default=False)
 
+    def update_params(self, params: Dict[str, Any]) -> bool:
+        if self.detector_field and self.descriptor_field and self.matching_method_field:
+            if self.detector_field.currentText() == 'SIFT' and self.descriptor_field.currentText() == 'ORB':
+                QMessageBox.warning(None, "Error", "Detector SIFT requires descriptor SIFT")
+                return False
+            if (self.detector_field.currentText() == 'SIFT' or self.descriptor_field.currentText() == 'SIFT') and \
+                self.matching_method_field.currentText() == self.MATCHING_METHOD_OPTIONS[1]:
+                QMessageBox.warning(None, "Error", "Matching method Hamming distance requires detector and descriptor ORB")
+                return False
+            if self.detector_field.currentText() == 'ORB' and self.descriptor_field.currentText() == 'ORB' and \
+                self.matching_method_field.currentText() != self.MATCHING_METHOD_OPTIONS[1]:
+                QMessageBox.warning(None, "Error", "Detector and descriptor ORB require matching method Hamming distance")
+                return False
+        return super().update_params(params)
 
 class BalanceFramesConfigurator(NoNameActionConfigurator):
     CORRECTION_MAP_OPTIONS = ['Linear', 'Gamma', 'Match histograms']
