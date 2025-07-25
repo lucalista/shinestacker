@@ -317,7 +317,7 @@ class FieldBuilder:
         container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         return container
 
-    def create_float_field(self, tag, default=0.0, min=0.0, max=1.0, step=0.1, decimals=1, **kwargs):
+    def create_float_field(self, tag, default=0.0, min=0.0, max=1.0, step=0.1, decimals=2, **kwargs):
         spin = QDoubleSpinBox()
         spin.setValue(self.action.params.get(tag, default))
         spin.setRange(min, max)
@@ -709,14 +709,28 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
         self.descriptor_field = 0
         if self.expert:
             self.add_bold_label("Feature identification:")
-            self.detector_field = self.builder.add_field('detector', FIELD_COMBO, 'Detector', required=False,
-                                                         options=self.DETECTOR_OPTIONS, default=constants.DEFAULT_DETECTOR)
-            self.descriptor_field = self.builder.add_field('descriptor', FIELD_COMBO, 'Descriptor', required=False,
-                                                           options=self.DESCRIPTOR_OPTIONS, default=constants.DEFAULT_DESCRIPTOR)
+            detector = self.detector_field = self.builder.add_field('detector', FIELD_COMBO, 'Detector', required=False,
+                                                                    options=self.DETECTOR_OPTIONS, default=constants.DEFAULT_DETECTOR)
+            descriptor = self.descriptor_field = self.builder.add_field('descriptor', FIELD_COMBO, 'Descriptor', required=False,
+                                                                        options=self.DESCRIPTOR_OPTIONS, default=constants.DEFAULT_DESCRIPTOR)
             self.add_bold_label("Feature matching:")
-            self.matching_method_field = self.builder.add_field('match_method', FIELD_COMBO, 'Match method', required=False,
-                                                                options=self.MATCHING_METHOD_OPTIONS, values=constants.VALID_MATCHING_METHODS,
-                                   default=constants.DEFAULT_MATCHING_METHOD)
+            match_method = self.matching_method_field = self.builder.add_field('match_method', FIELD_COMBO, 'Match method', required=False,
+                                                                               options=self.MATCHING_METHOD_OPTIONS, values=constants.VALID_MATCHING_METHODS,
+                                                                               default=constants.DEFAULT_MATCHING_METHOD)
+
+            def change_match_config():
+                text = detector.currentText()
+                if text == 'SIFT':
+                    print("force detector + match")
+                    descriptor.setCurrentText(text)
+                    match_method.setCurrentText(self.MATCHING_METHOD_OPTIONS[0])
+                elif text in ['ORB', 'SURF', 'AKAZE']:
+                    if descriptor.currentText() in ['ORB', 'AKAZE']:
+                        match_method.setCurrentText(self.MATCHING_METHOD_OPTIONS[1])
+
+            detector.currentIndexChanged.connect(change_match_config)
+            descriptor.currentIndexChanged.connect(change_match_config)
+            match_method.currentIndexChanged.connect(change_match_config)
             self.builder.add_field('flann_idx_kdtree', FIELD_INT, 'Flann idx kdtree', required=False,
                                    default=constants.DEFAULT_FLANN_IDX_KDTREE, min=0, max=10)
             self.builder.add_field('flann_trees', FIELD_INT, 'Flann trees', required=False,
@@ -789,15 +803,18 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
             if self.detector_field.currentText() == 'SIFT' and self.descriptor_field.currentText() == 'ORB':
                 QMessageBox.warning(None, "Error", "Detector SIFT requires descriptor SIFT")
                 return False
-            if (self.detector_field.currentText() == 'SIFT' or self.descriptor_field.currentText() == 'SIFT') and \
-                self.matching_method_field.currentText() == self.MATCHING_METHOD_OPTIONS[1]:
-                QMessageBox.warning(None, "Error", "Matching method Hamming distance requires detector and descriptor ORB")
+            if self.detector_field.currentText() == 'SIFT' and self.descriptor_field.currentText() == 'SIFT' and \
+               self.matching_method_field.currentText() == self.MATCHING_METHOD_OPTIONS[1]:
+                QMessageBox.warning(None, "Error", "Detector and descriptor SIFT require matching method K-NN")
                 return False
-            if self.detector_field.currentText() == 'ORB' and self.descriptor_field.currentText() == 'ORB' and \
-                self.matching_method_field.currentText() != self.MATCHING_METHOD_OPTIONS[1]:
-                QMessageBox.warning(None, "Error", "Detector and descriptor ORB require matching method Hamming distance")
+            if self.detector_field.currentText() in ['ORB', 'SURF', 'AKAZE'] and \
+               self.descriptor_field.currentText() in ['ORB', 'AKAZE'] and \
+               self.matching_method_field.currentText() != self.MATCHING_METHOD_OPTIONS[1]:
+                QMessageBox.warning(None, "Error", f"Detector {self.detector_field.currentText()} "
+                                    f"and descriptor {self.descriptor_field.currentText()} require matching method Hamming distance")
                 return False
-        return super().update_params(params)
+            return super().update_params(params)
+
 
 class BalanceFramesConfigurator(NoNameActionConfigurator):
     CORRECTION_MAP_OPTIONS = ['Linear', 'Gamma', 'Match histograms']

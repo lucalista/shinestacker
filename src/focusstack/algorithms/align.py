@@ -42,8 +42,6 @@ _cv2_border_mode_map = {
     constants.BORDER_REPLICATE_BLUR: cv2.BORDER_REPLICATE
 }
 
-RAISE_ORB_ORB_HAMMING = "align: detector ORB and descriptor ORB require match method NORM_HAMMING"
-
 
 def get_good_matches(des_0, des_1, matching_config=None):
     matching_config = {**_DEFAULT_MATCHING_CONFIG, **(matching_config or {})}
@@ -66,6 +64,18 @@ def get_good_matches(des_0, des_1, matching_config=None):
 def detect_and_compute(img_0, img_1, feature_config=None, matching_config=None):
     feature_config = {**_DEFAULT_FEATURE_CONFIG, **(feature_config or {})}
     matching_config = {**_DEFAULT_MATCHING_CONFIG, **(matching_config or {})}
+    feature_config_detector = feature_config['detector']
+    feature_config_descriptor = feature_config['descriptor']
+    match_method = matching_config['match_method']
+    if feature_config_detector == constants.DETECTOR_SIFT and feature_config_descriptor == constants.DESCRIPTOR_ORB:
+        raise ValueError("Detector SIFT requires descriptor SIFT")
+    elif feature_config_detector == constants.DETECTOR_SIFT and feature_config_descriptor == constants.DESCRIPTOR_SIFT and \
+            match_method == constants.MATCHING_NORM_HAMMING:
+        raise ValueError("Detector and descriptor SIFT require matching method K-NN")
+    elif feature_config_detector in [constants.DETECTOR_ORB, constants.DETECTOR_SURF, constants.DETECTOR_AKAZE] and \
+            feature_config_descriptor in [constants.DETECTOR_ORB, constants.DETECTOR_AKAZE] and \
+            match_method != constants.MATCHING_NORM_HAMMING:
+        raise ValueError(f"Detector {feature_config_detector} and descriptor {feature_config_descriptor} require matching method Hamming distance")
     img_bw_0, img_bw_1 = img_bw_8bit(img_0), img_bw_8bit(img_1)
     detector_map = {
         constants.DETECTOR_SIFT: cv2.SIFT_create,
@@ -78,13 +88,10 @@ def detect_and_compute(img_0, img_1, feature_config=None, matching_config=None):
         constants.DESCRIPTOR_ORB: cv2.ORB_create,
         constants.DESCRIPTOR_AKAZE: cv2.AKAZE_create
     }
-    detector = detector_map[feature_config['detector']]()
-    descriptor = descriptor_map[feature_config['descriptor']]()
+    detector = detector_map[feature_config_detector]()
+    descriptor = descriptor_map[feature_config_descriptor]()
     feature_config_detector = feature_config['detector']
     feature_config_descriptor = feature_config['descriptor']
-    if feature_config_detector == constants.DETECTOR_ORB and \
-       feature_config_descriptor == constants.DESCRIPTOR_ORB and matching_config['match_method'] != constants.MATCHING_NORM_HAMMING:
-        raise RuntimeError(RAISE_ORB_ORB_HAMMING)
     if feature_config_detector == feature_config_descriptor and \
        feature_config_detector in (constants.DETECTOR_SIFT, constants.DETECTOR_AKAZE):
         kp_0, des_0 = detector.detectAndCompute(img_bw_0, None)
@@ -126,7 +133,6 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
     feature_config = {**_DEFAULT_FEATURE_CONFIG, **(feature_config or {})}
     matching_config = {**_DEFAULT_MATCHING_CONFIG, **(matching_config or {})}
     alignment_config = {**_DEFAULT_ALIGNMENT_CONFIG, **(alignment_config or {})}
-
     try:
         cv2_border_mode = _cv2_border_mode_map[alignment_config['border_mode']]
     except KeyError:
@@ -135,7 +141,6 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
     validate_image(img_0, *get_img_metadata(img_1))
     if callbacks and 'message' in callbacks.keys():
         callbacks['message']()
-
     subsample = alignment_config['subsample']
     if subsample > 1:
         if alignment_config['fast_subsampling']:

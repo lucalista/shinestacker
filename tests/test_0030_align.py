@@ -3,7 +3,7 @@ matplotlib.use('Agg')
 from focusstack.config.constants import constants
 from focusstack.algorithms.utils import read_img
 from focusstack.algorithms.stack_framework import StackJob, CombinedActions
-from focusstack.algorithms.align import align_images, AlignFrames, RAISE_ORB_ORB_HAMMING
+from focusstack.algorithms.align import align_images, AlignFrames
 
 
 def test_align():
@@ -50,8 +50,9 @@ def test_align_4():
                                                    matching_config={'match_method': constants.MATCHING_KNN})
         assert img_warp is not None
         assert n_good_matches > 100
-    except RuntimeError as e:
-        assert str(e) == RAISE_ORB_ORB_HAMMING
+    except ValueError as e:
+        assert str(e) == "Detector ORB and descriptor ORB require matching method Hamming distance"
+
     except Exception:
         assert False
 
