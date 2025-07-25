@@ -4,9 +4,6 @@ from PySide6.QtGui import QTextCursor, QTextOption, QFont
 from PySide6.QtCore import QThread, QObject, Signal, Slot, Qt
 from .. config.constants import constants
 
-LOG_FONTS = ['Monaco', 'Menlo', ' Lucida Console', 'Courier New', 'Courier', 'monospace']
-LOG_FONTS_STR = ", ".join(LOG_FONTS)
-
 
 class SimpleHtmlFormatter(logging.Formatter):
     COLOR_MAP = {
@@ -70,9 +67,9 @@ class SimpleHtmlFormatter(logging.Formatter):
         message = constants.ANSI_ESCAPE.sub('', message).replace("\r", "").rstrip()
         color = self.COLOR_MAP.get(levelname, '#000000')
         return f'''
-        <div style="margin: 2px 0; font-family: {LOG_FONTS_STR};">
-            <span style="color: {color}; font-weight: bold;">[{levelname[:3]}]</span>
-            <span> {message}</span>
+        <div style="margin: 2px 0; font-family: {constants.LOG_FONTS_STR};">
+            <span style="color: {color}; font-weight: bold;">[{levelname[:3]}] </span>
+            <span>{message}</span>
         </div>
         '''
 
@@ -125,7 +122,7 @@ class QTextEditLogger(GuiLogger):
         text_edit.setWordWrapMode(QTextOption.WrapMode.WordWrap)
         text_edit.setAcceptRichText(True)
         text_edit.setReadOnly(True)
-        font = QFont(LOG_FONTS, 12)
+        font = QFont(constants.LOG_FONTS, 12)
         text_edit.setFont(font)
         self.text_edit = text_edit
         self.status_bar = QStatusBar()

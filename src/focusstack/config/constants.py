@@ -12,6 +12,9 @@ class _Constants:
     MAX_UINT8 = 255
     MAX_UINT16 = 65535
 
+    LOG_FONTS = ['Monaco', 'Menlo', ' Lucida Console', 'Courier New', 'Courier', 'monospace']
+    LOG_FONTS_STR = ", ".join(LOG_FONTS)
+
     ANSI_ESCAPE = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 
     ACTION_JOB = "Job"

@@ -277,6 +277,8 @@ class ProjectEditor(QMainWindow):
             element = self.delete_job(confirm)
         elif self.action_list.hasFocus():
             element = self.delete_action(confirm)
+        else:
+            element = None
         if self.job_list.count() > 0:
             self.delete_element_action.setEnabled(True)
         return element

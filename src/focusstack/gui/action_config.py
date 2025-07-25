@@ -721,7 +721,6 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
             def change_match_config():
                 text = detector.currentText()
                 if text == 'SIFT':
-                    print("force detector + match")
                     descriptor.setCurrentText(text)
                     match_method.setCurrentText(self.MATCHING_METHOD_OPTIONS[0])
                 elif text in ['ORB', 'SURF', 'AKAZE']:

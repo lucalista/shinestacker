@@ -7,7 +7,7 @@ from PySide6.QtCore import Signal, Slot
 from .. config.constants import constants
 from .. config.gui_constants import gui_constants
 from .colors import RED_BUTTON_STYLE, BLUE_BUTTON_STYLE, BLUE_COMBO_STYLE
-from .gui_logging import LogWorker, QTextEditLogger, LOG_FONTS_STR
+from .gui_logging import LogWorker, QTextEditLogger
 from .gui_images import GuiPdfView, GuiImageView, GuiOpenApp
 from .colors import ColorPalette
 
@@ -366,8 +366,8 @@ class RunWorker(LogWorker):
     def run(self):
         self.status_signal.emit(f"{self.tag} running...", constants.RUN_ONGOING, "", 0)
         self.html_signal.emit(f'''
-        <div style="margin: 2px 0; font-family: {LOG_FONTS_STR};">
-        <span style="color: #{ColorPalette.DARK_BLUE.hex()}; font-weight: bold;">{self.tag} begins</span>
+        <div style="margin: 2px 0; font-family: {constants.LOG_FONTS_STR};">
+        <span style="color: #{ColorPalette.DARK_BLUE.hex()}; font-style: italic; font-weigt: bold;">{self.tag} begins</span>
         </div>
         ''')
         status, error_message = self.do_run()
@@ -381,8 +381,8 @@ class RunWorker(LogWorker):
             message = f"{self.tag} stopped"
             color = "#" + ColorPalette.DARK_RED.hex()
         self.html_signal.emit(f'''
-        <div style="margin: 2px 0; font-family: {LOG_FONTS_STR};">
-        <span style="color: {color}; font-weight: bold;">{message}</span>
+        <div style="margin: 2px 0; font-family: {constants.LOG_FONTS_STR};">
+        <span style="color: {color}; font-style: italic; font-weight: bold;">{message}</span>
         </div>
         ''')
         self.end_signal.emit(status, self.id_str, message)

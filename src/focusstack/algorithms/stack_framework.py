@@ -53,12 +53,17 @@ class FramePaths:
             list_dir = os.listdir(self.output_dir)
             if len(list_dir) > 0:
                 if self.scratch_output_dir:
-                    for filename in list_dir:
-                        file_path = os.path.join(self.output_dir, filename)
-                        if os.path.isfile(file_path):
-                            os.remove(file_path)
+                    if self.enabled:
+                        for filename in list_dir:
+                            file_path = os.path.join(self.output_dir, filename)
+                            if os.path.isfile(file_path):
+                                os.remove(file_path)
+                        self.print_message(color_str(f": output directory {self.output_path} content erased", 'yellow'))
+                    else:
+                        self.print_message(color_str(f": module disabled, output directory {self.output_path} not scratched", 'yellow'))
                 else:
-                    self.print_message(color_str(f": output directory {self.output_path} not empty, files may be overwritten or merged with existing ones.", 'yellow'), level=logging.WARNING) # noqa
+                    self.print_message(color_str(f": output directory {self.output_path} not empty, "
+                        "files may be overwritten or merged with existing ones.", 'yellow'), level=logging.WARNING) # noqa
         if self.plot_path == '':
             self.plot_path = self.working_path + ('' if self.working_path[-1] == '/' else '/') + self.plot_path
             if not os.path.exists(self.plot_path):
