@@ -4,7 +4,7 @@ import os.path
 from PySide6.QtWidgets import (QWidget, QPushButton, QHBoxLayout, QFileDialog, QLabel, QComboBox,
                                QMessageBox, QSizePolicy, QStackedWidget, QDialog, QFormLayout,
                                QLineEdit, QSpinBox, QDoubleSpinBox, QCheckBox, QTreeView, QAbstractItemView, QListView)
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from .. config.constants import constants
 from .project_model import ActionConfig
 
@@ -703,33 +703,64 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
     def __init__(self, expert=False):
         super().__init__(expert)
 
+    def show_info(self, message, timeout=3000):
+        self.info_label.setText(message)
+        self.info_label.setVisible(True)
+        QTimer.singleShot(timeout, lambda: self.info_label.setVisible(False))
+
+    def change_match_config(self):
+        detector = self.detector_field.currentText()
+        descriptor = self.descriptor_field.currentText()
+        match_method = self.matching_method_field.currentText()
+        if detector == 'SIFT' and descriptor != 'SIFT':
+            self.descriptor_field.setCurrentText('SIFT')
+            self.show_info("SIFT detector requires SIFT descriptor")
+        elif detector in ['ORB', 'AKAZE'] and descriptor in ['ORB', 'AKAZE']:
+            if match_method != self.MATCHING_METHOD_OPTIONS[1]:
+                self.matching_method_field.setCurrentText(self.MATCHING_METHOD_OPTIONS[1])
+                self.show_info(f"{detector} detector and {descriptor} descriptor require Hamming distance")
+        elif descriptor == 'SIFT' and match_method != self.MATCHING_METHOD_OPTIONS[0]:
+            self.matching_method_field.setCurrentText(self.MATCHING_METHOD_OPTIONS[0])
+            self.show_info("SIFT descriptor requires K-nearest neighbors matching")
+
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
         self.detector_field = 0
         self.descriptor_field = 0
         if self.expert:
             self.add_bold_label("Feature identification:")
+
+            self.info_label = QLabel()
+            self.info_label.setStyleSheet("color: orange; font-style: italic;")
+            self.info_label.setVisible(False)
+            layout.addRow(self.info_label)
+
             detector = self.detector_field = self.builder.add_field('detector', FIELD_COMBO, 'Detector', required=False,
                                                                     options=self.DETECTOR_OPTIONS, default=constants.DEFAULT_DETECTOR)
             descriptor = self.descriptor_field = self.builder.add_field('descriptor', FIELD_COMBO, 'Descriptor', required=False,
                                                                         options=self.DESCRIPTOR_OPTIONS, default=constants.DEFAULT_DESCRIPTOR)
+
             self.add_bold_label("Feature matching:")
             match_method = self.matching_method_field = self.builder.add_field('match_method', FIELD_COMBO, 'Match method', required=False,
                                                                                options=self.MATCHING_METHOD_OPTIONS, values=constants.VALID_MATCHING_METHODS,
                                                                                default=constants.DEFAULT_MATCHING_METHOD)
+            self.detector_field.setToolTip(
+                "SIFT: Requires SIFT descriptor and K-NN matching\n"
+                "ORB/AKAZE: Work best with Hamming distance"
+            )
 
-            def change_match_config():
-                text = detector.currentText()
-                if text == 'SIFT':
-                    descriptor.setCurrentText(text)
-                    match_method.setCurrentText(self.MATCHING_METHOD_OPTIONS[0])
-                elif text in ['ORB', 'SURF', 'AKAZE']:
-                    if descriptor.currentText() in ['ORB', 'AKAZE']:
-                        match_method.setCurrentText(self.MATCHING_METHOD_OPTIONS[1])
+            self.descriptor_field.setToolTip(
+                "SIFT: Requires K-NN matching\n"
+                "ORB/AKAZE: Require Hamming distance with ORB/AKAZE detectors"
+            )
 
-            detector.currentIndexChanged.connect(change_match_config)
-            descriptor.currentIndexChanged.connect(change_match_config)
-            match_method.currentIndexChanged.connect(change_match_config)
+            self.matching_method_field.setToolTip(
+                "Automatically selected based on detector/descriptor combination"
+            )
+
+            detector.currentIndexChanged.connect(self.change_match_config)
+            descriptor.currentIndexChanged.connect(self.change_match_config)
+            match_method.currentIndexChanged.connect(self.change_match_config)
             self.builder.add_field('flann_idx_kdtree', FIELD_INT, 'Flann idx kdtree', required=False,
                                    default=constants.DEFAULT_FLANN_IDX_KDTREE, min=0, max=10)
             self.builder.add_field('flann_trees', FIELD_INT, 'Flann trees', required=False,
@@ -738,7 +769,7 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
                                    default=constants.DEFAULT_FLANN_CHECKS, min=0, max=1000)
             self.builder.add_field('threshold', FIELD_FLOAT, 'Threshold', required=False,
                                    default=constants.DEFAULT_ALIGN_THRESHOLD, min=0, max=1, step=0.05)
-        if self.expert:
+
             self.add_bold_label("Transform:")
             transform = self.builder.add_field('transform', FIELD_COMBO, 'Transform', required=False,
                                                options=self.TRANSFORM_OPTIONS, values=constants.VALID_TRANSFORMS,
