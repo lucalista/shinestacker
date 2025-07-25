@@ -16,10 +16,12 @@ Arguments for the constructor ```AlignFrames``` of are:
   * ```DETECTOR_ORB```: [Oriented FAST and Rotated BRIEF](https://docs.opencv.org/4.x/d1/d89/tutorial_py_orb.html)
   * ```DETECTOR_SURF```: [Speeded-Up Robust Features](https://docs.opencv.org/3.4/df/dd2/tutorial_py_surf_intro.html)
   * ```DETECTOR_AKAZE```: [AKAZE local features matching](https://docs.opencv.org/3.4/db/d70/tutorial_akaze_matching.html)
+  * ```DETECTOR_BRISK```: [BRISK local feature matching](https://medium.com/analytics-vidhya/feature-matching-using-brisk-277c47539e8)
 * ```descriptor``` (optional): the feature descriptor is used to find matches. Possible values are:
   * ```DESCRIPTOR_SIFT``` (default)
   * ```DESCRIPTOR_ORB```
   * ```DESCRIPTOR_AKAZE```
+  * ```DESCRIPTPR_BRISK```
 
   For a more quantitative comparison of the different methods, consult the publication: [S. A. K. Tareen and Z. Saleem, "A comparative analysis of SIFT, SURF, KAZE, AKAZE, ORB, and BRISK", doi:10.1109/ICOMET.2018.8346440](https://ieeexplore.ieee.org/document/8346440)
 

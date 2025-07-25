@@ -72,8 +72,8 @@ def detect_and_compute(img_0, img_1, feature_config=None, matching_config=None):
     elif feature_config_detector == constants.DETECTOR_SIFT and feature_config_descriptor == constants.DESCRIPTOR_SIFT and \
             match_method == constants.MATCHING_NORM_HAMMING:
         raise ValueError("Detector and descriptor SIFT require matching method K-NN")
-    elif feature_config_detector in [constants.DETECTOR_ORB, constants.DETECTOR_SURF, constants.DETECTOR_AKAZE] and \
-            feature_config_descriptor in [constants.DETECTOR_ORB, constants.DETECTOR_AKAZE] and \
+    elif feature_config_detector in constants.NOKNN_METHODS['detectors'] and \
+            feature_config_descriptor in constants.NOKNN_METHODS['descriptors'] and \
             match_method != constants.MATCHING_NORM_HAMMING:
         raise ValueError(f"Detector {feature_config_detector} and descriptor {feature_config_descriptor} require matching method Hamming distance")
     img_bw_0, img_bw_1 = img_bw_8bit(img_0), img_bw_8bit(img_1)
@@ -81,12 +81,14 @@ def detect_and_compute(img_0, img_1, feature_config=None, matching_config=None):
         constants.DETECTOR_SIFT: cv2.SIFT_create,
         constants.DETECTOR_ORB: cv2.ORB_create,
         constants.DETECTOR_SURF: cv2.FastFeatureDetector_create,
-        constants.DETECTOR_AKAZE: cv2.AKAZE_create
+        constants.DETECTOR_AKAZE: cv2.AKAZE_create,
+        constants.DETECTOR_BRISK: cv2.BRISK_create
     }
     descriptor_map = {
         constants.DESCRIPTOR_SIFT: cv2.SIFT_create,
         constants.DESCRIPTOR_ORB: cv2.ORB_create,
-        constants.DESCRIPTOR_AKAZE: cv2.AKAZE_create
+        constants.DESCRIPTOR_AKAZE: cv2.AKAZE_create,
+        constants.DETECTOR_BRISK: cv2.BRISK_create
     }
     detector = detector_map[feature_config_detector]()
     descriptor = descriptor_map[feature_config_descriptor]()

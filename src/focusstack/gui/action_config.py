@@ -693,8 +693,8 @@ class VignettingConfigurator(NoNameActionConfigurator):
 
 
 class AlignFramesConfigurator(NoNameActionConfigurator):
-    DETECTOR_OPTIONS = ['SIFT', 'ORB', 'SURF', 'AKAZE']
-    DESCRIPTOR_OPTIONS = ['SIFT', 'ORB', 'AKAZE']
+    DETECTOR_OPTIONS = ['SIFT', 'ORB', 'SURF', 'AKAZE', 'BRISK']
+    DESCRIPTOR_OPTIONS = ['SIFT', 'ORB', 'SURF', 'AKAZE', 'BRISK']
     BORDER_MODE_OPTIONS = ['Constant', 'Replicate', 'Replicate and blur']
     TRANSFORM_OPTIONS = ['Rigid', 'Homography']
     METHOD_OPTIONS = ['Random Sample Consensus (RANSAC)', 'Least Median (LMEDS)']
@@ -715,7 +715,7 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
         if detector == 'SIFT' and descriptor != 'SIFT':
             self.descriptor_field.setCurrentText('SIFT')
             self.show_info("SIFT detector requires SIFT descriptor")
-        elif detector in ['ORB', 'AKAZE'] and descriptor in ['ORB', 'AKAZE']:
+        elif detector in ['ORB', 'AKAZE', 'BRISK'] and descriptor in ['ORB', 'AKAZE', 'BRISK']:
             if match_method != self.MATCHING_METHOD_OPTIONS[1]:
                 self.matching_method_field.setCurrentText(self.MATCHING_METHOD_OPTIONS[1])
                 self.show_info(f"{detector} detector and {descriptor} descriptor require Hamming distance")
@@ -837,8 +837,8 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
                self.matching_method_field.currentText() == self.MATCHING_METHOD_OPTIONS[1]:
                 QMessageBox.warning(None, "Error", "Detector and descriptor SIFT require matching method K-NN")
                 return False
-            if self.detector_field.currentText() in ['ORB', 'SURF', 'AKAZE'] and \
-               self.descriptor_field.currentText() in ['ORB', 'AKAZE'] and \
+            if self.detector_field.currentText() in constants.NOKNN_METHODS['detectors'] and \
+               self.descriptor_field.currentText() in constants.NOKNN_METHODS['descriptors'] and \
                self.matching_method_field.currentText() != self.MATCHING_METHOD_OPTIONS[1]:
                 QMessageBox.warning(None, "Error", f"Detector {self.detector_field.currentText()} "
                                     f"and descriptor {self.descriptor_field.currentText()} require matching method Hamming distance")
