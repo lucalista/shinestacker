@@ -67,7 +67,7 @@ def detect_and_compute(img_0, img_1, feature_config=None, matching_config=None):
     feature_config_detector = feature_config['detector']
     feature_config_descriptor = feature_config['descriptor']
     match_method = matching_config['match_method']
-    if feature_config_detector == constants.DETECTOR_SIFT and feature_config_descriptor == constants.DESCRIPTOR_ORB:
+    if feature_config_detector == constants.DETECTOR_SIFT and feature_config_descriptor != constants.DESCRIPTOR_SIFT:
         raise ValueError("Detector SIFT requires descriptor SIFT")
     elif feature_config_detector == constants.DETECTOR_SIFT and feature_config_descriptor == constants.DESCRIPTOR_SIFT and \
             match_method == constants.MATCHING_NORM_HAMMING:
