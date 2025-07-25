@@ -67,6 +67,8 @@ def detect_and_compute(img_0, img_1, feature_config=None, matching_config=None):
     feature_config_detector = feature_config['detector']
     feature_config_descriptor = feature_config['descriptor']
     match_method = matching_config['match_method']
+    if feature_config_detector == constants.DETECTOR_SURF and feature_config_descriptor == constants.DESCRIPTOR_AKAZE:
+        raise ValueError("Detector SURF is incompatible with descriptor AKAZE")
     if feature_config_detector == constants.DETECTOR_SIFT and feature_config_descriptor != constants.DESCRIPTOR_SIFT:
         raise ValueError("Detector SIFT requires descriptor SIFT")
     elif feature_config_detector == constants.DETECTOR_SIFT and feature_config_descriptor == constants.DESCRIPTOR_SIFT and \
@@ -91,14 +93,12 @@ def detect_and_compute(img_0, img_1, feature_config=None, matching_config=None):
         constants.DETECTOR_BRISK: cv2.BRISK_create
     }
     detector = detector_map[feature_config_detector]()
-    descriptor = descriptor_map[feature_config_descriptor]()
-    feature_config_detector = feature_config['detector']
-    feature_config_descriptor = feature_config['descriptor']
     if feature_config_detector == feature_config_descriptor and \
-       feature_config_detector in (constants.DETECTOR_SIFT, constants.DETECTOR_AKAZE):
+       feature_config_detector in (constants.DETECTOR_SIFT, constants.DETECTOR_AKAZE, constants.DETECTOR_BRISK):
         kp_0, des_0 = detector.detectAndCompute(img_bw_0, None)
         kp_1, des_1 = detector.detectAndCompute(img_bw_1, None)
     else:
+        descriptor = descriptor_map[feature_config_descriptor]()
         kp_0, des_0 = descriptor.compute(img_bw_0, detector.detect(img_bw_0, None))
         kp_1, des_1 = descriptor.compute(img_bw_1, detector.detect(img_bw_1, None))
     return kp_0, kp_1, get_good_matches(des_0, des_1, matching_config)

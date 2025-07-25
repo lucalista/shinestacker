@@ -23,7 +23,7 @@ Arguments for the constructor ```AlignFrames``` of are:
   * ```DESCRIPTOR_AKAZE```
   * ```DESCRIPTPR_BRISK```
 
-  For a more quantitative comparison of the different methods, consult the publication: [S. A. K. Tareen and Z. Saleem, "A comparative analysis of SIFT, SURF, KAZE, AKAZE, ORB, and BRISK", doi:10.1109/ICOMET.2018.8346440](https://ieeexplore.ieee.org/document/8346440)
+  For a more quantitative comparison of performances of the different methods, consult the publication: [S. A. K. Tareen and Z. Saleem, "A comparative analysis of SIFT, SURF, KAZE, AKAZE, ORB, and BRISK", doi:10.1109/ICOMET.2018.8346440](https://ieeexplore.ieee.org/document/8346440)
 
 ```matching_config``` (optional, default; ```None```): a dictionary specifying the following parameters, with the corresponding default values:
 ```python

@@ -693,8 +693,6 @@ class VignettingConfigurator(NoNameActionConfigurator):
 
 
 class AlignFramesConfigurator(NoNameActionConfigurator):
-    DETECTOR_OPTIONS = ['SIFT', 'ORB', 'SURF', 'AKAZE', 'BRISK']
-    DESCRIPTOR_OPTIONS = ['SIFT', 'ORB', 'SURF', 'AKAZE', 'BRISK']
     BORDER_MODE_OPTIONS = ['Constant', 'Replicate', 'Replicate and blur']
     TRANSFORM_OPTIONS = ['Rigid', 'Homography']
     METHOD_OPTIONS = ['Random Sample Consensus (RANSAC)', 'Least Median (LMEDS)']
@@ -712,11 +710,14 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
         detector = self.detector_field.currentText()
         descriptor = self.descriptor_field.currentText()
         match_method = self.matching_method_field.currentText()
-        if detector == 'SIFT' and descriptor != 'SIFT':
+        if detector == 'SURF' and descriptor == 'AKAZE':
+            self.descriptor_field.setCurrentText('SIFT')
+            self.show_info("SURF detector is incompatible with AKAZE descriptor")
+        elif detector == 'SIFT' and descriptor != 'SIFT':
             self.descriptor_field.setCurrentText('SIFT')
             self.show_info("SIFT detector requires SIFT descriptor")
-        elif detector in ['ORB', 'AKAZE', 'BRISK'] and descriptor in ['ORB', 'AKAZE', 'BRISK']:
-            if match_method != self.MATCHING_METHOD_OPTIONS[1]:
+        elif detector in constants.NOKNN_METHODS['detectors'] and descriptor in constants.NOKNN_METHODS['descriptors']:
+            if match_method == self.MATCHING_METHOD_OPTIONS[0]:
                 self.matching_method_field.setCurrentText(self.MATCHING_METHOD_OPTIONS[1])
                 self.show_info(f"{detector} detector and {descriptor} descriptor require Hamming distance")
         elif descriptor == 'SIFT' and match_method != self.MATCHING_METHOD_OPTIONS[0]:
@@ -736,9 +737,9 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
             layout.addRow(self.info_label)
 
             detector = self.detector_field = self.builder.add_field('detector', FIELD_COMBO, 'Detector', required=False,
-                                                                    options=self.DETECTOR_OPTIONS, default=constants.DEFAULT_DETECTOR)
+                                                                    options=constants.VALID_DETECTORS, default=constants.DEFAULT_DETECTOR)
             descriptor = self.descriptor_field = self.builder.add_field('descriptor', FIELD_COMBO, 'Descriptor', required=False,
-                                                                        options=self.DESCRIPTOR_OPTIONS, default=constants.DEFAULT_DESCRIPTOR)
+                                                                        options=constants.VALID_DESCRIPTORS, default=constants.DEFAULT_DESCRIPTOR)
 
             self.add_bold_label("Feature matching:")
             match_method = self.matching_method_field = self.builder.add_field('match_method', FIELD_COMBO, 'Match method', required=False,
@@ -839,7 +840,7 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
                 return False
             if self.detector_field.currentText() in constants.NOKNN_METHODS['detectors'] and \
                self.descriptor_field.currentText() in constants.NOKNN_METHODS['descriptors'] and \
-               self.matching_method_field.currentText() != self.MATCHING_METHOD_OPTIONS[1]:
+               self.matching_method_field.currentText() == self.MATCHING_METHOD_OPTIONS[0]:
                 QMessageBox.warning(None, "Error", f"Detector {self.detector_field.currentText()} "
                                     f"and descriptor {self.descriptor_field.currentText()} require matching method Hamming distance")
                 return False
