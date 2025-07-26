@@ -7,6 +7,8 @@
 # Documentation
 - [Main documentation page](https://github.com/lucalista/focusstack/blob/main/docs/main.md)
 
+👉 [Changelog](CHANGELOG.md)
+
 # Credits:
 
 The main pyramid stack algorithm was inspired by the [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar. The latest implementation was rewritten from the original code that was used under permission of the author for initial versions of this package.
