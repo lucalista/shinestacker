@@ -5,8 +5,7 @@
 <img src='https://raw.githubusercontent.com/lucalista/focusstack/main/img/flies.gif' width="400">  <img src='https://raw.githubusercontent.com/lucalista/focusstack/main/img/flies_stack.jpg' width="400">
 
 # Documentation
-- [Main documentation page](https://github.com/lucalista/focusstack/blob/main/docs/main.md)
-
+👉 [Main documentation page](https://github.com/lucalista/focusstack/blob/main/docs/main.md)
 👉 [Changelog](CHANGELOG.md)
 
 # Credits:
