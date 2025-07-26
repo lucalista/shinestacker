@@ -5,7 +5,7 @@ This page reports the main releases only and the main changes therein.
 ---
 
 ## [v0.1.4] - 2025-07-23
-Bug fixes and alignment improvements Latest
+**Bug fixes and alignment improvements**
 
 ### Changes
 
@@ -19,7 +19,7 @@ Bug fixes and alignment improvements Latest
 ---
 
 ## [v0.1.1] - 2025-07-20
-Optimized image alignment
+**Optimized image alignment**
 
 ### Changes
 
@@ -32,7 +32,7 @@ Optimized image alignment
 ---
 
 ## [v0.1.0] - 2025-07-19
-This is the first relatively stable and usable GUI release.
+**First relatively stable and usable GUI release**
 
 ### Changes
 - several stability improvements
