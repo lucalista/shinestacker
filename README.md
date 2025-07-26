@@ -6,7 +6,7 @@
 
 # Documentation
 * [Main documentation page](https://github.com/lucalista/focusstack/blob/main/docs/main.md)
-* [Changelog](https://github.com/lucalista/focusstack/CHANGELOG.md)
+* [Changelog](https://github.com/lucalista/focusstack/blob/main/CHANGELOG.md)
 
 # Credits:
 
