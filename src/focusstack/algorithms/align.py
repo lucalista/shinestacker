@@ -60,6 +60,22 @@ def get_good_matches(des_0, des_1, matching_config=None):
         raise InvalidOptionError('match_method', match_method, f". Valid options are: {constants.MATCHING_KNN}, {constants.MATCHING_NORM_HAMMING}")
     return good_matches
 
+def validate_align_config(detector, descriptor, match_method):
+    print(detector, descriptor, match_method)
+    if descriptor == constants.DESCRIPTOR_SIFT and match_method == constants.MATCHING_NORM_HAMMING:
+        raise ValueError("Descriptor SIFT requires matching method KNN")
+    if detector == constants.DETECTOR_ORB and descriptor == constants.DESCRIPTOR_AKAZE and \
+            match_method == constants.MATCHING_NORM_HAMMING:
+        raise ValueError("Detector ORB and descriptor AKAZE require matching method KNN")
+    if detector == constants.DETECTOR_BRISK and descriptor == constants.DESCRIPTOR_AKAZE:
+        raise ValueError("Detector BRISK is incompatible with descriptor AKAZE")
+    if detector == constants.DETECTOR_SURF and descriptor == constants.DESCRIPTOR_AKAZE:
+        raise ValueError("Detector SURF is incompatible with descriptor AKAZE")
+    if detector == constants.DETECTOR_SIFT and descriptor != constants.DESCRIPTOR_SIFT:
+        raise ValueError("Detector SIFT requires descriptor SIFT")
+    if detector in constants.NOKNN_METHODS['detectors'] and descriptor in constants.NOKNN_METHODS['descriptors'] and \
+            match_method != constants.MATCHING_NORM_HAMMING:
+        raise ValueError(f"Detector {detector} and descriptor {descriptor} require matching method Hamming distance")
 
 def detect_and_compute(img_0, img_1, feature_config=None, matching_config=None):
     feature_config = {**_DEFAULT_FEATURE_CONFIG, **(feature_config or {})}
@@ -67,17 +83,7 @@ def detect_and_compute(img_0, img_1, feature_config=None, matching_config=None):
     feature_config_detector = feature_config['detector']
     feature_config_descriptor = feature_config['descriptor']
     match_method = matching_config['match_method']
-    if feature_config_detector == constants.DETECTOR_SURF and feature_config_descriptor == constants.DESCRIPTOR_AKAZE:
-        raise ValueError("Detector SURF is incompatible with descriptor AKAZE")
-    if feature_config_detector == constants.DETECTOR_SIFT and feature_config_descriptor != constants.DESCRIPTOR_SIFT:
-        raise ValueError("Detector SIFT requires descriptor SIFT")
-    elif feature_config_detector == constants.DETECTOR_SIFT and feature_config_descriptor == constants.DESCRIPTOR_SIFT and \
-            match_method == constants.MATCHING_NORM_HAMMING:
-        raise ValueError("Detector and descriptor SIFT require matching method K-NN")
-    elif feature_config_detector in constants.NOKNN_METHODS['detectors'] and \
-            feature_config_descriptor in constants.NOKNN_METHODS['descriptors'] and \
-            match_method != constants.MATCHING_NORM_HAMMING:
-        raise ValueError(f"Detector {feature_config_detector} and descriptor {feature_config_descriptor} require matching method Hamming distance")
+    validate_align_config(feature_config_detector, feature_config_descriptor, match_method)
     img_bw_0, img_bw_1 = img_bw_8bit(img_0), img_bw_8bit(img_1)
     detector_map = {
         constants.DETECTOR_SIFT: cv2.SIFT_create,
