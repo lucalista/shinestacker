@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (QWidget, QPushButton, QHBoxLayout, QFileDialog, Q
 from PySide6.QtCore import Qt, QTimer
 from .. config.constants import constants
 from .project_model import ActionConfig
+from .. algorithms.align import validate_align_config
 
 FIELD_TEXT = 'text'
 FIELD_ABS_PATH = 'abs_path'
@@ -709,20 +710,27 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
     def change_match_config(self):
         detector = self.detector_field.currentText()
         descriptor = self.descriptor_field.currentText()
-        match_method = self.matching_method_field.currentText()
-        if detector == 'SURF' and descriptor == 'AKAZE':
-            self.descriptor_field.setCurrentText('SIFT')
-            self.show_info("SURF detector is incompatible with AKAZE descriptor")
-        elif detector == 'SIFT' and descriptor != 'SIFT':
-            self.descriptor_field.setCurrentText('SIFT')
-            self.show_info("SIFT detector requires SIFT descriptor")
-        elif detector in constants.NOKNN_METHODS['detectors'] and descriptor in constants.NOKNN_METHODS['descriptors']:
-            if match_method == self.MATCHING_METHOD_OPTIONS[0]:
-                self.matching_method_field.setCurrentText(self.MATCHING_METHOD_OPTIONS[1])
-                self.show_info(f"{detector} detector and {descriptor} descriptor require Hamming distance")
-        elif descriptor == 'SIFT' and match_method != self.MATCHING_METHOD_OPTIONS[0]:
-            self.matching_method_field.setCurrentText(self.MATCHING_METHOD_OPTIONS[0])
-            self.show_info("SIFT descriptor requires K-nearest neighbors matching")
+        match_method = {k: v for k, v in zip(self.MATCHING_METHOD_OPTIONS,
+                    constants.VALID_MATCHING_METHODS)}[self.matching_method_field.currentText()]
+        try:
+            print(detector, descriptor, match_method)
+            validate_align_config(detector, descriptor, match_method)
+        except Exception as e:
+            self.show_info(str(e))
+            if descriptor == constants.DETECTOR_SIFT and match_method == constants.MATCHING_NORM_HAMMING:
+                self.matching_method_field.setCurrentText(self.MATCHING_METHOD_OPTIONS[0])
+            if detector == constants.DETECTOR_ORB and descriptor == constants.DESCRIPTOR_AKAZE and \
+                    match_method == constants.MATCHING_NORM_HAMMING:
+                self.matching_method_field.setCurrentText(constants.MATCHING_NORM_HAMMING)
+            if detector == constants.DETECTOR_BRISK and descriptor == constants.DESCRIPTOR_AKAZE:
+                self.descriptor_field.setCurrentText('BRISK')
+            if detector == constants.DETECTOR_SURF and descriptor == constants.DESCRIPTOR_AKAZE:
+                self.descriptor_field.setCurrentText('SIFT')
+            if detector == constants.DETECTOR_SIFT and descriptor != constants.DESCRIPTOR_SIFT:
+                self.descriptor_field.setCurrentText('SIFT')
+            if detector in constants.NOKNN_METHODS['detectors'] and descriptor in constants.NOKNN_METHODS['descriptors']:
+                if match_method == constants.MATCHING_KNN:
+                    self.matching_method_field.setCurrentText(self.MATCHING_METHOD_OPTIONS[1])
 
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
@@ -831,20 +839,16 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
 
     def update_params(self, params: Dict[str, Any]) -> bool:
         if self.detector_field and self.descriptor_field and self.matching_method_field:
-            if self.detector_field.currentText() == 'SIFT' and self.descriptor_field.currentText() == 'ORB':
-                QMessageBox.warning(None, "Error", "Detector SIFT requires descriptor SIFT")
+            try:
+                detector = self.detector_field.currentText()
+                descriptor = self.descriptor_field.currentText()
+                match_method = {k: v for k, v in zip(self.MATCHING_METHOD_OPTIONS,
+                    constants.VALID_MATCHING_METHODS)}[self.matching_method_field.currentText()]
+                validate_align_config(detector, descriptor, match_method)
+                return super().update_params(params)
+            except Exception as e:
+                QMessageBox.warning(None, "Error", f"{str(e)}")
                 return False
-            if self.detector_field.currentText() == 'SIFT' and self.descriptor_field.currentText() == 'SIFT' and \
-               self.matching_method_field.currentText() == self.MATCHING_METHOD_OPTIONS[1]:
-                QMessageBox.warning(None, "Error", "Detector and descriptor SIFT require matching method K-NN")
-                return False
-            if self.detector_field.currentText() in constants.NOKNN_METHODS['detectors'] and \
-               self.descriptor_field.currentText() in constants.NOKNN_METHODS['descriptors'] and \
-               self.matching_method_field.currentText() == self.MATCHING_METHOD_OPTIONS[0]:
-                QMessageBox.warning(None, "Error", f"Detector {self.detector_field.currentText()} "
-                                    f"and descriptor {self.descriptor_field.currentText()} require matching method Hamming distance")
-                return False
-            return super().update_params(params)
 
 
 class BalanceFramesConfigurator(NoNameActionConfigurator):

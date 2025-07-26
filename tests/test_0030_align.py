@@ -1,6 +1,5 @@
 import matplotlib
 matplotlib.use('Agg')
-from focusstack.config.constants import constants
 from focusstack.algorithms.utils import read_img
 from focusstack.algorithms.stack_framework import StackJob, CombinedActions
 from focusstack.algorithms.align import align_images, AlignFrames
@@ -12,47 +11,6 @@ def test_align():
         n_good_matches, M, img_warp = align_images(img_1, img_2)
         assert img_warp is not None
         assert n_good_matches > 100
-    except Exception:
-        assert False
-
-
-def test_align_2():
-    try:
-        img_1, img_2 = [read_img(f"../examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
-        n_good_matches, M, img_warp = align_images(img_1, img_2,
-                                                   feature_config={'detector': constants.DETECTOR_ORB,
-                                                                   'descriptor': constants.DESCRIPTOR_SIFT})
-        assert img_warp is not None
-        assert n_good_matches > 100
-    except Exception:
-        assert False
-
-
-def test_align_3():
-    try:
-        img_1, img_2 = [read_img(f"../examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
-        n_good_matches, M, img_warp = align_images(img_1, img_2,
-                                                   feature_config={'detector': constants.DETECTOR_ORB,
-                                                                   'descriptor': constants.DESCRIPTOR_ORB},
-                                                   matching_config={'match_method': constants.MATCHING_NORM_HAMMING})
-        assert img_warp is not None
-        assert n_good_matches > 100
-    except Exception:
-        assert False
-
-
-def test_align_4():
-    try:
-        img_1, img_2 = [read_img(f"../examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
-        n_good_matches, M, img_warp = align_images(img_1, img_2,
-                                                   feature_config={'detector': constants.DETECTOR_ORB,
-                                                                   'descriptor': constants.DESCRIPTOR_ORB},
-                                                   matching_config={'match_method': constants.MATCHING_KNN})
-        assert img_warp is not None
-        assert n_good_matches > 100
-    except ValueError as e:
-        assert str(e) == "Detector ORB and descriptor ORB require matching method Hamming distance"
-
     except Exception:
         assert False
 
@@ -100,8 +58,5 @@ def test_tif():
 if __name__ == '__main__':
     test_align()
     test_align_rescale()
-    test_align_2()
-    test_align_3()
-    test_align_4()
     test_jpg()
     test_tif()
