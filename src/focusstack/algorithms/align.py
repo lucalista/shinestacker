@@ -60,6 +60,7 @@ def get_good_matches(des_0, des_1, matching_config=None):
         raise InvalidOptionError('match_method', match_method, f". Valid options are: {constants.MATCHING_KNN}, {constants.MATCHING_NORM_HAMMING}")
     return good_matches
 
+
 def validate_align_config(detector, descriptor, match_method):
     print(detector, descriptor, match_method)
     if descriptor == constants.DESCRIPTOR_SIFT and match_method == constants.MATCHING_NORM_HAMMING:
@@ -76,6 +77,7 @@ def validate_align_config(detector, descriptor, match_method):
     if detector in constants.NOKNN_METHODS['detectors'] and descriptor in constants.NOKNN_METHODS['descriptors'] and \
             match_method != constants.MATCHING_NORM_HAMMING:
         raise ValueError(f"Detector {detector} and descriptor {descriptor} require matching method Hamming distance")
+
 
 def detect_and_compute(img_0, img_1, feature_config=None, matching_config=None):
     feature_config = {**_DEFAULT_FEATURE_CONFIG, **(feature_config or {})}

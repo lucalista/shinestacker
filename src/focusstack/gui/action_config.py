@@ -711,7 +711,7 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
         detector = self.detector_field.currentText()
         descriptor = self.descriptor_field.currentText()
         match_method = {k: v for k, v in zip(self.MATCHING_METHOD_OPTIONS,
-                    constants.VALID_MATCHING_METHODS)}[self.matching_method_field.currentText()]
+                                             constants.VALID_MATCHING_METHODS)}[self.matching_method_field.currentText()]
         try:
             print(detector, descriptor, match_method)
             validate_align_config(detector, descriptor, match_method)
@@ -843,7 +843,7 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
                 detector = self.detector_field.currentText()
                 descriptor = self.descriptor_field.currentText()
                 match_method = {k: v for k, v in zip(self.MATCHING_METHOD_OPTIONS,
-                    constants.VALID_MATCHING_METHODS)}[self.matching_method_field.currentText()]
+                                                     constants.VALID_MATCHING_METHODS)}[self.matching_method_field.currentText()]
                 validate_align_config(detector, descriptor, match_method)
                 return super().update_params(params)
             except Exception as e:

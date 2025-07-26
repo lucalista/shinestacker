@@ -30,7 +30,7 @@ trap_exceptions = {
     ('SURF', 'AKAZE', 'NORM_HAMMING'): 'Detector SURF is incompatible with descriptor AKAZE',
     ('SURF', 'BRISK', 'KNN'): 'Detector SURF and descriptor BRISK require matching method Hamming distance',
     ('SURF', 'ORB', 'KNN'): 'Detector SURF and descriptor ORB require matching method Hamming distance',
-    ('SURF', 'SIFT', 'NORM_HAMMING'): 'Descriptor SIFT requires matching method KNN',
+    ('SURF', 'SIFT', 'NORM_HAMMING'): 'Descriptor SIFT requires matching method KNN'
 }
 
 
