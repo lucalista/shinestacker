@@ -20,3 +20,4 @@ focus_stacking.md
 multilayer.md
 noise.md
 vignetting.md
+api.md
