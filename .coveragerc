@@ -1,0 +1,5 @@
+[run]
+omit =
+    src/shinestacker/gui/*
+    src/shinestacker/app/*
+    src/shinestacker/retouch/*
