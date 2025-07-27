@@ -2,8 +2,8 @@ import os
 import logging
 from PIL import Image
 from PIL.ExifTags import TAGS
-from focusstack.core.logging import setup_logging
-from focusstack.algorithms.exif import get_exif, copy_exif_from_file_to_file, print_exif
+from shinestacker.core.logging import setup_logging
+from shinestacker.algorithms.exif import get_exif, copy_exif_from_file_to_file, print_exif
 
 
 NO_TEST_TIFF_TAGS = ["XMLPacket", "Compression", "StripOffsets", "RowsPerStrip", "StripByteCounts", "ImageResources", "ExifOffset", 34665]

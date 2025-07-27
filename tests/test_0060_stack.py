@@ -1,7 +1,7 @@
-from focusstack.algorithms.stack_framework import StackJob
-from focusstack.algorithms.stack import FocusStack, FocusStackBunch
-from focusstack.algorithms.pyramid import PyramidStack
-from focusstack.algorithms.depth_map import DepthMapStack
+from shinestacker.algorithms.stack_framework import StackJob
+from shinestacker.algorithms.stack import FocusStack, FocusStackBunch
+from shinestacker.algorithms.pyramid import PyramidStack
+from shinestacker.algorithms.depth_map import DepthMapStack
 
 
 def test_jpg():

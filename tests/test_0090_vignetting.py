@@ -1,5 +1,5 @@
-from focusstack.algorithms.stack_framework import StackJob, CombinedActions
-from focusstack.algorithms.vignetting import Vignetting
+from shinestacker.algorithms.stack_framework import StackJob, CombinedActions
+from shinestacker.algorithms.vignetting import Vignetting
 
 
 def test_vignetting():

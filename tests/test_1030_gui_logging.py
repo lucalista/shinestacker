@@ -1,8 +1,8 @@
 import pytest
 import logging
 from PySide6.QtWidgets import QApplication
-from focusstack.gui.gui_logging import (SimpleHtmlFormatter, SimpleHtmlHandler,
-                                        GuiLogger, QTextEditLogger, LogManager, LogWorker)
+from shinestacker.gui.gui_logging import (SimpleHtmlFormatter, SimpleHtmlHandler,
+                                          GuiLogger, QTextEditLogger, LogManager, LogWorker)
 
 
 @pytest.fixture

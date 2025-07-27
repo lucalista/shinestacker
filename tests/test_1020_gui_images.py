@@ -4,7 +4,7 @@ import platform
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt
-from focusstack.gui.gui_images import GuiPdfView, GuiImageView, GuiOpenApp, open_file
+from shinestacker.gui.gui_images import GuiPdfView, GuiImageView, GuiOpenApp, open_file
 
 
 @pytest.fixture

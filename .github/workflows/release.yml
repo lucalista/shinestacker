@@ -43,8 +43,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: focusstack-${{ matrix.os }}
-          path: dist/focusstack-release.zip
+          name: shinestacker-${{ matrix.os }}
+          path: dist/shinestacker-release.zip
 
   create-release:
     needs: publish-release
@@ -58,9 +58,9 @@ jobs:
       - name: Prepare release assets
         run: |
           mkdir -p release_assets
-          cp artifacts/focusstack-ubuntu-latest/focusstack-release.zip release_assets/focusstack-ubuntu.zip
-          cp artifacts/focusstack-windows-latest/focusstack-release.zip release_assets/focusstack-windows.zip
-          cp artifacts/focusstack-macos-latest/focusstack-release.zip release_assets/focusstack-macos.zip
+          cp artifacts/shinestacker-ubuntu-latest/shinestacker-release.zip release_assets/shinestacker-ubuntu.zip
+          cp artifacts/shinestacker-windows-latest/shinestacker-release.zip release_assets/shinestacker-windows.zip
+          cp artifacts/shinestacker-macos-latest/shinestacker-release.zip release_assets/shinestacker-macos.zip
           ls -la release_assets/
 
       - name: Create release
@@ -68,6 +68,6 @@ jobs:
         with:
           draft: true
           files: |
-            release_assets/focusstack-ubuntu.zip
-            release_assets/focusstack-windows.zip
-            release_assets/focusstack-macos.zip
+            release_assets/shinestacker-ubuntu.zip
+            release_assets/shinestacker-windows.zip
+            release_assets/shinestacker-macos.zip

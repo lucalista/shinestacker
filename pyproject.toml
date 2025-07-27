@@ -3,9 +3,9 @@ requires = ["setuptools>=68.2.2", "setuptools-scm>=8.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "focusstack"
+name = "shinestacker"
 dynamic = ["version"]
-description = "FocusStack"
+description = "ShineStacker"
 authors = [
     {name = "Luca Lista", email = "luka.lista@gmail.com"}
 ]
@@ -39,21 +39,21 @@ dev = [
 ]
 
 [project.scripts]
-focusstack = "focusstack.app.main:main"
-focusstack-project = "focusstack.app.project:main"
-focusstack-retouch = "focusstack.app.retouch:main"
+shinestacker = "shinestacker.app.main:main"
+shinestacker-project = "shinestacker.app.project:main"
+shinestacker-retouch = "shinestacker.app.retouch:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
 packages = [
-    "focusstack",
-    "focusstack.app",
-    "focusstack.config",
-    "focusstack.core",
-    "focusstack.algorithms",
-    "focusstack.gui",
-    "focusstack.gui.img",
-    "focusstack.retouch"
+    "shinestacker",
+    "shinestacker.app",
+    "shinestacker.config",
+    "shinestacker.core",
+    "shinestacker.algorithms",
+    "shinestacker.gui",
+    "shinestacker.gui.img",
+    "shinestacker.retouch"
 ]
 include-package-data = true
 
@@ -61,5 +61,5 @@ include-package-data = true
 version_scheme = "no-guess-dev"
 local_scheme = "no-local-version"
 fallback_version = "0.0.0"
-write_to = "src/focusstack/_version.py"
+write_to = "src/shinestacker/_version.py"
 write_to_template = "__version__ = '{version}'"
