@@ -20,7 +20,7 @@ noisy pixel masking.
 
 * If the app is dowloaded from the [releases page](https://github.com/lucalista/focusstack/releases), after the  ```zip``` archive is uncompressed, just double-click the app icon.
 
-<img src='../img/gui-finder.png' width="300">
+<img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/img/gui-finder.png' width="300">
 
 **Platform Tip**: Windows apps are inside `/focusstack/`, macOS/Linux apps are directly in the uncompressed folder.
 
@@ -35,7 +35,7 @@ Switching from *Project* to *Retouch* can be done from the *FocusStack* main men
 
 When the app starts, it proposes to create a new project.
 
-<img src='../img/gui-project-new.png' width="600">
+<img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/img/gui-project-new.png' width="600">
 
 ### Creating Projects
 1. Select source folder (JPEG/TIFF 8/16-bit)
@@ -44,7 +44,7 @@ When the app starts, it proposes to create a new project.
    - Real-time logs & progress bar
    - Thumbnail previews for each stage
 
-<img src='../img/flow-diagram.png' width="900" alt="FocusStack workflow: Source images → Alignment → Balancing → Stacking">
+<img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/img/flow-diagram.png' width="900" alt="FocusStack workflow: Source images → Alignment → Balancing → Stacking">
 
 > **Large Set Tip**: For 100+ images:
 > - Split into 10-15 image "bunches" 
@@ -63,7 +63,7 @@ Some actions can be combined in order to produce a single intermediate output (a
 
 It is possible to run a single job, or all jobs within a project.
 
-<img src='../img/gui-project-run.png' width="600">
+<img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/img/gui-project-run.png' width="600">
 
 ### Project Run Tabs
 
@@ -75,7 +75,7 @@ When the job finishes, a *Retouch* button is enabled, which opens the output ima
 
 ## Retouch area
 
-<img src='../img/gui-retouch.png' width="600">
+<img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/img/gui-retouch.png' width="600">
 
 ### Brush Properties
 Adjust in the top toolbar:

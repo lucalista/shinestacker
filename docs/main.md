@@ -4,7 +4,7 @@
 [![PyPI version](https://badge.fury.io/py/shinestacker.svg)](https://pypi.org/project/shinestacker/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/shinestacker)](https://pypi.org/project/shinestacker/)
 
-<img src='../img/flies.gif' width="400">  <img src='../img/flies_stack.jpg' width="400">
+<img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/img/flies.gif' width="400">  <img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/img/flies_stack.jpg' width="400">
 
 > **Professional focus stacking** for microscopy, macro photography, and computational imaging
 
