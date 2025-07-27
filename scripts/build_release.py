@@ -20,9 +20,9 @@ pyinstaller_cmd = ["pyinstaller", "--onedir", f"--name={app_name}", "--paths=src
                    f"--distpath=dist/{package_dir}", f"--collect-all={project_name}",
                    "--collect-data=imagecodecs", "--collect-submodules=imagecodecs", "--copy-metadata=imagecodecs"]
 if sys_name == 'darwin':
-    pyinstaller_cmd += ["--windowed", "--icon=ico/focus_stack.icns"]
+    pyinstaller_cmd += ["--windowed", "--icon=ico/shinestacker.icns"]
 elif sys_name == 'windows':
-    pyinstaller_cmd += ["--windowed", "--icon=ico/focus_stack.ico"]
+    pyinstaller_cmd += ["--windowed", "--icon=ico/shinestacker.ico"]
 pyinstaller_cmd += ["src/shinestacker/app/main.py"]
 
 print(" ".join(pyinstaller_cmd))
