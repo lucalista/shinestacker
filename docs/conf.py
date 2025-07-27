@@ -4,7 +4,7 @@ html_title = "Shine Stacker Documentation"
 
 extensions = [
     'myst_parser',
-    'sphinx.ext.mathjax'
+    'sphinx.ext.mathjax',
 ]
 
 myst_enable_extensions = [
