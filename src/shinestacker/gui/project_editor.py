@@ -328,9 +328,6 @@ class ProjectEditor(QMainWindow):
         label = QLabel(html_text)
         widget_list.setItemWidget(item, label)
 
-    def get_icon(self, icon):
-        return QIcon(os.path.join(self.script_dir, f"img/{icon}.png"))
-
     def add_action_CombinedActions(self):
         self.add_action(constants.ACTION_COMBO)
 

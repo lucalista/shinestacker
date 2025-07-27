@@ -39,12 +39,7 @@ class NewProjectDialog(QDialog):
         self.layout.addRow(label)
 
     def create_form(self):
-        icon_path = f'{get_app_base_path()}'
-        if os.path.exists(f'{icon_path}/ico'):
-            icon_path = f'{icon_path}/ico'
-        else:
-            icon_path = f'{icon_path}/../ico'
-        icon_path = f'{icon_path}/shinestacker.png'
+        icon_path = f"{os.path.dirname(__file__)}/ico/shinestacker.png"
         app_icon = QIcon(icon_path)
         icon_pixmap = app_icon.pixmap(128, 128)
         icon_label = QLabel()

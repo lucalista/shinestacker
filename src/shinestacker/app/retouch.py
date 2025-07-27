@@ -1,3 +1,4 @@
+import os
 import sys
 import argparse
 from PySide6.QtWidgets import QApplication, QMenu
@@ -70,7 +71,8 @@ Multiple directories can be specified separated by ';'.
         app.setAttribute(Qt.AA_DontUseNativeMenuBar)
     else:
         disable_macos_special_menu_items()
-    app.setWindowIcon(QIcon(f'{get_app_base_path()}/ico/shinestacker.png'))
+    icon_path = f"{os.path.dirname(__file__)}/../gui/ico/shinestacker.png"
+    app.setWindowIcon(QIcon(icon_path))
     editor = RetouchApp()
     app.editor = editor
     editor.show()

@@ -138,12 +138,7 @@ expert options are visible by default.
         app.setAttribute(Qt.AA_DontUseNativeMenuBar)
     else:
         disable_macos_special_menu_items()
-    icon_path = f'{get_app_base_path()}'
-    if os.path.exists(f'{icon_path}/ico'):
-        icon_path = f'{icon_path}/ico'
-    else:
-        icon_path = f'{icon_path}/../ico'
-    icon_path = f'{icon_path}/shinestacker.png'
+    icon_path = f"{os.path.dirname(__file__)}/../gui/ico/shinestacker.png"
     app.setWindowIcon(QIcon(icon_path))
     main_app = MainApp()
     app.main_app = main_app

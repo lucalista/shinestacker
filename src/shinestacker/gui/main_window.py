@@ -414,6 +414,9 @@ class MainWindow(ActionsWindow, LogManager):
                     menu.addAction(self.job_retouch_path_action)
             menu.exec(event.globalPos())
 
+    def get_icon(self, icon):
+        return QIcon(os.path.join(self.script_dir, f"img/{icon}.png"))
+
     def get_retouch_path(self, job):
         frames_path = [get_action_output_path(action)[0]
                        for action in job.sub_actions if action.type_name == constants.ACTION_COMBO]
