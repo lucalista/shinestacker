@@ -1,12 +1,12 @@
-# Focus Stacking Processing Framework
+# Shine Stacker Processing Framework
 
-[![CI multiplatform](https://github.com/lucalista/focusstack/actions/workflows/ci-multiplatform.yml/badge.svg)](https://github.com/lucalista/focusstack/actions/workflows/ci-multiplatform.yml)
+[![CI multiplatform](https://github.com/lucalista/shinestacker/actions/workflows/ci-multiplatform.yml/badge.svg)](https://github.com/lucalista/shinestacker/actions/workflows/ci-multiplatform.yml)
 
-<img src='https://raw.githubusercontent.com/lucalista/focusstack/main/img/flies.gif' width="400">  <img src='https://raw.githubusercontent.com/lucalista/focusstack/main/img/flies_stack.jpg' width="400">
+<img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/img/flies.gif' width="400">  <img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/img/flies_stack.jpg' width="400">
 
 ## Documentation
 
-📖 [Main documentation](https://github.com/lucalista/focusstack/blob/main/docs/main.md) • 📝 [Changelog](https://github.com/lucalista/focusstack/blob/main/CHANGELOG.md)
+📖 [Main documentation](https://github.com/lucalista/shinestacker/blob/main/docs/main.md) • 📝 [Changelog](https://github.com/lucalista/shinestacker/blob/main/CHANGELOG.md)
 
 
 # Credits:

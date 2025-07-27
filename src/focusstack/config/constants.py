@@ -3,8 +3,8 @@ import re
 
 
 class _Constants:
-    APP_TITLE = "Focus Stack"
-    APP_STRING = "FocusStack"
+    APP_TITLE = "Shine Stacker"
+    APP_STRING = "ShineStacker"
     EXTENSIONS = set(["jpeg", "jpg", "png", "tif", "tiff"])
 
     NUM_UINT8 = 256
@@ -167,7 +167,7 @@ class _Constants:
 
     def __init__(self):
         self.PYTHON_APP = sys.executable
-        self.RETOUCH_APP = "focusstack-retouch"
+        self.RETOUCH_APP = "shinestacker-retouch"
         _Constants.__setattr__ = _Constants.__setattr__aux
 
 
