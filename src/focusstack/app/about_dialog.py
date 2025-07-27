@@ -13,7 +13,7 @@ def show_about_dialog():
     into a single focused image.</p>
     <p>Author: Luca Lista<br/>
     Email: <a href="mailto:luka.lista@gmail.com">luka.lista@gmail.com</a></p>
-    <p><a href="https://github.com/lucalista/focusstack">GitHub homepage</a></p>
+    <p><a href="https://github.com/lucalista/shinestacker">GitHub homepage</a></p>
     """
     msg = QMessageBox()
     msg.setWindowTitle(f"About {constants.APP_STRING}")
