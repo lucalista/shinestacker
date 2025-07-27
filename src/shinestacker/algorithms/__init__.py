@@ -12,3 +12,8 @@ from .vignetting import Vignetting
 import logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
+
+__all__ = [
+	'StackJob', 'CombinedActions', 'AlignFrames', 'BalanceFrames', 'FocusStackBunch', 'FocusStack',
+	'DepthMapStack', 'PyramidStack', 'MultiLayer', 'NoiseDetection', 'MaskNoise', 'Vignetting'
+]
