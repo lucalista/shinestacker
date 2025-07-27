@@ -1,4 +1,4 @@
-# Job creation
+# Job creation and action scheduling
 
 Create a job, then schedule the desired actions in a job, then run the job.
 
@@ -13,7 +13,7 @@ Arguments are:
 * ```callbacks``` (optional, default: ```None```): dictionary of callback functions for internal use. If equal to ```'tqdm'```, a progress bar is shown in either text mode or jupyter notebook.
 * ```enabled``` (optional, default: ```True```): allows to switch on and off all actions within a job.
 
-# Schedule multiple actions based on a reference image: align and/or balance images
+## Schedule multiple actions based on a reference image: align and/or balance images
 
 The class ```CombinedActions``` runs multiple actions on each of the frames appearing in a path.
 
