@@ -1,5 +1,6 @@
 project = 'Shine Stacker'
 author = 'Luca Lista'
+html_title = "Shine Stacker Documentation"
 
 extensions = ['myst_parser']
 
