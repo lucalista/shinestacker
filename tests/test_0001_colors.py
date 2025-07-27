@@ -1,4 +1,4 @@
-from focusstack.core.colors import color_str
+from shinestacker.core.colors import color_str
 
 
 def test_color():

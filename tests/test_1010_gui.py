@@ -2,8 +2,8 @@ import pytest
 import json
 import tempfile
 from pathlib import Path
-from focusstack.config.constants import constants
-from focusstack.gui.main_window import MainWindow
+from shinestacker.config.constants import constants
+from shinestacker.gui.main_window import MainWindow
 
 
 @pytest.fixture

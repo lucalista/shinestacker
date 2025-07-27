@@ -1,7 +1,7 @@
-from focusstack.config.constants import constants
-from focusstack.algorithms.stack_framework import StackJob, CombinedActions
-from focusstack.algorithms.align import AlignFrames
-from focusstack.algorithms.balance import BalanceFrames
+from shinestacker.config.constants import constants
+from shinestacker.algorithms.stack_framework import StackJob, CombinedActions
+from shinestacker.algorithms.align import AlignFrames
+from shinestacker.algorithms.balance import BalanceFrames
 
 
 def test_hls_gamma():

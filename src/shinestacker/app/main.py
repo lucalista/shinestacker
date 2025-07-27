@@ -111,9 +111,9 @@ class Application(QApplication):
 
 def main():
     parser = argparse.ArgumentParser(
-        prog='focusstack-retouch',
+        prog=f'{constants.APP_STRING.lower()}-retouch',
         description='Focus stacking App.',
-        epilog='This app is part of the focusstack package.')
+        epilog=f'This app is part of the {constants.APP_STRING} package.')
     parser.add_argument('-f', '--filename', nargs='?', help='''
 if a single file is specified, it can be either a project or an image.
 Multiple frames can be specified as a list of files.

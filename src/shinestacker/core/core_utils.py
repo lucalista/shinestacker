@@ -31,7 +31,7 @@ def get_app_base_path():
         dirs = path.split(sep)
         last = -1
         for i in range(len(dirs) - 1, -1, -1):
-            if dirs[i] == 'focusstack':
+            if dirs[i] == 'shinestacker':
                 last = i
                 break
         path = sep.join(dirs if last == 1 else dirs[:last + 1])

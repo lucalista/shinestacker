@@ -1,8 +1,8 @@
 import matplotlib
 matplotlib.use('Agg')
-from focusstack.algorithms.utils import read_img
-from focusstack.algorithms.stack_framework import StackJob, CombinedActions
-from focusstack.algorithms.align import align_images, AlignFrames
+from shinestacker.algorithms.utils import read_img
+from shinestacker.algorithms.stack_framework import StackJob, CombinedActions
+from shinestacker.algorithms.align import align_images, AlignFrames
 
 
 def test_align():

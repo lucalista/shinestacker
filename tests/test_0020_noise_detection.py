@@ -1,8 +1,10 @@
 import logging
-from focusstack.core.logging import setup_logging
-from focusstack.core.exceptions import ShapeError, BitDepthError
-from focusstack.algorithms.stack_framework import StackJob, CombinedActions
-from focusstack.algorithms.noise_detection import mean_image, NoiseDetection, MaskNoise
+from shinestacker.config.config import config
+from shinestacker.config.constants import constants
+from shinestacker.core.logging import setup_logging
+from shinestacker.core.exceptions import ShapeError, BitDepthError
+from shinestacker.algorithms.stack_framework import StackJob, CombinedActions
+from shinestacker.algorithms.noise_detection import mean_image, NoiseDetection, MaskNoise
 
 
 def check_fail_size(extension, directory, ExepctionType, files):
@@ -20,7 +22,7 @@ def test_detect_fail_1():
     setup_logging(
         console_level=logging.DEBUG,
         file_level=logging.DEBUG,
-        log_file="logs/focusstack.log"
+        log_file=f"logs/{constants.APP_STRING.lower()}.log"
     )
     check_fail_size("jpg", "img-jpg-wrong-size", ShapeError, (1, 2))
 

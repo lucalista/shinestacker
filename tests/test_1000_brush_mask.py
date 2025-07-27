@@ -1,5 +1,5 @@
 import numpy as np
-from focusstack.retouch.brush_preview import brush_profile
+from shinestacker.retouch.brush_preview import brush_profile
 
 
 def test_brush_profile():

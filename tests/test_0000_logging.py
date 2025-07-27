@@ -2,8 +2,9 @@ import logging
 import time
 from tqdm import tqdm
 from tqdm.notebook import tqdm_notebook
-from focusstack.config.config import config
-from focusstack.core.logging import setup_logging, console_logging_overwrite, console_logging_newline
+from shinestacker.config.config import config
+from shinestacker.config.constants import constants
+from shinestacker.core.logging import setup_logging, console_logging_overwrite, console_logging_newline
 
 
 def test_log():
@@ -11,7 +12,7 @@ def test_log():
         setup_logging(
             console_level=logging.DEBUG,
             file_level=logging.DEBUG,
-            log_file="logs/focusstack.log"
+            log_file=f"logs/{constants.APP_STRING.lower()}.log"
         )
         logger = logging.getLogger(__name__)
         logger.info('Started')
@@ -36,7 +37,7 @@ def test_tqdm():
         setup_logging(
             console_level=logging.DEBUG,
             file_level=logging.DEBUG,
-            log_file="logs/focusstack.log"
+            log_file=f"logs/{constants.APP_STRING.lower()}.log"
         )
         logger = logging.getLogger("tqdm")
         counts = 50

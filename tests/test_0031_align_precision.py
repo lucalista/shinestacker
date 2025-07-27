@@ -5,8 +5,8 @@ import matplotlib
 if "pytest" in sys.modules:
     matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from focusstack.config.constants import constants
-from focusstack.algorithms.align import align_images
+from shinestacker.config.constants import constants
+from shinestacker.algorithms.align import align_images
 np.random.seed(123456)
 
 

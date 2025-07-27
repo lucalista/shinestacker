@@ -1,8 +1,8 @@
 import matplotlib
 matplotlib.use('Agg')
-from focusstack.config.constants import constants
-from focusstack.algorithms.utils import read_img
-from focusstack.algorithms.align import align_images
+from shinestacker.config.constants import constants
+from shinestacker.algorithms.utils import read_img
+from shinestacker.algorithms.align import align_images
 
 trap_exceptions = {
     ('AKAZE', 'AKAZE', 'KNN'): 'Detector AKAZE and descriptor AKAZE require matching method Hamming distance',

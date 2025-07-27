@@ -1,6 +1,6 @@
 import time
-from focusstack.core.colors import color_str
-from focusstack.core.framework import Job, JobBase, ActionList
+from shinestacker.core.colors import color_str
+from shinestacker.core.framework import Job, JobBase, ActionList
 
 
 class Action1(JobBase):

@@ -1,12 +1,12 @@
 import pytest
 import os
-from unittest.mock import MagicMock, patch
-from focusstack.gui.project_model import Project, ActionConfig
-from focusstack.algorithms.stack_framework import StackJob
-from focusstack.gui.project_converter import ProjectConverter
-from focusstack.config.constants import constants
-from focusstack.core.exceptions import RunStopException
 import logging
+from unittest.mock import MagicMock, patch
+from shinestacker.gui.project_model import Project, ActionConfig
+from shinestacker.algorithms.stack_framework import StackJob
+from shinestacker.gui.project_converter import ProjectConverter
+from shinestacker.config.constants import constants
+from shinestacker.core.exceptions import RunStopException
 
 
 @pytest.fixture
@@ -32,7 +32,7 @@ def real_job():
 def test_get_logger(converter):
     logger = converter.get_logger()
     assert isinstance(logger, logging.Logger)
-    assert logger.name == "focusstack.gui.project_converter"
+    assert logger.name == "shinestacker.gui.project_converter"
     custom_logger = converter.get_logger("custom_logger")
     assert custom_logger.name == "custom_logger"
 

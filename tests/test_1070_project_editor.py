@@ -1,13 +1,13 @@
 import pytest
 from PySide6.QtWidgets import QMessageBox, QListWidget, QListWidgetItem
-from focusstack.config.constants import constants
-from focusstack.gui.project_editor import ProjectEditor, ActionPosition
+from shinestacker.config.constants import constants
+from shinestacker.gui.project_editor import ProjectEditor, ActionPosition
 from unittest.mock import MagicMock, patch
 
 
 @pytest.fixture
 def editor(qtbot):
-    with patch('focusstack.gui.project_editor.QMainWindow.__init__'):
+    with patch('shinestacker.gui.project_editor.QMainWindow.__init__'):
         editor = ProjectEditor()
         editor.job_list = MagicMock(spec=QListWidget)
         editor.action_list = MagicMock(spec=QListWidget)
@@ -69,7 +69,7 @@ def test_set_project(editor, mock_project):
 #     ])
 
 
-@patch('focusstack.gui.project_editor.QMessageBox.question', return_value=QMessageBox.Yes)
+@patch('shinestacker.gui.project_editor.QMessageBox.question', return_value=QMessageBox.Yes)
 def test_delete_job(mock_msg, editor, mock_project):
     editor.set_project(mock_project)
     editor.job_list.currentRow.return_value = 0
@@ -115,7 +115,7 @@ def test_action_position_dataclass():
     assert pos.is_sub_action
 
 
-@patch('focusstack.gui.project_editor.ActionConfigDialog')
+@patch('shinestacker.gui.project_editor.ActionConfigDialog')
 def test_add_job(mock_dialog, editor):
     mock_dialog.return_value.exec.return_value = QMessageBox.Accepted
     project = MagicMock()

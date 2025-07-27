@@ -1,26 +1,31 @@
+import os
 import sys
+import logging
 import argparse
+import matplotlib
+import matplotlib.backends.backend_pdf
+matplotlib.use('agg')
 from PySide6.QtWidgets import QApplication, QMenu
 from PySide6.QtGui import QIcon, QAction
-from PySide6.QtCore import Qt, QEvent
+from PySide6.QtCore import Qt, QTimer, QEvent
 from .. config.config import config
 config.init(DISABLE_TQDM=True, DONT_USE_NATIVE_MENU=True)
-from .. core.core_utils import get_app_base_path
-from .. config.config import config
 from .. config.constants import constants
-from .. retouch.image_editor_ui import ImageEditorUI
+from .. core.logging import setup_logging
+from .. core.core_utils import get_app_base_path
+from .. gui.main_window import MainWindow
 from .gui_utils import disable_macos_special_menu_items
 from .help_menu import add_help_action
 from .about_dialog import show_about_dialog
-from .open_frames import open_frames
 
 
-class RetouchApp(ImageEditorUI):
+class ProjectApp(MainWindow):
     def __init__(self):
         super().__init__()
         self.app_menu = self.create_menu()
         self.menuBar().insertMenu(self.menuBar().actions()[0], self.app_menu)
         add_help_action(self)
+        self.set_retouch_callback(self._retouch_callback)
 
     def create_menu(self):
         app_menu = QMenu(constants.APP_STRING)
@@ -38,43 +43,47 @@ class RetouchApp(ImageEditorUI):
         app_menu.addAction(exit_action)
         return app_menu
 
+    def _retouch_callback(self, filename):
+        p = ";".join(filename)
+        os.system(f'{constants.RETOUCH_APP} -p "{p}" &')
+
 
 class Application(QApplication):
     def event(self, event):
         if event.type() == QEvent.Quit and event.spontaneous():
-            self.editor.quit()
+            self.window.quit()
         return super().event(event)
 
 
 def main():
     parser = argparse.ArgumentParser(
-        prog='focusstack-retouch',
-        description='Final retouch focus stack image from individual frames.',
+        prog=f'{constants.APP_STRING.lower()}-project',
+        description='Manage and run focus stack jobs.',
         epilog=f'This app is part of the {constants.APP_STRING} package.')
     parser.add_argument('-f', '--filename', nargs='?', help='''
-import frames from files.
-Multiple files can be specified separated by ';'.
+project filename.
 ''')
-    parser.add_argument('-p', '--path', nargs='?', help='''
-import frames from one or more directories.
-Multiple directories can be specified separated by ';'.
+    parser.add_argument('-x', '--expert', action='store_true', help='''
+expert options are visible by default.
 ''')
     args = vars(parser.parse_args(sys.argv[1:]))
-    filename = args['filename']
-    path = args['path']
-    if filename and path:
-        print("can't specify both arguments --filename and --path", file=sys.stderr)
-        exit(1)
+    setup_logging(console_level=logging.DEBUG, file_level=logging.DEBUG, disable_console=True)
     app = Application(sys.argv)
     if config.DONT_USE_NATIVE_MENU:
         app.setAttribute(Qt.AA_DontUseNativeMenuBar)
     else:
         disable_macos_special_menu_items()
     app.setWindowIcon(QIcon(f'{get_app_base_path()}/ico/focus_stack.png'))
-    editor = RetouchApp()
-    app.editor = editor
-    editor.show()
-    open_frames(editor, filename, path)
+    window = ProjectApp()
+    if args['expert']:
+        window.set_expert_options()
+    app.window = window
+    window.show()
+    filename = args['filename']
+    if filename:
+        QTimer.singleShot(100, lambda: window.open_project(filename))
+    else:
+        QTimer.singleShot(100, lambda: window.new_project())
     sys.exit(app.exec())
 
 
