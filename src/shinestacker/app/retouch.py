@@ -70,7 +70,7 @@ Multiple directories can be specified separated by ';'.
         app.setAttribute(Qt.AA_DontUseNativeMenuBar)
     else:
         disable_macos_special_menu_items()
-    app.setWindowIcon(QIcon(f'{get_app_base_path()}/ico/focus_stack.png'))
+    app.setWindowIcon(QIcon(f'{get_app_base_path()}/ico/shinestacker.png'))
     editor = RetouchApp()
     app.editor = editor
     editor.show()
