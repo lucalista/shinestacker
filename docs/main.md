@@ -78,14 +78,14 @@ job.run()
 
 ## Documentation Highlights
 ### Core Processing
-- [Graphical User Interface](../docs/gui.md)
-- [Image alignment](../docs/alignment.md)
-- [Luminosity and color balancing](../docs/balancing.md)
-- [Stacking algorithms](../docs/focus_stacking.md)
+- [Graphical User Interface](gui.md)
+- [Image alignment](alignment.md)
+- [Luminosity and color balancing](balancing.md)
+- [Stacking algorithms](focus_stacking.md)
 ### Advanced Modules
-- [Noisy pixel masking](../docs/noise.md)
-- [Vignetting correction](../docs/vignetting.md)
-- [Multilayer image](../docs/multilayer.md)
+- [Noisy pixel masking](noise.md)
+- [Vignetting correction](vignetting.md)
+- [Multilayer image](multilayer.md)
 
 ## Requirements
 

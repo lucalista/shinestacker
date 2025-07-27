@@ -1,10 +1,10 @@
 # API Reference
 
-```{autosummary}
-:toctree: _autosummary
-:template: custom-module-template.rst
-:recursive:
+```{toctree}
+:maxdepth: 2
+:caption: API Modules
 
-shinestacker.config
-shinestacker.core
-shinestacker.algorithms
+_autosummary/shinestacker.config
+_autosummary/shinestacker.core
+_autosummary/shinestacker.algorithms
+```
