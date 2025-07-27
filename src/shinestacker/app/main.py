@@ -8,17 +8,17 @@ matplotlib.use('agg')
 from PySide6.QtWidgets import QApplication, QMainWindow, QStackedWidget, QMenu
 from PySide6.QtGui import QAction, QIcon, QGuiApplication
 from PySide6.QtCore import Qt, QEvent, QTimer
-from .. config.config import config
+from shinestacker.config.config import config
 config.init(DISABLE_TQDM=True, COMBINED_APP=True, DONT_USE_NATIVE_MENU=True)
-from .. config import constants
-from .. core.logging import setup_logging
-from .. core.core_utils import get_app_base_path
-from .. gui.main_window import MainWindow
-from .. retouch.image_editor_ui import ImageEditorUI
-from .gui_utils import disable_macos_special_menu_items
-from .help_menu import add_help_action
-from .about_dialog import show_about_dialog
-from .open_frames import open_frames
+from shinestacker.config.constants import constants
+from shinestacker.core.logging import setup_logging
+from shinestacker.core.core_utils import get_app_base_path
+from shinestacker.gui.main_window import MainWindow
+from shinestacker.retouch.image_editor_ui import ImageEditorUI
+from shinestacker.app.gui_utils import disable_macos_special_menu_items
+from shinestacker.app.help_menu import add_help_action
+from shinestacker.app.about_dialog import show_about_dialog
+from shinestacker.app.open_frames import open_frames
 
 
 class MainApp(QMainWindow):
