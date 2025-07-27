@@ -62,7 +62,6 @@ def get_good_matches(des_0, des_1, matching_config=None):
 
 
 def validate_align_config(detector, descriptor, match_method):
-    print(detector, descriptor, match_method)
     if descriptor == constants.DESCRIPTOR_SIFT and match_method == constants.MATCHING_NORM_HAMMING:
         raise ValueError("Descriptor SIFT requires matching method KNN")
     if detector == constants.DETECTOR_ORB and descriptor == constants.DESCRIPTOR_AKAZE and \
