@@ -98,12 +98,12 @@ job.run()
 ```bash
 pip install imagecodecs matplotlib numpy opencv-python pillow psdtags scipy setuptools-scm tifffile tqdm
 ```
-# GUI support
+## GUI support
 ```bash
 pip install argparse PySide6 jsonpickle webbrowser
 ```
 
-# Jupyter support
+## Jupyter support
 ```bash
 pip install ipywidgets
 ```
