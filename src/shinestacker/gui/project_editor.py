@@ -1,7 +1,6 @@
 import os
 from dataclasses import dataclass
 from PySide6.QtWidgets import QMainWindow, QListWidget, QMessageBox, QDialog, QListWidgetItem, QLabel
-from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt
 from .. config.constants import constants
 from .colors import ColorPalette

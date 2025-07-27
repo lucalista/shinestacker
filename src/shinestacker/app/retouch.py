@@ -6,7 +6,6 @@ from PySide6.QtGui import QIcon, QAction
 from PySide6.QtCore import Qt, QEvent
 from shinestacker.config.config import config
 config.init(DISABLE_TQDM=True, DONT_USE_NATIVE_MENU=True)
-from shinestacker.core.core_utils import get_app_base_path
 from shinestacker.config.config import config
 from shinestacker.config.constants import constants
 from shinestacker.retouch.image_editor_ui import ImageEditorUI
