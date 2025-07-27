@@ -73,7 +73,8 @@ expert options are visible by default.
         app.setAttribute(Qt.AA_DontUseNativeMenuBar)
     else:
         disable_macos_special_menu_items()
-    app.setWindowIcon(QIcon(f'{get_app_base_path()}/ico/shinestacker.png'))
+    icon_path = f"{os.path.dirname(__file__)}/../gui/ico/shinestacker.png"
+    app.setWindowIcon(QIcon(icon_path))
     window = ProjectApp()
     if args['expert']:
         window.set_expert_options()

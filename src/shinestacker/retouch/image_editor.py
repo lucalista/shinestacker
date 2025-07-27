@@ -364,8 +364,6 @@ class ImageEditor(QMainWindow):
             QMessageBox.critical(self, "Save Error", f"Could not save file: {str(e)}")
 
     def select_exif_path(self):
-        if self.current_stack is None:
-            return
         path, _ = QFileDialog.getOpenFileName(None, "Select file with exif data")
         if path:
             self.exif_path = path
