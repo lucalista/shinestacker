@@ -33,6 +33,10 @@ dependencies = [
     "setuptools-scm"
 ]
 
+[project.urls]
+Homepage = "https://github.com/lucalista/shinestacker"
+Documentation = "https://shinestacker.readthedocs.io/"
+
 [project.optional-dependencies]
 dev = [
     "pytest",
