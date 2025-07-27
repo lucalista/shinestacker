@@ -12,11 +12,11 @@
 :caption: Content
 
 main.md
+gui.md
+job.md
 alignment.md
 balancing.md
 focus_stacking.md
-gui.md
-job.md
 multilayer.md
 noise.md
 vignetting.md
