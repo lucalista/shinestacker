@@ -4,6 +4,19 @@ This page reports the main releases only and the main changes therein.
 
 ---
 
+## [v0.2.0] - 2025-07-27
+**Stability improvements and new package name**
+
+### Changes
+
+* first release with new name ShineStacker
+* added BRISK detector/descriptor alignment method
+* improved stability by adding more validation controls to alignment configuration
+* some bug fixes
+* minor restyling
+
+---
+
 ## [v0.1.4] - 2025-07-23
 **Bug fixes and alignment improvements**
 
