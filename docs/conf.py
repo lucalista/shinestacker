@@ -1,3 +1,6 @@
+project = 'Shine Stacker'
+author = 'Luca Lista'
+
 extensions = ['myst_parser']
 
 source_suffix = {
