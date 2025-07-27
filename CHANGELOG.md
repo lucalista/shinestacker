@@ -4,6 +4,15 @@ This page reports the main releases only and the main changes therein.
 
 ---
 
+## [v0.2.1] - 2025-07-27
+**Icon location fix**
+
+### Changes
+
+* icon location fixed, compatibly with PyPI and bundle release build
+
+---
+
 ## [v0.2.0] - 2025-07-27
 **Stability improvements and new package name**
 
