@@ -5,7 +5,7 @@ from shinestacker.algorithms.balance import BalanceFrames
 
 def test_tif_rgb_match():
     try:
-        job = StackJob("job", "../examples", input_path="input/img-tif", callbacks='tqdm')
+        job = StackJob("job", "examples", input_path="input/img-tif", callbacks='tqdm')
         job.add_action(CombinedActions("balance",
                                        [BalanceFrames(channel=constants.BALANCE_RGB,
                                                       corr_map=constants.BALANCE_MATCH_HIST,
@@ -18,7 +18,7 @@ def test_tif_rgb_match():
 
 def test_jpg_lumi():
     try:
-        job = StackJob("job", "../examples", input_path="input/img-jpg", callbacks='tqdm')
+        job = StackJob("job", "examples", input_path="input/img-jpg", callbacks='tqdm')
         job.add_action(CombinedActions("balance",
                                        [BalanceFrames(channel=constants.BALANCE_LUMI,
                                                       corr_map=constants.BALANCE_LINEAR,
@@ -31,7 +31,7 @@ def test_jpg_lumi():
 
 def test_tif_lumi():
     try:
-        job = StackJob("job", "../examples", input_path="input/img-tif", callbacks='tqdm')
+        job = StackJob("job", "examples", input_path="input/img-tif", callbacks='tqdm')
         job.add_action(CombinedActions("balance",
                                        [BalanceFrames(channel=constants.BALANCE_LUMI,
                                                       corr_map=constants.BALANCE_GAMMA,
@@ -44,7 +44,7 @@ def test_tif_lumi():
 
 def test_jpg_rgb():
     try:
-        job = StackJob("job", "../examples", input_path="input/img-jpg", callbacks='tqdm')
+        job = StackJob("job", "examples", input_path="input/img-jpg", callbacks='tqdm')
         job.add_action(CombinedActions("balance",
                                        [BalanceFrames(channel=constants.BALANCE_RGB,
                                                       corr_map=constants.BALANCE_LINEAR,
@@ -57,7 +57,7 @@ def test_jpg_rgb():
 
 def test_jpg_hsv():
     try:
-        job = StackJob("job", "../examples", input_path="input/img-jpg", callbacks='tqdm')
+        job = StackJob("job", "examples", input_path="input/img-jpg", callbacks='tqdm')
         job.add_action(CombinedActions("balance",
                                        [BalanceFrames(channel=constants.BALANCE_HSV,
                                                       corr_map=constants.BALANCE_LINEAR,
@@ -70,7 +70,7 @@ def test_jpg_hsv():
 
 def test_jpg_hls():
     try:
-        job = StackJob("job", "../examples", input_path="input/img-jpg", callbacks='tqdm')
+        job = StackJob("job", "examples", input_path="input/img-jpg", callbacks='tqdm')
         job.add_action(CombinedActions("balance",
                                        [BalanceFrames(channel=constants.BALANCE_HLS,
                                                       corr_map=constants.BALANCE_GAMMA,

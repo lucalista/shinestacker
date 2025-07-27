@@ -12,10 +12,10 @@ def test_write():
         output_dir = test_path
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        filenames = [f"../examples/input/img-tif/000{i}.tif" for i in range(N_LAYERS)]
+        filenames = [f"examples/input/img-tif/000{i}.tif" for i in range(N_LAYERS)]
         labels = [f'Layer {i + 1}' for i in range(N_LAYERS)]
         write_multilayer_tiff(filenames, output_dir + test_file, labels=labels,
-                              exif_path="../examples/input/img-tif")
+                              exif_path="examples/input/img-tif")
     except Exception:
         assert False
 
@@ -32,9 +32,9 @@ def test_read():
 
 def test_jpg():
     try:
-        job = StackJob("job", "../examples", input_path="../examples/input/img-jpg")
+        job = StackJob("job", "examples", input_path="input/img-jpg")
         job.add_action(MultiLayer("multi", output_path="output/img-jpg-multilayer",
-                                  input_path=["../examples/input/img-jpg", "output/img-jpg-stack"],
+                                  input_path=["examples/input/img-jpg", "output/img-jpg-stack"],
                                   reverse_order=True))
         job.run()
     except Exception:
@@ -43,10 +43,10 @@ def test_jpg():
 
 def test_tif():
     try:
-        job = StackJob("job", "../examples", input_path="../examples/input/img-tif")
+        job = StackJob("job", "examples", input_path="input/img-tif")
         job.add_action(MultiLayer("multi", output_path="output/img-tif-multilayer",
-                                  input_path=["output/img-tif-stack", "../examples/input/img-tif"],
-                                  exif_path='../examples/input/img-tif',
+                                  input_path=["output/img-tif-stack", "input/img-tif"],
+                                  exif_path='input/img-tif',
                                   reverse_order=True))
         job.run()
     except Exception:
