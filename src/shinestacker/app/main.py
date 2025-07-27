@@ -143,7 +143,7 @@ expert options are visible by default.
         icon_path = f'{icon_path}/ico'
     else:
         icon_path = f'{icon_path}/../ico'
-    icon_path = f'{icon_path}/focus_stack.png'
+    icon_path = f'{icon_path}/shinestacker.png'
     app.setWindowIcon(QIcon(icon_path))
     main_app = MainApp()
     app.main_app = main_app

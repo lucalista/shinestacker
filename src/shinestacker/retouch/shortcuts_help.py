@@ -49,7 +49,7 @@ class ShortcutsHelp(QDialog):
             icon_path = f'{icon_path}/ico'
         else:
             icon_path = f'{icon_path}/../ico'
-        icon_path = f'{icon_path}/focus_stack.png'
+        icon_path = f'{icon_path}/shinestacker.png'
         app_icon = QIcon(icon_path)
         icon_pixmap = app_icon.pixmap(128, 128)
         icon_label = QLabel()
