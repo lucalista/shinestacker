@@ -3,7 +3,6 @@ from PySide6.QtWidgets import (QFormLayout, QHBoxLayout, QPushButton, QDialog,
                                QLabel, QVBoxLayout, QWidget)
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt
-from .. core.core_utils import get_app_base_path
 
 
 class ShortcutsHelp(QDialog):

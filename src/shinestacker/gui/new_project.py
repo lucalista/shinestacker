@@ -6,7 +6,6 @@ from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt
 from .. config.gui_constants import gui_constants
 from .. config.constants import constants
-from .. core.core_utils import get_app_base_path
 
 
 class NewProjectDialog(QDialog):

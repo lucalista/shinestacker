@@ -1,5 +1,4 @@
 import logging
-from shinestacker.config.config import config
 from shinestacker.config.constants import constants
 from shinestacker.core.logging import setup_logging
 from shinestacker.core.exceptions import ShapeError, BitDepthError

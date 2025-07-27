@@ -12,7 +12,6 @@ from shinestacker.config.config import config
 config.init(DISABLE_TQDM=True, DONT_USE_NATIVE_MENU=True)
 from shinestacker.config.constants import constants
 from shinestacker.core.logging import setup_logging
-from shinestacker.core.core_utils import get_app_base_path
 from shinestacker.gui.main_window import MainWindow
 from shinestacker.app.gui_utils import disable_macos_special_menu_items
 from shinestacker.app.help_menu import add_help_action
