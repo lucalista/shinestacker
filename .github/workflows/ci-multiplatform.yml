@@ -35,7 +35,7 @@ jobs:
 
       - name: Run non-GUI tests (test_00*.py)
         run: >
-          Python3 -c "import glob, pytest, sys; sys.exit(pytest.main(glob.glob('tests/test_00*.py') + ['-v', '--disable-warnings', '--cov=shinestacker', '--cov-report=xml']))"
+          python3 -c "import glob, pytest, sys; sys.exit(pytest.main(glob.glob('tests/test_00*.py') + ['-v', '--disable-warnings', '--cov=shinestacker', '--cov-report=xml']))"
 
       - name: Upload coverage to Codecov
         if: matrix.os == 'ubuntu-latest'
