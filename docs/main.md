@@ -1,6 +1,6 @@
-# Focus Stacking Processing Framework
+# Shine Stacker Processing Framework
 
-[![CI multiplatform](https://github.com/lucalista/focusstack/actions/workflows/ci-multiplatform.yml/badge.svg)](https://github.com/lucalista/focusstack/actions/workflows/ci-multiplatform.yml)
+[![CI multiplatform](https://github.com/lucalista/shinestacker/actions/workflows/ci-multiplatform.yml/badge.svg)](https://github.com/lucalista/shinestacker/actions/workflows/ci-multiplatform.yml)
 
 <img src='../img/flies.gif' width="400">  <img src='../img/flies_stack.jpg' width="400">
 
@@ -17,7 +17,7 @@
 ## Quick start
 ### Command Line Processing
 ```python
-from focusstack.algorithms import *
+from shinestacker.algorithms import *
 
 # Minimal workflow: Alignment → Stacking
 job = StackJob("demo", "/path/to/images", input_path="src")
@@ -48,7 +48,7 @@ Follow [GUI guide](gui.md) for batch processing and retouching.
 ## Advanced Processing Pipeline
 
 ```python
-from focusstack.algorithms import *
+from shinestacker.algorithms import *
 
 job = StackJob("job", "E:/Focus stacking/My image directory/", input_path="src")
 job.add_action(NoiseDetection())
