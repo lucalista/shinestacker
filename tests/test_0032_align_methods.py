@@ -1,5 +1,4 @@
-import matplotlib
-matplotlib.use('Agg')
+from time import perf_counter
 from shinestacker.config.constants import constants
 from shinestacker.algorithms.utils import read_img
 from shinestacker.algorithms.align import align_images
@@ -35,18 +34,22 @@ trap_exceptions = {
 
 
 def test_align():
+    perf_map = {}
     for detector in constants.VALID_DETECTORS:
         for descriptor in constants.VALID_DESCRIPTORS:
             for match_method in constants.VALID_MATCHING_METHODS:
                 try:
                     print(f"detector: {detector}, descriptor: {descriptor}, match method: {match_method}")
                     img_1, img_2 = [read_img(f"../examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
+                    t_start = perf_counter()
                     n_good_matches, M, img_warp = align_images(img_1, img_2,
                                                                feature_config={'detector': detector,
                                                                                'descriptor': descriptor},
                                                                matching_config={'match_method': match_method})
+                    t_elapsed = perf_counter() - t_start
                     assert img_warp is not None
                     assert n_good_matches > 100
+                    perf_map[t_elapsed] = (detector, descriptor, match_method)
                 except Exception as e:
                     k = (detector, descriptor, match_method)
                     if k in trap_exceptions.keys():
@@ -54,6 +57,11 @@ def test_align():
                         assert str(e) == trap_exceptions[k]
                     else:
                         assert False
+    perf_map = dict(sorted(perf_map.items()))
+    print("== time performance ==")
+    for t, v in perf_map.items():
+        print(f"{t:.4f}s: {v[0]}-{v[1]}-{v[2]}")
+    print("======================")
 
 
 if __name__ == '__main__':
