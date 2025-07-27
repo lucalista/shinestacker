@@ -20,7 +20,7 @@ class _Config:
 
     def init(self, **kwargs):
         if self._initialized:
-            raise RuntimeError("Config already initialized")
+            return
         for k, v in kwargs.items():
             if hasattr(self, f"_{k}"):
                 setattr(self, f"_{k}", v)

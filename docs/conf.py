@@ -1,3 +1,7 @@
+import os
+import sys
+sys.path.insert(0, os.path.abspath('../src'))
+
 project = 'Shine Stacker'
 author = 'Luca Lista'
 html_title = "Shine Stacker Documentation"
@@ -28,4 +32,12 @@ extensions = [
     'sphinx.ext.autosummary',
 ]
 
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '**/.ipynb_checkpoints']
+
 autosummary_generate = True
+autodoc_default_options = {
+    'members': True,
+    'undoc-members': True,
+    'show-inheritance': True,
+}
+

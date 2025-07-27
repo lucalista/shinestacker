@@ -1,5 +1,5 @@
 import os
-from config.config import config
+from ..config.config import config
 
 if not config.DISABLE_TQDM:
     from tqdm import tqdm
