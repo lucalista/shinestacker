@@ -7,6 +7,11 @@ extensions = [
     'sphinx.ext.mathjax'
 ]
 
+myst_enable_extensions = [
+    "dollarmath",
+    "amsmath",
+]
+
 source_suffix = {
     '.rst': 'restructuredtext',
     '.md': 'markdown',
