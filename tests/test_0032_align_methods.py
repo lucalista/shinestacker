@@ -40,7 +40,7 @@ def test_align():
             for match_method in constants.VALID_MATCHING_METHODS:
                 try:
                     print(f"detector: {detector}, descriptor: {descriptor}, match method: {match_method}")
-                    img_1, img_2 = [read_img(f"../examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
+                    img_1, img_2 = [read_img(f"examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
                     t_start = perf_counter()
                     n_good_matches, M, img_warp = align_images(img_1, img_2,
                                                                feature_config={'detector': detector,

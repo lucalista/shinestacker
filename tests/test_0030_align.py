@@ -7,7 +7,7 @@ from shinestacker.algorithms.align import align_images, AlignFrames
 
 def test_align():
     try:
-        img_1, img_2 = [read_img(f"../examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
+        img_1, img_2 = [read_img(f"examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
         n_good_matches, M, img_warp = align_images(img_1, img_2)
         assert img_warp is not None
         assert n_good_matches > 100
@@ -17,7 +17,7 @@ def test_align():
 
 def test_align_rescale():
     try:
-        img_1, img_2 = [read_img(f"../examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
+        img_1, img_2 = [read_img(f"examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
         n_good_matches, M, img_warp = align_images(img_1, img_2, alignment_config={'subsample': 4})
         assert img_warp is not None
         assert n_good_matches > 10
@@ -27,7 +27,7 @@ def test_align_rescale():
 
 def test_align_ecc():
     try:
-        img_1, img_2 = [read_img(f"../examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
+        img_1, img_2 = [read_img(f"examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
         n_good_matches, M, img_warp = align_images(img_1, img_2, alignment_config={'ecc_refinement': True})
         assert img_warp is not None
         assert n_good_matches > 10
@@ -37,7 +37,7 @@ def test_align_ecc():
 
 def test_jpg():
     try:
-        job = StackJob("job", "../examples", input_path="input/img-jpg", callbacks='tqdm')
+        job = StackJob("job", "examples", input_path="input/img-jpg", callbacks='tqdm')
         job.add_action(CombinedActions("align-jpg", [AlignFrames(plot_summary=True)],
                                        output_path="output/img-jpg-align"))
         job.run()
@@ -47,7 +47,7 @@ def test_jpg():
 
 def test_tif():
     try:
-        job = StackJob("job", "../examples", input_path="input/img-tif", callbacks='tqdm')
+        job = StackJob("job", "examples", input_path="input/img-tif", callbacks='tqdm')
         job.add_action(CombinedActions("align-tif", [AlignFrames(plot_summary=True)],
                                        output_path="output/img-tif-align"))
         job.run()

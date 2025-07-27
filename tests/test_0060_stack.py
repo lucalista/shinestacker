@@ -6,7 +6,7 @@ from shinestacker.algorithms.depth_map import DepthMapStack
 
 def test_jpg():
     try:
-        job = StackJob("job", "../examples", input_path="input/img-jpg")
+        job = StackJob("job", "examples", input_path="input/img-jpg")
         job.add_action(FocusStack("stack-pyramid", PyramidStack(),
                                   output_path="output/img-jpg-stack", prefix='pyr_'))
         job.run()
@@ -16,7 +16,7 @@ def test_jpg():
 
 def test_tif():
     try:
-        job = StackJob("job", "../examples", input_path="input/img-tif")
+        job = StackJob("job", "examples", input_path="input/img-tif")
         job.add_action(FocusStack("stack-pyramid-tiff", PyramidStack(),
                                   output_path="output/img-tif-stack", prefix='pyr_'))
         job.run()
@@ -26,7 +26,7 @@ def test_tif():
 
 def test_jpg_dm():
     try:
-        job = StackJob("job", "../examples", input_path="input/img-jpg")
+        job = StackJob("job", "examples", input_path="input/img-jpg")
         job.add_action(FocusStack("stack-depthmap", DepthMapStack(),
                                   output_path="output/img-jpg-stack", prefix='dm_'))
         job.run()
@@ -36,7 +36,7 @@ def test_jpg_dm():
 
 def test_bunches():
     try:
-        job = StackJob("job", "../examples", input_path="input/img-jpg")
+        job = StackJob("job", "examples", input_path="input/img-jpg")
         job.add_action(FocusStackBunch("stack-pyramid-bunch", PyramidStack(),
                                        output_path="output/img-jpg-bunches", frames=3))
         job.run()

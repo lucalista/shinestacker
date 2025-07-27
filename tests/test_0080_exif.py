@@ -21,7 +21,7 @@ def test_exif_jpg():
         out_filename = output_dir + "/0001.jpg"
         logger.info("======== Testing JPG EXIF ======== ")
         logger.info("*** Source JPG EXIF ***")
-        exif = copy_exif_from_file_to_file("../examples/input/img-jpg/0000.jpg", "../examples/input/img-jpg/0001.jpg",
+        exif = copy_exif_from_file_to_file("examples/input/img-jpg/0000.jpg", "examples/input/img-jpg/0001.jpg",
                                            out_filename=out_filename, verbose=True)
         exif_copy = get_exif(out_filename)
         logger.info("*** Copy JPG EXIF ***")
@@ -56,7 +56,7 @@ def test_exif_tiff():
         out_filename = output_dir + "/0001.tif"
         logger.info("======== Testing TIFF EXIF ========")
         logging.getLogger(__name__).info("*** Source TIFF EXIF ***")
-        exif = copy_exif_from_file_to_file("../examples/input/img-tif/0000.tif", "../examples/input/img-tif/0001.tif",
+        exif = copy_exif_from_file_to_file("examples/input/img-tif/0000.tif", "examples/input/img-tif/0001.tif",
                                            out_filename=out_filename, verbose=True)
         image = Image.open(out_filename)
         exif_copy = image.tag_v2 if hasattr(image, 'tag_v2') else image.getexif()
