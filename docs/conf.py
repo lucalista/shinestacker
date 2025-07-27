@@ -5,6 +5,6 @@ source_suffix = {
     '.md': 'markdown',
 }
 
-master_doc = 'main'
+master_doc = 'index'
 
 html_theme = 'furo'
