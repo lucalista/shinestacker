@@ -20,3 +20,12 @@ source_suffix = {
 master_doc = 'index'
 
 html_theme = 'furo'
+
+extensions = [
+    'myst_parser',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.autosummary',
+]
+
+autosummary_generate = True
