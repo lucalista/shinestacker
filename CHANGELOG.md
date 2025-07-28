@@ -4,6 +4,17 @@ This page reports the main releases only and the main changes therein.
 
 ---
 
+## [v0.2.2] - 2025-07-28
+**More stability and improved tests**
+
+### Changes
+
+* improved test suite and enhanced test coverage
+* updated documentation
+* some stability improvements
+
+---
+
 ## [v0.2.1] - 2025-07-27
 **Icon location fix**
 
