@@ -4,7 +4,7 @@ import numpy as np
 from PIL import Image
 from PIL.ExifTags import TAGS
 from shinestacker.core.logging import setup_logging
-from shinestacker.algorithms.exif import get_exif, copy_exif_from_file_to_file, print_exif, write_image_with_exif_data
+from shinestacker.algorithms.exif import get_exif, copy_exif_from_file_to_file, print_exif, write_image_with_exif_data, get_tiff_dtype_count
 
 
 NO_TEST_TIFF_TAGS = ["XMLPacket", "Compression", "StripOffsets", "RowsPerStrip", "StripByteCounts", "ImageResources", "ExifOffset", 34665]
@@ -184,7 +184,37 @@ def test_write_image_with_exif_data():
         assert False
 
 
+def test_get_tiff_dtype_count():
+    try:
+        setup_logging()
+        logger = logging.getLogger(__name__)
+        logger.info("======== Testing get_tiff_dtype_count ========")
+        test_cases = [
+            ("string", (2, 7)),          # ASCII string (dtype=2), length + null terminator
+            (b"bytes", (1, 5)),         # Binary data (dtype=1), length without null terminator
+            # Lists are treated as strings in the current implementation
+            ([1, 2, 3], (2, 10)),       # Current behavior treats lists as strings
+            (np.array([1, 2, 3], dtype=np.uint16), (3, 3)),
+            (np.array([1, 2, 3], dtype=np.uint32), (4, 3)),
+            (np.array([1.0, 2.0], dtype=np.float32), (11, 2)),
+            (np.array([1.0, 2.0], dtype=np.float64), (12, 2)),
+            (12345, (3, 1)),            # uint16 (dtype=3)
+            (123456, (4, 1)),           # uint32 (dtype=4)
+            (3.14, (11, 1)),            # float32 (dtype=11)
+            (None, (2, 5)),             # None becomes 'None' (length 4 + null terminator)
+        ]
+        for value, expected in test_cases:
+            result = get_tiff_dtype_count(value)
+            logger.info(f"Testing {value!r:20} => Expected: {expected}, Got: {result}")
+            assert result == expected, f"Failed for {value!r}: expected {expected}, got {result}"
+        logger.info("All get_tiff_dtype_count tests passed")
+    except Exception as e:
+        logger.error(f"Test failed: {str(e)}")
+        assert False
+
+
 if __name__ == '__main__':
     test_exif_tiff()
     test_exif_jpg()
     test_write_image_with_exif_data()
+    test_get_tiff_dtype_count()
