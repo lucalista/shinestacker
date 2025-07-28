@@ -7,7 +7,7 @@ test_file = "/multi-out.tif"
 N_LAYERS = 6
 
 
-def test_write():
+def test_write_tif():
     try:
         output_dir = test_path
         if not os.path.exists(output_dir):
@@ -16,6 +16,19 @@ def test_write():
         labels = [f'Layer {i + 1}' for i in range(N_LAYERS)]
         write_multilayer_tiff(filenames, output_dir + test_file, labels=labels,
                               exif_path="examples/input/img-tif")
+    except Exception:
+        assert False
+
+
+def test_write_jpg():
+    try:
+        output_dir = test_path
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        filenames = [f"examples/input/img-jpg/000{i}.jpg" for i in range(N_LAYERS)]
+        labels = [f'Layer {i + 1}' for i in range(N_LAYERS)]
+        write_multilayer_tiff(filenames, output_dir + test_file, labels=labels,
+                              exif_path="examples/input/img-jpg")
     except Exception:
         assert False
 
@@ -54,7 +67,8 @@ def test_tif():
 
 
 if __name__ == '__main__':
-    test_write()
+    test_write_tif()
+    test_write_jpg()
     test_read()
     test_jpg()
     test_tif()
