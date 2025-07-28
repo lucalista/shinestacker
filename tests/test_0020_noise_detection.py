@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')
 import logging
 from shinestacker.config.constants import constants
 from shinestacker.core.logging import setup_logging
@@ -37,7 +39,7 @@ def test_detect_fail_3():
 def test_detect():
     try:
         job = StackJob("job", "examples/", input_path="input/img-noise", callbacks='tqdm')
-        job.add_action(NoiseDetection())
+        job.add_action(NoiseDetection(plot_histograms=True))
         job.run()
     except Exception:
         assert False
