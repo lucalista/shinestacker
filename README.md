@@ -7,14 +7,14 @@
 
 <img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/img/flies.gif' width="400" referrerpolicy="no-referrer">  <img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/img/flies_stack.jpg' width="400" referrerpolicy="no-referrer">
 
-## Documentation
+# Documentation
 
 📖 [Main documentation](https://github.com/lucalista/shinestacker/blob/main/docs/main.md) • 📝 [Changelog](https://github.com/lucalista/shinestacker/blob/main/CHANGELOG.md)
 
 
-# Credits:
+# Credits
 
-The main pyramid stack algorithm was inspired by the [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar. The latest implementation was rewritten from the original code that was used under permission of the author for initial versions of this package.
+The main pyramid stack algorithm was initially inspired by the [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar that was used under permission of the author for initial versions of this package. The implementation in the latest releases was rewritten from the original code.
 
 # Resources
 
