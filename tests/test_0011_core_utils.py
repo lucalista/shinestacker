@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
-import os
 from shinestacker.algorithms.core_utils import check_path_exists, make_tqdm_bar
+
 
 class TestCoreUtils(unittest.TestCase):
 
@@ -32,8 +32,8 @@ class TestCoreUtils(unittest.TestCase):
         mock_config.JUPYTER_NOTEBOOK = False
         make_tqdm_bar('Terminal', 100, ncols=120)
         mock_tqdm.assert_called_once_with(
-            desc='Terminal', 
-            total=100, 
+            desc='Terminal',
+            total=100,
             ncols=120
         )
 
@@ -44,9 +44,10 @@ class TestCoreUtils(unittest.TestCase):
         mock_config.JUPYTER_NOTEBOOK = True
         make_tqdm_bar('Notebook', 50)
         mock_tqdm_notebook.assert_called_once_with(
-            desc='Notebook', 
+            desc='Notebook',
             total=50
         )
+
 
 if __name__ == '__main__':
     unittest.main()

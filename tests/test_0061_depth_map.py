@@ -8,6 +8,7 @@ from shinestacker.algorithms.depth_map import DepthMapStack
 
 n_images = 6
 
+
 @pytest.fixture
 def example_images():
     image_dir = "examples/input/img-jpg/"
@@ -36,6 +37,7 @@ def test_sobel_map_with_examples(example_images):
     assert sobel_map.dtype == np.float32
     assert np.all(sobel_map >= 0)  # Energy should always be positive
 
+
 def test_focus_stack_with_examples(example_images):
     dms = DepthMapStack()
     dms.process = MagicMock()
@@ -63,7 +65,7 @@ def test_pyramid_blend_with_examples(example_images):
     assert blended.shape == images[0].shape
     assert blended.dtype == np.float32
     middle_img = images[1]
-    correlation = np.corrcoef(blended.flatten(), middle_img.flatten())[0,1]
+    correlation = np.corrcoef(blended.flatten(), middle_img.flatten())[0, 1]
     assert correlation > 0.5
 
 
@@ -71,19 +73,12 @@ def test_performance_with_all_images(example_images):
     dms = DepthMapStack()
     dms.process = MagicMock()
     dms.process.callback.return_value = True
-    
-    # Time the operation (pytest will show this in output)
     import time
     start = time.time()
-    result = dms.focus_stack(example_images)  # All 7 images
+    result = dms.focus_stack(example_images)
     elapsed = time.time() - start
-    
-    # Verify output
     assert result.shape[0] > 0 and result.shape[1] > 0
     print(f"\nFocus stacking {n_images} images took {elapsed:.2f} seconds")
-    
-    # Optionally save the result for visual inspection
     output_dir = "examples/output/"
     os.makedirs(output_dir, exist_ok=True)
     cv2.imwrite(os.path.join(output_dir, "focus_stacked.jpg"), result)
-
