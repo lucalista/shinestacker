@@ -1,4 +1,6 @@
-# Shine Stacker Processing Framework
+# Shine Stacker
+
+## Focus Stacking Processing Framework and GUI
 
 [![CI multiplatform](https://github.com/lucalista/shinestacker/actions/workflows/ci-multiplatform.yml/badge.svg)](https://github.com/lucalista/shinestacker/actions/workflows/ci-multiplatform.yml)
 [![PyPI version](https://img.shields.io/pypi/v/shinestacker?color=success)](https://pypi.org/project/shinestacker/)
