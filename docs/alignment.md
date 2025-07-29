@@ -2,7 +2,7 @@
 
 Automatically align, scale, tanslate and rotate or apply full perspective correction.
 
-All constants described below are contained in the object: ```constants```, imported as:
+All constants described below are contained in the object ```constants```, imported as:
 
 ```python
 from shinestacker.config.constants import constants
