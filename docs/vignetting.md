@@ -23,4 +23,4 @@ Arguments for the constructor of ```Vignetting``` are:
 
 ⚠️ Vignetting may be very strong at the outer part of the image in extreme macro photography with the use of [reversed lenses](https://digital-photography-school.com/reverse-lens-macro-close-up-photography-lesson-3/), and in the worse cases the outer part of the image becomes almost or completely black. In those cases, vignetting correction cannot recover those very dark areas, but recovers at least a uniform luminosity in the central part, and the image will require anyway to be cropped.
 
-<img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/img/extreme-vignetting.png' width="600" referrerpolicy="no-referrer">
+<img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/img/extreme-vignetting.jpg' width="600" referrerpolicy="no-referrer">
