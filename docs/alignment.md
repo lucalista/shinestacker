@@ -19,7 +19,7 @@ feature_config = {
   * ```DETECTOR_SURF```: [Speeded-Up Robust Features](https://docs.opencv.org/3.4/df/dd2/tutorial_py_surf_intro.html)
   * ```DETECTOR_AKAZE```: [AKAZE local features matching](https://docs.opencv.org/3.4/db/d70/tutorial_akaze_matching.html)
   * ```DETECTOR_BRISK```: [Binary Robust Invariant Scalable Keypoints](https://medium.com/analytics-vidhya/feature-matching-using-brisk-277c47539e8)
-* ```descriptor``` (optional): the feature descriptor is used to find matches. Possible values are:
+* ```descriptor``` (optional, default: ```DESCRIPTOR_SIFT```): the feature descriptor is used to find matches. Possible values are:
   * ```DESCRIPTOR_SIFT``` (default)
   * ```DESCRIPTOR_ORB```
   * ```DESCRIPTOR_AKAZE```
