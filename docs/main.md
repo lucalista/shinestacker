@@ -10,7 +10,7 @@
 
 <img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/img/flies.gif' width="400">  <img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/img/flies_stack.jpg' width="400">
 
-> **Professional focus stacking** for microscopy, macro photography, and computational imaging
+> **Focus stacking** for microscopy, macro photography, and computational imaging
 
 ## Key Features
 - 🚀 **Batch Processing**: Align, balance, and stack hundreds of images
