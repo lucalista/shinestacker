@@ -17,8 +17,8 @@ Arguments for the constructor ```AlignFrames``` of are:
 * ```feature_config``` (optional, default: ```None```): a dictionary specifying the following parameters, with the corresponding default values:
 ```python
 feature_config = {
-    'detector': DETECTOR_SIFT,
-    'descriptor': DESCRIPTOR_SIFT
+    'detector': constants.DETECTOR_SIFT,
+    'descriptor': constants.DESCRIPTOR_SIFT
 }
 ```
 * ```detector``` (optional, default: ```DETECTOR_SIFT```): the feature detector is used to find matches. See [Feature Detection and Description](https://docs.opencv.org/4.x/db/d27/tutorial_py_table_of_contents_feature2d.html) for more details. Possible values are:
@@ -38,7 +38,7 @@ feature_config = {
 ```matching_config``` (optional, default; ```None```): a dictionary specifying the following parameters, with the corresponding default values:
 ```python
 matching_config= {
-    'match_method': MATCHING_KNN,
+    'match_method': constants.MATCHING_KNN,
     'flann_idx_kdtree': 2,
     'flann_trees': 5,
     'flann_checks': 50,
@@ -56,13 +56,13 @@ matching_config= {
 * ```alignment_config``` (optional, default; ```None```): a dictionary specifying the following parameters, with the corresponding default values:
 ```python
 alignment_config = {
-    'transform': ALIGN_RIGID,
-    'align_methid': RANSAC,
+    'transform': constants.ALIGN_RIGID,
+    'align_methid': constants.RANSAC,
     'rans_threshold': 5.0,
     'refine_iters': 100,
     'align_confidence': 99.9,
     'max_iters': 2000,
-    'border_mode': BORDER_REPLICATE_BLUR,
+    'border_mode': constants.BORDER_REPLICATE_BLUR,
     'border_value': (0, 0, 0, 0),
     'border_blur': 50,
     'subsample': 1,
