@@ -65,7 +65,7 @@ job.add_action(CombinedActions("align",
 			       [MaskNoise(),Vignetting(), AlignFrames(),
                                 BalanceFrames(mask_size=0.9,
                                               intensity_interval={'min': 150, 'max': 65385})]))
-job.add_action(FocusStackBunch("batches", PyramidStack(), frames=10, overlap=2, denoise=0.8))
+job.add_action(FocusStackBunch("bunches", PyramidStack(), frames=10, overlap=2, denoise=0.8))
 job.add_action(FocusStack("stack", PyramidStack(), prefix='pyramid_', denoise=0.8))
 job.add_action(FocusStack("stack", DepthMapStack(), input_path='batches', prefix='depthmap_', denoise=0.8))
 job.add_action(MultiLayer("multilayer", input_path=['batches', 'stack']))
