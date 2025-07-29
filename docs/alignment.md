@@ -83,7 +83,7 @@ give raise to an exception.
 
 ## CPU performances
 
-⏳ Below the time performances for alinment of two of the sample images with 2000×1300 resolution for allowed configuration combinations, from fastest to slowest. Note that slower may be more precise.
+⏳ Below the time performances for alignment of two of the sample images with 2000×1300 resolution for allowed configuration combinations, from fastest to slowest. Note that slower may be more precise.
 
 | Time (s) | Detector | Descriptor | Match method |
 |----------|----------|------------|--------------|
