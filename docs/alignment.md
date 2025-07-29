@@ -8,7 +8,7 @@ job.add_action(Actions("align", [AlignFrames(*options)])
 Arguments for the constructor ```AlignFrames``` of are:
 * ```feature_config``` (optional, default: ```None```): a dictionary specifying the following parameters, with the corresponding default values:
 ```python
-{
+feature_config = {
     'detector': DETECTOR_SIFT,
     'descriptor': DESCRIPTOR_SIFT
 }
@@ -29,7 +29,7 @@ Arguments for the constructor ```AlignFrames``` of are:
 
 ```matching_config``` (optional, default; ```None```): a dictionary specifying the following parameters, with the corresponding default values:
 ```python
-{
+matching_config= {
     'match_method': MATCHING_KNN,
     'flann_idx_kdtree': 2,
     'flann_trees': 5,
@@ -47,7 +47,7 @@ Arguments for the constructor ```AlignFrames``` of are:
 
 * ```alignment_config``` (optional, default; ```None```): a dictionary specifying the following parameters, with the corresponding default values:
 ```python
-{
+alignment_config = {
     'transform': ALIGN_RIGID,
     'align_methid': RANSAC,
     'rans_threshold': 5.0,
