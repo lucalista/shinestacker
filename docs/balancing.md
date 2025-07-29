@@ -9,7 +9,7 @@ Arguments for the constructor of ```BalanceFrames``` are:
 * ```mask_size``` (optional): if specified, luminosity and color balance is only applied to pixels within a circle of radius equal to the minimum between the image width and height times ```mask_size```, i.e: 0.8 means 80% of a portrait image width or landscape image height. It may beuseful for images with vignetting, in order to avoid including in the balance processing the outer darker pixels.
 * ```intensity_interval``` (optional): if specifies, only pixels with intensity within the specified range are used. It may be useful to remove very dark areas or very light areas. Not used if ```MATCH_HIST``` is specified as value for ```corr_map```. The argument has to be a dictionary where one or both values corresponding to the keys ```min``` and ```max``` can be specified. The default values are:
 ```python
-{
+intensity_interval = {
     'min': 0,
     'max': -1
 }
