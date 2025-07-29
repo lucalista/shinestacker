@@ -51,7 +51,7 @@ When the app starts, it proposes to create a new project.
 > - Set frame overlap (default: 2 frames)
 > - Combine intermediate results later
 
-> 💡 **RAM Warning**: >15 images may need 16GB+ RAM. Use smaller batches if needed.
+> 💡 **RAM Warning**: >15 images of 20Mpx resolution may need 16GB+ RAM. Combine smaller bunches first, if needed, to stack up to hundreds of frames.
 
 The newly created project consists of a single job that contains more actions.
 Each action produces a folder as output that has, by default, the action's name.
