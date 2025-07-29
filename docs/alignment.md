@@ -51,19 +51,27 @@ Arguments for the constructor ```AlignFrames``` of are:
     'transform': ALIGN_RIGID,
     'align_methid': RANSAC,
     'rans_threshold': 5.0,
+    'refine_iters': 100,
+    'align_confidence': 99.9,
+    'max_iters': 2000,
     'border_mode': BORDER_REPLICATE_BLUR,
     'border_value': (0, 0, 0, 0),
-    'border_blur': 50
+    'border_blur': 50,
+    'subsample': 1,
+    'fast_subsampling': False
 }
 ```
-* ```transform``` (optional): the transformation applied to register images. Possible values are:
+* ```transform``` (optional, default: ```ALIGN_RIGID```): the transformation applied to register images. Possible values are:
   * ```ALIGN_RIGID``` (default): allow scale, tanslation and rotation correction. This should be used for image acquired with tripode or microscope.
   * ```ALIGN_HOMOGRAPHY```: allow full perspective correction. This should be used for images taken with hand camera.
-* ```align_method``` (optional): the method used to find matches. Valid options are:
-  * ```RANSAC``` (*Random Sample Consensus*)
+* ```align_method``` (optional, default: ```RANSAC```): the method used to find matches. Valid options are:
+  * ```RANSAC``` (*Random Sample Consensus*, default)
   * ```LMEDS``` (*Least Medians of Squares*)
 * ```rans_threshold``` (optional, default: 5.0): parameter used if ```ALIGN_HOMOGRAPHY``` is choosen as tansformation, see [Feature Matching + Homography to find Objects](https://docs.opencv.org/3.4/d1/de0/tutorial_py_feature_homography.html) for more details.
-* ```subsample``` (optional, default: 4): subsample image for faster alignment. Faster, but alignment could be less accurate.
+* ```refine_iters``` (optional, default: 100): refinement iterations. Used only if ```transform=ALIGN_RIGID```.
+* ```align_confidence``` (optional, default: 99.9): alignment algorithm confidence (%). Used only if ```transform=ALIGN_RIGID```. 
+* ```max_iters``` (optional, default: 2000): maximum number of iterations. Used only if ```transform=ALIGN_HOMOGRAPHY```. 
+* ```subsample``` (optional, default: 1): subsample image for faster alignment. Faster, but alignment could be less accurate.
 * ```fast_subsampling``` (optiona, default: ```False```): perform fast image subsampling without interpolation. Used if ```subsample``` is set to ```True```.
 * ```border_mode``` (optional, default: ```BORDER_REPLICATE_BLUR```): border mode. See [Adding borders to your images](https://docs.opencv.org/3.4/dc/da3/tutorial_copyMakeBorder.html) for more details.  Possible values are:
   * ```BORDER_CONSTANT```: pad the image with a constant value. The border value is specified with the parameter ```border_value```.
