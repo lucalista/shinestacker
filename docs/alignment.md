@@ -2,6 +2,14 @@
 
 Automatically align, scale, tanslate and rotate or apply full perspective correction.
 
+All constants below are defined in the object: ```constants``` imported as:
+
+```python
+from shinestacker.config.constants import constants
+```
+
+Alignment actions can be added to a job as follows:
+
 ```python
 job.add_action(Actions("align", [AlignFrames(*options)])
 ```
