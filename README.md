@@ -10,6 +10,27 @@
 
 <img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/img/flies.gif' width="400" referrerpolicy="no-referrer">  <img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/img/flies_stack.jpg' width="400" referrerpolicy="no-referrer">
 
+> **Focus stacking** for microscopy, macro photography, and computational imaging
+
+## Key Features
+- 🚀 **Batch Processing**: Align, balance, and stack hundreds of images
+- 🎨 **Hybrid Workflows**: Combine Python scripting with GUI refinement
+- 🧩 **Modular Architecture**: Mix-and-match processing modules
+- 🖌️ **Non-Destructive Editing**: Save multilayer TIFFs for retouching
+- 📊 **Jupyter Integration**: Reproducible research notebooks
+
+## Interactive GUI
+
+The GUI has two main working areas: 
+
+* *Project*: manage and run focus stacking workflows in a flexible and configurable way, with optional intermediate batch stacking.
+
+<img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/img/gui-project-run.png' width="600" referrerpolicy="no-referrer">
+
+* *Retouch*: interactive final refinements to final blended image from individual frames.
+
+<img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/img/gui-retouch.png' width="600" referrerpolicy="no-referrer">
+
 # Documentation
 
 📖 [Main documentation](https://github.com/lucalista/shinestacker/blob/main/docs/main.md) • 📝 [Changelog](https://github.com/lucalista/shinestacker/blob/main/CHANGELOG.md)
