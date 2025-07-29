@@ -87,17 +87,17 @@ give raise to an exception.
 
 | Time (s) | Detector | Descriptor | Match method |
 |----------|----------|------------|--------------|
-| 0.0250s  |  SURF    | ORB        | NORM_HAMMING |
-| 0.0347s  |  SURF    | BRISK      | NORM_HAMMING |
-| 0.0469s  |  ORB     | ORB        | NORM_HAMMING |
-| 0.0471s  |  ORB     | BRISK      | NORM_HAMMING |
-| 0.1001s  |  BRISK   | BRISK      | NORM_HAMMING |
-| 0.1199s  |  BRISK   | ORB        | NORM_HAMMING |
-| 0.1604s  |  SURF    | SIFT       | KNN          |
-| 0.1966s  |  BRISK   | SIFT       | KNN          |
-| 0.2121s  |  ORB     | SIFT       | KNN          |
-| 0.2738s  |  AKAZE   | AKAZE      | NORM_HAMMING |
-| 0.2863s  |  AKAZE   | ORB        | NORM_HAMMING |
-| 0.2887s  |  AKAZE   | BRISK      | NORM_HAMMING |
-| 0.4075s  |  AKAZE   | SIFT       | KNN          |
-| 0.4397s  |  SIFT    | SIFT       | KNN          |
+| 0.0250   |  SURF    | ORB        | NORM_HAMMING |
+| 0.0347   |  SURF    | BRISK      | NORM_HAMMING |
+| 0.0469   |  ORB     | ORB        | NORM_HAMMING |
+| 0.0471   |  ORB     | BRISK      | NORM_HAMMING |
+| 0.1001   |  BRISK   | BRISK      | NORM_HAMMING |
+| 0.1199   |  BRISK   | ORB        | NORM_HAMMING |
+| 0.1604   |  SURF    | SIFT       | KNN          |
+| 0.1966   |  BRISK   | SIFT       | KNN          |
+| 0.2121   |  ORB     | SIFT       | KNN          |
+| 0.2738   |  AKAZE   | AKAZE      | NORM_HAMMING |
+| 0.2863   |  AKAZE   | ORB        | NORM_HAMMING |
+| 0.2887   |  AKAZE   | BRISK      | NORM_HAMMING |
+| 0.4075   |  AKAZE   | SIFT       | KNN          |
+| 0.4397   |  SIFT    | SIFT       | KNN          |
