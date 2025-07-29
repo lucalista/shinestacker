@@ -40,6 +40,31 @@ Arguments for the constructor ```AlignFrames``` of are:
 * ```match_method``` (optional): the method used to find matches. See [Feature Matching](https://docs.opencv.org/4.x/dc/dc3/tutorial_py_matcher.html) for more details. Possible values are:
   * ```MATCHING_KNN``` (default): [Feature Matching with FLANN](https://docs.opencv.org/3.4/d5/d6f/tutorial_feature_flann_matcher.html)
   * ```MATCHING_NORM_HAMMING```: [Use Hamming distance](https://docs.opencv.org/4.x/d2/de8/group__core__array.html#ggad12cefbcb5291cf958a85b4b67b6149fa4b063afd04aebb8dd07085a1207da727)
+
+
+⚠️ **Note**: not all combinations of detector, descriptor and match methods are allowed. Combinations that are not allowed
+give raise to an exception. 
+
+Below time performances for alinment of allowed combinations on two of the sample images with 2000×1300 resolution, from fastest to slowest. Note that slower may be more precise.
+
+| Time (s) | Detector | Descriptor | Match method |
+|----------|----------|------------|--------------|
+| 0.0250s  |  SURF    | ORB        | NORM_HAMMING |
+| 0.0347s  |  SURF    | BRISK      | NORM_HAMMING |
+| 0.0469s  |  ORB     | ORB        | NORM_HAMMING |
+| 0.0471s  |  ORB     | BRISK      | NORM_HAMMING |
+| 0.1001s  |  BRISK   | BRISK      | NORM_HAMMING |
+| 0.1199s  |  BRISK   | ORB        | NORM_HAMMING |
+| 0.1604s  |  SURF    | SIFT       | KNN          |
+| 0.1966s  |  BRISK   | SIFT       | KNN          |
+| 0.2121s  |  ORB     | SIFT       | KNN          |
+| 0.2738s  |  AKAZE   | AKAZE      | NORM_HAMMING |
+| 0.2863s  |  AKAZE   | ORB        | NORM_HAMMING |
+| 0.2887s  |  AKAZE   | BRISK      | NORM_HAMMING |
+| 0.4075s  |  AKAZE   | SIFT       | KNN          |
+| 0.4397s  |  SIFT    | SIFT       | KNN          |
+
+
 * ```flann_idx_kdtree``` (optional, default: 2): parameter used by the FLANN matching algorithm.
 * ```flann_tree``` (optional, default: 5): parameter used by the FLANN matching algorithm.
 * ```flann_checks``` (optional, default: 50): parameter used by the FLANN matching algorithm.
