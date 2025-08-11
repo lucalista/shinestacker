@@ -326,6 +326,9 @@ class ImageEditorUI(ImageEditor):
         unsharp_mask_action = QAction("Unsharp Mask", self)
         unsharp_mask_action.triggered.connect(self.unsharp_mask)
         filter_menu.addAction(unsharp_mask_action)
+        white_balance_action = QAction("White Balance", self)
+        white_balance_action.triggered.connect(self.white_balance)
+        filter_menu.addAction(white_balance_action)
 
         help_menu = menubar.addMenu("&Help")
         help_menu.setObjectName("Help")
