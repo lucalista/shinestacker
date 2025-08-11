@@ -14,119 +14,165 @@ class ImageFilters(ImageEditor):
     def __init__(self):
         super().__init__()
 
-    def denoise(self):
-        max_range = 500.0
-        max_value = 5.00
-        initial_value = 2.5
-        self.master_layer_copy = self.master_layer.copy()
+    class GenericPreviewWorker(QThread):
+        finished = Signal(np.ndarray, int)
+
+        def __init__(self, func, args=(), kwargs=None, request_id=0):
+            super().__init__()
+            self.func = func
+            self.args = args
+            self.kwargs = kwargs or {}
+            self.request_id = request_id
+
+        def run(self):
+            try:
+                result = self.func(*self.args, **self.kwargs)
+            except Exception:
+                raise
+            self.finished.emit(result, self.request_id)
+
+    def run_filter_with_preview(self, filter_func, get_params, setup_ui):
+        if not hasattr(self, "master_layer") or self.master_layer is None:
+            return
+        if not hasattr(self, "master_layer_copy") or self.master_layer_copy is None:
+            self.master_layer_copy = self.master_layer.copy()
         dlg = QDialog(self)
-        dlg.setWindowTitle("Denoise")
-        dlg.setMinimumWidth(600)
         layout = QVBoxLayout(dlg)
-        slider_layout = QHBoxLayout()
-        slider = QSlider(Qt.Horizontal)
-        slider.setRange(0, max_range)
-        slider.setValue(initial_value / max_value * max_range)
-        slider_layout.addWidget(slider)
-        value_label = QLabel(f"{max_value:.2f}")
-        slider_layout.addWidget(value_label)
-        layout.addLayout(slider_layout)
-        preview_check = QCheckBox("Preview")
-        preview_check.setChecked(True)
-        layout.addWidget(preview_check)
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        layout.addWidget(button_box)
-        last_preview_strength = None
-        preview_timer = QTimer()
-        preview_timer.setSingleShot(True)
-        preview_timer.setInterval(200)
         active_worker = None
         last_request_id = 0
-
-        class PreviewWorker(QThread):
-            finished = Signal(np.ndarray, int)
-
-            def __init__(self, image, strength, request_id):
-                super().__init__()
-                self.image = image
-                self.strength = strength
-                self.request_id = request_id
-
-            def run(self):
-                result = denoise(self.image, self.strength)
-                self.finished.emit(result, self.request_id)
-
-        def slider_changed(value):
-            float_value = max_value * value / max_range
-            value_label.setText(f"{float_value:.2f}")
-            if preview_check.isChecked():
-                nonlocal last_preview_strength
-                last_preview_strength = float_value
-                preview_timer.start()
-
-        def do_preview():
-            nonlocal active_worker, last_request_id
-            if last_preview_strength is None:
-                return
-            if active_worker and active_worker.isRunning():
-                active_worker.quit()
-                active_worker.wait()
-            last_request_id += 1
-            current_request_id = last_request_id
-            active_worker = PreviewWorker(
-                self.master_layer_copy.copy(),
-                last_preview_strength,
-                current_request_id
-            )
-            active_worker.finished.connect(
-                lambda img, rid: set_preview(img, rid, current_request_id)
-            )
-            active_worker.start()
 
         def set_preview(img, request_id, expected_id):
             if request_id != expected_id:
                 return
             self.master_layer = img
-            self.display_master_layer()
-            dlg.activateWindow()
-            slider.setFocus()
-
-        def on_preview_toggled(checked):
-            nonlocal last_preview_strength
-            if checked:
-                last_preview_strength = max_value * slider.value() / max_range
-                do_preview()
-            else:
-                self.master_layer = self.master_layer_copy.copy()
+            if hasattr(self, "display_master_layer"):
                 self.display_master_layer()
+            try:
                 dlg.activateWindow()
-                slider.setFocus()
-                button_box.setFocus()
+            except Exception:
+                pass
 
-        slider.valueChanged.connect(slider_changed)
-        preview_timer.timeout.connect(do_preview)
-        preview_check.stateChanged.connect(on_preview_toggled)
-        button_box.accepted.connect(dlg.accept)
-        button_box.rejected.connect(dlg.reject)
+        def do_preview():
+            nonlocal active_worker, last_request_id
+            if active_worker and active_worker.isRunning():
+                try:
+                    active_worker.quit()
+                    active_worker.wait()
+                except Exception:
+                    pass
+            last_request_id += 1
+            current_id = last_request_id
+            img_copy = self.master_layer_copy.copy()
+            params = tuple(get_params() or ())
+            worker = self.GenericPreviewWorker(
+                filter_func,
+                args=(img_copy, *params),
+                request_id=current_id
+            )
+            active_worker = worker
+            active_worker.finished.connect(lambda img, rid: set_preview(img, rid, current_id))
+            active_worker.start()
 
-        def run_initial_preview():
-            slider_changed(slider.value())
-
-        QTimer.singleShot(0, run_initial_preview)
-        slider.setFocus()
-        if dlg.exec_() == QDialog.Accepted:
-            strength = max_value * float(slider.value()) / max_range
-            h, w = self.master_layer.shape[:2]
-            self.undo_manager.extend_undo_area(0, 0, w, h)
-            self.undo_manager.save_undo_state(self.master_layer_copy, 'Denoise')
-            self.master_layer = denoise(self.master_layer_copy, strength)
-            self.master_layer_copy = self.master_layer.copy()
-            self.display_master_layer()
-            self.update_master_thumbnail()
-            self.mark_as_modified()
-        else:
+        def restore_original():
             self.master_layer = self.master_layer_copy.copy()
-            self.display_master_layer()
+            if hasattr(self, "display_master_layer"):
+                self.display_master_layer()
+            try:
+                dlg.activateWindow()
+            except Exception:
+                pass
+
+        setup_ui(dlg, layout, do_preview, restore_original)
+        QTimer.singleShot(0, do_preview)
+        accepted = dlg.exec_() == QDialog.Accepted
+
+        if accepted:
+            params = tuple(get_params() or ())
+            try:
+                h, w = self.master_layer.shape[:2]
+            except Exception:
+                h, w = self.master_layer_copy.shape[:2]
+            if hasattr(self, "undo_manager"):
+                try:
+                    self.undo_manager.extend_undo_area(0, 0, w, h)
+                    self.undo_manager.save_undo_state(self.master_layer_copy, getattr(filter_func, "__name__", "Filter"))
+                except Exception:
+                    pass
+            final_img = filter_func(self.master_layer_copy, *params)
+            self.master_layer = final_img
+            try:
+                self.master_layer_copy = self.master_layer.copy()
+            except Exception:
+                self.master_layer_copy = self.master_layer
+            if hasattr(self, "display_master_layer"):
+                self.display_master_layer()
+            if hasattr(self, "update_master_thumbnail"):
+                try:
+                    self.update_master_thumbnail()
+                except Exception:
+                    pass
+            if hasattr(self, "mark_as_modified"):
+                try:
+                    self.mark_as_modified()
+                except Exception:
+                    pass
+        else:
+            restore_original()
+
+    def denoise(self):
+        max_range = 500.0
+        max_value = 10.00
+        initial_value = 2.5
+
+        def get_params():
+            return [max_value * slider.value() / max_range]
+
+        def setup_ui(dlg, layout, do_preview, restore_original):
+            nonlocal slider
+            dlg.setWindowTitle("Denoise")
+            dlg.setMinimumWidth(600)
+            slider_layout = QHBoxLayout()
+            slider_local = QSlider(Qt.Horizontal)
+            slider_local.setRange(0, max_range)
+            slider_local.setValue(int(initial_value / max_value * max_range))
+            slider_layout.addWidget(slider_local)
+            value_label = QLabel(f"{max_value:.2f}")
+            slider_layout.addWidget(value_label)
+            layout.addLayout(slider_layout)
+            preview_check = QCheckBox("Preview")
+            preview_check.setChecked(True)
+            layout.addWidget(preview_check)
+            button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+            layout.addWidget(button_box)
+            preview_timer = QTimer()
+            preview_timer.setSingleShot(True)
+            preview_timer.setInterval(200)
+
+            def do_preview_delayed():
+                preview_timer.start()
+
+            preview_timer.timeout.connect(do_preview)
+
+            def slider_changed(val):
+                float_val = max_value * float(val) / max_range
+                value_label.setText(f"{float_val:.2f}")
+                if preview_check.isChecked():
+                    do_preview_delayed()
+
+            slider_local.valueChanged.connect(slider_changed)
+
+            def on_preview_toggled(checked):
+                if checked:
+                    do_preview()
+                else:
+                    restore_original()
+
+            preview_check.stateChanged.connect(lambda s: on_preview_toggled(s == Qt.Checked))
+            button_box.accepted.connect(dlg.accept)
+            button_box.rejected.connect(dlg.reject)
+            slider = slider_local
+        slider = None
+        self.run_filter_with_preview(denoise, get_params, setup_ui)
 
     def unsharp_mask(self):
         max_range = 500.0
@@ -136,150 +182,79 @@ class ImageFilters(ImageEditor):
         initial_radius = 1.0
         initial_amount = 0.5
         initial_threshold = 0.0
-        self.master_layer_copy = self.master_layer.copy()
-        dlg = QDialog(self)
-        dlg.setWindowTitle("Unsharp Mask")
-        dlg.setMinimumWidth(600)
-        layout = QVBoxLayout(dlg)
-        params = {
-            "Radius": (max_radius, initial_radius, "{:.2f}"),
-            "Amount": (max_amount, initial_amount, "{:.2%}"),
-            "Threshold": (max_threshold, initial_threshold, "{:.2f}")
-        }
-        sliders = {}
-        value_labels = {}
-        for name, (max_val, init_val, fmt) in params.items():
-            param_layout = QHBoxLayout()
-            name_label = QLabel(f"{name}:")
-            param_layout.addWidget(name_label)
-            slider = QSlider(Qt.Horizontal)
-            slider.setRange(0, max_range)
-            slider.setValue(init_val / max_val * max_range)
-            param_layout.addWidget(slider)
-            value_label = QLabel(fmt.format(init_val))
-            param_layout.addWidget(value_label)
-            layout.addLayout(param_layout)
-            sliders[name] = slider
-            value_labels[name] = value_label
-        preview_check = QCheckBox("Preview")
-        preview_check.setChecked(True)
-        layout.addWidget(preview_check)
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        layout.addWidget(button_box)
-        last_preview_params = None
-        preview_timer = QTimer()
-        preview_timer.setSingleShot(True)
-        preview_timer.setInterval(200)
-        active_worker = None
-        last_request_id = 0
 
-        class UnsharpWorker(QThread):
-            finished = Signal(np.ndarray, int)
-
-            def __init__(self, image, radius, amount, threshold, request_id):
-                super().__init__()
-                self.image = image
-                self.radius = radius
-                self.amount = amount
-                self.threshold = threshold
-                self.request_id = request_id
-
-            def run(self):
-                result = unsharp_mask(self.image, max(0.01, self.radius), self.amount, self.threshold)
-                self.finished.emit(result, self.request_id)
-
-        def update_param_value(name, value, max_val, fmt):
-            float_value = max_val * value / max_range
-            value_labels[name].setText(fmt.format(float_value))
-            if preview_check.isChecked():
-                nonlocal last_preview_params
-                last_preview_params = (
-                    max_radius * sliders["Radius"].value() / max_range,
-                    max_amount * sliders["Amount"].value() / max_range,
-                    max_threshold * sliders["Threshold"].value() / max_range
-                )
-                preview_timer.start()
-        sliders["Radius"].valueChanged.connect(
-            lambda v: update_param_value("Radius", v, params["Radius"][0], params["Radius"][2]))
-        sliders["Amount"].valueChanged.connect(
-            lambda v: update_param_value("Amount", v, params["Amount"][0], params["Amount"][2]))
-        sliders["Threshold"].valueChanged.connect(
-            lambda v: update_param_value("Threshold", v, params["Threshold"][0], params["Threshold"][2]))
-
-        def do_preview():
-            nonlocal active_worker, last_request_id
-            if last_preview_params is None:
-                return
-            if active_worker and active_worker.isRunning():
-                active_worker.quit()
-                active_worker.wait()
-            last_request_id += 1
-            current_request_id = last_request_id
-            radius, amount, threshold = last_preview_params
-            active_worker = UnsharpWorker(
-                self.master_layer_copy.copy(),
-                radius,
-                amount,
-                threshold,
-                current_request_id
+        def get_params():
+            return (
+                max(0.01, max_radius * radius_slider.value() / max_range),
+                max_amount * amount_slider.value() / max_range,
+                max_threshold * threshold_slider.value() / max_range
             )
-            active_worker.finished.connect(lambda img, rid: set_preview(img, rid, current_request_id))
-            active_worker.start()
 
-        def set_preview(img, request_id, expected_id):
-            if request_id != expected_id:
-                return
-            self.master_layer = img
-            self.display_master_layer()
-            dlg.activateWindow()
-            sliders["Radius"].setFocus()
+        def setup_ui(dlg, layout, do_preview, restore_original):
+            nonlocal radius_slider, amount_slider, threshold_slider
+            dlg.setWindowTitle("Unsharp Mask")
+            dlg.setMinimumWidth(600)
+            params = {
+                "Radius": (max_radius, initial_radius, "{:.2f}"),
+                "Amount": (max_amount, initial_amount, "{:.2%}"),
+                "Threshold": (max_threshold, initial_threshold, "{:.2f}")
+            }
+            value_labels = {}
+            for name, (max_val, init_val, fmt) in params.items():
+                param_layout = QHBoxLayout()
+                name_label = QLabel(f"{name}:")
+                param_layout.addWidget(name_label)
+                slider = QSlider(Qt.Horizontal)
+                slider.setRange(0, max_range)
+                slider.setValue(int(init_val / max_val * max_range))
+                param_layout.addWidget(slider)
+                value_label = QLabel(fmt.format(init_val))
+                param_layout.addWidget(value_label)
+                layout.addLayout(param_layout)
+                if name == "Radius":
+                    radius_slider = slider
+                elif name == "Amount":
+                    amount_slider = slider
+                elif name == "Threshold":
+                    threshold_slider = slider
+                value_labels[name] = value_label
+            preview_check = QCheckBox("Preview")
+            preview_check.setChecked(True)
+            layout.addWidget(preview_check)
+            button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+            layout.addWidget(button_box)
+            preview_timer = QTimer()
+            preview_timer.setSingleShot(True)
+            preview_timer.setInterval(200)
 
-        def on_preview_toggled(checked):
-            nonlocal last_preview_params
-            if checked:
-                last_preview_params = (
-                    max_radius * sliders["Radius"].value() / max_range,
-                    max_amount * sliders["Amount"].value() / max_range,
-                    max_threshold * sliders["Threshold"].value() / max_range
-                )
-                do_preview()
-            else:
-                self.master_layer = self.master_layer_copy.copy()
-                self.display_master_layer()
-                dlg.activateWindow()
-                sliders["Radius"].setFocus()
+            def update_value(name, value, max_val, fmt):
+                float_value = max_val * value / max_range
+                value_labels[name].setText(fmt.format(float_value))
+                if preview_check.isChecked():
+                    preview_timer.start()
 
-        preview_timer.timeout.connect(do_preview)
-        preview_check.stateChanged.connect(on_preview_toggled)
-        button_box.accepted.connect(dlg.accept)
-        button_box.rejected.connect(dlg.reject)
+            radius_slider.valueChanged.connect(
+                lambda v: update_value("Radius", v, max_radius, params["Radius"][2]))
+            amount_slider.valueChanged.connect(
+                lambda v: update_value("Amount", v, max_amount, params["Amount"][2]))
+            threshold_slider.valueChanged.connect(
+                lambda v: update_value("Threshold", v, max_threshold, params["Threshold"][2]))
+            preview_timer.timeout.connect(do_preview)
 
-        def run_initial_preview():
-            nonlocal last_preview_params
-            last_preview_params = (
-                initial_radius,
-                initial_amount,
-                initial_threshold
-            )
-            do_preview()
+            def on_preview_toggled(checked):
+                if checked:
+                    do_preview()
+                else:
+                    restore_original()
 
-        QTimer.singleShot(0, run_initial_preview)
-        sliders["Radius"].setFocus()
-        if dlg.exec_() == QDialog.Accepted:
-            radius = max_radius * sliders["Radius"].value() / max_range
-            amount = max_amount * sliders["Amount"].value() / max_range
-            threshold = max_threshold * sliders["Threshold"].value() / max_range
-            h, w = self.master_layer.shape[:2]
-            self.undo_manager.extend_undo_area(0, 0, w, h)
-            self.undo_manager.save_undo_state(self.master_layer_copy, 'Unsharp Mask')
-            self.master_layer = unsharp_mask(self.master_layer_copy, max(0.01, radius), amount, threshold)
-            self.master_layer_copy = self.master_layer.copy()
-            self.display_master_layer()
-            self.update_master_thumbnail()
-            self.mark_as_modified()
-        else:
-            self.master_layer = self.master_layer_copy.copy()
-            self.display_master_layer()
+            preview_check.stateChanged.connect(lambda s: on_preview_toggled(s == Qt.Checked))
+            button_box.accepted.connect(dlg.accept)
+            button_box.rejected.connect(dlg.reject)
+            QTimer.singleShot(0, do_preview)
+        radius_slider = None
+        amount_slider = None
+        threshold_slider = None
+        self.run_filter_with_preview(unsharp_mask, get_params, setup_ui)
 
     def white_balance(self):
         if hasattr(self, 'wb_dialog') and self.wb_dialog:
