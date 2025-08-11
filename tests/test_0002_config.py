@@ -1,5 +1,5 @@
 import pytest
-from shinestacker.config.config import _Config, config
+from shinestacker.config.config import _Config
 
 
 class TestConfig:
