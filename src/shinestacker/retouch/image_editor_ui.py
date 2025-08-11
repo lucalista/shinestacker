@@ -319,6 +319,12 @@ class ImageEditorUI(ImageEditor):
         cursor_group.addAction(brush_action)
         cursor_group.setExclusive(True)
 
+        filter_menu = menubar.addMenu("&Filter")
+        filter_menu.setObjectName("Filter")
+        denoise_action = QAction("Denoise", self)
+        denoise_action.triggered.connect(self.denoise)
+        filter_menu.addAction(denoise_action)
+
         help_menu = menubar.addMenu("&Help")
         help_menu.setObjectName("Help")
         shortcuts_help_action = QAction("Shortcuts and mouse", self)

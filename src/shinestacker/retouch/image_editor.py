@@ -16,6 +16,7 @@ from .brush_controller import BrushController
 from .undo_manager import UndoManager
 from .file_loader import FileLoader
 from .exif_data import ExifData
+from .. algorithms.denoise import denoise
 
 
 def slider_to_brush_size(slider_val):
@@ -668,3 +669,15 @@ class ImageEditor(QMainWindow):
             else:
                 self.redo_action.setText("Redo")
                 self.redo_action.setEnabled(False)
+
+    def denoise(self):
+        self.master_layer_copy = self.master_layer.copy()
+        
+        h, w = self.master_layer.shape[:2]
+        self.undo_manager.extend_undo_area(0, 0, w, h)
+        self.undo_manager.save_undo_state(self.master_layer_copy, 'denoise')
+        self.master_layer = denoise(self.master_layer, 50)
+        self.master_layer_copy = self.master_layer.copy()
+        self.display_master_layer()
+        self.update_master_thumbnail()
+        self.mark_as_modified()

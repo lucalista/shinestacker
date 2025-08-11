@@ -2,8 +2,8 @@ import cv2
 import numpy as np
 
 
-def denoise(image, h_luminance, photo_render, search_window=21, block_size=7):
-    if image.dtype == np.uint8:
-        return cv2.fastNlMeansDenoisingColored(image, None, h_luminance, photo_render, search_window, block_size)
-    else:
-        raise RuntimeError("denoise only supports 8 bit images")
+def denoise(image, h_luminance, template_window_size=7, search_window_size=21):
+    norm_type = cv2.NORM_L2 if image.dtype == np.uint8 else cv2.NORM_L1
+    if image.dtype == np.uint16:
+        h_luminance = h_luminance * 256
+    return cv2.fastNlMeansDenoising(image, [h_luminance], None, template_window_size, search_window_size, norm_type)
