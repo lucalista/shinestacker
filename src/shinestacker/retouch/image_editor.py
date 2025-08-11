@@ -17,6 +17,7 @@ from .undo_manager import UndoManager
 from .file_loader import FileLoader
 from .exif_data import ExifData
 from .. algorithms.denoise import denoise
+from .. algorithms.sharpen import unsharp_mask
 
 
 def slider_to_brush_size(slider_val):
@@ -776,6 +777,159 @@ class ImageEditor(QMainWindow):
             self.undo_manager.extend_undo_area(0, 0, w, h)
             self.undo_manager.save_undo_state(self.master_layer_copy, 'denoise')
             self.master_layer = denoise(self.master_layer_copy, strength)
+            self.master_layer_copy = self.master_layer.copy()
+            self.display_master_layer()
+            self.update_master_thumbnail()
+            self.mark_as_modified()
+        else:
+            self.master_layer = self.master_layer_copy.copy()
+            self.display_master_layer()
+
+    def unsharp_mask(self):
+        max_range = 500.0
+        max_radius = 4.0
+        max_amount = 3.0
+        max_threshold = 100.0
+        initial_radius = 1.0
+        initial_amount = 0.5
+        initial_threshold = 0.0
+        self.master_layer_copy = self.master_layer.copy()
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Unsharp Mask")
+        dlg.setMinimumWidth(600)
+        layout = QVBoxLayout(dlg)
+        params = {
+            "Radius": (max_radius, initial_radius, "{:.2f}"),
+            "Amount": (max_amount, initial_amount, "{:.2%}"),
+            "Threshold": (max_threshold, initial_threshold, "{:.2f}")
+        }
+        sliders = {}
+        value_labels = {}
+        for name, (max_val, init_val, fmt) in params.items():
+            param_layout = QHBoxLayout()
+            name_label = QLabel(f"{name}:")
+            param_layout.addWidget(name_label)
+            slider = QSlider(Qt.Horizontal)
+            slider.setRange(0, max_range)
+            slider.setValue(init_val / max_val * max_range)
+            param_layout.addWidget(slider)
+            value_label = QLabel(fmt.format(init_val))
+            param_layout.addWidget(value_label)
+            layout.addLayout(param_layout)
+            sliders[name] = slider
+            value_labels[name] = value_label
+        preview_check = QCheckBox("Preview")
+        preview_check.setChecked(True)
+        layout.addWidget(preview_check)
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        layout.addWidget(button_box)
+        last_preview_params = None
+        preview_timer = QTimer()
+        preview_timer.setSingleShot(True)
+        preview_timer.setInterval(200)
+        active_worker = None
+        last_request_id = 0
+
+        class UnsharpWorker(QThread):
+            finished = Signal(np.ndarray, int)
+
+            def __init__(self, image, radius, amount, threshold, request_id):
+                super().__init__()
+                self.image = image
+                self.radius = radius
+                self.amount = amount
+                self.threshold = threshold
+                self.request_id = request_id
+
+            def run(self):
+                result = unsharp_mask(self.image, max(0.01, self.radius), self.amount, self.threshold)
+                self.finished.emit(result, self.request_id)
+
+        def update_param_value(name, value, max_val, fmt):
+            float_value = max_val * value / max_range
+            value_labels[name].setText(fmt.format(float_value))
+            if preview_check.isChecked():
+                nonlocal last_preview_params
+                last_preview_params = (
+                    max_radius * sliders["Radius"].value() / max_range,
+                    max_amount * sliders["Amount"].value() / max_range,
+                    max_threshold * sliders["Threshold"].value() / max_range
+                )
+                preview_timer.start()
+        sliders["Radius"].valueChanged.connect(
+            lambda v: update_param_value("Radius", v, params["Radius"][0], params["Radius"][2]))
+        sliders["Amount"].valueChanged.connect(
+            lambda v: update_param_value("Amount", v, params["Amount"][0], params["Amount"][2]))
+        sliders["Threshold"].valueChanged.connect(
+            lambda v: update_param_value("Threshold", v, params["Threshold"][0], params["Threshold"][2]))
+
+        def do_preview():
+            nonlocal active_worker, last_request_id
+            if last_preview_params is None:
+                return
+            if active_worker and active_worker.isRunning():
+                active_worker.quit()
+                active_worker.wait()
+            last_request_id += 1
+            current_request_id = last_request_id
+            radius, amount, threshold = last_preview_params
+            active_worker = UnsharpWorker(
+                self.master_layer_copy.copy(),
+                radius,
+                amount,
+                threshold,
+                current_request_id
+            )
+            active_worker.finished.connect(lambda img, rid: set_preview(img, rid, current_request_id))
+            active_worker.start()
+
+        def set_preview(img, request_id, expected_id):
+            if request_id != expected_id:
+                return
+            self.master_layer = img
+            self.display_master_layer()
+            dlg.activateWindow()
+            sliders["Radius"].setFocus()
+
+        def on_preview_toggled(checked):
+            nonlocal last_preview_params
+            if checked:
+                last_preview_params = (
+                    max_radius * sliders["Radius"].value() / max_range,
+                    max_amount * sliders["Amount"].value() / max_range,
+                    max_threshold * sliders["Threshold"].value() / max_range
+                )
+                do_preview()
+            else:
+                self.master_layer = self.master_layer_copy.copy()
+                self.display_master_layer()
+                dlg.activateWindow()
+                sliders["Radius"].setFocus()
+
+        preview_timer.timeout.connect(do_preview)
+        preview_check.stateChanged.connect(on_preview_toggled)
+        button_box.accepted.connect(dlg.accept)
+        button_box.rejected.connect(dlg.reject)
+
+        def run_initial_preview():
+            nonlocal last_preview_params
+            last_preview_params = (
+                initial_radius,
+                initial_amount,
+                initial_threshold
+            )
+            do_preview()
+
+        QTimer.singleShot(0, run_initial_preview)
+        sliders["Radius"].setFocus()
+        if dlg.exec_() == QDialog.Accepted:
+            radius = max_radius * sliders["Radius"].value() / max_range
+            amount = max_amount * sliders["Amount"].value() / max_range
+            threshold = max_threshold * sliders["Threshold"].value() / max_range
+            h, w = self.master_layer.shape[:2]
+            self.undo_manager.extend_undo_area(0, 0, w, h)
+            self.undo_manager.save_undo_state(self.master_layer_copy, 'unsharp mask')
+            self.master_layer = unsharp_mask(self.master_layer_copy, max(0.01, radius), amount, threshold)
             self.master_layer_copy = self.master_layer.copy()
             self.display_master_layer()
             self.update_master_thumbnail()
