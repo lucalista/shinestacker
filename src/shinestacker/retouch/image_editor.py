@@ -66,7 +66,8 @@ class ImageEditor(QMainWindow):
         self.brush_controller = BrushController(self.brush)
         self.undo_manager = UndoManager()
         self.undo_action = None
-        self.undo_manager.stack_changed.connect(self.update_undo_action)
+        self.redo_action = None
+        self.undo_manager.stack_changed.connect(self.update_undo_redo_actions)
         self.loader_thread = None
 
     def keyPressEvent(self, event):
@@ -203,6 +204,7 @@ class ImageEditor(QMainWindow):
         self.shape = np.array(master_layer).shape
         self.dtype = master_layer.dtype
         self.modified = False
+        self.undo_manager.reset()
         self.blank_layer = np.zeros(master_layer.shape[:2])
         self.update_thumbnails()
         self.image_viewer.setup_brush_cursor()
@@ -383,6 +385,7 @@ class ImageEditor(QMainWindow):
             self.current_layer = 0
             self.current_file_path = ''
             self.modified = False
+            self.undo_manager.reset()
             self.image_viewer.clear_image()
             self.update_thumbnails()
             self.update_title()
@@ -650,12 +653,18 @@ class ImageEditor(QMainWindow):
             self.update_timer.stop()
             self.mark_as_modified()
 
-    def update_undo_action(self, has_undo, description):
-        if not self.undo_action:
-            return
-        if has_undo:
-            self.undo_action.setText(f"Undo {description}")
-            self.undo_action.setEnabled(True)
-        else:
-            self.undo_action.setText("Undo")
-            self.undo_action.setEnabled(False)
+    def update_undo_redo_actions(self, has_undo, undo_desc, has_redo, redo_desc):
+        if self.undo_action:
+            if has_undo:
+                self.undo_action.setText(f"Undo {undo_desc}")
+                self.undo_action.setEnabled(True)
+            else:
+                self.undo_action.setText("Undo")
+                self.undo_action.setEnabled(False)
+        if self.redo_action:
+            if has_redo:
+                self.redo_action.setText(f"Redo {redo_desc}")
+                self.redo_action.setEnabled(True)
+            else:
+                self.redo_action.setText("Redo")
+                self.redo_action.setEnabled(False)

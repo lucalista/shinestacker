@@ -19,6 +19,7 @@ def brush_size_to_slider(size):
 
 class ClickableLabel(QLabel):
     doubleClicked = Signal()
+
     def __init__(self, text, parent=None):
         super().__init__(text, parent)
         self.setMouseTracking(True)
@@ -228,6 +229,11 @@ class ImageEditorUI(ImageEditor):
         self.undo_action.setShortcut("Ctrl+Z")
         self.undo_action.triggered.connect(self.undo_last_brush)
         edit_menu.addAction(self.undo_action)
+        self.redo_action = QAction("Redo", self)
+        self.redo_action.setEnabled(False)
+        self.redo_action.setShortcut("Ctrl+Y")
+        self.redo_action.triggered.connect(self.redo_last_brush)
+        edit_menu.addAction(self.redo_action)
         edit_menu.addSeparator()
 
         copy_action = QAction("Copy Layer to Master", self)
@@ -371,6 +377,12 @@ class ImageEditorUI(ImageEditor):
             self.display_current_view()
             self.mark_as_modified()
             self.statusBar().showMessage("Undo applied", 2000)
+
+    def redo_last_brush(self):
+        if self.undo_manager.redo(self.master_layer):
+            self.display_current_view()
+            self.mark_as_modified()
+            self.statusBar().showMessage("Redo applied", 2000)
 
     def handle_temp_view(self, start):
         if start:
