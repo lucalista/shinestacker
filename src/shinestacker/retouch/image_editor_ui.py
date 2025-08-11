@@ -3,7 +3,7 @@ from PySide6.QtGui import QShortcut, QKeySequence, QAction, QActionGroup
 from PySide6.QtCore import Qt, QSize, Signal
 from PySide6.QtGui import QGuiApplication
 from .. config.gui_constants import gui_constants
-from .image_editor import ImageEditor
+from .image_filters import ImageFilters
 from .image_viewer import ImageViewer
 from .shortcuts_help import ShortcutsHelp
 
@@ -30,7 +30,7 @@ class ClickableLabel(QLabel):
         super().mouseDoubleClickEvent(event)
 
 
-class ImageEditorUI(ImageEditor):
+class ImageEditorUI(ImageFilters):
     def __init__(self):
         super().__init__()
         self.setup_ui()
