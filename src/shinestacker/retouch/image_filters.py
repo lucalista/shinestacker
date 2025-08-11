@@ -154,14 +154,13 @@ class ImageFilters(ImageEditor):
             def do_preview_delayed():
                 preview_timer.start()
 
-            preview_timer.timeout.connect(do_preview)
-
             def slider_changed(val):
                 float_val = max_value * float(val) / max_range
                 value_label.setText(f"{float_val:.2f}")
                 if preview_check.isChecked():
                     do_preview_delayed()
 
+            preview_timer.timeout.connect(do_preview)
             slider_local.valueChanged.connect(slider_changed)
             self.connect_preview_toggle(preview_check, do_preview_delayed, restore_original)
             button_box.accepted.connect(dlg.accept)
@@ -351,12 +350,11 @@ class ImageFilters(ImageEditor):
                     dlg.activateWindow()
                     dlg.raise_()
 
-            pick_button.clicked.connect(start_color_pick)
-
             def reset_rgb():
                 for slider in sliders.values():
                     slider.setValue(initial_val)
 
+            pick_button.clicked.connect(start_color_pick)
             button_box.accepted.connect(dlg.accept)
             button_box.rejected.connect(dlg.reject)
             button_box.button(QDialogButtonBox.Reset).clicked.connect(reset_rgb)
