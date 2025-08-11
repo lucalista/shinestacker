@@ -296,6 +296,9 @@ class ImageFilters(ImageEditor):
         self.master_layer_copy = self.master_layer.copy()
         self.brush_preview.hide()
         self.wb_dialog = dlg = QDialog(self)
+        dlg.setWindowModality(Qt.ApplicationModal)
+        dlg.setWindowFlags(dlg.windowFlags() | Qt.WindowStaysOnTopHint)
+        dlg.setFocusPolicy(Qt.StrongFocus)
         dlg.setWindowTitle("White Balance")
         dlg.setMinimumWidth(600)
         layout = QVBoxLayout(dlg)
@@ -426,6 +429,8 @@ class ImageFilters(ImageEditor):
 
         dlg.finished.connect(finish_white_balance)
         dlg.show()
+        dlg.activateWindow()
+        dlg.raise_()
 
     def get_pixel_color_at(self, pos, radius=None):
         scene_pos = self.image_viewer.mapToScene(pos)
