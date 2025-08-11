@@ -1,5 +1,4 @@
 import numpy as np
-import cv2
 import os
 from .. config.constants import constants
 from .. core.colors import color_str
@@ -8,6 +7,7 @@ from .. core.exceptions import InvalidOptionError
 from .utils import write_img
 from .stack_framework import FrameDirectory, ActionList
 from .exif import copy_exif_from_file_to_file
+from .denoise import denoise
 
 
 class FocusStackBase:
@@ -30,7 +30,7 @@ class FocusStackBase:
         out_filename = f"{self.output_dir}/{self.prefix}{in_filename[0]}." + '.'.join(in_filename[1:])
         if self.denoise > 0:
             self.sub_message_r(': denoise image')
-            stacked_img = cv2.fastNlMeansDenoisingColored(stacked_img, None, self.denoise, self.denoise, 7, 21)
+            stacked_img = denoise(stacked_img, self.denoise, self.denoise)
         write_img(out_filename, stacked_img)
         if self.exif_path != '' and stacked_img.dtype == np.uint8:
             self.sub_message_r(': copy exif data')
