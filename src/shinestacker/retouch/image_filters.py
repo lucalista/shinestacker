@@ -14,7 +14,7 @@ class ImageFilters(ImageEditor):
     def __init__(self):
         super().__init__()
 
-    class GenericPreviewWorker(QThread):
+    class PreviewWorker(QThread):
         finished = Signal(np.ndarray, int)
 
         def __init__(self, func, args=(), kwargs=None, request_id=0):
@@ -39,7 +39,7 @@ class ImageFilters(ImageEditor):
                 restore_original()
         preview_check.toggled.connect(on_toggled)
 
-    def run_filter_with_preview(self, filter_func, get_params, setup_ui):
+    def run_filter_with_preview(self, filter_func, get_params, setup_ui, undo_label):
         if not hasattr(self, "master_layer") or self.master_layer is None:
             return
         if not hasattr(self, "master_layer_copy") or self.master_layer_copy is None:
@@ -70,13 +70,8 @@ class ImageFilters(ImageEditor):
                     pass
             last_request_id += 1
             current_id = last_request_id
-            img_copy = self.master_layer_copy.copy()
             params = tuple(get_params() or ())
-            worker = self.GenericPreviewWorker(
-                filter_func,
-                args=(img_copy, *params),
-                request_id=current_id
-            )
+            worker = self.PreviewWorker(filter_func, args=(self.master_layer_copy, *params), request_id=current_id)
             active_worker = worker
             active_worker.finished.connect(lambda img, rid: set_preview(img, rid, current_id))
             active_worker.start()
@@ -103,7 +98,7 @@ class ImageFilters(ImageEditor):
             if hasattr(self, "undo_manager"):
                 try:
                     self.undo_manager.extend_undo_area(0, 0, w, h)
-                    self.undo_manager.save_undo_state(self.master_layer_copy, getattr(filter_func, "__name__", "Filter"))
+                    self.undo_manager.save_undo_state(self.master_layer_copy, undo_label)
                 except Exception:
                     pass
             final_img = filter_func(self.master_layer_copy, *params)
@@ -173,7 +168,7 @@ class ImageFilters(ImageEditor):
             button_box.rejected.connect(dlg.reject)
             slider = slider_local
         slider = None
-        self.run_filter_with_preview(denoise, get_params, setup_ui)
+        self.run_filter_with_preview(denoise, get_params, setup_ui, 'Denoise')
 
     def unsharp_mask(self):
         max_range = 500.0
@@ -248,7 +243,7 @@ class ImageFilters(ImageEditor):
         radius_slider = None
         amount_slider = None
         threshold_slider = None
-        self.run_filter_with_preview(unsharp_mask, get_params, setup_ui)
+        self.run_filter_with_preview(unsharp_mask, get_params, setup_ui, 'Unsharp Mask')
 
     def white_balance(self):
         if hasattr(self, 'wb_dialog') and self.wb_dialog:
@@ -386,7 +381,7 @@ class ImageFilters(ImageEditor):
         color_preview = None
         preview_timer = None
         self.run_filter_with_preview(lambda img, r, g, b: white_balance_from_rgb(img, (r, g, b)),
-                                     get_params, setup_ui)
+                                     get_params, setup_ui, 'White Balance')
 
     def get_pixel_color_at(self, pos, radius=None):
         scene_pos = self.image_viewer.mapToScene(pos)
