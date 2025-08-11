@@ -125,7 +125,7 @@ class ImageFilters(ImageEditor):
         initial_value = 2.5
 
         def get_params():
-            return [max_value * slider.value() / max_range]
+            return (max_value * slider.value() / max_range,)
 
         def setup_ui(dlg, layout, do_preview, restore_original):
             nonlocal slider
@@ -167,7 +167,7 @@ class ImageFilters(ImageEditor):
                 else:
                     restore_original()
 
-            preview_check.stateChanged.connect(lambda s: on_preview_toggled(s == Qt.Checked))
+            preview_check.stateChanged.connect(on_preview_toggled)
             button_box.accepted.connect(dlg.accept)
             button_box.rejected.connect(dlg.reject)
             slider = slider_local
@@ -178,7 +178,7 @@ class ImageFilters(ImageEditor):
         max_range = 500.0
         max_radius = 4.0
         max_amount = 3.0
-        max_threshold = 100.0
+        max_threshold = 64.0
         initial_radius = 1.0
         initial_amount = 0.5
         initial_threshold = 0.0
@@ -196,7 +196,7 @@ class ImageFilters(ImageEditor):
             dlg.setMinimumWidth(600)
             params = {
                 "Radius": (max_radius, initial_radius, "{:.2f}"),
-                "Amount": (max_amount, initial_amount, "{:.2%}"),
+                "Amount": (max_amount, initial_amount, "{:.1%}"),
                 "Threshold": (max_threshold, initial_threshold, "{:.2f}")
             }
             value_labels = {}
@@ -247,7 +247,7 @@ class ImageFilters(ImageEditor):
                 else:
                     restore_original()
 
-            preview_check.stateChanged.connect(lambda s: on_preview_toggled(s == Qt.Checked))
+            preview_check.stateChanged.connect(on_preview_toggled)
             button_box.accepted.connect(dlg.accept)
             button_box.rejected.connect(dlg.reject)
             QTimer.singleShot(0, do_preview)
@@ -261,151 +261,145 @@ class ImageFilters(ImageEditor):
             self.wb_dialog.activateWindow()
             self.wb_dialog.raise_()
             return
+
         max_range = 255
         initial_val = 128
-        initial_rgb = (initial_val, initial_val, initial_val)
         cursor_style = self.image_viewer.cursor_style
         self.image_viewer.set_cursor_style('outline')
         if self.image_viewer.brush_cursor:
             self.image_viewer.brush_cursor.hide()
-        self.master_layer_copy = self.master_layer.copy()
-        self.brush_preview.hide()
-        self.wb_dialog = dlg = QDialog(self)
-        dlg.setWindowModality(Qt.ApplicationModal)
-        dlg.setWindowFlags(dlg.windowFlags() | Qt.WindowStaysOnTopHint)
-        dlg.setFocusPolicy(Qt.StrongFocus)
-        dlg.setWindowTitle("White Balance")
-        dlg.setMinimumWidth(600)
-        layout = QVBoxLayout(dlg)
-        row_layout = QHBoxLayout()
-        color_preview = QFrame()
-        color_preview.setFixedHeight(80)
-        color_preview.setFixedWidth(80)
-        color_preview.setStyleSheet("background-color: rgb(128,128,128);")
-        row_layout.addWidget(color_preview)
-        sliders_layout = QVBoxLayout()
+        if hasattr(self, 'brush_preview'):
+            self.brush_preview.hide()
+
+        def get_params():
+            return tuple(sliders[n].value() for n in ("R", "G", "B"))
+
+        def setup_ui(dlg, layout, do_preview, restore_original):
+            nonlocal sliders, value_labels, color_preview, preview_timer
+            self.wb_dialog = dlg
+            dlg.setWindowModality(Qt.ApplicationModal)
+            dlg.setWindowFlags(dlg.windowFlags() | Qt.WindowStaysOnTopHint)
+            dlg.setFocusPolicy(Qt.StrongFocus)
+            dlg.setWindowTitle("White Balance")
+            dlg.setMinimumWidth(600)
+            row_layout = QHBoxLayout()
+            color_preview = QFrame()
+            color_preview.setFixedHeight(80)
+            color_preview.setFixedWidth(80)
+            color_preview.setStyleSheet("background-color: rgb(128,128,128);")
+            row_layout.addWidget(color_preview)
+            sliders_layout = QVBoxLayout()
+            sliders = {}
+            value_labels = {}
+            for name in ("R", "G", "B"):
+                row = QHBoxLayout()
+                label = QLabel(f"{name}:")
+                row.addWidget(label)
+                slider = QSlider(Qt.Horizontal)
+                slider.setRange(0, max_range)
+                slider.setValue(initial_val)
+                row.addWidget(slider)
+                val_label = QLabel(str(initial_val))
+                row.addWidget(val_label)
+                sliders_layout.addLayout(row)
+                sliders[name] = slider
+                value_labels[name] = val_label
+            row_layout.addLayout(sliders_layout)
+            layout.addLayout(row_layout)
+            pick_button = QPushButton("Pick Color")
+            layout.addWidget(pick_button)
+            preview_check = QCheckBox("Preview")
+            preview_check.setChecked(True)
+            layout.addWidget(preview_check)
+            button_box = QDialogButtonBox(
+                QDialogButtonBox.Ok | QDialogButtonBox.Reset | QDialogButtonBox.Cancel
+            )
+            layout.addWidget(button_box)
+            preview_timer = QTimer()
+            preview_timer.setSingleShot(True)
+            preview_timer.setInterval(200)
+
+            def update_preview_color():
+                rgb = tuple(sliders[n].value() for n in ("R", "G", "B"))
+                color_preview.setStyleSheet(f"background-color: rgb{rgb};")
+
+            def schedule_preview():
+                if preview_check.isChecked():
+                    preview_timer.start()
+
+            def on_slider_change():
+                for name in ("R", "G", "B"):
+                    value_labels[name].setText(str(sliders[name].value()))
+                update_preview_color()
+                schedule_preview()
+
+            for slider in sliders.values():
+                slider.valueChanged.connect(on_slider_change)
+
+            preview_timer.timeout.connect(do_preview)
+
+            def on_preview_toggled(checked):
+                if checked:
+                    do_preview()
+                else:
+                    restore_original()
+
+            preview_check.stateChanged.connect(on_preview_toggled)
+
+            def start_color_pick():
+                dlg.hide()
+                QApplication.setOverrideCursor(QCursor(Qt.CrossCursor))
+                self.image_viewer.setCursor(Qt.CrossCursor)
+                self._original_mouse_press = self.image_viewer.mousePressEvent
+                self.image_viewer.mousePressEvent = pick_color_from_click
+
+            def pick_color_from_click(event):
+                if event.button() == Qt.LeftButton:
+                    pos = event.pos()
+                    bgr = self.get_pixel_color_at(pos, radius=int(self.brush.size))
+                    rgb = (bgr[2], bgr[1], bgr[0])
+                    for name, val in zip(("R", "G", "B"), rgb):
+                        sliders[name].setValue(val)
+                    QApplication.restoreOverrideCursor()
+                    self.image_viewer.unsetCursor()
+                    if hasattr(self, "_original_mouse_press"):
+                        self.image_viewer.mousePressEvent = self._original_mouse_press
+                        delattr(self, "_original_mouse_press")
+                    dlg.show()
+                    dlg.activateWindow()
+                    dlg.raise_()
+
+            pick_button.clicked.connect(start_color_pick)
+
+            def reset_rgb():
+                for slider in sliders.values():
+                    slider.setValue(initial_val)
+
+            button_box.accepted.connect(dlg.accept)
+            button_box.rejected.connect(dlg.reject)
+            button_box.button(QDialogButtonBox.Reset).clicked.connect(reset_rgb)
+
+            def on_finished():
+                self.image_viewer.set_cursor_style(cursor_style)
+                if self.image_viewer.brush_cursor:
+                    self.image_viewer.brush_cursor.show()
+                if hasattr(self, 'brush_preview'):
+                    self.brush_preview.show()
+                if hasattr(self, "_original_mouse_press"):
+                    QApplication.restoreOverrideCursor()
+                    self.image_viewer.unsetCursor()
+                    self.image_viewer.mousePressEvent = self._original_mouse_press
+                    delattr(self, "_original_mouse_press")
+                self.wb_dialog = None
+
+            dlg.finished.connect(on_finished)
+            QTimer.singleShot(0, do_preview)
         sliders = {}
         value_labels = {}
-        rgb_layouts = {}
-        for name, init_val in zip(("R", "G", "B"), initial_rgb):
-            row = QHBoxLayout()
-            label = QLabel(f"{name}:")
-            row.addWidget(label)
-            slider = QSlider(Qt.Horizontal)
-            slider.setRange(0, max_range)
-            slider.setValue(init_val)
-            row.addWidget(slider)
-            val_label = QLabel(str(init_val))
-            row.addWidget(val_label)
-            sliders_layout.addLayout(row)
-            sliders[name] = slider
-            value_labels[name] = val_label
-            rgb_layouts[name] = row
-        row_layout.addLayout(sliders_layout)
-        layout.addLayout(row_layout)
-        pick_button = QPushButton("Pick Color")
-        layout.addWidget(pick_button)
-
-        def update_preview_color():
-            rgb = tuple(sliders[n].value() for n in ("R", "G", "B"))
-            color_preview.setStyleSheet(f"background-color: rgb{rgb};")
-
-        def schedule_preview():
-            nonlocal last_preview_rgb
-            rgb = tuple(sliders[n].value() for n in ("R", "G", "B"))
-            for n in ("R", "G", "B"):
-                value_labels[n].setText(str(sliders[n].value()))
-            update_preview_color()
-            if preview_check.isChecked() and rgb != last_preview_rgb:
-                last_preview_rgb = rgb
-                preview_timer.start(100)
-
-        def apply_preview():
-            rgb = tuple(sliders[n].value() for n in ("R", "G", "B"))
-            processed = white_balance_from_rgb(self.master_layer_copy, rgb)
-            self.master_layer = processed
-            self.display_master_layer()
-            dlg.activateWindow()
-
-        def on_preview_toggled(checked):
-            nonlocal last_preview_rgb
-            if checked:
-                last_preview_rgb = tuple(sliders[n].value() for n in ("R", "G", "B"))
-                preview_timer.start(100)
-            else:
-                self.master_layer = self.master_layer_copy.copy()
-                self.display_master_layer()
-                dlg.activateWindow()
-
-        preview_check = QCheckBox("Preview")
-        preview_check.setChecked(True)
-        preview_check.stateChanged.connect(on_preview_toggled)
-        layout.addWidget(preview_check)
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Reset | QDialogButtonBox.Cancel)
-        layout.addWidget(button_box)
-        last_preview_rgb = None
-        preview_timer = QTimer()
-        preview_timer.setSingleShot(True)
-        preview_timer.timeout.connect(apply_preview)
-        for slider in sliders.values():
-            slider.valueChanged.connect(schedule_preview)
-
-        def start_color_pick():
-            dlg.hide()
-            QApplication.setOverrideCursor(QCursor(Qt.CrossCursor))
-            self.image_viewer.setCursor(Qt.CrossCursor)
-            self.master_layer = self.master_layer_copy
-            self.display_master_layer()
-            self._original_mouse_press = self.image_viewer.mousePressEvent
-            self.image_viewer.mousePressEvent = pick_color_from_click
-
-        def pick_color_from_click(event):
-            if event.button() == Qt.LeftButton:
-                pos = event.pos()
-                bgr = self.get_pixel_color_at(pos)
-                rgb = (bgr[2], bgr[1], bgr[0])
-                for name, val in zip(("R", "G", "B"), rgb):
-                    sliders[name].setValue(val)
-                QApplication.restoreOverrideCursor()
-                self.image_viewer.unsetCursor()
-                if hasattr(self, "_original_mouse_press"):
-                    self.image_viewer.mousePressEvent = self._original_mouse_press
-                dlg.show()
-                dlg.activateWindow()
-                dlg.raise_()
-
-        pick_button.clicked.connect(start_color_pick)
-        button_box.accepted.connect(dlg.accept)
-
-        def cancel_changes():
-            self.master_layer = self.master_layer_copy
-            self.display_master_layer()
-            dlg.reject()
-
-        def reset_rgb():
-            for k, s in sliders.items():
-                s.setValue(initial_val)
-
-        button_box.rejected.connect(cancel_changes)
-        button_box.button(QDialogButtonBox.Reset).clicked.connect(reset_rgb)
-
-        def finish_white_balance(result):
-            if result == QDialog.Accepted:
-                apply_preview()
-                h, w = self.master_layer.shape[:2]
-                self.undo_manager.extend_undo_area(0, 0, w, h)
-                self.undo_manager.save_undo_state(self.master_layer_copy, 'White Balance')
-                self.master_layer_copy = self.master_layer.copy()
-                self.display_master_layer()
-                self.update_master_thumbnail()
-                self.mark_as_modified()
-            self.image_viewer.set_cursor_style(cursor_style)
-            self.wb_dialog = None
-
-        dlg.finished.connect(finish_white_balance)
-        dlg.show()
-        dlg.activateWindow()
-        dlg.raise_()
+        color_preview = None
+        preview_timer = None
+        self.run_filter_with_preview(lambda img, r, g, b: white_balance_from_rgb(img, (r, g, b)),
+                                     get_params, setup_ui)
 
     def get_pixel_color_at(self, pos, radius=None):
         scene_pos = self.image_viewer.mapToScene(pos)
