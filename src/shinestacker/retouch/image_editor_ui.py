@@ -18,9 +18,7 @@ def brush_size_to_slider(size):
 
 
 class ClickableLabel(QLabel):
-    """QLabel personalizzata che emette un segnale quando viene doppio-clickata"""
-    doubleClicked = Signal()  # PySide6 usa Signal invece di pyqtSignal
-
+    doubleClicked = Signal()
     def __init__(self, text, parent=None):
         super().__init__(text, parent)
         self.setMouseTracking(True)
@@ -225,10 +223,11 @@ class ImageEditorUI(ImageEditor):
         file_menu.addAction("Import &EXIF data", self.select_exif_path)
 
         edit_menu = menubar.addMenu("&Edit")
-        undo_action = QAction("Undo Brush", self)
-        undo_action.setShortcut("Ctrl+Z")
-        undo_action.triggered.connect(self.undo_last_brush)
-        edit_menu.addAction(undo_action)
+        self.undo_action = QAction("Undo", self)
+        self.undo_action.setEnabled(False)
+        self.undo_action.setShortcut("Ctrl+Z")
+        self.undo_action.triggered.connect(self.undo_last_brush)
+        edit_menu.addAction(self.undo_action)
         edit_menu.addSeparator()
 
         copy_action = QAction("Copy Layer to Master", self)
