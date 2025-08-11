@@ -25,7 +25,6 @@ class ClickableLabel(QLabel):
         self.setMouseTracking(True)
 
     def mouseDoubleClickEvent(self, event):
-        """Override del doppio click"""
         if event.button() == Qt.LeftButton:
             self.doubleClicked.emit()
         super().mouseDoubleClickEvent(event)
@@ -324,6 +323,9 @@ class ImageEditorUI(ImageEditor):
         denoise_action = QAction("Denoise", self)
         denoise_action.triggered.connect(self.denoise)
         filter_menu.addAction(denoise_action)
+        unsharp_mask_action = QAction("Unsharp Mask", self)
+        unsharp_mask_action.triggered.connect(self.unsharp_mask)
+        filter_menu.addAction(unsharp_mask_action)
 
         help_menu = menubar.addMenu("&Help")
         help_menu.setObjectName("Help")
