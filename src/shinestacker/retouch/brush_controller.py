@@ -22,7 +22,7 @@ class BrushController:
         y_start, y_end = max(0, y_center - radius), min(h, y_center + radius + 1)
         if x_start >= x_end or y_start >= y_end:
             return 0, 0, 0, 0
-        mask = self._get_brush_mask(radius)
+        mask = self.get_brush_mask(radius)
         if mask is None:
             return 0, 0, 0, 0
         master_area = master_layer[y_start:y_end, x_start:x_end]
@@ -31,10 +31,10 @@ class BrushController:
         mask_layer_area = mask_layer[y_start:y_end, x_start:x_end]
         mask_area = mask[y_start - (y_center - radius):y_end - (y_center - radius), x_start - (x_center - radius):x_end - (x_center - radius)]
         mask_layer_area[:] = np.clip(mask_layer_area + mask_area * self.brush.flow / 100.0, 0.0, 1.0)  # np.maximum(mask_layer_area, mask_area)
-        self._apply_mask(master_area, source_area, mask_layer_area, dest_area)
+        self.apply_mask(master_area, source_area, mask_layer_area, dest_area)
         return x_start, y_start, x_end, y_end
 
-    def _get_brush_mask(self, radius):
+    def get_brush_mask(self, radius):
         mask_key = (radius, self.brush.hardness)
         if mask_key not in self._brush_mask_cache.keys():
             full_mask = create_brush_mask(size=radius * 2 + 1, hardness_percent=self.brush.hardness,
@@ -42,7 +42,7 @@ class BrushController:
             self._brush_mask_cache[mask_key] = full_mask
         return self._brush_mask_cache[mask_key]
 
-    def _apply_mask(self, master_area, source_area, mask_area, dest_area):
+    def apply_mask(self, master_area, source_area, mask_area, dest_area):
         opacity_factor = float(self.brush.opacity) / 100.0
         effective_mask = np.clip(mask_area * opacity_factor, 0, 1)
         dtype = master_area.dtype
