@@ -125,9 +125,4 @@ See help menu for complete list of shortcuts.
 **EXIF metadata**:
 * EXIF data can be imported from source images and saved with final file.
 
-## Final retouch
-
-The final retouch, including color and luminosity balance, sharpness enhancement and
-so on can be applied with your favorite image processing application, like [GIMP](https://www.gimp.org/)
-or other.
 
