@@ -4,6 +4,17 @@ This page reports the main releases only and the main changes therein.
 
 ---
 
+## [v0.3.0] - 2025-08-11
+**Filters added to retouch GUI**
+
+### Changes
+
+* added filters for sharpening, denoise and white balance
+* updated documentation
+* some bug fixes
+
+---
+
 ## [v0.2.2] - 2025-07-28
 **More stability and improved tests**
 

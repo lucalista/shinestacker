@@ -116,6 +116,6 @@ pip install ipywidgets
 
 | Issue    |  Workaround    |
 |----------|----------------|
-| Balance modes ```HSV```/```HLS``` fail with 16-bit images | convert to 8-bit or use ```RGB``` or luminosity |
+| Balance modes ```HSV```/```HLS``` don't support 16-bit images | convert to 8-bit or use ```RGB``` or luminosity |
 | PNG support untested  | Convert to TIFF/JPEG first |
 | GUI tests limited     | Report bugs as GitHub issuse |

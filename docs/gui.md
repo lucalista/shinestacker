@@ -99,7 +99,9 @@ Adjust in the top toolbar:
 3. **Verify**:
    - Toggle master view (`M`) to check results
    - Compare before/after with `L`/`M` toggle
-3. **Export**:
+4. **Filters**:
+   - Improve the final image with sharpening, denoise and color balance
+5. **Export**:
    - ✅ Final image: Single TIFF/JPEG 
    - 🗂️ Editable: Multilayer TIFF (large)
 
