@@ -65,6 +65,8 @@ class ImageEditor(QMainWindow):
         self.brush = Brush()
         self.brush_controller = BrushController(self.brush)
         self.undo_manager = UndoManager()
+        self.undo_action = None
+        self.undo_manager.stack_changed.connect(self.update_undo_action)
         self.loader_thread = None
 
     def keyPressEvent(self, event):
@@ -644,6 +646,16 @@ class ImageEditor(QMainWindow):
         if self.update_timer.isActive():
             self.display_master_layer()
             self.update_master_thumbnail()
-            self.undo_manager.save_undo_state(self.master_layer_copy)
+            self.undo_manager.save_undo_state(self.master_layer_copy, 'brush stroke')
             self.update_timer.stop()
             self.mark_as_modified()
+
+    def update_undo_action(self, has_undo, description):
+        if not self.undo_action:
+            return
+        if has_undo:
+            self.undo_action.setText(f"Undo {description}")
+            self.undo_action.setEnabled(True)
+        else:
+            self.undo_action.setText("Undo")
+            self.undo_action.setEnabled(False)
