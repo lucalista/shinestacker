@@ -85,6 +85,7 @@ class NewProjectDialog(QDialog):
         bunch_overlap_range = gui_constants.NEW_PROJECT_BUNCH_OVERLAP
         self.bunch_overlap.setRange(bunch_overlap_range['min'], bunch_overlap_range['max'])
         self.bunch_overlap.setValue(constants.DEFAULT_OVERLAP)
+        self.update_bunch_options(gui_constants.NEW_PROJECT_BUNCH_STACK)
         self.focus_stack_pyramid = QCheckBox()
         self.focus_stack_pyramid.setChecked(gui_constants.NEW_PROJECT_FOCUS_STACK_PYRAMID)
         self.focus_stack_depth_map = QCheckBox()
