@@ -1,10 +1,10 @@
 import traceback
 import numpy as np
 import cv2
-from PySide6.QtWidgets import (QMainWindow, QFileDialog, QMessageBox, QAbstractItemView,
-                               QVBoxLayout, QLabel, QDialog, QApplication)
+from PySide6.QtWidgets import (QMainWindow, QFileDialog, QMessageBox, QAbstractItemView, QHBoxLayout,
+                               QVBoxLayout, QLabel, QDialog, QApplication, QSlider, QCheckBox, QDialogButtonBox)
 from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QRadialGradient, QGuiApplication, QCursor
-from PySide6.QtCore import Qt, QTimer, QEvent, QPoint
+from PySide6.QtCore import Qt, QTimer, QEvent, QPoint, QThread, Signal
 from .. config.constants import constants
 from .. config.gui_constants import gui_constants
 from .. core.exceptions import ShapeError, BitDepthError
@@ -671,13 +671,115 @@ class ImageEditor(QMainWindow):
                 self.redo_action.setEnabled(False)
 
     def denoise(self):
+        max_range = 500.0
+        max_value = 5.00
+        initial_value = 2.5
         self.master_layer_copy = self.master_layer.copy()
-        
-        h, w = self.master_layer.shape[:2]
-        self.undo_manager.extend_undo_area(0, 0, w, h)
-        self.undo_manager.save_undo_state(self.master_layer_copy, 'denoise')
-        self.master_layer = denoise(self.master_layer, 50)
-        self.master_layer_copy = self.master_layer.copy()
-        self.display_master_layer()
-        self.update_master_thumbnail()
-        self.mark_as_modified()
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Denoise")
+        dlg.setMinimumWidth(600)
+        layout = QVBoxLayout(dlg)
+        slider_layout = QHBoxLayout()
+        slider = QSlider(Qt.Horizontal)
+        slider.setRange(0, max_range)
+        slider.setValue(initial_value / max_value * max_range)
+        slider_layout.addWidget(slider)
+        value_label = QLabel(f"{max_value:.2f}")
+        slider_layout.addWidget(value_label)
+        layout.addLayout(slider_layout)
+        preview_check = QCheckBox("Preview")
+        preview_check.setChecked(True)
+        layout.addWidget(preview_check)
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        layout.addWidget(button_box)
+        last_preview_strength = None
+        preview_timer = QTimer()
+        preview_timer.setSingleShot(True)
+        preview_timer.setInterval(200)
+        active_worker = None
+        last_request_id = 0
+
+        class PreviewWorker(QThread):
+            finished = Signal(np.ndarray, int)
+
+            def __init__(self, image, strength, request_id):
+                super().__init__()
+                self.image = image
+                self.strength = strength
+                self.request_id = request_id
+
+            def run(self):
+                result = denoise(self.image, self.strength)
+                self.finished.emit(result, self.request_id)
+
+        def slider_changed(value):
+            float_value = max_value * value / max_range
+            value_label.setText(f"{float_value:.2f}")
+            if preview_check.isChecked():
+                nonlocal last_preview_strength
+                last_preview_strength = float_value
+                preview_timer.start()
+
+        def do_preview():
+            nonlocal active_worker, last_request_id
+            if last_preview_strength is None:
+                return
+            if active_worker and active_worker.isRunning():
+                active_worker.quit()
+                active_worker.wait()
+            last_request_id += 1
+            current_request_id = last_request_id
+            active_worker = PreviewWorker(
+                self.master_layer_copy.copy(),
+                last_preview_strength,
+                current_request_id
+            )
+            active_worker.finished.connect(
+                lambda img, rid: set_preview(img, rid, current_request_id)
+            )
+            active_worker.start()
+
+        def set_preview(img, request_id, expected_id):
+            if request_id != expected_id:
+                return
+            self.master_layer = img
+            self.display_master_layer()
+            dlg.activateWindow()
+            slider.setFocus()
+
+        def on_preview_toggled(checked):
+            nonlocal last_preview_strength
+            if checked:
+                last_preview_strength = max_value * slider.value() / max_range
+                do_preview()
+            else:
+                self.master_layer = self.master_layer_copy.copy()
+                self.display_master_layer()
+                dlg.activateWindow()
+                slider.setFocus()
+                button_box.setFocus()
+
+        slider.valueChanged.connect(slider_changed)
+        preview_timer.timeout.connect(do_preview)
+        preview_check.stateChanged.connect(on_preview_toggled)
+        button_box.accepted.connect(dlg.accept)
+        button_box.rejected.connect(dlg.reject)
+
+        def run_initial_preview():
+            slider_changed(slider.value())
+
+        QTimer.singleShot(0, run_initial_preview)
+        slider.setFocus()
+        if dlg.exec_() == QDialog.Accepted:
+            strength = max_value * float(slider.value()) / max_range
+            h, w = self.master_layer.shape[:2]
+            self.undo_manager.extend_undo_area(0, 0, w, h)
+            self.undo_manager.save_undo_state(self.master_layer_copy, 'denoise')
+            self.master_layer = denoise(self.master_layer_copy, strength)
+            self.master_layer_copy = self.master_layer.copy()
+            self.display_master_layer()
+            self.update_master_thumbnail()
+            self.mark_as_modified()
+        else:
+            self.master_layer = self.master_layer_copy.copy()
+            self.display_master_layer()
