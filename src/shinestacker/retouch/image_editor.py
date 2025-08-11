@@ -2,7 +2,8 @@ import traceback
 import numpy as np
 import cv2
 from PySide6.QtWidgets import (QMainWindow, QFileDialog, QMessageBox, QAbstractItemView, QHBoxLayout,
-                               QVBoxLayout, QLabel, QDialog, QApplication, QSlider, QCheckBox, QDialogButtonBox)
+                               QPushButton, QFrame, QVBoxLayout, QLabel, QDialog, QApplication, QSlider,
+                               QCheckBox, QDialogButtonBox)
 from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QRadialGradient, QGuiApplication, QCursor
 from PySide6.QtCore import Qt, QTimer, QEvent, QPoint, QThread, Signal
 from .. config.constants import constants
@@ -18,6 +19,7 @@ from .file_loader import FileLoader
 from .exif_data import ExifData
 from .. algorithms.denoise import denoise
 from .. algorithms.sharpen import unsharp_mask
+from .. algorithms.white_balance import white_balance_from_rgb
 
 
 def slider_to_brush_size(slider_val):
@@ -937,3 +939,171 @@ class ImageEditor(QMainWindow):
         else:
             self.master_layer = self.master_layer_copy.copy()
             self.display_master_layer()
+
+    def white_balance(self):
+        max_range = 255
+        initial_val = 128
+        initial_rgb = (initial_val, initial_val, initial_val)
+        cursor_style = self.image_viewer.cursor_style
+        self.image_viewer.set_cursor_style('outline')
+        if self.image_viewer.brush_cursor:
+            self.image_viewer.brush_cursor.hide()
+        self.master_layer_copy = self.master_layer.copy()
+        self.brush_preview.hide()
+        print("cursor style: ", self.image_viewer.cursor_style)
+        self.wb_dialog = dlg = QDialog(self)
+        dlg.setWindowTitle("White Balance")
+        dlg.setMinimumWidth(600)
+        layout = QVBoxLayout(dlg)
+        row_layout = QHBoxLayout()
+        color_preview = QFrame()
+        color_preview.setFixedHeight(80)
+        color_preview.setFixedWidth(80)
+        color_preview.setStyleSheet("background-color: rgb(128,128,128);")
+        row_layout.addWidget(color_preview)
+        sliders_layout = QVBoxLayout()
+        sliders = {}
+        value_labels = {}
+        rgb_layouts = {}
+        for name, init_val in zip(("R", "G", "B"), initial_rgb):
+            row = QHBoxLayout()
+            label = QLabel(f"{name}:")
+            row.addWidget(label)
+            slider = QSlider(Qt.Horizontal)
+            slider.setRange(0, max_range)
+            slider.setValue(init_val)
+            row.addWidget(slider)
+            val_label = QLabel(str(init_val))
+            row.addWidget(val_label)
+            sliders_layout.addLayout(row)
+            sliders[name] = slider
+            value_labels[name] = val_label
+            rgb_layouts[name] = row
+        row_layout.addLayout(sliders_layout)
+        layout.addLayout(row_layout)
+        pick_button = QPushButton("Pick Color")
+        layout.addWidget(pick_button)
+
+        def update_preview_color():
+            rgb = tuple(sliders[n].value() for n in ("R", "G", "B"))
+            color_preview.setStyleSheet(f"background-color: rgb{rgb};")
+            print("cursor style: ", self.image_viewer.cursor_style)
+
+        def schedule_preview():
+            nonlocal last_preview_rgb
+            rgb = tuple(sliders[n].value() for n in ("R", "G", "B"))
+            for n in ("R", "G", "B"):
+                value_labels[n].setText(str(sliders[n].value()))
+            update_preview_color()
+            if preview_check.isChecked() and rgb != last_preview_rgb:
+                last_preview_rgb = rgb
+                preview_timer.start(100)
+            print("cursor style: ", self.image_viewer.cursor_style)
+
+        def apply_preview():
+            rgb = tuple(sliders[n].value() for n in ("R", "G", "B"))
+            processed = white_balance_from_rgb(self.master_layer_copy, rgb)
+            self.master_layer = processed
+            self.display_master_layer()
+            dlg.activateWindow()
+            print("cursor style: ", self.image_viewer.cursor_style)
+
+        def on_preview_toggled(checked):
+            nonlocal last_preview_rgb
+            if checked:
+                last_preview_rgb = tuple(sliders[n].value() for n in ("R", "G", "B"))
+                preview_timer.start(100)
+            else:
+                self.master_layer = self.master_layer_copy.copy()
+                self.display_master_layer()
+                dlg.activateWindow()
+            print("cursor style: ", self.image_viewer.cursor_style)
+
+        preview_check = QCheckBox("Preview")
+        preview_check.setChecked(True)
+        preview_check.stateChanged.connect(on_preview_toggled)
+        layout.addWidget(preview_check)
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Reset | QDialogButtonBox.Cancel)
+        layout.addWidget(button_box)
+        last_preview_rgb = None
+        preview_timer = QTimer()
+        preview_timer.setSingleShot(True)
+        preview_timer.timeout.connect(apply_preview)
+        for slider in sliders.values():
+            slider.valueChanged.connect(schedule_preview)
+
+        def start_color_pick():
+            print("hide")
+            dlg.hide()
+            QApplication.setOverrideCursor(QCursor(Qt.CrossCursor))
+            self.image_viewer.setCursor(Qt.CrossCursor)
+            self.master_layer = self.master_layer_copy
+            self.display_master_layer()
+            self._original_mouse_press = self.image_viewer.mousePressEvent
+            self.image_viewer.mousePressEvent = pick_color_from_click
+            print("cursor style: ", self.image_viewer.cursor_style)
+
+        def pick_color_from_click(event):
+            if event.button() == Qt.LeftButton:
+                pos = event.pos()
+                bgr = self.get_pixel_color_at(pos)
+                rgb = (bgr[2], bgr[1], bgr[0])
+                for name, val in zip(("R", "G", "B"), rgb):
+                    sliders[name].setValue(val)
+                self.white_balance()
+                QApplication.restoreOverrideCursor()
+                self.image_viewer.unsetCursor()
+                if hasattr(self, "_original_mouse_press"):
+                    self.image_viewer.mousePressEvent = self._original_mouse_press
+                dlg.show()
+                dlg.activateWindow()
+                print("cursor style: ", self.image_viewer.cursor_style)
+
+        pick_button.clicked.connect(start_color_pick)
+        button_box.accepted.connect(dlg.accept)
+        self.wb_dialog = None
+
+        def cancel_changes():
+            self.master_layer = self.master_layer_copy
+            self.display_master_layer()
+            dlg.reject()
+
+        def reset_rgb():
+            for k, s in sliders.items():
+                s.setValue(initial_val)
+
+        button_box.rejected.connect(cancel_changes)
+        button_box.button(QDialogButtonBox.Reset).clicked.connect(reset_rgb)
+        dlg.show()
+
+        def finish_white_balance(result):
+            if result == QDialog.Accepted:
+                apply_preview()
+                h, w = self.master_layer.shape[:2]
+                self.undo_manager.extend_undo_area(0, 0, w, h)
+                self.undo_manager.save_undo_state(self.master_layer_copy, 'white balance')
+                self.master_layer_copy = self.master_layer.copy()
+                self.display_master_layer()
+                self.update_master_thumbnail()
+                self.mark_as_modified()
+            print("reset style")
+            self.image_viewer.set_cursor_style(cursor_style)
+            self.wb_dialog = None
+
+        dlg.finished.connect(finish_white_balance)
+
+    def get_pixel_color_at(self, pos):
+        scene_pos = self.image_viewer.mapToScene(pos)
+        item_pos = self.image_viewer.pixmap_item.mapFromScene(scene_pos)
+        x = int(item_pos.x())
+        y = int(item_pos.y())
+        if (0 <= x < self.master_layer.shape[1]) and (0 <= y < self.master_layer.shape[0]):
+            pixel = self.master_layer[y, x]
+            if pixel.ndim == 0:
+                pixel = [pixel, pixel, pixel]
+            pixel = [np.float32(x) for x in pixel]
+            if self.master_layer.dtype == np.uint16:
+                pixel = [x / 256.0 for x in pixel]
+            return tuple(int(v) for v in pixel)
+        else:
+            return (0, 0, 0)

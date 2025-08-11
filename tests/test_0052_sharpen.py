@@ -10,8 +10,8 @@ def test_unsharpen_mask_8bit():
     if not os.path.exists(out_path):
         os.makedirs(out_path)
     try:
-        den = unsharp_mask(img, radius=2.0, amount=1.5, threshold=10)
-        write_img(f"{out_path}/test-unsharpen-mask.jpg", den)
+        sharp = unsharp_mask(img, radius=2.0, amount=1.5, threshold=10)
+        write_img(f"{out_path}/test-unsharpen-mask.jpg", sharp)
         assert True
     except Exception:
         assert False
@@ -22,8 +22,8 @@ def test_unsharpen_mask_16bit():
     if not os.path.exists(out_path):
         os.makedirs(out_path)
     try:
-        den = unsharp_mask(img, radius=3.0, amount=2.0, threshold=10)
-        write_img(f"{out_path}/test-unsharpen-mask.tif", den)
+        sharp = unsharp_mask(img, radius=3.0, amount=2.0, threshold=10)
+        write_img(f"{out_path}/test-unsharpen-mask.tif", sharp)
         assert True
     except Exception:
         assert False
