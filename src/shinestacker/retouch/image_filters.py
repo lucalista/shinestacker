@@ -31,6 +31,14 @@ class ImageFilters(ImageEditor):
                 raise
             self.finished.emit(result, self.request_id)
 
+    def connect_preview_toggle(self, preview_check, do_preview, restore_original):
+        def on_toggled(checked):
+            if checked:
+                do_preview()
+            else:
+                restore_original()
+        preview_check.toggled.connect(on_toggled)
+
     def run_filter_with_preview(self, filter_func, get_params, setup_ui):
         if not hasattr(self, "master_layer") or self.master_layer is None:
             return
@@ -160,14 +168,7 @@ class ImageFilters(ImageEditor):
                     do_preview_delayed()
 
             slider_local.valueChanged.connect(slider_changed)
-
-            def on_preview_toggled(checked):
-                if checked:
-                    do_preview()
-                else:
-                    restore_original()
-
-            preview_check.stateChanged.connect(on_preview_toggled)
+            self.connect_preview_toggle(preview_check, do_preview_delayed, restore_original)
             button_box.accepted.connect(dlg.accept)
             button_box.rejected.connect(dlg.reject)
             slider = slider_local
@@ -240,14 +241,7 @@ class ImageFilters(ImageEditor):
             threshold_slider.valueChanged.connect(
                 lambda v: update_value("Threshold", v, max_threshold, params["Threshold"][2]))
             preview_timer.timeout.connect(do_preview)
-
-            def on_preview_toggled(checked):
-                if checked:
-                    do_preview()
-                else:
-                    restore_original()
-
-            preview_check.stateChanged.connect(on_preview_toggled)
+            self.connect_preview_toggle(preview_check, do_preview, restore_original)
             button_box.accepted.connect(dlg.accept)
             button_box.rejected.connect(dlg.reject)
             QTimer.singleShot(0, do_preview)
@@ -337,14 +331,7 @@ class ImageFilters(ImageEditor):
                 slider.valueChanged.connect(on_slider_change)
 
             preview_timer.timeout.connect(do_preview)
-
-            def on_preview_toggled(checked):
-                if checked:
-                    do_preview()
-                else:
-                    restore_original()
-
-            preview_check.stateChanged.connect(on_preview_toggled)
+            self.connect_preview_toggle(preview_check, do_preview, restore_original)
 
             def start_color_pick():
                 dlg.hide()
