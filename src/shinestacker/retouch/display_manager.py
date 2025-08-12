@@ -46,19 +46,17 @@ class DisplayManager(QObject):
             self.display_master_layer()
             self.needs_update = False
 
-    def display_master_layer(self):
-        if self.master_layer() is None:
+    def display_image(self, img):
+        if img is None:
             self.image_viewer.clear_image()
         else:
-            qimage = self.numpy_to_qimage(self.master_layer())
-            self.image_viewer.set_image(qimage)
+            self.image_viewer.set_image(self.numpy_to_qimage(img))
 
     def display_current_layer(self):
-        if self.layer_stack() is None:
-            return
-        layer = self.current_layer()
-        qimage = self.numpy_to_qimage(layer)
-        self.image_viewer.set_image(qimage)
+        self.display_image(self.current_layer())
+
+    def display_master_layer(self):
+        self.display_image(self.master_layer())
 
     def display_current_view(self):
         if self.temp_view_individual or self.view_mode == 'individual':
@@ -76,21 +74,35 @@ class DisplayManager(QObject):
             qimg = QImage(layer.data, width, height, width, QImage.Format_Grayscale8)
         return QPixmap.fromImage(qimg.scaled(*gui_constants.UI_SIZES['thumbnail'], Qt.KeepAspectRatio))
 
-    def update_master_thumbnail(self):
-        if self.master_layer() is None:
-            self.master_thumbnail_label.clear()
-        else:
-            master_thumb = self.create_thumbnail(self.master_layer())
-            self.master_thumbnail_label.setPixmap(master_thumb)
-
     def update_thumbnails(self):
         self.update_master_thumbnail()
-        self.thumbnail_list.clear()
+        thumbnails = []
         if self.layer_stack() is None:
             return
         for i, (layer, label) in enumerate(zip(self.layer_stack(), self.layer_labels())):
             thumbnail = self.create_thumbnail(layer)
-            self.add_thumbnail_item(thumbnail, label, i, i == self.current_layer_idx())
+            thumbnails.append((thumbnail, label, i, i == self.current_layer_idx()))
+        self._update_thumbnail_list(thumbnails)
+    
+    def _update_thumbnail_list(self, thumbnails):
+        self.thumbnail_list.clear()
+        for thumb_data in thumbnails:
+            thumbnail, label, index, is_current = thumb_data
+            self.add_thumbnail_item(thumbnail, label, index, is_current)
+    
+    def update_master_thumbnail(self):
+        master = self.master_layer()
+        if master is None:
+            self._clear_master_thumbnail()
+        else:
+            thumb = self.create_thumbnail(master)
+            self._set_master_thumbnail(thumb)
+    
+    def _clear_master_thumbnail(self):
+        self.master_thumbnail_label.clear()
+    
+    def _set_master_thumbnail(self, pixmap):
+        self.master_thumbnail_label.setPixmap(pixmap)
 
     def add_thumbnail_item(self, thumbnail, label, i, is_current):
         item_widget = QWidget()
