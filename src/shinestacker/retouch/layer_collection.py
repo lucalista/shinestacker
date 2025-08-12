@@ -15,6 +15,12 @@ class LayerCollection:
     def number_of_layers(self):
         return len(self.layer_stack)
 
+    def layer_label(self, i):
+        return self.layer_labels[i]
+
+    def set_layer_label(self, i, val):
+        self.layer_labels[i] = val
+
     def valid_current_layer_idx(self):
         return 0 <= self.current_layer_idx < self.number_of_layers()
 
