@@ -10,10 +10,12 @@ class LayerCollection:
         return len(self.layer_stack)
 
     def valid_current_layer_idx(self):
-        return self.current_layer_idx >= 0 or self.current_layer_idx < self.number_of_layers()
+        return 0 <= self.current_layer_idx < self.number_of_layers()
 
     def current_layer(self):
-        return self.layer_stack[self.current_layer_idx] if self.valid_current_layer_idx() else None
+        if self.layer_stack and self.valid_current_layer_idx():
+            return self.layer_stack[self.current_layer_idx]
+        return None
 
     def copy_master_layer(self):
         self.master_layer_copy = self.master_layer.copy()
