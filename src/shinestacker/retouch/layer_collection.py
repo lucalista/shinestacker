@@ -3,6 +3,9 @@ import numpy as np
 
 class LayerCollection:
     def __init__(self):
+        self.reset()
+
+    def reset(self):
         self.master_layer = None
         self.master_layer_copy = None
         self.layer_stack = None
