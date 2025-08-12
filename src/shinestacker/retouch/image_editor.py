@@ -405,8 +405,7 @@ class ImageEditor(QMainWindow):
 
     def highlight_thumbnail(self, index):
         self.thumbnail_list.setCurrentRow(index)
-        self.thumbnail_list.scrollToItem(self.thumbnail_list.item(index),
-                                         QAbstractItemView.PositionAtCenter)
+        self.thumbnail_list.scrollToItem(self.thumbnail_list.item(index), QAbstractItemView.PositionAtCenter)
 
     def update_brush_size(self, slider_val):
 

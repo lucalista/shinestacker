@@ -102,22 +102,10 @@ class ImageFilters(ImageEditor):
                     pass
             final_img = filter_func(self.layer_collection.master_layer_copy, *params)
             self.layer_collection.master_layer = final_img
-            try:
-                self.layer_collection.copy_master_layer()
-            except Exception:
-                self.layer_collection.copy_master_layer()
-            if hasattr(self, "display_master_layer"):
-                self.display_master_layer()
-            if hasattr(self, "update_master_thumbnail"):
-                try:
-                    self.update_master_thumbnail()
-                except Exception:
-                    pass
-            if hasattr(self, "mark_as_modified"):
-                try:
-                    self.mark_as_modified()
-                except Exception:
-                    pass
+            self.layer_collection.copy_master_layer()
+            self.display_master_layer()
+            self.update_master_thumbnail()
+            self.mark_as_modified()
         else:
             restore_original()
 
