@@ -6,6 +6,7 @@ from .. config.gui_constants import gui_constants
 from .image_filters import ImageFilters
 from .image_viewer import ImageViewer
 from .shortcuts_help import ShortcutsHelp
+from .brush import Brush
 
 
 def brush_size_to_slider(size):
@@ -20,6 +21,7 @@ def brush_size_to_slider(size):
 class ImageEditorUI(ImageFilters):
     def __init__(self):
         super().__init__()
+        self.brush = Brush()
         self.setup_ui()
         self.setup_menu()
         self.setup_shortcuts()
@@ -41,7 +43,6 @@ class ImageEditorUI(ImageFilters):
         self.image_viewer = ImageViewer()
         self.image_viewer.temp_view_requested.connect(self.handle_temp_view)
         self.image_viewer.image_editor = self
-        self.image_viewer.brush = self.brush_controller.brush
         self.image_viewer.setFocusPolicy(Qt.StrongFocus)
         side_panel = QWidget()
         side_layout = QVBoxLayout(side_panel)
@@ -62,7 +63,6 @@ class ImageEditorUI(ImageFilters):
         self.brush_size_slider = QSlider(Qt.Horizontal)
         self.brush_size_slider.setRange(0, gui_constants.BRUSH_SIZE_SLIDER_MAX)
         self.brush_size_slider.setValue(brush_size_to_slider(self.brush.size))
-        self.brush_size_slider.valueChanged.connect(self.update_brush_size)
         brush_layout.addWidget(self.brush_size_slider)
 
         hardness_label = QLabel("Brush Hardness")
@@ -71,7 +71,6 @@ class ImageEditorUI(ImageFilters):
         self.hardness_slider = QSlider(Qt.Horizontal)
         self.hardness_slider.setRange(0, 100)
         self.hardness_slider.setValue(self.brush.hardness)
-        self.hardness_slider.valueChanged.connect(self.update_brush_hardness)
         brush_layout.addWidget(self.hardness_slider)
 
         opacity_label = QLabel("Brush Opacity")
@@ -80,7 +79,6 @@ class ImageEditorUI(ImageFilters):
         self.opacity_slider = QSlider(Qt.Horizontal)
         self.opacity_slider.setRange(0, 100)
         self.opacity_slider.setValue(self.brush.opacity)
-        self.opacity_slider.valueChanged.connect(self.update_brush_opacity)
         brush_layout.addWidget(self.opacity_slider)
 
         flow_label = QLabel("Brush Flow")
@@ -89,7 +87,6 @@ class ImageEditorUI(ImageFilters):
         self.flow_slider = QSlider(Qt.Horizontal)
         self.flow_slider.setRange(1, 100)
         self.flow_slider.setValue(self.brush.flow)
-        self.flow_slider.valueChanged.connect(self.update_brush_flow)
         brush_layout.addWidget(self.flow_slider)
 
         side_layout.addWidget(brush_panel)
@@ -106,7 +103,6 @@ class ImageEditorUI(ImageFilters):
         """)
         self.brush_preview.setAlignment(Qt.AlignCenter)
         self.brush_preview.setFixedHeight(100)
-        self.update_brush_thumb()
         brush_layout.addWidget(self.brush_preview)
         side_layout.addWidget(brush_panel)
 
