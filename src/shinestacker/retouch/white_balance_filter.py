@@ -19,133 +19,93 @@ class WhiteBalanceFilter(BaseFilter):
     def setup_ui(self, dlg, layout, do_preview, restore_original, init_val=None):
         if init_val:
             self.initial_val = init_val
-
         dlg.setWindowTitle("White Balance")
         dlg.setMinimumWidth(600)
-
-        # Create UI elements
         row_layout = QHBoxLayout()
         self.color_preview = QFrame()
         self.color_preview.setFixedHeight(80)
         self.color_preview.setFixedWidth(80)
         self.color_preview.setStyleSheet(f"background-color: rgb{self.initial_val};")
         row_layout.addWidget(self.color_preview)
-
         sliders_layout = QVBoxLayout()
         for name in ("R", "G", "B"):
             row = QHBoxLayout()
             label = QLabel(f"{name}:")
             row.addWidget(label)
-
             slider = QSlider(Qt.Horizontal)
             slider.setRange(0, self.max_range)
             slider.setValue(self.initial_val[["R", "G", "B"].index(name)])
             row.addWidget(slider)
-
             val_label = QLabel(str(self.initial_val[["R", "G", "B"].index(name)]))
             row.addWidget(val_label)
             sliders_layout.addLayout(row)
-
             self.sliders[name] = slider
             self.value_labels[name] = val_label
-
         row_layout.addLayout(sliders_layout)
         layout.addLayout(row_layout)
-
         pick_button = QPushButton("Pick Color")
         layout.addWidget(pick_button)
-
         preview_check = QCheckBox("Preview")
         preview_check.setChecked(True)
         layout.addWidget(preview_check)
-
-        button_box = QDialogButtonBox(
-            QDialogButtonBox.Ok | QDialogButtonBox.Reset | QDialogButtonBox.Cancel
-        )
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Reset | QDialogButtonBox.Cancel)
         layout.addWidget(button_box)
-
         self.preview_timer = QTimer()
         self.preview_timer.setSingleShot(True)
         self.preview_timer.setInterval(200)
-
-        # Connect signals and slots
         for slider in self.sliders.values():
             slider.valueChanged.connect(self.on_slider_change)
-
         self.preview_timer.timeout.connect(do_preview)
         self.editor.connect_preview_toggle(preview_check, do_preview, restore_original)
         pick_button.clicked.connect(self.start_color_pick)
         button_box.accepted.connect(dlg.accept)
         button_box.rejected.connect(dlg.reject)
         button_box.button(QDialogButtonBox.Reset).clicked.connect(self.reset_rgb)
-
-        # Initial preview
         QTimer.singleShot(0, do_preview)
 
     def on_slider_change(self):
-        """Update preview color and schedule preview"""
-        # Update value labels
         for name in ("R", "G", "B"):
             self.value_labels[name].setText(str(self.sliders[name].value()))
-
-        # Update color preview
         rgb = tuple(self.sliders[n].value() for n in ("R", "G", "B"))
         self.color_preview.setStyleSheet(f"background-color: rgb{rgb};")
-
-        # Schedule preview if needed
         if self.preview_timer:
             self.preview_timer.start()
 
     def start_color_pick(self):
-        """Initiate color picking process"""
-        # Hide the dialog and reject it to exit the event loop
         for widget in QApplication.topLevelWidgets():
             if isinstance(widget, QDialog) and widget.isVisible():
                 widget.hide()
                 widget.reject()
                 break
-
-        # Set up color picking environment
         self.editor.image_viewer.set_cursor_style('outline')
         if self.editor.image_viewer.brush_cursor:
             self.editor.image_viewer.brush_cursor.hide()
         self.editor.brush_preview.hide()
-
-        # Set cursor and save original event handlers
         QApplication.setOverrideCursor(QCursor(Qt.CrossCursor))
         self.editor.image_viewer.setCursor(Qt.CrossCursor)
         self.original_mouse_press = self.editor.image_viewer.mousePressEvent
         self.editor.image_viewer.mousePressEvent = self.pick_color_from_click
 
     def pick_color_from_click(self, event):
-        """Handle mouse click during color picking"""
         if event.button() == Qt.LeftButton:
-            # Get pixel color at click position
             pos = event.pos()
             bgr = self.editor.get_pixel_color_at(pos, radius=int(self.editor.brush.size))
             rgb = (bgr[2], bgr[1], bgr[0])
-
-            # Clean up after color picking
             QApplication.restoreOverrideCursor()
             self.editor.image_viewer.unsetCursor()
             self.editor.image_viewer.mousePressEvent = self.original_mouse_press
             self.editor.image_viewer.brush_cursor.show()
             self.editor.brush_preview.show()
-
-            # Create new filter instance with picked color
             new_filter = WhiteBalanceFilter(self.editor)
             new_filter.run_with_preview(init_val=rgb)
 
     def reset_rgb(self):
-        """Reset RGB sliders to initial values"""
         for name, slider in self.sliders.items():
             slider.setValue(self.initial_val[["R", "G", "B"].index(name)])
 
     def get_params(self):
-        """Get current RGB values from sliders"""
         return tuple(self.sliders[n].value() for n in ("R", "G", "B"))
 
     def apply(self, image, r, g, b):
-        """Apply white balance to image"""
         from .. algorithms.white_balance import white_balance_from_rgb
         return white_balance_from_rgb(image, (r, g, b))

@@ -66,7 +66,6 @@ class UnsharpMaskFilter(BaseFilter):
             lambda v: update_value("Amount", v, self.max_amount, params["Amount"][2]))
         self.threshold_slider.valueChanged.connect(
             lambda v: update_value("Threshold", v, self.max_threshold, params["Threshold"][2]))
-
         preview_timer.timeout.connect(do_preview)
         self.editor.connect_preview_toggle(preview_check, do_preview, restore_original)
         button_box.accepted.connect(dlg.accept)

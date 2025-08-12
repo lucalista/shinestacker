@@ -11,21 +11,17 @@ class BaseFilter(ABC):
 
     @abstractmethod
     def setup_ui(self, dlg, layout, do_preview, restore_original, **kwargs):
-        """Set up filter-specific UI components"""
         pass
 
     @abstractmethod
     def get_params(self):
-        """Get current parameters from UI"""
         pass
 
     @abstractmethod
     def apply(self, image, *params):
-        """Apply filter to image with given parameters"""
         pass
 
     def run_with_preview(self, **kwargs):
-        """Run filter with preview workflow"""
         if self.editor.layer_collection.master_layer is None:
             return
 
@@ -76,7 +72,6 @@ class BaseFilter(ABC):
         self.setup_ui(dlg, layout, do_preview, restore_original, **kwargs)
         QTimer.singleShot(0, do_preview)
         accepted = dlg.exec_() == QDialog.Accepted
-
         if accepted:
             params = tuple(self.get_params() or ())
             try:

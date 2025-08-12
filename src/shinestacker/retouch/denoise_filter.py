@@ -43,10 +43,7 @@ class DenoiseFilter(BaseFilter):
                 do_preview_delayed()
 
         slider_local.valueChanged.connect(slider_changed)
-
-        # Use the helper method from the editor
         self.editor.connect_preview_toggle(preview_check, do_preview_delayed, restore_original)
-
         button_box.accepted.connect(dlg.accept)
         button_box.rejected.connect(dlg.reject)
         self.slider = slider_local
