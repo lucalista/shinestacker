@@ -35,7 +35,8 @@ class ImageFilters(ImageEditor):
         item_pos = self.image_viewer.position_on_image(pos)
         x = int(item_pos.x())
         y = int(item_pos.y())
-        if (0 <= x < self.layer_collection.master_layer.shape[1]) and (0 <= y < self.layer_collection.master_layer.shape[0]):
+        if (0 <= x < self.layer_collection.master_layer.shape[1]) and \
+           (0 <= y < self.layer_collection.master_layer.shape[0]):
             if radius is None:
                 radius = int(self.brush.size)
             if radius > 0:
@@ -62,5 +63,4 @@ class ImageFilters(ImageEditor):
             if self.layer_collection.master_layer.dtype == np.uint16:
                 pixel = [x / 256.0 for x in pixel]
             return tuple(int(v) for v in pixel)
-        else:
-            return (0, 0, 0)
+        return (0, 0, 0)

@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QListWidget, QSlider, QInputDialog
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QListWidget, QSlider
 from PySide6.QtGui import QShortcut, QKeySequence, QAction, QActionGroup
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication
@@ -342,15 +342,6 @@ class ImageEditorUI(ImageFilters):
     def quit(self):
         if self._check_unsaved_changes():
             self.close()
-
-    def _rename_label(self, label_widget, old_label, i):
-        new_label, ok = QInputDialog.getText(self.thumbnail_list, "Rename Label", "New label name:", text=old_label)
-        if ok and new_label and new_label != old_label:
-            label_widget.setText(new_label)
-            self._update_label_in_data(old_label, new_label, i)
-
-    def _update_label_in_data(self, old_label, new_label, i):
-        self.layer_collection.layer_labels[i] = new_label
 
     def undo(self):
         if self.undo_manager.undo(self.layer_collection.master_layer):

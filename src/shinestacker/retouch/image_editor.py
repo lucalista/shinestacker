@@ -38,22 +38,27 @@ class ImageEditor(QMainWindow):
             self.layer_collection,
             self.image_viewer,
             self.master_thumbnail_label,
-            self.thumbnail_list
+            self.thumbnail_list,
+            parent=self
         )
+        self.display_manager.status_message_requested.connect(self.show_status_message)
+
+    def show_status_message(self, message):
+        self.statusBar().showMessage(message)
 
     def keyPressEvent(self, event):
         if self.image_viewer.empty:
             return
-        elif event.text() == '[':
+        if event.text() == '[':
             self.decrease_brush_size()
             return
-        elif event.text() == ']':
+        if event.text() == ']':
             self.increase_brush_size()
             return
-        elif event.text() == '{':
+        if event.text() == '{':
             self.decrease_brush_hardness()
             return
-        elif event.text() == '}':
+        if event.text() == '}':
             self.increase_brush_hardness()
             return
         super().keyPressEvent(event)
