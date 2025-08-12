@@ -447,7 +447,6 @@ class ImageEditor(QMainWindow):
 
         self.brush.size = slider_to_brush_size(slider_val)
         self.update_brush_thumb()
-        self.image_viewer.update_brush_cursor()
 
     def increase_brush_size(self, amount=5):
         val = self.brush_size_slider.value()
@@ -472,17 +471,14 @@ class ImageEditor(QMainWindow):
     def update_brush_hardness(self, hardness):
         self.brush.hardness = hardness
         self.update_brush_thumb()
-        self.image_viewer.update_brush_cursor()
 
     def update_brush_opacity(self, opacity):
         self.brush.opacity = opacity
         self.update_brush_thumb()
-        self.image_viewer.update_brush_cursor()
 
     def update_brush_flow(self, flow):
         self.brush.flow = flow
         self.update_brush_thumb()
-        self.image_viewer.update_brush_cursor()
 
     def update_brush_thumb(self):
         width, height = gui_constants.UI_SIZES['brush_preview']
@@ -518,6 +514,7 @@ class ImageEditor(QMainWindow):
             painter.drawText(0, 55, f"Flow: {self.brush.flow}%")
         painter.end()
         self.brush_preview.setPixmap(pixmap)
+        self.image_viewer.update_brush_cursor()
 
     def allow_cursor_preview(self):
         return self.view_mode == 'master' and not self.temp_view_individual
