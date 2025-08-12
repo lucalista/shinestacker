@@ -1,7 +1,7 @@
 import math
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
 from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QCursor, QShortcut, QKeySequence, QRadialGradient
-from PySide6.QtCore import Qt, QRectF, QTime, QPoint, Signal
+from PySide6.QtCore import Qt, QRectF, QTime, QPoint, QPointF, Signal
 from .. config.gui_constants import gui_constants
 from .brush_preview import BrushPreviewItem
 
@@ -74,6 +74,8 @@ class ImageViewer(QGraphicsView):
         self.empty = False
         self.setFocus()
         self.activateWindow()
+        self.brush_preview.layer_collection = self.image_editor.layer_collection
+        self.brush_preview.brush = self.brush
 
     def clear_image(self):
         self.scene.clear()
@@ -123,7 +125,7 @@ class ImageViewer(QGraphicsView):
     def mousePressEvent(self, event):
         if self.empty:
             return
-        if event.button() == Qt.LeftButton and self.image_editor.master_layer is not None:
+        if event.button() == Qt.LeftButton and self.image_editor.layer_collection.master_layer is not None:
             if self.space_pressed:
                 self.scrolling = True
                 self.last_mouse_pos = event.position()
@@ -245,7 +247,13 @@ class ImageViewer(QGraphicsView):
         if self.cursor_style == 'preview' and allow_cursor_preview:
             self._setup_outline_style()
             self.brush_cursor.hide()
-            self.brush_preview.update(self.image_editor, QCursor.pos(), int(size))
+            pos = QCursor.pos()
+            if isinstance(pos, QPointF):
+                scene_pos = pos
+            else:
+                cursor_pos = self.image_editor.image_viewer.mapFromGlobal(pos)
+                scene_pos = self.image_editor.image_viewer.mapToScene(cursor_pos)
+            self.brush_preview.update(scene_pos, int(size))
         else:
             self.brush_preview.hide()
             if self.cursor_style == 'outline' or not allow_cursor_preview:

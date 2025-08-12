@@ -381,16 +381,16 @@ class ImageEditorUI(ImageFilters):
             self._update_label_in_data(old_label, new_label, i)
 
     def _update_label_in_data(self, old_label, new_label, i):
-        self.current_labels[i] = new_label
+        self.layer_collection.layer_labels[i] = new_label
 
     def undo_last_brush(self):
-        if self.undo_manager.undo(self.master_layer):
+        if self.undo_manager.undo(self.layer_collection.master_layer):
             self.display_current_view()
             self.mark_as_modified()
             self.statusBar().showMessage("Undo applied", 2000)
 
     def redo_last_brush(self):
-        if self.undo_manager.redo(self.master_layer):
+        if self.undo_manager.redo(self.layer_collection.master_layer):
             self.display_current_view()
             self.mark_as_modified()
             self.statusBar().showMessage("Redo applied", 2000)

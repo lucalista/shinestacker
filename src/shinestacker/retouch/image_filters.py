@@ -40,10 +40,9 @@ class ImageFilters(ImageEditor):
         preview_check.toggled.connect(on_toggled)
 
     def run_filter_with_preview(self, filter_func, get_params, setup_ui, undo_label):
-        if not hasattr(self, "master_layer") or self.master_layer is None:
+        if self.layer_collection.master_layer is None:
             return
-        if not hasattr(self, "master_layer_copy") or self.master_layer_copy is None:
-            self.master_layer_copy = self.master_layer.copy()
+        self.layer_collection.copy_master_layer()
         dlg = QDialog(self)
         layout = QVBoxLayout(dlg)
         active_worker = None
@@ -52,7 +51,7 @@ class ImageFilters(ImageEditor):
         def set_preview(img, request_id, expected_id):
             if request_id != expected_id:
                 return
-            self.master_layer = img
+            self.layer_collection.master_layer = img
             if hasattr(self, "display_master_layer"):
                 self.display_master_layer()
             try:
@@ -71,13 +70,13 @@ class ImageFilters(ImageEditor):
             last_request_id += 1
             current_id = last_request_id
             params = tuple(get_params() or ())
-            worker = self.PreviewWorker(filter_func, args=(self.master_layer_copy, *params), request_id=current_id)
+            worker = self.PreviewWorker(filter_func, args=(self.layer_collection.master_layer_copy, *params), request_id=current_id)
             active_worker = worker
             active_worker.finished.connect(lambda img, rid: set_preview(img, rid, current_id))
             active_worker.start()
 
         def restore_original():
-            self.master_layer = self.master_layer_copy.copy()
+            self.layer_collection.master_layer = self.layer_collection.master_layer_copy.copy()
             if hasattr(self, "display_master_layer"):
                 self.display_master_layer()
             try:
@@ -92,21 +91,21 @@ class ImageFilters(ImageEditor):
         if accepted:
             params = tuple(get_params() or ())
             try:
-                h, w = self.master_layer.shape[:2]
+                h, w = self.layer_collection.master_layer.shape[:2]
             except Exception:
-                h, w = self.master_layer_copy.shape[:2]
+                h, w = self.layer_collection.master_layer_copy.shape[:2]
             if hasattr(self, "undo_manager"):
                 try:
                     self.undo_manager.extend_undo_area(0, 0, w, h)
-                    self.undo_manager.save_undo_state(self.master_layer_copy, undo_label)
+                    self.undo_manager.save_undo_state(self.layer_collection.master_layer_copy, undo_label)
                 except Exception:
                     pass
-            final_img = filter_func(self.master_layer_copy, *params)
-            self.master_layer = final_img
+            final_img = filter_func(self.layer_collection.master_layer_copy, *params)
+            self.layer_collection.master_layer = final_img
             try:
-                self.master_layer_copy = self.master_layer.copy()
+                self.layer_collection.copy_master_layer()
             except Exception:
-                self.master_layer_copy = self.master_layer
+                self.layer_collection.copy_master_layer()
             if hasattr(self, "display_master_layer"):
                 self.display_master_layer()
             if hasattr(self, "update_master_thumbnail"):
@@ -386,31 +385,31 @@ class ImageFilters(ImageEditor):
         item_pos = self.image_viewer.pixmap_item.mapFromScene(scene_pos)
         x = int(item_pos.x())
         y = int(item_pos.y())
-        if (0 <= x < self.master_layer.shape[1]) and (0 <= y < self.master_layer.shape[0]):
+        if (0 <= x < self.layer_collection.master_layer.shape[1]) and (0 <= y < self.layer_collection.master_layer.shape[0]):
             if radius is None:
                 radius = int(self.brush.size)
             if radius > 0:
                 y_indices, x_indices = np.ogrid[-radius:radius + 1, -radius:radius + 1]
                 mask = x_indices**2 + y_indices**2 <= radius**2
                 x0 = max(0, x - radius)
-                x1 = min(self.master_layer.shape[1], x + radius + 1)
+                x1 = min(self.layer_collection.master_layer.shape[1], x + radius + 1)
                 y0 = max(0, y - radius)
-                y1 = min(self.master_layer.shape[0], y + radius + 1)
+                y1 = min(self.layer_collection.master_layer.shape[0], y + radius + 1)
                 mask = mask[radius - (y - y0): radius + (y1 - y), radius - (x - x0): radius + (x1 - x)]
-                region = self.master_layer[y0:y1, x0:x1]
+                region = self.layer_collection.master_layer[y0:y1, x0:x1]
                 if region.size == 0:
-                    pixel = self.master_layer[y, x]
+                    pixel = self.layer_collection.master_layer[y, x]
                 else:
                     if region.ndim == 3:
                         pixel = [region[:, :, c][mask].mean() for c in range(region.shape[2])]
                     else:
                         pixel = region[mask].mean()
             else:
-                pixel = self.master_layer[y, x]
+                pixel = self.layer_collection.master_layer[y, x]
             if np.isscalar(pixel):
                 pixel = [pixel, pixel, pixel]
             pixel = [np.float32(x) for x in pixel]
-            if self.master_layer.dtype == np.uint16:
+            if self.layer_collection.master_layer.dtype == np.uint16:
                 pixel = [x / 256.0 for x in pixel]
             return tuple(int(v) for v in pixel)
         else:

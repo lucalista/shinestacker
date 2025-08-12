@@ -1,6 +1,6 @@
 import numpy as np
 from PySide6.QtWidgets import QGraphicsPixmapItem
-from PySide6.QtCore import Qt, QPointF
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QPixmap, QPainter, QImage
 
 
@@ -42,6 +42,8 @@ def create_brush_mask(size, hardness_percent, opacity_percent):
 class BrushPreviewItem(QGraphicsPixmapItem):
     def __init__(self):
         super().__init__()
+        self.layer_collection = None
+        self.brush = None
         self.setVisible(False)
         self.setZValue(500)
         self.setTransformationMode(Qt.SmoothTransformation)
@@ -68,31 +70,26 @@ class BrushPreviewItem(QGraphicsPixmapItem):
         else:
             raise Exception("Bitmas is neither 8 bit nor 16, but of type " + area.dtype)
 
-    def update(self, editor, pos, size):
+    def update(self, scene_pos, size):
         try:
-            if editor.current_stack is None or not hasattr(editor, 'image_viewer') or size <= 0:
+            if self.layer_collection.layer_stack is None or size <= 0:
                 self.hide()
                 return
             radius = size // 2
-            if isinstance(pos, QPointF):
-                scene_pos = pos
-            else:
-                cursor_pos = editor.image_viewer.mapFromGlobal(pos)
-                scene_pos = editor.image_viewer.mapToScene(cursor_pos)
             x = int(scene_pos.x() - radius + 0.5)
             y = int(scene_pos.y() - radius)
             w = h = size
-            if editor.current_layer < 0 or editor.current_layer >= len(editor.current_stack):
+            if not self.layer_collection.valid_current_layer_idx():
                 self.hide()
                 return
-            layer_area = self.get_layer_area(editor.current_stack[editor.current_layer], x, y, w, h)
-            master_area = self.get_layer_area(editor.master_layer, x, y, w, h)
+            layer_area = self.get_layer_area(self.layer_collection.current_layer(), x, y, w, h)
+            master_area = self.get_layer_area(self.layer_collection.master_layer, x, y, w, h)
             if layer_area is None or master_area is None:
                 self.hide()
                 return
-            height, width = editor.current_stack[editor.current_layer].shape[:2]
-            full_mask = create_brush_mask(size=size, hardness_percent=editor.brush.hardness,
-                                          opacity_percent=editor.brush.opacity)[:, :, np.newaxis]
+            height, width = self.layer_collection.current_layer().shape[:2]
+            full_mask = create_brush_mask(size=size, hardness_percent=self.brush.hardness,
+                                          opacity_percent=self.brush.opacity)[:, :, np.newaxis]
             mask_x_start = max(0, -x) if x < 0 else 0
             mask_y_start = max(0, -y) if y < 0 else 0
             mask_x_end = size - (max(0, (x + w) - width)) if (x + w) > width else size
