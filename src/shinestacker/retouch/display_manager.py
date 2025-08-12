@@ -25,6 +25,12 @@ class DisplayManager(QObject):
                  thumbnail_list, parent=None):
         super().__init__(parent)
         self.layer_collection = layer_collection
+        self.master_layer = lambda: self.layer_collection.master_layer
+        self.current_layer = lambda: self.layer_collection.current_layer()
+        self.layer_stack = lambda: self.layer_collection.layer_stack
+        self.layer_labels = lambda: self.layer_collection.layer_labels
+        self.set_layer_label = lambda i, val: self.layer_collection.set_layer_label(i, val)
+        self.current_layer_idx = lambda: self.layer_collection.current_layer_idx
         self.image_viewer = image_viewer
         self.master_thumbnail_label = master_thumbnail_label
         self.thumbnail_list = thumbnail_list
@@ -41,16 +47,16 @@ class DisplayManager(QObject):
             self.needs_update = False
 
     def display_master_layer(self):
-        if self.layer_collection.master_layer is None:
+        if self.master_layer() is None:
             self.image_viewer.clear_image()
         else:
-            qimage = self.numpy_to_qimage(self.layer_collection.master_layer)
+            qimage = self.numpy_to_qimage(self.master_layer())
             self.image_viewer.set_image(qimage)
 
     def display_current_layer(self):
-        if self.layer_collection.layer_stack is None:
+        if self.layer_stack() is None:
             return
-        layer = self.layer_collection.current_layer()
+        layer = self.current_layer()
         qimage = self.numpy_to_qimage(layer)
         self.image_viewer.set_image(qimage)
 
@@ -71,20 +77,20 @@ class DisplayManager(QObject):
         return QPixmap.fromImage(qimg.scaled(*gui_constants.UI_SIZES['thumbnail'], Qt.KeepAspectRatio))
 
     def update_master_thumbnail(self):
-        if self.layer_collection.master_layer is None:
+        if self.master_layer() is None:
             self.master_thumbnail_label.clear()
         else:
-            master_thumb = self.create_thumbnail(self.layer_collection.master_layer)
+            master_thumb = self.create_thumbnail(self.master_layer())
             self.master_thumbnail_label.setPixmap(master_thumb)
 
     def update_thumbnails(self):
         self.update_master_thumbnail()
         self.thumbnail_list.clear()
-        if self.layer_collection.layer_stack is None:
+        if self.layer_stack() is None:
             return
-        for i, (layer, label) in enumerate(zip(self.layer_collection.layer_stack, self.layer_collection.layer_labels)):
+        for i, (layer, label) in enumerate(zip(self.layer_stack(), self.layer_labels())):
             thumbnail = self.create_thumbnail(layer)
-            self.add_thumbnail_item(thumbnail, label, i, i == self.layer_collection.current_layer_idx)
+            self.add_thumbnail_item(thumbnail, label, i, i == self.current_layer_idx())
 
     def add_thumbnail_item(self, thumbnail, label, i, is_current):
         item_widget = QWidget()
@@ -104,7 +110,7 @@ class DisplayManager(QObject):
             new_label, ok = QInputDialog.getText(self.thumbnail_list, "Rename Label", "New label name:", text=old_label)
             if ok and new_label and new_label != old_label:
                 label_widget.setText(new_label)
-                self.layer_collection.layer_labels[i] = new_label
+                self.set_layer_labels(i, new_label)
 
         label_widget.doubleClicked.connect(lambda: rename_label(label_widget, label, i))
         layout.addWidget(label_widget)
@@ -118,7 +124,7 @@ class DisplayManager(QObject):
             self.thumbnail_list.setCurrentItem(item)
 
     def set_view_master(self):
-        if self.layer_collection.master_layer is None:
+        if self.master_layer() is None:
             return
         self.view_mode = 'master'
         self.temp_view_individual = False
@@ -126,7 +132,7 @@ class DisplayManager(QObject):
         self.status_message_requested.emit("View mode: Master")
 
     def set_view_individual(self):
-        if self.layer_collection.master_layer is None:
+        if self.master_layer() is None:
             return
         self.view_mode = 'individual'
         self.temp_view_individual = False

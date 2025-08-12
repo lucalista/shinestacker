@@ -198,7 +198,7 @@ class ImageEditor(QMainWindow):
 
     def begin_copy_brush_area(self, pos):
         if self.display_manager.allow_cursor_preview():
-            self.mask_layer = self.blank_layer.copy()
+            self.mask_layer = self.io_gui_handler.blank_layer.copy()
             self.layer_collection.copy_master_layer()
             self.undo_manager.reset_undo_area()
             self.copy_brush_area_to_master(pos)
