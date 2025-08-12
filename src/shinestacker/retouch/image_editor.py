@@ -86,37 +86,8 @@ class ImageEditor(QMainWindow):
             return True
 
     def sort_layers(self, order):
-        if not hasattr(self, 'current_stack') or not hasattr(self, 'current_labels'):
-            return
-        master_index = -1
-        master_label = None
-        master_layer = None
-        for i, label in enumerate(self.layer_collection.layer_labels):
-            if label.lower() == "master":
-                master_index = i
-                master_label = self.layer_collection.layer_labels.pop(i)
-                master_layer = self.layer_collection.layer_stack[i]
-                self.layer_collection.layer_stack = np.delete(self.layer_collection.layer_stack, i, axis=0)
-                break
-        if order == 'asc':
-            self.sorted_indices = sorted(range(len(self.layer_collection.layer_labels)),
-                                         key=lambda i: self.layer_collection.layer_labels[i].lower())
-        elif order == 'desc':
-            self.sorted_indices = sorted(range(len(self.layer_collection.layer_labels)),
-                                         key=lambda i: self.layer_collection.layer_labels[i].lower(),
-                                         reverse=True)
-        else:
-            raise ValueError(f"Invalid sorting order: {order}")
-        self.layer_collection.layer_labels = [self.layer_collection.layer_labels[i] for i in self.sorted_indices]
-        self.layer_collection.layer_stack = self.layer_collection.layer_stack[self.sorted_indices]
-        if master_index != -1:
-            self.layer_collection.layer_labels.insert(0, master_label)
-            self.layer_collection.layer_stack = np.insert(self.layer_collection.layer_stack, 0, master_layer, axis=0)
-            self.layer_collection.master_layer = master_layer.copy()
-            self.layer_collection.master_layer.setflags(write=True)
+        self.layer_collection.sort_layers(order)
         self.update_thumbnails()
-        if self.layer_collection.current_layer_idx >= self.layer_collection.number_of_layers():
-            self.layer_collection.current_layer_idx = self.layer_collection.number_of_layers() - 1
         self.change_layer(self.layer_collection.current_layer)
 
     def update_title(self):
