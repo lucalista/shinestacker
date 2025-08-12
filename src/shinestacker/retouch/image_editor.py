@@ -21,7 +21,6 @@ class ImageEditor(QMainWindow):
         super().__init__()
         self.layer_collection = LayerCollection()
         self.io_manager = IOManager(self.layer_collection)
-        self._brush_mask_cache = {}
         self.view_mode = 'master'
         self.temp_view_individual = False
         self.modified = False
@@ -449,7 +448,6 @@ class ImageEditor(QMainWindow):
         self.brush.size = slider_to_brush_size(slider_val)
         self.update_brush_thumb()
         self.image_viewer.update_brush_cursor()
-        self.clear_brush_cache()
 
     def increase_brush_size(self, amount=5):
         val = self.brush_size_slider.value()
@@ -475,7 +473,6 @@ class ImageEditor(QMainWindow):
         self.brush.hardness = hardness
         self.update_brush_thumb()
         self.image_viewer.update_brush_cursor()
-        self.clear_brush_cache()
 
     def update_brush_opacity(self, opacity):
         self.brush.opacity = opacity
@@ -521,9 +518,6 @@ class ImageEditor(QMainWindow):
             painter.drawText(0, 55, f"Flow: {self.brush.flow}%")
         painter.end()
         self.brush_preview.setPixmap(pixmap)
-
-    def clear_brush_cache(self):
-        self._brush_mask_cache.clear()
 
     def allow_cursor_preview(self):
         return self.view_mode == 'master' and not self.temp_view_individual
