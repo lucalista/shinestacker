@@ -5,7 +5,7 @@ from PySide6.QtCore import QTimer
 
 def open_files(editor, filenames):
     if len(filenames) == 1:
-        QTimer.singleShot(100, lambda: editor.open_file(filenames[0]))
+        QTimer.singleShot(100, lambda: editor.io_gui_handler.open_file(filenames[0]))
     else:
         def check_thread():
             if editor.loader_thread is None or editor.loader_thread.isRunning():
@@ -13,7 +13,7 @@ def open_files(editor, filenames):
             else:
                 editor.import_frames_from_files(filenames[1:])
         QTimer.singleShot(100, lambda: (
-            editor.open_file(filenames[0]),
+            editor.io_gui_handler.open_file(filenames[0]),
             QTimer.singleShot(100, check_thread)
         ))
 

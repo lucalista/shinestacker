@@ -185,9 +185,9 @@ class ImageViewer(QGraphicsView):
             return
         if self.control_pressed:
             if event.angleDelta().y() > 0:
-                self.image_editor.decrease_brush_size()
+                self.image_editor.brush_tool.decrease_brush_size()
             else:
-                self.image_editor.increase_brush_size()
+                self.image_editor.brush_tool.increase_brush_size()
         else:
             zoom_in_factor = 1.10
             zoom_out_factor = 1 / zoom_in_factor
