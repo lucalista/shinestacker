@@ -450,22 +450,26 @@ class ImageEditor(QMainWindow):
 
     def increase_brush_size(self, amount=5):
         val = self.brush_size_slider.value()
-        self.brush_size_slider.setValue(min(val + amount, self.brush_size_slider.maximum()))
+        val = min(val + amount, self.brush_size_slider.maximum())
+        self.brush_size_slider.setValue(val)
         self.update_brush_size(val)
 
     def decrease_brush_size(self, amount=5):
         val = self.brush_size_slider.value()
-        self.brush_size_slider.setValue(max(val - amount, self.brush_size_slider.minimum()))
+        val = max(val - amount, self.brush_size_slider.minimum())
+        self.brush_size_slider.setValue(val)
         self.update_brush_size(val)
 
     def increase_brush_hardness(self, amount=2):
         val = self.hardness_slider.value()
-        self.hardness_slider.setValue(min(val + amount, self.hardness_slider.maximum()))
+        val = min(val + amount, self.hardness_slider.maximum())
+        self.hardness_slider.setValue(val)
         self.update_brush_hardness(val)
 
     def decrease_brush_hardness(self, amount=2):
         val = self.hardness_slider.value()
-        self.hardness_slider.setValue(max(val - amount, self.hardness_slider.minimum()))
+        val = max(val - amount, self.hardness_slider.minimum())
+        self.hardness_slider.setValue(val)
         self.update_brush_hardness(val)
 
     def update_brush_hardness(self, hardness):
