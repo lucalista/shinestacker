@@ -4,6 +4,16 @@ This page reports the main releases only and the main changes therein.
 
 ---
 
+## [v0.3.1] - 2025-08-12
+**Fixes and code refactoring**
+
+### Changes
+
+* some GUI fixes
+* some code refactoring and cleanup
+
+---
+
 ## [v0.3.0] - 2025-08-11
 **Filters added to retouch GUI**
 
