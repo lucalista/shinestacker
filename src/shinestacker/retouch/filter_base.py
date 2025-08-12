@@ -35,7 +35,7 @@ class BaseFilter(ABC):
             if request_id != expected_id:
                 return
             self.editor.layer_collection.master_layer = img
-            self.editor.display_master_layer()
+            self.editor.display_manager.display_master_layer()
             try:
                 dlg.activateWindow()
             except Exception:
@@ -63,7 +63,7 @@ class BaseFilter(ABC):
 
         def restore_original():
             self.editor.layer_collection.master_layer = self.editor.layer_collection.master_layer_copy.copy()
-            self.editor.display_master_layer()
+            self.editor.display_manager.display_master_layer()
             try:
                 dlg.activateWindow()
             except Exception:
@@ -90,8 +90,8 @@ class BaseFilter(ABC):
             final_img = self.apply(self.editor.layer_collection.master_layer_copy, *params)
             self.editor.layer_collection.master_layer = final_img
             self.editor.layer_collection.copy_master_layer()
-            self.editor.display_master_layer()
-            self.editor.update_master_thumbnail()
+            self.editor.display_manager.display_master_layer()
+            self.editor.display_manager.update_master_thumbnail()
             self.editor.mark_as_modified()
         else:
             restore_original()

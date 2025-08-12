@@ -45,10 +45,11 @@ class ExifData(QDialog):
         shortcuts = {}
         if self.exif is None:
             shortcuts['Warning:'] = 'no EXIF data found'
+            data = {}
         else:
             data = exif_dict(self.exif)
         if len(data) > 0:
-            for k, (t, d) in data.items():
+            for k, (_, d) in data.items():
                 if isinstance(d, IFDRational):
                     d = f"{d.numerator}/{d.denominator}"
                 else:
