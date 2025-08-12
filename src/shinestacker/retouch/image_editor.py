@@ -420,10 +420,6 @@ class ImageEditor(QMainWindow):
             self.image_viewer.update_brush_cursor()
             self.image_viewer.setFocus()
 
-    def change_layer_item(self, item):
-        layer_idx = self.thumbnail_list.row(item)
-        self.change_layer(layer_idx)
-
     def display_current_layer(self):
         if self.layer_collection.layer_stack is None:
             return

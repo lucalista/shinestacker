@@ -172,7 +172,12 @@ class ImageEditorUI(ImageFilters):
         self.thumbnail_list.setFixedWidth(gui_constants.THUMB_WIDTH)
         self.thumbnail_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.thumbnail_list.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        self.thumbnail_list.itemClicked.connect(self.change_layer_item)
+
+        def change_layer_item(item):
+            layer_idx = self.thumbnail_list.row(item)
+            self.change_layer(layer_idx)
+
+        self.thumbnail_list.itemClicked.connect(change_layer_item)
         self.thumbnail_list.setStyleSheet("""
             QListWidget {
                 background-color: #f5f5f5;
