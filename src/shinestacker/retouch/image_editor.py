@@ -288,12 +288,16 @@ class ImageEditor(QMainWindow):
             self.update_title()
 
     def set_view_master(self):
+        if self.layer_collection.master_layer is None:
+            return
         self.view_mode = 'master'
         self.temp_view_individual = False
         self.display_master_layer()
         self.statusBar().showMessage("View mode: Master")
 
     def set_view_individual(self):
+        if self.layer_collection.master_layer is None:
+            return
         self.view_mode = 'individual'
         self.temp_view_individual = False
         self.display_current_layer()
