@@ -313,6 +313,7 @@ class ImageFilters(ImageEditor):
             def start_color_pick():
                 restore_original()
                 dlg.hide()
+                dlg.reject()
                 QApplication.setOverrideCursor(QCursor(Qt.CrossCursor))
                 self.image_viewer.setCursor(Qt.CrossCursor)
                 self._original_mouse_press = self.image_viewer.mousePressEvent
@@ -320,9 +321,16 @@ class ImageFilters(ImageEditor):
 
             def pick_color_from_click(event):
                 if event.button() == Qt.LeftButton:
-                    pos = event.pos()
-                    bgr = self.get_pixel_color_at(pos, radius=int(self.brush.size))
+                    bgr = self.get_pixel_color_at(event.pos(), radius=int(self.brush.size))
                     rgb = (bgr[2], bgr[1], bgr[0])
+                    QApplication.restoreOverrideCursor()
+                    self.image_viewer.unsetCursor()
+                    self.image_viewer.mousePressEvent = self._original_mouse_press
+                    delattr(self, "_original_mouse_press")
+                    self.image_viewer.set_cursor_style(cursor_style)
+                    if self.image_viewer.brush_cursor:
+                        self.image_viewer.brush_cursor.show()
+                    self.brush_preview.show()
                     self.white_balance(rgb)
 
             def reset_rgb():
@@ -338,11 +346,6 @@ class ImageFilters(ImageEditor):
                 self.image_viewer.set_cursor_style(cursor_style)
                 self.image_viewer.brush_cursor.show()
                 self.brush_preview.show()
-                if hasattr(self, "_original_mouse_press"):
-                    QApplication.restoreOverrideCursor()
-                    self.image_viewer.unsetCursor()
-                    self.image_viewer.mousePressEvent = self._original_mouse_press
-                    delattr(self, "_original_mouse_press")
                 self.wb_dialog = None
 
             dlg.finished.connect(on_finished)
