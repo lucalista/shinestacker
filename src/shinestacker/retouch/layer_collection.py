@@ -13,7 +13,7 @@ class LayerCollection:
         return 0 <= self.current_layer_idx < self.number_of_layers()
 
     def current_layer(self):
-        if self.layer_stack and self.valid_current_layer_idx():
+        if self.layer_stack is not None and self.valid_current_layer_idx():
             return self.layer_stack[self.current_layer_idx]
         return None
 
