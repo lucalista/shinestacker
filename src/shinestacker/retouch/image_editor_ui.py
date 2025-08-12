@@ -355,6 +355,6 @@ class ImageEditorUI(ImageFilters):
 
     def handle_temp_view(self, start):
         if start:
-            self.start_temp_view()
+            self.display_manager.start_temp_view()
         else:
-            self.end_temp_view()
+            self.display_manager.end_temp_view()

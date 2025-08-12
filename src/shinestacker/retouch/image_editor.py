@@ -63,10 +63,10 @@ class ImageEditor(QMainWindow):
 
     def eventFilter(self, obj, event):
         if event.type() == QEvent.KeyPress and event.key() == Qt.Key_X:
-            self.start_temp_view()
+            self.display_manager.start_temp_view()
             return True
         if event.type() == QEvent.KeyRelease and event.key() == Qt.Key_X:
-            self.end_temp_view()
+            self.display_manager.end_temp_view()
             return True
         return super().eventFilter(obj, event)
 

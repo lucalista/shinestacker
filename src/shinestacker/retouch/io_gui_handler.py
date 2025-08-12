@@ -86,7 +86,7 @@ class IOGuiHandler(QObject):
                                                      "Images Images (*.tif *.tiff *.jpg *.jpeg);;All Files (*)")
         if file_paths:
             self.import_frames_from_files(file_paths)
-        elf.status_message_requested.emit("Imported selected frames")
+        self.status_message_requested.emit("Imported selected frames")
 
     def import_frames_from_files(self, file_paths):
         try:
