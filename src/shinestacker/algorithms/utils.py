@@ -47,10 +47,14 @@ def img_bw(img):
 
 
 def get_img_metadata(img):
+    if img is None:
+        return None, None
     return img.shape[:2], img.dtype
 
 
 def validate_image(img, expected_shape=None, expected_dtype=None):
+    if img is None:
+        raise RuntimeError("Image is None")
     shape, dtype = get_img_metadata(img)
     if expected_shape and shape[:2] != expected_shape[:2]:
         raise ShapeError(expected_shape, shape)

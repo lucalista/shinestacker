@@ -1,22 +1,18 @@
 import traceback
 import numpy as np
-import cv2
 from PySide6.QtWidgets import (QMainWindow, QFileDialog, QMessageBox, QAbstractItemView,
                                QVBoxLayout, QLabel, QDialog, QApplication)
 from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QRadialGradient, QGuiApplication, QCursor
 from PySide6.QtCore import Qt, QTimer, QEvent, QPoint
 from .. config.constants import constants
 from .. config.gui_constants import gui_constants
-from .. core.exceptions import ShapeError, BitDepthError
-from .. algorithms.exif import get_exif, write_image_with_exif_data
-from .. algorithms.multilayer import write_multilayer_tiff_from_images
-from .. algorithms.utils import read_img, validate_image, get_img_metadata
 from .brush import Brush
 from .brush_controller import BrushController
 from .undo_manager import UndoManager
 from .file_loader import FileLoader
 from .exif_data import ExifData
 from .layer_collection import LayerCollection
+from .io_manager import IOManager
 
 
 def slider_to_brush_size(slider_val):
@@ -46,12 +42,10 @@ class ImageEditor(QMainWindow):
     def __init__(self):
         super().__init__()
         self.layer_collection = LayerCollection()
+        self.io_manager = IOManager(self.layer_collection)
         self._brush_mask_cache = {}
         self.view_mode = 'master'
         self.temp_view_individual = False
-        self.current_file_path = ''
-        self.exif_path = ''
-        self.exif_data = None
         self.modified = False
         self.installEventFilter(self)
         self.update_timer = QTimer(self)
@@ -150,8 +144,8 @@ class ImageEditor(QMainWindow):
 
     def update_title(self):
         title = constants.APP_TITLE
-        if self.current_file_path:
-            title += f" - {self.current_file_path.split('/')[-1]}"
+        if self.io_manager.current_file_path:
+            title += f" - {self.io_manager.current_file_path.split('/')[-1]}"
             if self.modified:
                 title += " *"
         self.window().setWindowTitle(title)
@@ -169,7 +163,7 @@ class ImageEditor(QMainWindow):
             self.import_frames_from_files(file_paths)
             return
         path = file_paths[0] if isinstance(file_paths, list) else file_paths
-        self.current_file_path = path
+        self.io_manager.current_file_path = path
         QGuiApplication.setOverrideCursor(QCursor(Qt.BusyCursor))
         self.loading_dialog = QDialog(self)
         self.loading_dialog.setWindowTitle("Loading")
@@ -197,8 +191,6 @@ class ImageEditor(QMainWindow):
         else:
             self.layer_collection.layer_labels = labels
         self.layer_collection.master_layer = master_layer
-        self.shape = np.array(master_layer).shape
-        self.dtype = master_layer.dtype
         self.modified = False
         self.undo_manager.reset()
         self.blank_layer = np.zeros(master_layer.shape[:2])
@@ -206,7 +198,7 @@ class ImageEditor(QMainWindow):
         self.image_viewer.setup_brush_cursor()
         self.change_layer(0)
         self.image_viewer.reset_zoom()
-        self.statusBar().showMessage(f"Loaded: {self.current_file_path}")
+        self.statusBar().showMessage(f"Loaded: {self.io_manager.current_file_path}")
         self.thumbnail_list.setFocus()
         self.update_title()
 
@@ -216,7 +208,7 @@ class ImageEditor(QMainWindow):
         self.loading_dialog.accept()
         self.loading_dialog.deleteLater()
         QMessageBox.critical(self, "Error", error_msg)
-        self.statusBar().showMessage(f"Error loading: {self.current_file_path}")
+        self.statusBar().showMessage(f"Error loading: {self.io_manager.current_file_path}")
 
     def mark_as_modified(self):
         self.modified = True
@@ -227,68 +219,32 @@ class ImageEditor(QMainWindow):
                                                      "Images Images (*.tif *.tiff *.jpg *.jpeg);;All Files (*)")
         if file_paths:
             self.import_frames_from_files(file_paths)
+        self.statusBar().showMessage("Imported selected frames")
 
     def import_frames_from_files(self, file_paths):
-        if file_paths is None or len(file_paths) == 0:
+        try:
+            stack, labels, master = self.io_manager.import_frames(file_paths)
+        except Exception as e:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Critical)
+            msg.setWindowTitle("Import error")
+            msg.setText(str(e))
+            msg.exec()
             return
-        if self.layer_collection.layer_stack is None and len(file_paths) > 0:
-            path = file_paths[0]
-            img = cv2.cvtColor(read_img(path), cv2.COLOR_BGR2RGB)
-            self.layer_collection.layer_stack = np.array([img])
-            self.shape, self.dtype = get_img_metadata(img)
-            label = path.split("/")[-1].split(".")[0]
-            self.layer_collection.layer_labels = [label]
-            if self.layer_collection.master_layer is None:
-                self.layer_collection.master_layer = img.copy()
-            self.blank_layer = np.zeros(self.layer_collection.master_layer.shape[:2])
-            next_paths = file_paths[1:]
+        if self.layer_collection.layer_stack is None and len(stack) > 0:
+            self.layer_collection.layer_stack = np.array(stack)
+            self.layer_collection.layer_labels = labels
+            self.layer_collection.master_layer = master
+            self.blank_layer = np.zeros(master.shape[:2])
         else:
-            next_paths = file_paths
-        for path in next_paths:
-            try:
-                label = path.split("/")[-1].split(".")[0]
-                img = cv2.cvtColor(read_img(path), cv2.COLOR_BGR2RGB)
-                try:
-                    validate_image(img, self.shape, self.dtype)
-                except ShapeError as e:
-                    msg = QMessageBox()
-                    msg.setIcon(QMessageBox.Critical)
-                    msg.setWindowTitle("Import error")
-                    msg.setText(f"All files must have the same shape.\n{str(e)}")
-                    msg.exec()
-                    return
-                except BitDepthError as e:
-                    msg = QMessageBox()
-                    msg.setIcon(QMessageBox.Critical)
-                    msg.setWindowTitle("Import error")
-                    msg.setText(f"All flies must have the same bit depth.\n{str(e)}")
-                    msg.exec()
-                    return
-                except Exception as e:
-                    traceback.print_tb(e.__traceback__)
-                    raise e
-                    return
-                label_x = label
-                i = 0
-                while label_x in self.layer_collection.layer_labels:
-                    i += 1
-                    label_x = f"{label} ({i})"
-                self.layer_collection.layer_labels.append(label_x)
-                self.layer_collection.layer_stack = np.append(self.layer_collection.layer_stack, [img], axis=0)
-            except Exception as e:
-                traceback.print_tb(e.__traceback__)
-                msg = QMessageBox()
-                msg.setIcon(QMessageBox.Critical)
-                msg.setWindowTitle("Import error")
-                msg.setText(f"Error loading file: {path}.\n{str(e)}")
-                msg.exec()
-                self.statusBar().showMessage(f"Error loading file: {path}")
-                break
+            for img, label in zip(stack, labels):
+                self.layer_collection.layer_labels.append(label)
+                self.layer_collection.layer_stack = np.append(
+                    self.layer_collection.layer_stack, [img], axis=0)
         self.mark_as_modified()
         self.change_layer(0)
         self.image_viewer.reset_zoom()
         self.thumbnail_list.setFocus()
-
         self.update_thumbnails()
 
     def save_file(self):
@@ -325,10 +281,8 @@ class ImageEditor(QMainWindow):
 
     def save_multilayer_to_path(self, path):
         try:
-            master_layer = {'Master': self.layer_collection.master_layer}
-            individual_layers = {label: image for label, image in zip(self.layer_collection.layer_labels, self.layer_collection.layer_stack)}
-            write_multilayer_tiff_from_images({**master_layer, **individual_layers}, path, exif_path=self.exif_path)
-            self.current_file_path = path
+            self.io_manager.save_multilayer(path)
+            self.io_manager.current_file_path = path
             self.modified = False
             self.update_title()
             self.statusBar().showMessage(f"Saved multilayer to: {path}")
@@ -354,8 +308,8 @@ class ImageEditor(QMainWindow):
 
     def save_master_to_path(self, path):
         try:
-            write_image_with_exif_data(self.exif_data, cv2.cvtColor(self.layer_collection.master_layer, cv2.COLOR_RGB2BGR), path)
-            self.current_file_path = path
+            self.io_manager.save_master(path)
+            self.io_manager.current_file_path = path
             self.modified = False
             self.update_title()
             self.statusBar().showMessage(f"Saved master layer to: {path}")
@@ -366,10 +320,9 @@ class ImageEditor(QMainWindow):
     def select_exif_path(self):
         path, _ = QFileDialog.getOpenFileName(None, "Select file with exif data")
         if path:
-            self.exif_path = path
-            self.exif_data = get_exif(path)
+            self.io_manager.set_exif_data(path)
             self.statusBar().showMessage(f"EXIF data extracted from {path}.")
-        self._exif_dialog = ExifData(self.exif_data, self)
+        self._exif_dialog = ExifData(self.io_manager.exif_data, self)
         self._exif_dialog.exec()
 
     def close_file(self):
@@ -379,7 +332,7 @@ class ImageEditor(QMainWindow):
             self.current_stack = None
             self.layer_collection.master_layer = None
             self.layer_collection.current_layer_idx = 0
-            self.current_file_path = ''
+            self.io_manager.current_file_path = ''
             self.modified = False
             self.undo_manager.reset()
             self.image_viewer.clear_image()
