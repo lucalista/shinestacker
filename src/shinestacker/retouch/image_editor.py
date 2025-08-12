@@ -16,6 +16,7 @@ from .brush_controller import BrushController
 from .undo_manager import UndoManager
 from .file_loader import FileLoader
 from .exif_data import ExifData
+from .layer_collection import LayerCollection
 
 
 def slider_to_brush_size(slider_val):
@@ -44,12 +45,7 @@ def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None
 class ImageEditor(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.current_stack = None
-        self.master_layer = None
-        self.current_labels = None
-        self.current_layer = 0
-        self.shape = None
-        self.dtype = None
+        self.layer_collection = LayerCollection()
         self._brush_mask_cache = {}
         self.view_mode = 'master'
         self.temp_view_individual = False
@@ -124,33 +120,33 @@ class ImageEditor(QMainWindow):
         master_index = -1
         master_label = None
         master_layer = None
-        for i, label in enumerate(self.current_labels):
+        for i, label in enumerate(self.layer_collection.layer_labels):
             if label.lower() == "master":
                 master_index = i
-                master_label = self.current_labels.pop(i)
-                master_layer = self.current_stack[i]
-                self.current_stack = np.delete(self.current_stack, i, axis=0)
+                master_label = self.layer_collection.layer_labels.pop(i)
+                master_layer = self.layer_collection.layer_stack[i]
+                self.layer_collection.layer_stack = np.delete(self.layer_collection.layer_stack, i, axis=0)
                 break
         if order == 'asc':
-            self.sorted_indices = sorted(range(len(self.current_labels)),
-                                         key=lambda i: self.current_labels[i].lower())
+            self.sorted_indices = sorted(range(len(self.layer_collection.layer_labels)),
+                                         key=lambda i: self.layer_collection.layer_labels[i].lower())
         elif order == 'desc':
-            self.sorted_indices = sorted(range(len(self.current_labels)),
-                                         key=lambda i: self.current_labels[i].lower(),
+            self.sorted_indices = sorted(range(len(self.layer_collection.layer_labels)),
+                                         key=lambda i: self.layer_collection.layer_labels[i].lower(),
                                          reverse=True)
         else:
             raise ValueError(f"Invalid sorting order: {order}")
-        self.current_labels = [self.current_labels[i] for i in self.sorted_indices]
-        self.current_stack = self.current_stack[self.sorted_indices]
+        self.layer_collection.layer_labels = [self.layer_collection.layer_labels[i] for i in self.sorted_indices]
+        self.layer_collection.layer_stack = self.layer_collection.layer_stack[self.sorted_indices]
         if master_index != -1:
-            self.current_labels.insert(0, master_label)
-            self.current_stack = np.insert(self.current_stack, 0, master_layer, axis=0)
-            self.master_layer = master_layer.copy()
-            self.master_layer.setflags(write=True)
+            self.layer_collection.layer_labels.insert(0, master_label)
+            self.layer_collection.layer_stack = np.insert(self.layer_collection.layer_stack, 0, master_layer, axis=0)
+            self.layer_collection.master_layer = master_layer.copy()
+            self.layer_collection.master_layer.setflags(write=True)
         self.update_thumbnails()
-        if self.current_layer >= len(self.current_stack):
-            self.current_layer = len(self.current_stack) - 1
-        self.change_layer(self.current_layer)
+        if self.layer_collection.current_layer_idx >= self.layer_collection.number_of_layers():
+            self.layer_collection.current_layer_idx = self.layer_collection.number_of_layers() - 1
+        self.change_layer(self.layer_collection.current_layer)
 
     def update_title(self):
         title = constants.APP_TITLE
@@ -195,12 +191,12 @@ class ImageEditor(QMainWindow):
         QApplication.restoreOverrideCursor()
         self.loading_timer.stop()
         self.loading_dialog.hide()
-        self.current_stack = stack
+        self.layer_collection.layer_stack = stack
         if labels is None:
-            self.current_labels = [f'Layer {i:03d}' for i in range(len(stack))]
+            self.layer_collection.layer_labels = [f'Layer {i:03d}' for i in range(len(stack))]
         else:
-            self.current_labels = labels
-        self.master_layer = master_layer
+            self.layer_collection.layer_labels = labels
+        self.layer_collection.master_layer = master_layer
         self.shape = np.array(master_layer).shape
         self.dtype = master_layer.dtype
         self.modified = False
@@ -235,16 +231,16 @@ class ImageEditor(QMainWindow):
     def import_frames_from_files(self, file_paths):
         if file_paths is None or len(file_paths) == 0:
             return
-        if self.current_stack is None and len(file_paths) > 0:
+        if self.layer_collection.layer_stack is None and len(file_paths) > 0:
             path = file_paths[0]
             img = cv2.cvtColor(read_img(path), cv2.COLOR_BGR2RGB)
-            self.current_stack = np.array([img])
+            self.layer_collection.layer_stack = np.array([img])
             self.shape, self.dtype = get_img_metadata(img)
             label = path.split("/")[-1].split(".")[0]
-            self.current_labels = [label]
-            if self.master_layer is None:
-                self.master_layer = img.copy()
-            self.blank_layer = np.zeros(self.master_layer.shape[:2])
+            self.layer_collection.layer_labels = [label]
+            if self.layer_collection.master_layer is None:
+                self.layer_collection.master_layer = img.copy()
+            self.blank_layer = np.zeros(self.layer_collection.master_layer.shape[:2])
             next_paths = file_paths[1:]
         else:
             next_paths = file_paths
@@ -274,11 +270,11 @@ class ImageEditor(QMainWindow):
                     return
                 label_x = label
                 i = 0
-                while label_x in self.current_labels:
+                while label_x in self.layer_collection.layer_labels:
                     i += 1
                     label_x = f"{label} ({i})"
-                self.current_labels.append(label_x)
-                self.current_stack = np.append(self.current_stack, [img], axis=0)
+                self.layer_collection.layer_labels.append(label_x)
+                self.layer_collection.layer_stack = np.append(self.layer_collection.layer_stack, [img], axis=0)
             except Exception as e:
                 traceback.print_tb(e.__traceback__)
                 msg = QMessageBox()
@@ -308,7 +304,7 @@ class ImageEditor(QMainWindow):
             self.save_multilayer_as()
 
     def save_multilayer(self):
-        if self.current_stack is None:
+        if self.layer_collection.layer_stack is None:
             return
         if self.current_file_path != '':
             extension = self.current_file_path.split('.')[-1]
@@ -318,7 +314,7 @@ class ImageEditor(QMainWindow):
         self.save_multilayer_file_as()
 
     def save_multilayer_as(self):
-        if self.current_stack is None:
+        if self.layer_collection.layer_stack is None:
             return
         path, _ = QFileDialog.getSaveFileName(self, "Save Image", "",
                                               "TIFF Files (*.tif *.tiff);;All Files (*)")
@@ -329,8 +325,8 @@ class ImageEditor(QMainWindow):
 
     def save_multilayer_to_path(self, path):
         try:
-            master_layer = {'Master': self.master_layer}
-            individual_layers = {label: image for label, image in zip(self.current_labels, self.current_stack)}
+            master_layer = {'Master': self.layer_collection.master_layer}
+            individual_layers = {label: image for label, image in zip(self.layer_collection.layer_labels, self.layer_collection.layer_stack)}
             write_multilayer_tiff_from_images({**master_layer, **individual_layers}, path, exif_path=self.exif_path)
             self.current_file_path = path
             self.modified = False
@@ -341,7 +337,7 @@ class ImageEditor(QMainWindow):
             QMessageBox.critical(self, "Save Error", f"Could not save file: {str(e)}")
 
     def save_master(self):
-        if self.master_layer is None:
+        if self.layer_collection.master_layer is None:
             return
         if self.current_file_path != '':
             self.save_master_to_path(self.current_file_path)
@@ -349,7 +345,7 @@ class ImageEditor(QMainWindow):
         self.save_master_as()
 
     def save_master_as(self):
-        if self.current_stack is None:
+        if self.layer_collection.layer_stack is None:
             return
         path, _ = QFileDialog.getSaveFileName(self, "Save Image", "",
                                               "TIFF Files (*.tif *.tiff);;JPEG Files (*.jpg *.jpeg);;All Files (*)")
@@ -358,7 +354,7 @@ class ImageEditor(QMainWindow):
 
     def save_master_to_path(self, path):
         try:
-            write_image_with_exif_data(self.exif_data, cv2.cvtColor(self.master_layer, cv2.COLOR_RGB2BGR), path)
+            write_image_with_exif_data(self.exif_data, cv2.cvtColor(self.layer_collection.master_layer, cv2.COLOR_RGB2BGR), path)
             self.current_file_path = path
             self.modified = False
             self.update_title()
@@ -378,11 +374,11 @@ class ImageEditor(QMainWindow):
 
     def close_file(self):
         if self._check_unsaved_changes():
-            self.master_layer = None
+            self.layer_collection.master_layer = None
             self.blank_layer = None
             self.current_stack = None
-            self.master_layer = None
-            self.current_layer = 0
+            self.layer_collection.master_layer = None
+            self.layer_collection.current_layer_idx = 0
             self.current_file_path = ''
             self.modified = False
             self.undo_manager.reset()
@@ -423,10 +419,10 @@ class ImageEditor(QMainWindow):
             self.display_master_layer()
 
     def display_master_layer(self):
-        if self.master_layer is None:
+        if self.layer_collection.master_layer is None:
             self.image_viewer.clear_image()
         else:
-            qimage = self.numpy_to_qimage(self.master_layer)
+            qimage = self.numpy_to_qimage(self.layer_collection.master_layer)
             self.image_viewer.set_image(qimage)
 
     def create_thumbnail(self, layer, size):
@@ -440,30 +436,30 @@ class ImageEditor(QMainWindow):
         return QPixmap.fromImage(qimg.scaled(*gui_constants.UI_SIZES['thumbnail'], Qt.KeepAspectRatio))
 
     def update_master_thumbnail(self):
-        if self.master_layer is None:
+        if self.layer_collection.master_layer is None:
             self.master_thumbnail_label.clear()
         else:
             thumb_size = gui_constants.UI_SIZES['thumbnail']
-            master_thumb = self.create_thumbnail(self.master_layer, thumb_size)
+            master_thumb = self.create_thumbnail(self.layer_collection.master_layer, thumb_size)
             self.master_thumbnail_label.setPixmap(master_thumb)
 
     def update_thumbnails(self):
         self.update_master_thumbnail()
         self.thumbnail_list.clear()
         thumb_size = gui_constants.UI_SIZES['thumbnail']
-        if self.current_stack is None:
+        if self.layer_collection.layer_stack is None:
             return
-        for i, (layer, label) in enumerate(zip(self.current_stack, self.current_labels)):
+        for i, (layer, label) in enumerate(zip(self.layer_collection.layer_stack, self.layer_collection.layer_labels)):
             thumbnail = self.create_thumbnail(layer, thumb_size)
-            self._add_thumbnail_item(thumbnail, label, i, i == self.current_layer)
+            self._add_thumbnail_item(thumbnail, label, i, i == self.layer_collection.current_layer_idx)
 
     def _add_thumbnail_item(self, thumbnail, label, i, is_current):
         pass
 
     def change_layer(self, layer_idx):
-        if 0 <= layer_idx < len(self.current_stack):
+        if 0 <= layer_idx < self.layer_collection.number_of_layers():
             view_state = self.image_viewer.get_view_state()
-            self.current_layer = layer_idx
+            self.layer_collection.current_layer_idx = layer_idx
             self.display_current_view()
             self.image_viewer.set_view_state(view_state)
             self.thumbnail_list.setCurrentRow(layer_idx)
@@ -476,9 +472,9 @@ class ImageEditor(QMainWindow):
         self.change_layer(layer_idx)
 
     def display_current_layer(self):
-        if self.current_stack is None:
+        if self.layer_collection.layer_stack is None:
             return
-        layer = self.current_stack[self.current_layer]
+        layer = self.layer_collection.current_layer()
         qimage = self.numpy_to_qimage(layer)
         self.image_viewer.set_image(qimage)
 
@@ -497,16 +493,16 @@ class ImageEditor(QMainWindow):
         return QImage()
 
     def prev_layer(self):
-        if self.current_stack is not None:
-            new_idx = max(0, self.current_layer - 1)
-            if new_idx != self.current_layer:
+        if self.layer_collection.layer_stack is not None:
+            new_idx = max(0, self.layer_collection.current_layer_idx - 1)
+            if new_idx != self.layer_collection.current_layer_idx:
                 self.change_layer(new_idx)
                 self.highlight_thumbnail(new_idx)
 
     def next_layer(self):
-        if self.current_stack is not None:
-            new_idx = min(len(self.current_stack) - 1, self.current_layer + 1)
-            if new_idx != self.current_layer:
+        if self.layer_collection.layer_stack is not None:
+            new_idx = min(self.layer_collection.number_of_layers() - 1, self.layer_collection.current_layer_idx + 1)
+            if new_idx != self.layer_collection.current_layer_idx:
                 self.change_layer(new_idx)
                 self.highlight_thumbnail(new_idx)
 
@@ -599,7 +595,7 @@ class ImageEditor(QMainWindow):
         return self.view_mode == 'master' and not self.temp_view_individual
 
     def copy_layer_to_master(self):
-        if self.current_stack is None or self.master_layer is None:
+        if self.layer_collection.layer_stack is None or self.layer_collection.master_layer is None:
             return
         reply = QMessageBox.question(
             self,
@@ -609,27 +605,27 @@ class ImageEditor(QMainWindow):
             QMessageBox.No
         )
         if reply == QMessageBox.Yes:
-            self.master_layer = self.current_stack[self.current_layer].copy()
-            self.master_layer.setflags(write=True)
+            self.layer_collection.master_layer = self.layer_collection.current_layer().copy()
+            self.layer_collection.master_layer.setflags(write=True)
             self.display_current_view()
             self.update_thumbnails()
             self.mark_as_modified()
-            self.statusBar().showMessage(f"Copied layer {self.current_layer + 1} to master")
+            self.statusBar().showMessage(f"Copied layer {self.layer_collection.current_layer_idx + 1} to master")
 
     def copy_brush_area_to_master(self, view_pos):
-        if self.current_layer is None or self.current_stack is None or len(self.current_stack) == 0 \
+        if self.layer_collection.layer_stack is None or self.layer_collection.number_of_layers() == 0 \
            or self.view_mode != 'master' or self.temp_view_individual:
             return
-        area = self.brush_controller.apply_brush_operation(self.master_layer_copy,
-                                                           self.current_stack[self.current_layer],
-                                                           self.master_layer, self.mask_layer,
+        area = self.brush_controller.apply_brush_operation(self.layer_collection.master_layer_copy,
+                                                           self.layer_collection.current_layer(),
+                                                           self.layer_collection.master_layer, self.mask_layer,
                                                            view_pos, self.image_viewer)
         self.undo_manager.extend_undo_area(*area)
 
     def begin_copy_brush_area(self, pos):
         if self.view_mode == 'master' and not self.temp_view_individual:
             self.mask_layer = self.blank_layer.copy()
-            self.master_layer_copy = self.master_layer.copy()
+            self.layer_collection.copy_master_layer()
             self.undo_manager.reset_undo_area()
             self.copy_brush_area_to_master(pos)
             self.needs_update = True
@@ -649,7 +645,7 @@ class ImageEditor(QMainWindow):
         if self.update_timer.isActive():
             self.display_master_layer()
             self.update_master_thumbnail()
-            self.undo_manager.save_undo_state(self.master_layer_copy, 'Brush Stroke')
+            self.undo_manager.save_undo_state(self.layer_collection.master_layer_copy, 'Brush Stroke')
             self.update_timer.stop()
             self.mark_as_modified()
 
