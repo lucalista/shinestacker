@@ -231,12 +231,12 @@ class ImageEditorUI(ImageFilters):
         self.undo_action = QAction("Undo", self)
         self.undo_action.setEnabled(False)
         self.undo_action.setShortcut("Ctrl+Z")
-        self.undo_action.triggered.connect(self.undo_last_brush)
+        self.undo_action.triggered.connect(self.undo)
         edit_menu.addAction(self.undo_action)
         self.redo_action = QAction("Redo", self)
         self.redo_action.setEnabled(False)
         self.redo_action.setShortcut("Ctrl+Y")
-        self.redo_action.triggered.connect(self.redo_last_brush)
+        self.redo_action.triggered.connect(self.redo)
         edit_menu.addAction(self.redo_action)
         edit_menu.addSeparator()
 
@@ -388,15 +388,17 @@ class ImageEditorUI(ImageFilters):
     def _update_label_in_data(self, old_label, new_label, i):
         self.layer_collection.layer_labels[i] = new_label
 
-    def undo_last_brush(self):
+    def undo(self):
         if self.undo_manager.undo(self.layer_collection.master_layer):
             self.display_current_view()
+            self.update_master_thumbnail()
             self.mark_as_modified()
             self.statusBar().showMessage("Undo applied", 2000)
 
-    def redo_last_brush(self):
+    def redo(self):
         if self.undo_manager.redo(self.layer_collection.master_layer):
             self.display_current_view()
+            self.update_master_thumbnail()
             self.mark_as_modified()
             self.statusBar().showMessage("Redo applied", 2000)
 
