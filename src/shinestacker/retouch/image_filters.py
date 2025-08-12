@@ -52,8 +52,7 @@ class ImageFilters(ImageEditor):
             if request_id != expected_id:
                 return
             self.layer_collection.master_layer = img
-            if hasattr(self, "display_master_layer"):
-                self.display_master_layer()
+            self.display_master_layer()
             try:
                 dlg.activateWindow()
             except Exception:
@@ -77,8 +76,7 @@ class ImageFilters(ImageEditor):
 
         def restore_original():
             self.layer_collection.master_layer = self.layer_collection.master_layer_copy.copy()
-            if hasattr(self, "display_master_layer"):
-                self.display_master_layer()
+            self.display_master_layer()
             try:
                 dlg.activateWindow()
             except Exception:
@@ -87,7 +85,6 @@ class ImageFilters(ImageEditor):
         setup_ui(dlg, layout, do_preview, restore_original)
         QTimer.singleShot(0, do_preview)
         accepted = dlg.exec_() == QDialog.Accepted
-
         if accepted:
             params = tuple(get_params() or ())
             try:
@@ -153,6 +150,7 @@ class ImageFilters(ImageEditor):
             button_box.accepted.connect(dlg.accept)
             button_box.rejected.connect(dlg.reject)
             slider = slider_local
+
         slider = None
         self.run_filter_with_preview(denoise, get_params, setup_ui, 'Denoise')
 
@@ -226,25 +224,22 @@ class ImageFilters(ImageEditor):
             button_box.accepted.connect(dlg.accept)
             button_box.rejected.connect(dlg.reject)
             QTimer.singleShot(0, do_preview)
+
         radius_slider = None
         amount_slider = None
         threshold_slider = None
         self.run_filter_with_preview(unsharp_mask, get_params, setup_ui, 'Unsharp Mask')
 
-    def white_balance(self):
-        if hasattr(self, 'wb_dialog') and self.wb_dialog:
-            self.wb_dialog.activateWindow()
-            self.wb_dialog.raise_()
-            return
-
+    def white_balance(self, init_val=False):
         max_range = 255
-        initial_val = 128
+        if init_val is False:
+            init_val = (128, 128, 128)
+        initial_val = {k: v for k, v in zip(["R", "G", "B"], init_val)}
         cursor_style = self.image_viewer.cursor_style
         self.image_viewer.set_cursor_style('outline')
         if self.image_viewer.brush_cursor:
             self.image_viewer.brush_cursor.hide()
-        if hasattr(self, 'brush_preview'):
-            self.brush_preview.hide()
+        self.brush_preview.hide()
 
         def get_params():
             return tuple(sliders[n].value() for n in ("R", "G", "B"))
@@ -272,9 +267,10 @@ class ImageFilters(ImageEditor):
                 row.addWidget(label)
                 slider = QSlider(Qt.Horizontal)
                 slider.setRange(0, max_range)
-                slider.setValue(initial_val)
+                init_val = initial_val[name]
+                slider.setValue(init_val)
                 row.addWidget(slider)
-                val_label = QLabel(str(initial_val))
+                val_label = QLabel(str(init_val))
                 row.addWidget(val_label)
                 sliders_layout.addLayout(row)
                 sliders[name] = slider
@@ -315,6 +311,7 @@ class ImageFilters(ImageEditor):
             self.connect_preview_toggle(preview_check, do_preview, restore_original)
 
             def start_color_pick():
+                restore_original()
                 dlg.hide()
                 QApplication.setOverrideCursor(QCursor(Qt.CrossCursor))
                 self.image_viewer.setCursor(Qt.CrossCursor)
@@ -326,20 +323,11 @@ class ImageFilters(ImageEditor):
                     pos = event.pos()
                     bgr = self.get_pixel_color_at(pos, radius=int(self.brush.size))
                     rgb = (bgr[2], bgr[1], bgr[0])
-                    for name, val in zip(("R", "G", "B"), rgb):
-                        sliders[name].setValue(val)
-                    QApplication.restoreOverrideCursor()
-                    self.image_viewer.unsetCursor()
-                    if hasattr(self, "_original_mouse_press"):
-                        self.image_viewer.mousePressEvent = self._original_mouse_press
-                        delattr(self, "_original_mouse_press")
-                    dlg.show()
-                    dlg.activateWindow()
-                    dlg.raise_()
+                    self.white_balance(rgb)
 
             def reset_rgb():
-                for slider in sliders.values():
-                    slider.setValue(initial_val)
+                for name, slider in sliders.items():
+                    slider.setValue(initial_val[name])
 
             pick_button.clicked.connect(start_color_pick)
             button_box.accepted.connect(dlg.accept)
@@ -348,10 +336,8 @@ class ImageFilters(ImageEditor):
 
             def on_finished():
                 self.image_viewer.set_cursor_style(cursor_style)
-                if self.image_viewer.brush_cursor:
-                    self.image_viewer.brush_cursor.show()
-                if hasattr(self, 'brush_preview'):
-                    self.brush_preview.show()
+                self.image_viewer.brush_cursor.show()
+                self.brush_preview.show()
                 if hasattr(self, "_original_mouse_press"):
                     QApplication.restoreOverrideCursor()
                     self.image_viewer.unsetCursor()
@@ -361,6 +347,7 @@ class ImageFilters(ImageEditor):
 
             dlg.finished.connect(on_finished)
             QTimer.singleShot(0, do_preview)
+
         sliders = {}
         value_labels = {}
         color_preview = None
