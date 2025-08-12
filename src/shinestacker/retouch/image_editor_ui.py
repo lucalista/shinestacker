@@ -1,6 +1,6 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QListWidget, QListWidgetItem, QSlider, QInputDialog
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QListWidget, QSlider, QInputDialog
 from PySide6.QtGui import QShortcut, QKeySequence, QAction, QActionGroup
-from PySide6.QtCore import Qt, QSize, Signal
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication
 from .. config.gui_constants import gui_constants
 from .image_filters import ImageFilters
@@ -15,19 +15,6 @@ def brush_size_to_slider(size):
         return gui_constants.BRUSH_SIZE_SLIDER_MAX
     normalized = ((size - gui_constants.BRUSH_SIZES['min']) / gui_constants.BRUSH_SIZES['max']) ** (1 / gui_constants.BRUSH_GAMMA)
     return int(normalized * gui_constants.BRUSH_SIZE_SLIDER_MAX)
-
-
-class ClickableLabel(QLabel):
-    doubleClicked = Signal()
-
-    def __init__(self, text, parent=None):
-        super().__init__(text, parent)
-        self.setMouseTracking(True)
-
-    def mouseDoubleClickEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.doubleClicked.emit()
-        super().mouseDoubleClickEvent(event)
 
 
 class ImageEditorUI(ImageFilters):
@@ -210,6 +197,7 @@ class ImageEditorUI(ImageFilters):
         layout.addWidget(control_panel, 0)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
+        super().setup_ui()
 
     def setup_menu(self):
         menubar = self.menuBar()
@@ -278,12 +266,12 @@ class ImageEditorUI(ImageFilters):
 
         view_master_action = QAction("View Master", self)
         view_master_action.setShortcut("M")
-        view_master_action.triggered.connect(self.set_view_master)
+        view_master_action.triggered.connect(self.display_manager.set_view_master)
         view_menu.addAction(view_master_action)
 
         view_individual_action = QAction("View Individual", self)
         view_individual_action.setShortcut("L")
-        view_individual_action.triggered.connect(self.set_view_individual)
+        view_individual_action.triggered.connect(self.display_manager.set_view_individual)
         view_menu.addAction(view_individual_action)
         view_menu.addSeparator()
 
@@ -355,30 +343,6 @@ class ImageEditorUI(ImageFilters):
         if self._check_unsaved_changes():
             self.close()
 
-    def _add_thumbnail_item(self, thumbnail, label, i, is_current):
-        item_widget = QWidget()
-        layout = QVBoxLayout(item_widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-
-        thumbnail_label = QLabel()
-        thumbnail_label.setPixmap(thumbnail)
-        thumbnail_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(thumbnail_label)
-
-        label_widget = ClickableLabel(label)
-        label_widget.setAlignment(Qt.AlignCenter)
-        label_widget.doubleClicked.connect(lambda: self._rename_label(label_widget, label, i))
-        layout.addWidget(label_widget)
-
-        item = QListWidgetItem()
-        item.setSizeHint(QSize(gui_constants.IMG_WIDTH, gui_constants.IMG_HEIGHT))
-        self.thumbnail_list.addItem(item)
-        self.thumbnail_list.setItemWidget(item, item_widget)
-
-        if is_current:
-            self.thumbnail_list.setCurrentItem(item)
-
     def _rename_label(self, label_widget, old_label, i):
         new_label, ok = QInputDialog.getText(self.thumbnail_list, "Rename Label", "New label name:", text=old_label)
         if ok and new_label and new_label != old_label:
@@ -390,15 +354,15 @@ class ImageEditorUI(ImageFilters):
 
     def undo(self):
         if self.undo_manager.undo(self.layer_collection.master_layer):
-            self.display_current_view()
-            self.update_master_thumbnail()
+            self.display_manager.display_current_view()
+            self.display_manager.update_master_thumbnail()
             self.mark_as_modified()
             self.statusBar().showMessage("Undo applied", 2000)
 
     def redo(self):
         if self.undo_manager.redo(self.layer_collection.master_layer):
-            self.display_current_view()
-            self.update_master_thumbnail()
+            self.display_manager.display_current_view()
+            self.display_manager.update_master_thumbnail()
             self.mark_as_modified()
             self.statusBar().showMessage("Redo applied", 2000)
 

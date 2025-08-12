@@ -227,7 +227,7 @@ class ImageViewer(QGraphicsView):
         center_y = scene_pos.y()
         radius = size / 2
         self.brush_cursor.setRect(center_x - radius, center_y - radius, size, size)
-        allow_cursor_preview = self.image_editor.allow_cursor_preview()
+        allow_cursor_preview = self.image_editor.display_manager.allow_cursor_preview()
         if self.cursor_style == 'preview' and allow_cursor_preview:
             self._setup_outline_style()
             self.brush_cursor.hide()

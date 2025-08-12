@@ -2,7 +2,7 @@ import traceback
 import numpy as np
 from PySide6.QtWidgets import (QMainWindow, QFileDialog, QMessageBox, QAbstractItemView,
                                QVBoxLayout, QLabel, QDialog, QApplication)
-from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QGuiApplication, QCursor
+from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QGuiApplication, QCursor
 from PySide6.QtCore import Qt, QTimer, QEvent, QPoint
 from .. config.constants import constants
 from .. config.gui_constants import gui_constants
@@ -14,6 +14,7 @@ from .exif_data import ExifData
 from .layer_collection import LayerCollection
 from .io_manager import IOManager
 from .brush_gradient import create_brush_gradient
+from .display_manager import DisplayManager
 
 
 class ImageEditor(QMainWindow):
@@ -21,14 +22,9 @@ class ImageEditor(QMainWindow):
         super().__init__()
         self.layer_collection = LayerCollection()
         self.io_manager = IOManager(self.layer_collection)
-        self.view_mode = 'master'
-        self.temp_view_individual = False
+        self.display_manager = None
         self.modified = False
         self.installEventFilter(self)
-        self.update_timer = QTimer(self)
-        self.update_timer.setInterval(gui_constants.PAINT_REFRESH_TIMER)
-        self.update_timer.timeout.connect(self.process_pending_updates)
-        self.needs_update = False
         self.brush = Brush()
         self.brush_controller = BrushController(self.brush)
         self.undo_manager = UndoManager()
@@ -36,6 +32,14 @@ class ImageEditor(QMainWindow):
         self.redo_action = None
         self.undo_manager.stack_changed.connect(self.update_undo_redo_actions)
         self.loader_thread = None
+
+    def setup_ui(self):
+        self.display_manager = DisplayManager(
+            self.layer_collection,
+            self.image_viewer,
+            self.master_thumbnail_label,
+            self.thumbnail_list
+        )
 
     def keyPressEvent(self, event):
         if self.image_viewer.empty:
@@ -53,11 +57,6 @@ class ImageEditor(QMainWindow):
             self.increase_brush_hardness()
             return
         super().keyPressEvent(event)
-
-    def process_pending_updates(self):
-        if self.needs_update:
-            self.display_master_layer()
-            self.needs_update = False
 
     def eventFilter(self, obj, event):
         if event.type() == QEvent.KeyPress and event.key() == Qt.Key_X:
@@ -87,7 +86,7 @@ class ImageEditor(QMainWindow):
 
     def sort_layers(self, order):
         self.layer_collection.sort_layers(order)
-        self.update_thumbnails()
+        self.display_manager.update_thumbnails()
         self.change_layer(self.layer_collection.current_layer)
 
     def update_title(self):
@@ -142,7 +141,7 @@ class ImageEditor(QMainWindow):
         self.modified = False
         self.undo_manager.reset()
         self.blank_layer = np.zeros(master_layer.shape[:2])
-        self.update_thumbnails()
+        self.display_manager.update_thumbnails()
         self.image_viewer.setup_brush_cursor()
         self.change_layer(0)
         self.image_viewer.reset_zoom()
@@ -287,111 +286,16 @@ class ImageEditor(QMainWindow):
             self.update_thumbnails()
             self.update_title()
 
-    def set_view_master(self):
-        if self.layer_collection.master_layer is None:
-            return
-        self.view_mode = 'master'
-        self.temp_view_individual = False
-        self.display_master_layer()
-        self.statusBar().showMessage("View mode: Master")
-
-    def set_view_individual(self):
-        if self.layer_collection.master_layer is None:
-            return
-        self.view_mode = 'individual'
-        self.temp_view_individual = False
-        self.display_current_layer()
-        self.statusBar().showMessage("View mode: Individual layers")
-
-    def start_temp_view(self):
-        if not self.temp_view_individual and self.view_mode == 'master':
-            self.temp_view_individual = True
-            self.image_viewer.update_brush_cursor()
-            self.display_current_layer()
-            self.statusBar().showMessage("Temporary view: Individual layer (hold X)")
-
-    def end_temp_view(self):
-        if self.temp_view_individual:
-            self.temp_view_individual = False
-            self.image_viewer.update_brush_cursor()
-            self.display_master_layer()
-            self.statusBar().showMessage("View mode: Master")
-
-    def display_current_view(self):
-        if self.temp_view_individual or self.view_mode == 'individual':
-            self.display_current_layer()
-        else:
-            self.display_master_layer()
-
-    def display_master_layer(self):
-        if self.layer_collection.master_layer is None:
-            self.image_viewer.clear_image()
-        else:
-            qimage = self.numpy_to_qimage(self.layer_collection.master_layer)
-            self.image_viewer.set_image(qimage)
-
-    def create_thumbnail(self, layer, size):
-        if layer.dtype == np.uint16:
-            layer = (layer // 256).astype(np.uint8)
-        height, width = layer.shape[:2]
-        if layer.ndim == 3 and layer.shape[-1] == 3:
-            qimg = QImage(layer.data, width, height, 3 * width, QImage.Format_RGB888)
-        else:
-            qimg = QImage(layer.data, width, height, width, QImage.Format_Grayscale8)
-        return QPixmap.fromImage(qimg.scaled(*gui_constants.UI_SIZES['thumbnail'], Qt.KeepAspectRatio))
-
-    def update_master_thumbnail(self):
-        if self.layer_collection.master_layer is None:
-            self.master_thumbnail_label.clear()
-        else:
-            thumb_size = gui_constants.UI_SIZES['thumbnail']
-            master_thumb = self.create_thumbnail(self.layer_collection.master_layer, thumb_size)
-            self.master_thumbnail_label.setPixmap(master_thumb)
-
-    def update_thumbnails(self):
-        self.update_master_thumbnail()
-        self.thumbnail_list.clear()
-        thumb_size = gui_constants.UI_SIZES['thumbnail']
-        if self.layer_collection.layer_stack is None:
-            return
-        for i, (layer, label) in enumerate(zip(self.layer_collection.layer_stack, self.layer_collection.layer_labels)):
-            thumbnail = self.create_thumbnail(layer, thumb_size)
-            self._add_thumbnail_item(thumbnail, label, i, i == self.layer_collection.current_layer_idx)
-
-    def _add_thumbnail_item(self, thumbnail, label, i, is_current):
-        pass
-
     def change_layer(self, layer_idx):
         if 0 <= layer_idx < self.layer_collection.number_of_layers():
             view_state = self.image_viewer.get_view_state()
             self.layer_collection.current_layer_idx = layer_idx
-            self.display_current_view()
+            self.display_manager.display_current_view()
             self.image_viewer.set_view_state(view_state)
             self.thumbnail_list.setCurrentRow(layer_idx)
             self.thumbnail_list.setFocus()
             self.image_viewer.update_brush_cursor()
             self.image_viewer.setFocus()
-
-    def display_current_layer(self):
-        if self.layer_collection.layer_stack is None:
-            return
-        layer = self.layer_collection.current_layer()
-        qimage = self.numpy_to_qimage(layer)
-        self.image_viewer.set_image(qimage)
-
-    def numpy_to_qimage(self, array):
-        if array.dtype == np.uint16:
-            array = np.right_shift(array, 8).astype(np.uint8)
-
-        if array.ndim == 2:
-            height, width = array.shape
-            return QImage(memoryview(array), width, height, width, QImage.Format_Grayscale8)
-        elif array.ndim == 3:
-            height, width, _ = array.shape
-            if not array.flags['C_CONTIGUOUS']:
-                array = np.ascontiguousarray(array)
-            return QImage(memoryview(array), width, height, 3 * width, QImage.Format_RGB888)
-        return QImage()
 
     def prev_layer(self):
         if self.layer_collection.layer_stack is not None:
@@ -490,9 +394,6 @@ class ImageEditor(QMainWindow):
         self.brush_preview.setPixmap(pixmap)
         self.image_viewer.update_brush_cursor()
 
-    def allow_cursor_preview(self):
-        return self.view_mode == 'master' and not self.temp_view_individual
-
     def copy_layer_to_master(self):
         if self.layer_collection.layer_stack is None or self.layer_collection.master_layer is None:
             return
@@ -506,14 +407,14 @@ class ImageEditor(QMainWindow):
         if reply == QMessageBox.Yes:
             self.layer_collection.master_layer = self.layer_collection.current_layer().copy()
             self.layer_collection.master_layer.setflags(write=True)
-            self.display_current_view()
-            self.update_thumbnails()
+            self.display_manager.display_current_view()
+            self.display_manager.update_thumbnails()
             self.mark_as_modified()
             self.statusBar().showMessage(f"Copied layer {self.layer_collection.current_layer_idx + 1} to master")
 
     def copy_brush_area_to_master(self, view_pos):
         if self.layer_collection.layer_stack is None or self.layer_collection.number_of_layers() == 0 \
-           or self.view_mode != 'master' or self.temp_view_individual:
+           or not self.display_manager.allow_cursor_preview():
             return
         area = self.brush_controller.apply_brush_operation(self.layer_collection.master_layer_copy,
                                                            self.layer_collection.current_layer(),
@@ -522,30 +423,30 @@ class ImageEditor(QMainWindow):
         self.undo_manager.extend_undo_area(*area)
 
     def begin_copy_brush_area(self, pos):
-        if self.view_mode == 'master' and not self.temp_view_individual:
+        if self.display_manager.allow_cursor_preview():
             self.mask_layer = self.blank_layer.copy()
             self.layer_collection.copy_master_layer()
             self.undo_manager.reset_undo_area()
             self.copy_brush_area_to_master(pos)
-            self.needs_update = True
-            if not self.update_timer.isActive():
-                self.update_timer.start()
+            self.display_manager.needs_update = True
+            if not self.display_manager.update_timer.isActive():
+                self.display_manager.update_timer.start()
             self.mark_as_modified()
 
     def continue_copy_brush_area(self, pos):
-        if self.view_mode == 'master' and not self.temp_view_individual:
+        if self.display_manager.allow_cursor_preview():
             self.copy_brush_area_to_master(pos)
-            self.needs_update = True
-            if not self.update_timer.isActive():
-                self.update_timer.start()
+            self.display_manager.needs_update = True
+            if not self.display_manager.update_timer.isActive():
+                self.display_manager.update_timer.start()
             self.mark_as_modified()
 
     def end_copy_brush_area(self):
-        if self.update_timer.isActive():
-            self.display_master_layer()
-            self.update_master_thumbnail()
+        if self.display_manager.update_timer.isActive():
+            self.display_manager.display_master_layer()
+            self.display_manager.update_master_thumbnail()
             self.undo_manager.save_undo_state(self.layer_collection.master_layer_copy, 'Brush Stroke')
-            self.update_timer.stop()
+            self.display_manager.update_timer.stop()
             self.mark_as_modified()
 
     def update_undo_redo_actions(self, has_undo, undo_desc, has_redo, redo_desc):
