@@ -352,8 +352,7 @@ class ImageFilters(ImageEditor):
                                      get_params, setup_ui, 'White Balance')
 
     def get_pixel_color_at(self, pos, radius=None):
-        scene_pos = self.image_viewer.mapToScene(pos)
-        item_pos = self.image_viewer.pixmap_item.mapFromScene(scene_pos)
+        item_pos = self.image_viewer.position_on_image(pos)
         x = int(item_pos.x())
         y = int(item_pos.y())
         if (0 <= x < self.layer_collection.master_layer.shape[1]) and (0 <= y < self.layer_collection.master_layer.shape[0]):
