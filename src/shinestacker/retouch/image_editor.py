@@ -2,7 +2,7 @@ import traceback
 import numpy as np
 from PySide6.QtWidgets import (QMainWindow, QFileDialog, QMessageBox, QAbstractItemView,
                                QVBoxLayout, QLabel, QDialog, QApplication)
-from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QRadialGradient, QGuiApplication, QCursor
+from PySide6.QtGui import QPixmap, QPainter, QColor, QImage, QPen, QBrush, QGuiApplication, QCursor
 from PySide6.QtCore import Qt, QTimer, QEvent, QPoint
 from .. config.constants import constants
 from .. config.gui_constants import gui_constants
@@ -13,29 +13,13 @@ from .file_loader import FileLoader
 from .exif_data import ExifData
 from .layer_collection import LayerCollection
 from .io_manager import IOManager
+from .brush_gradient import create_brush_gradient
 
 
 def slider_to_brush_size(slider_val):
     normalized = slider_val / gui_constants.BRUSH_SIZE_SLIDER_MAX
     size = gui_constants.BRUSH_SIZES['min'] + gui_constants.BRUSH_SIZES['max'] * (normalized ** gui_constants.BRUSH_GAMMA)
     return max(gui_constants.BRUSH_SIZES['min'], min(gui_constants.BRUSH_SIZES['max'], size))
-
-
-def create_brush_gradient(center_x, center_y, radius, hardness, inner_color=None, outer_color=None, opacity=100):
-    gradient = QRadialGradient(center_x, center_y, float(radius))
-    inner = inner_color if inner_color is not None else QColor(*gui_constants.BRUSH_COLORS['inner'])
-    outer = outer_color if outer_color is not None else QColor(*gui_constants.BRUSH_COLORS['gradient_end'])
-    inner_with_opacity = QColor(inner)
-    inner_with_opacity.setAlpha(int(float(inner.alpha()) * float(opacity) / 100.0))
-    if hardness < 100:
-        hardness_normalized = float(hardness) / 100.0
-        gradient.setColorAt(0.0, inner_with_opacity)
-        gradient.setColorAt(hardness_normalized, inner_with_opacity)
-        gradient.setColorAt(1.0, outer)
-    else:
-        gradient.setColorAt(0.0, inner_with_opacity)
-        gradient.setColorAt(1.0, inner_with_opacity)
-    return gradient
 
 
 class ImageEditor(QMainWindow):
