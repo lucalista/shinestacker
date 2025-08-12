@@ -16,12 +16,6 @@ from .io_manager import IOManager
 from .brush_gradient import create_brush_gradient
 
 
-def slider_to_brush_size(slider_val):
-    normalized = slider_val / gui_constants.BRUSH_SIZE_SLIDER_MAX
-    size = gui_constants.BRUSH_SIZES['min'] + gui_constants.BRUSH_SIZES['max'] * (normalized ** gui_constants.BRUSH_GAMMA)
-    return max(gui_constants.BRUSH_SIZES['min'], min(gui_constants.BRUSH_SIZES['max'], size))
-
-
 class ImageEditor(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -445,6 +439,13 @@ class ImageEditor(QMainWindow):
                                          QAbstractItemView.PositionAtCenter)
 
     def update_brush_size(self, slider_val):
+
+        def slider_to_brush_size(slider_val):
+            normalized = slider_val / gui_constants.BRUSH_SIZE_SLIDER_MAX
+            size = gui_constants.BRUSH_SIZES['min'] + \
+                gui_constants.BRUSH_SIZES['max'] * (normalized ** gui_constants.BRUSH_GAMMA)
+            return max(gui_constants.BRUSH_SIZES['min'], min(gui_constants.BRUSH_SIZES['max'], size))
+
         self.brush.size = slider_to_brush_size(slider_val)
         self.update_brush_thumb()
         self.image_viewer.update_brush_cursor()
