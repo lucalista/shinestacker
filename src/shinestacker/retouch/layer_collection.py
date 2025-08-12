@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class LayerCollection:
     def __init__(self):
         self.master_layer = None
