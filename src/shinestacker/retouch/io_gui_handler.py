@@ -2,22 +2,22 @@ import traceback
 import numpy as np
 from PySide6.QtWidgets import QFileDialog, QMessageBox, QVBoxLayout, QLabel, QDialog, QApplication
 from PySide6.QtGui import QGuiApplication, QCursor
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QObject, QTimer, Signal
 from .file_loader import FileLoader
 from .exif_data import ExifData
 
 
-class IOGuiHandler:
+class IOGuiHandler(QObject):
+    status_message_requested = Signal(str)
+
     def __init__(self, io_manager, layer_collection, undo_manager, parent):
-        self.parent = parent
+        super().__init__(parent)
         self.io_manager = io_manager
         self.undo_manager = undo_manager
         self.layer_collection = layer_collection
         self.loader_thread = None
-        self.status_bar = None
 
-    def setup_ui(self, status_bar, display_manager, image_viewer):
-        self.status_bar = status_bar
+    def setup_ui(self, display_manager, image_viewer):
         self.display_manager = display_manager
         self.image_viewer = image_viewer
 
@@ -36,11 +36,11 @@ class IOGuiHandler:
         self.blank_layer = np.zeros(master_layer.shape[:2])
         self.display_manager.update_thumbnails()
         self.image_viewer.setup_brush_cursor()
-        self.parent.change_layer(0)
+        self.parent().change_layer(0)
         self.image_viewer.reset_zoom()
-        self.status_bar.showMessage(f"Loaded: {self.io_manager.current_file_path}")
-        self.parent.thumbnail_list.setFocus()
-        self.parent.update_title()
+        self.status_message_requested.emit(f"Loaded: {self.io_manager.current_file_path}")
+        self.parent().thumbnail_list.setFocus()
+        self.parent().update_title()
 
     def on_file_error(self, error_msg):
         QApplication.restoreOverrideCursor()
@@ -48,12 +48,12 @@ class IOGuiHandler:
         self.loading_dialog.accept()
         self.loading_dialog.deleteLater()
         QMessageBox.critical(self, "Error", error_msg)
-        self.status_bar.showMessage(f"Error loading: {self.io_manager.current_file_path}")
+        elf.status_message_requested.emit(f"Error loading: {self.io_manager.current_file_path}")
 
     def open_file(self, file_paths=None):
         if file_paths is None:
             file_paths, _ = QFileDialog.getOpenFileNames(
-                self, "Open Image", "", "Images (*.tif *.tiff *.jpg *.jpeg);;All Files (*)")
+                self.parent(), "Open Image", "", "Images (*.tif *.tiff *.jpg *.jpeg);;All Files (*)")
         if not file_paths:
             return
         if self.loader_thread and self.loader_thread.isRunning():
@@ -65,7 +65,7 @@ class IOGuiHandler:
         path = file_paths[0] if isinstance(file_paths, list) else file_paths
         self.io_manager.current_file_path = path
         QGuiApplication.setOverrideCursor(QCursor(Qt.BusyCursor))
-        self.loading_dialog = QDialog(self.parent)
+        self.loading_dialog = QDialog(self.parent())
         self.loading_dialog.setWindowTitle("Loading")
         self.loading_dialog.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
         self.loading_dialog.setModal(True)
@@ -82,11 +82,11 @@ class IOGuiHandler:
         self.loader_thread.start()
 
     def import_frames(self):
-        file_paths, _ = QFileDialog.getOpenFileNames(self.parent, "Select frames", "",
+        file_paths, _ = QFileDialog.getOpenFileNames(self.parent(), "Select frames", "",
                                                      "Images Images (*.tif *.tiff *.jpg *.jpeg);;All Files (*)")
         if file_paths:
             self.import_frames_from_files(file_paths)
-        self.status_bar.showMessage("Imported selected frames")
+        elf.status_message_requested.emit("Imported selected frames")
 
     def import_frames_from_files(self, file_paths):
         try:
@@ -108,20 +108,20 @@ class IOGuiHandler:
                 self.layer_collection.layer_labels.append(label)
                 self.layer_collection.layer_stack = np.append(
                     self.layer_collection.layer_stack, [img], axis=0)
-        self.parent.mark_as_modified()
-        self.parent.change_layer(0)
+        self.parent().mark_as_modified()
+        self.parent().change_layer(0)
         self.image_viewer.reset_zoom()
-        self.parent.thumbnail_list.setFocus()
+        self.parent().thumbnail_list.setFocus()
         self.display_manager.update_thumbnails()
 
     def save_file(self):
-        if self.parent.save_master_only.isChecked():
+        if self.parent().save_master_only.isChecked():
             self.save_master()
         else:
             self.save_multilayer()
 
     def save_file_as(self):
-        if self.parent.save_master_only.isChecked():
+        if self.parent().save_master_only.isChecked():
             self.save_master_as()
         else:
             self.save_multilayer_as()
@@ -138,7 +138,7 @@ class IOGuiHandler:
     def save_multilayer_as(self):
         if self.layer_collection.layer_stack is None:
             return
-        path, _ = QFileDialog.getSaveFileName(self.parent, "Save Image", "",
+        path, _ = QFileDialog.getSaveFileName(self.parent(), "Save Image", "",
                                               "TIFF Files (*.tif *.tiff);;All Files (*)")
         if path:
             if not path.lower().endswith(('.tif', '.tiff')):
@@ -150,11 +150,11 @@ class IOGuiHandler:
             self.io_manager.save_multilayer(path)
             self.io_manager.current_file_path = path
             self.modified = False
-            self.parent.update_title()
-            self.status_bar.showMessage(f"Saved multilayer to: {path}")
+            self.parent().update_title()
+            elf.status_message_requested.emit(f"Saved multilayer to: {path}")
         except Exception as e:
             traceback.print_tb(e.__traceback__)
-            QMessageBox.critical(self.parent, "Save Error", f"Could not save file: {str(e)}")
+            QMessageBox.critical(self.parent(), "Save Error", f"Could not save file: {str(e)}")
 
     def save_master(self):
         if self.layer_collection.master_layer is None:
@@ -167,7 +167,7 @@ class IOGuiHandler:
     def save_master_as(self):
         if self.layer_collection.layer_stack is None:
             return
-        path, _ = QFileDialog.getSaveFileName(self.parent, "Save Image", "",
+        path, _ = QFileDialog.getSaveFileName(self.parent(), "Save Image", "",
                                               "TIFF Files (*.tif *.tiff);;JPEG Files (*.jpg *.jpeg);;All Files (*)")
         if path:
             self.save_master_to_path(path)
@@ -178,21 +178,21 @@ class IOGuiHandler:
             self.io_manager.current_file_path = path
             self.modified = False
             self.parent.update_title()
-            self.status_bar.showMessage(f"Saved master layer to: {path}")
+            elf.status_message_requested.emit(f"Saved master layer to: {path}")
         except Exception as e:
             traceback.print_tb(e.__traceback__)
-            QMessageBox.critical(self.parent, "Save Error", f"Could not save file: {str(e)}")
+            QMessageBox.critical(self.parent(), "Save Error", f"Could not save file: {str(e)}")
 
     def select_exif_path(self):
         path, _ = QFileDialog.getOpenFileName(None, "Select file with exif data")
         if path:
             self.io_manager.set_exif_data(path)
-            self.status_bar.showMessage(f"EXIF data extracted from {path}.")
-        self._exif_dialog = ExifData(self.io_manager.exif_data, self.parent)
+            elf.status_message_requested.emit(f"EXIF data extracted from {path}.")
+        self._exif_dialog = ExifData(self.io_manager.exif_data, self.parent())
         self._exif_dialog.exec()
 
     def close_file(self):
-        if self.parent._check_unsaved_changes():
+        if self.parent()._check_unsaved_changes():
             self.layer_collection.master_layer = None
             self.blank_layer = None
             self.current_stack = None
@@ -203,4 +203,6 @@ class IOGuiHandler:
             self.image_viewer.clear_image()
             self.display_manager.thumbnail_list.clear()
             self.display_manager.update_thumbnails()
-            self.parent.update_title()
+            self.parent().update_title()
+            self.status_message_requested.emit("File closed")
+

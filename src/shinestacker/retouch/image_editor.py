@@ -21,8 +21,7 @@ class ImageEditor(QMainWindow):
         self.redo_action = None
         self.undo_manager.stack_changed.connect(self.update_undo_redo_actions)
         self.io_manager = IOManager(self.layer_collection)
-        self.io_gui_handler = IOGuiHandler(self.io_manager, self.layer_collection,
-                                           self.undo_manager, self)
+        self.io_gui_handler = None
         self.display_manager = None
         self.brush_tool = BrushTool()
         self.modified = False
@@ -31,13 +30,16 @@ class ImageEditor(QMainWindow):
     def setup_ui(self):
         self.display_manager = DisplayManager(self.layer_collection, self.image_viewer,
                                               self.master_thumbnail_label, self.thumbnail_list, parent=self)
+        self.io_gui_handler = IOGuiHandler(self.io_manager, self.layer_collection,
+                                           self.undo_manager, parent=self)
         self.display_manager.status_message_requested.connect(self.show_status_message)
+        self.io_gui_handler.status_message_requested.connect(self.show_status_message)
         self.brush_tool.setup_ui(self.brush, self.brush_preview, self.image_viewer,
                                  self.brush_size_slider, self.hardness_slider, self.opacity_slider,
                                  self.flow_slider)
         self.image_viewer.brush = self.brush_tool.brush
         self.brush_tool.update_brush_thumb()
-        self.io_gui_handler.setup_ui(self.statusBar(), self.display_manager, self.image_viewer)
+        self.io_gui_handler.setup_ui(self.display_manager, self.image_viewer)
 
     def show_status_message(self, message):
         self.statusBar().showMessage(message)
