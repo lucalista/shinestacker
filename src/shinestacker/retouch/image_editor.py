@@ -6,8 +6,6 @@ from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QGuiApplicati
 from PySide6.QtCore import Qt, QTimer, QEvent, QPoint
 from .. config.constants import constants
 from .. config.gui_constants import gui_constants
-from .brush import Brush
-from .brush_controller import BrushController
 from .undo_manager import UndoManager
 from .file_loader import FileLoader
 from .exif_data import ExifData
@@ -15,6 +13,7 @@ from .layer_collection import LayerCollection
 from .io_manager import IOManager
 from .brush_gradient import create_brush_gradient
 from .display_manager import DisplayManager
+from .brush_tool import BrushTool
 
 
 class ImageEditor(QMainWindow):
@@ -23,10 +22,9 @@ class ImageEditor(QMainWindow):
         self.layer_collection = LayerCollection()
         self.io_manager = IOManager(self.layer_collection)
         self.display_manager = None
+        self.brush_tool = BrushTool()
         self.modified = False
         self.installEventFilter(self)
-        self.brush = Brush()
-        self.brush_controller = BrushController(self.brush)
         self.undo_manager = UndoManager()
         self.undo_action = None
         self.redo_action = None
@@ -34,14 +32,14 @@ class ImageEditor(QMainWindow):
         self.loader_thread = None
 
     def setup_ui(self):
-        self.display_manager = DisplayManager(
-            self.layer_collection,
-            self.image_viewer,
-            self.master_thumbnail_label,
-            self.thumbnail_list,
-            parent=self
-        )
+        self.display_manager = DisplayManager(self.layer_collection, self.image_viewer,
+                                              self.master_thumbnail_label, self.thumbnail_list, parent=self)
         self.display_manager.status_message_requested.connect(self.show_status_message)
+        self.brush_tool.setup_ui(self.brush, self.brush_preview, self.image_viewer,
+                                 self.brush_size_slider, self.hardness_slider, self.opacity_slider,
+                                 self.flow_slider)
+        self.image_viewer.brush = self.brush_tool.brush
+        self.brush_tool.update_brush_thumb()
 
     def show_status_message(self, message):
         self.statusBar().showMessage(message)
@@ -50,16 +48,16 @@ class ImageEditor(QMainWindow):
         if self.image_viewer.empty:
             return
         if event.text() == '[':
-            self.decrease_brush_size()
+            self.brush_tool.decrease_brush_size()
             return
         if event.text() == ']':
-            self.increase_brush_size()
+            self.brush_tool.increase_brush_size()
             return
         if event.text() == '{':
-            self.decrease_brush_hardness()
+            self.brush_tool.decrease_brush_hardness()
             return
         if event.text() == '}':
-            self.increase_brush_hardness()
+            self.brush_tool.increase_brush_hardness()
             return
         super().keyPressEvent(event)
 
@@ -67,7 +65,7 @@ class ImageEditor(QMainWindow):
         if event.type() == QEvent.KeyPress and event.key() == Qt.Key_X:
             self.start_temp_view()
             return True
-        elif event.type() == QEvent.KeyRelease and event.key() == Qt.Key_X:
+        if event.type() == QEvent.KeyRelease and event.key() == Qt.Key_X:
             self.end_temp_view()
             return True
         return super().eventFilter(obj, event)
@@ -82,12 +80,10 @@ class ImageEditor(QMainWindow):
             if reply == QMessageBox.Save:
                 self.save_file()
                 return True
-            elif reply == QMessageBox.Discard:
+            if reply == QMessageBox.Discard:
                 return True
-            else:
-                return False
-        else:
-            return True
+            return False
+        return True
 
     def sort_layers(self, order):
         self.layer_collection.sort_layers(order)
@@ -320,48 +316,34 @@ class ImageEditor(QMainWindow):
         self.thumbnail_list.setCurrentRow(index)
         self.thumbnail_list.scrollToItem(self.thumbnail_list.item(index), QAbstractItemView.PositionAtCenter)
 
-    def update_brush_size(self, slider_val):
+    def copy_layer_to_master(self):
+        if self.layer_collection.layer_stack is None or self.layer_collection.master_layer is None:
+            return
+        reply = QMessageBox.question(
+            self,
+            "Confirm Copy",
+            "Warning: the current master layer will be erased\n\nDo you want to continue?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        if reply == QMessageBox.Yes:
+            self.layer_collection.master_layer = self.layer_collection.current_layer().copy()
+            self.layer_collection.master_layer.setflags(write=True)
+            self.display_manager.display_current_view()
+            self.display_manager.update_thumbnails()
+            self.mark_as_modified()
+            self.statusBar().showMessage(f"Copied layer {self.layer_collection.current_layer_idx + 1} to master")
 
-        def slider_to_brush_size(slider_val):
-            normalized = slider_val / gui_constants.BRUSH_SIZE_SLIDER_MAX
-            size = gui_constants.BRUSH_SIZES['min'] + \
-                gui_constants.BRUSH_SIZES['max'] * (normalized ** gui_constants.BRUSH_GAMMA)
-            return max(gui_constants.BRUSH_SIZES['min'], min(gui_constants.BRUSH_SIZES['max'], size))
-
-        self.brush.size = slider_to_brush_size(slider_val)
-        self.update_brush_thumb()
-
-    def increase_brush_size(self, amount=5):
-        val = min(self.brush_size_slider.value() + amount, self.brush_size_slider.maximum())
-        self.brush_size_slider.setValue(val)
-        self.update_brush_size(val)
-
-    def decrease_brush_size(self, amount=5):
-        val = max(self.brush_size_slider.value() - amount, self.brush_size_slider.minimum())
-        self.brush_size_slider.setValue(val)
-        self.update_brush_size(val)
-
-    def increase_brush_hardness(self, amount=2):
-        val = min(self.hardness_slider.value() + amount, self.hardness_slider.maximum())
-        self.hardness_slider.setValue(val)
-        self.update_brush_hardness(val)
-
-    def decrease_brush_hardness(self, amount=2):
-        val = max(self.hardness_slider.value() - amount, self.hardness_slider.minimum())
-        self.hardness_slider.setValue(val)
-        self.update_brush_hardness(val)
-
-    def update_brush_hardness(self, hardness):
-        self.brush.hardness = hardness
-        self.update_brush_thumb()
-
-    def update_brush_opacity(self, opacity):
-        self.brush.opacity = opacity
-        self.update_brush_thumb()
-
-    def update_brush_flow(self, flow):
-        self.brush.flow = flow
-        self.update_brush_thumb()
+    def copy_brush_area_to_master(self, view_pos):
+        if self.layer_collection.layer_stack is None or self.layer_collection.number_of_layers() == 0 \
+           or not self.display_manager.allow_cursor_preview():
+            return
+        area = self.brush_tool.apply_brush_operation(
+            self.layer_collection.master_layer_copy,
+            self.layer_collection.current_layer(),
+            self.layer_collection.master_layer, self.mask_layer,
+            view_pos, self.image_viewer)
+        self.undo_manager.extend_undo_area(*area)
 
     def update_brush_thumb(self):
         width, height = gui_constants.UI_SIZES['brush_preview']
@@ -398,34 +380,6 @@ class ImageEditor(QMainWindow):
         painter.end()
         self.brush_preview.setPixmap(pixmap)
         self.image_viewer.update_brush_cursor()
-
-    def copy_layer_to_master(self):
-        if self.layer_collection.layer_stack is None or self.layer_collection.master_layer is None:
-            return
-        reply = QMessageBox.question(
-            self,
-            "Confirm Copy",
-            "Warning: the current master layer will be erased\n\nDo you want to continue?",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No
-        )
-        if reply == QMessageBox.Yes:
-            self.layer_collection.master_layer = self.layer_collection.current_layer().copy()
-            self.layer_collection.master_layer.setflags(write=True)
-            self.display_manager.display_current_view()
-            self.display_manager.update_thumbnails()
-            self.mark_as_modified()
-            self.statusBar().showMessage(f"Copied layer {self.layer_collection.current_layer_idx + 1} to master")
-
-    def copy_brush_area_to_master(self, view_pos):
-        if self.layer_collection.layer_stack is None or self.layer_collection.number_of_layers() == 0 \
-           or not self.display_manager.allow_cursor_preview():
-            return
-        area = self.brush_controller.apply_brush_operation(self.layer_collection.master_layer_copy,
-                                                           self.layer_collection.current_layer(),
-                                                           self.layer_collection.master_layer, self.mask_layer,
-                                                           view_pos, self.image_viewer)
-        self.undo_manager.extend_undo_area(*area)
 
     def begin_copy_brush_area(self, pos):
         if self.display_manager.allow_cursor_preview():
