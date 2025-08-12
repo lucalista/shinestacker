@@ -346,3 +346,8 @@ class ImageViewer(QGraphicsView):
         self.cursor_style = style
         if self.brush_cursor:
             self.update_brush_cursor()
+
+    def position_on_image(self, pos):
+        scene_pos = self.mapToScene(pos)
+        item_pos = self.pixmap_item.mapFromScene(scene_pos)
+        return item_pos
