@@ -16,6 +16,16 @@ class ImageEditor(QMainWindow):
     def __init__(self):
         super().__init__()
         self.layer_collection = LayerCollection()
+        self.master_layer = lambda: self.layer_collection.master_layer
+        self.master_layer_copy = lambda: self.layer_collection.master_layer_copy
+        self.copy_master_layer = lambda: self.layer_collection.copy_master_layer()
+        self.current_layer = lambda: self.layer_collection.current_layer()
+        self.layer_stack = lambda: self.layer_collection.layer_stack
+        self.layer_labels = lambda: self.layer_collection.layer_labels
+        self.current_layer_idx = lambda: self.layer_collection.current_layer_idx
+        self.set_current_layer_idx = lambda idx: self.layer_collection.set_current_layer_idx(idx)
+        self.sort_layers = lambda order: self.layer_collection.sort_layers(order)
+        self.number_of_layers = lambda: self.layer_collection.number_of_layers()
         self.undo_manager = UndoManager()
         self.undo_action = None
         self.redo_action = None
@@ -86,9 +96,9 @@ class ImageEditor(QMainWindow):
         return True
 
     def sort_layers(self, order):
-        self.layer_collection.sort_layers(order)
+        self.sort_layers(order)
         self.display_manager.update_thumbnails()
-        self.change_layer(self.layer_collection.current_layer)
+        self.change_layer(self.current_layer())
 
     def update_title(self):
         title = constants.APP_TITLE
@@ -103,9 +113,9 @@ class ImageEditor(QMainWindow):
         self.update_title()
 
     def change_layer(self, layer_idx):
-        if 0 <= layer_idx < self.layer_collection.number_of_layers():
+        if 0 <= layer_idx < self.number_of_layers():
             view_state = self.image_viewer.get_view_state()
-            self.layer_collection.current_layer_idx = layer_idx
+            self.set_current_layer_idx(layer_idx)
             self.display_manager.display_current_view()
             self.image_viewer.set_view_state(view_state)
             self.thumbnail_list.setCurrentRow(layer_idx)
@@ -114,16 +124,16 @@ class ImageEditor(QMainWindow):
             self.image_viewer.setFocus()
 
     def prev_layer(self):
-        if self.layer_collection.layer_stack is not None:
-            new_idx = max(0, self.layer_collection.current_layer_idx - 1)
-            if new_idx != self.layer_collection.current_layer_idx:
+        if self.layer_stack() is not None:
+            new_idx = max(0, self.current_layer_idx() - 1)
+            if new_idx != self.current_layer_idx():
                 self.change_layer(new_idx)
                 self.highlight_thumbnail(new_idx)
 
     def next_layer(self):
-        if self.layer_collection.layer_stack is not None:
-            new_idx = min(self.layer_collection.number_of_layers() - 1, self.layer_collection.current_layer_idx + 1)
-            if new_idx != self.layer_collection.current_layer_idx:
+        if self.layer_stack() is not None:
+            new_idx = min(self.number_of_layers() - 1, self.current_layer_idx() + 1)
+            if new_idx != self.current_layer_idx():
                 self.change_layer(new_idx)
                 self.highlight_thumbnail(new_idx)
 
@@ -132,7 +142,7 @@ class ImageEditor(QMainWindow):
         self.thumbnail_list.scrollToItem(self.thumbnail_list.item(index), QAbstractItemView.PositionAtCenter)
 
     def copy_layer_to_master(self):
-        if self.layer_collection.layer_stack is None or self.layer_collection.master_layer is None:
+        if self.layer_stack() is None or self.master_layer() is None:
             return
         reply = QMessageBox.question(
             self,
@@ -142,21 +152,21 @@ class ImageEditor(QMainWindow):
             QMessageBox.No
         )
         if reply == QMessageBox.Yes:
-            self.layer_collection.master_layer = self.layer_collection.current_layer().copy()
-            self.layer_collection.master_layer.setflags(write=True)
+            self.set_master_layer(self.current_layer().copy())
+            self.master_layer().setflags(write=True)
             self.display_manager.display_current_view()
             self.display_manager.update_thumbnails()
             self.mark_as_modified()
-            self.statusBar().showMessage(f"Copied layer {self.layer_collection.current_layer_idx + 1} to master")
+            self.statusBar().showMessage(f"Copied layer {self.current_layer_idx() + 1} to master")
 
     def copy_brush_area_to_master(self, view_pos):
-        if self.layer_collection.layer_stack is None or self.layer_collection.number_of_layers() == 0 \
+        if self.layer_stack() is None or self.number_of_layers() == 0 \
            or not self.display_manager.allow_cursor_preview():
             return
         area = self.brush_tool.apply_brush_operation(
-            self.layer_collection.master_layer_copy,
-            self.layer_collection.current_layer(),
-            self.layer_collection.master_layer, self.mask_layer,
+            self.master_layer_copy(),
+            self.current_layer(),
+            self.master_layer(), self.mask_layer,
             view_pos, self.image_viewer)
         self.undo_manager.extend_undo_area(*area)
 
@@ -199,7 +209,7 @@ class ImageEditor(QMainWindow):
     def begin_copy_brush_area(self, pos):
         if self.display_manager.allow_cursor_preview():
             self.mask_layer = self.io_gui_handler.blank_layer.copy()
-            self.layer_collection.copy_master_layer()
+            self.copy_master_layer()
             self.undo_manager.reset_undo_area()
             self.copy_brush_area_to_master(pos)
             self.display_manager.needs_update = True
@@ -219,7 +229,7 @@ class ImageEditor(QMainWindow):
         if self.display_manager.update_timer.isActive():
             self.display_manager.display_master_layer()
             self.display_manager.update_master_thumbnail()
-            self.undo_manager.save_undo_state(self.layer_collection.master_layer_copy, 'Brush Stroke')
+            self.undo_manager.save_undo_state(self.master_layer_copy(), 'Brush Stroke')
             self.display_manager.update_timer.stop()
             self.mark_as_modified()
 

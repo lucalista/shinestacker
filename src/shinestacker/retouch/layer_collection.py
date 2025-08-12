@@ -21,6 +21,9 @@ class LayerCollection:
     def set_layer_label(self, i, val):
         self.layer_labels[i] = val
 
+    def set_current_layer_idx(self, idx):
+        self.current_layer_idx = idx
+
     def valid_current_layer_idx(self):
         return 0 <= self.current_layer_idx < self.number_of_layers()
 
