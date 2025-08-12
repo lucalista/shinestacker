@@ -87,16 +87,9 @@ class ImageFilters(ImageEditor):
         accepted = dlg.exec_() == QDialog.Accepted
         if accepted:
             params = tuple(get_params() or ())
-            try:
-                h, w = self.layer_collection.master_layer.shape[:2]
-            except Exception:
-                h, w = self.layer_collection.master_layer_copy.shape[:2]
-            if hasattr(self, "undo_manager"):
-                try:
-                    self.undo_manager.extend_undo_area(0, 0, w, h)
-                    self.undo_manager.save_undo_state(self.layer_collection.master_layer_copy, undo_label)
-                except Exception:
-                    pass
+            h, w = self.layer_collection.master_layer.shape[:2]
+            self.undo_manager.extend_undo_area(0, 0, w, h)
+            self.undo_manager.save_undo_state(self.layer_collection.master_layer_copy, undo_label)
             final_img = filter_func(self.layer_collection.master_layer_copy, *params)
             self.layer_collection.master_layer = final_img
             self.layer_collection.copy_master_layer()
