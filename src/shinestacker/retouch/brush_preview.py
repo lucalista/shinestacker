@@ -43,7 +43,10 @@ class BrushPreviewItem(QGraphicsPixmapItem):
     def __init__(self):
         super().__init__()
         self.layer_collection = None
-        self.brush = None
+        self.master_layer = lambda: self.layer_collection.master_layer
+        self.numbe_of_layers = lambda: self.layer_collection.number_of_layers()
+        self.current_layer = lambda: self.layer_collection.current_layer()
+        self.valid_current_layer_idx = lambda: self.layer_collection.valid_current_layer_idx()
         self.setVisible(False)
         self.setZValue(500)
         self.setTransformationMode(Qt.SmoothTransformation)
@@ -72,22 +75,22 @@ class BrushPreviewItem(QGraphicsPixmapItem):
 
     def update(self, scene_pos, size):
         try:
-            if self.layer_collection.layer_stack is None or size <= 0:
+            if self.numbe_of_layers() == 0 or size <= 0:
                 self.hide()
                 return
             radius = size // 2
             x = int(scene_pos.x() - radius + 0.5)
             y = int(scene_pos.y() - radius)
             w = h = size
-            if not self.layer_collection.valid_current_layer_idx():
+            if not self.valid_current_layer_idx():
                 self.hide()
                 return
-            layer_area = self.get_layer_area(self.layer_collection.current_layer(), x, y, w, h)
-            master_area = self.get_layer_area(self.layer_collection.master_layer, x, y, w, h)
+            layer_area = self.get_layer_area(self.current_layer(), x, y, w, h)
+            master_area = self.get_layer_area(self.master_layer(), x, y, w, h)
             if layer_area is None or master_area is None:
                 self.hide()
                 return
-            height, width = self.layer_collection.current_layer().shape[:2]
+            height, width = self.current_layer().shape[:2]
             full_mask = create_brush_mask(size=size, hardness_percent=self.brush.hardness,
                                           opacity_percent=self.brush.opacity)[:, :, np.newaxis]
             mask_x_start = max(0, -x) if x < 0 else 0
