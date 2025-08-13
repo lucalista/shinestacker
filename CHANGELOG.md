@@ -4,6 +4,20 @@ This page reports the main releases only and the main changes therein.
 
 ---
 
+## [v0.3.2] - 2025-08-13
+**Fixes and code refactoring**
+
+### Changes
+
+* fixed ```from shinestacker import *```
+* restored jupyter support and updated examples
+* several bug fixes
+* several code refactoring reduces interclass dependencies
+* updated documentation
+* added new sample images and project files
+
+---
+
 ## [v0.3.1] - 2025-08-12
 **Fixes and code refactoring**
 
