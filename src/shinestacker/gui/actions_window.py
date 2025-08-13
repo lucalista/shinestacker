@@ -126,9 +126,11 @@ class ActionsWindow(ProjectEditor):
             file_path, _ = QFileDialog.getOpenFileName(self, "Open Project", "", "Project Files (*.fsp);;All Files (*)")
         if file_path:
             try:
+                self._current_file = file_path
                 self._current_file_wd = '' if os.path.isabs(file_path) else os.path.dirname(file_path)
                 if not os.path.isabs(self._current_file_wd):
                     self._current_file_wd = os.path.abspath(self._current_file_wd)
+                    self._current_file = os.path.basename(self._current_file)
                 file = open(file_path, 'r')
                 pp = file_path.split('/')
                 if len(pp) > 1:
@@ -139,7 +141,6 @@ class ActionsWindow(ProjectEditor):
                     raise RuntimeError(f"Project from file {file_path} produced a null project.")
                 self.set_project(project)
                 self._modified_project = False
-                self._current_file = file_path
                 self.update_title()
                 self.refresh_ui(0, -1)
                 if self.job_list.count() > 0:

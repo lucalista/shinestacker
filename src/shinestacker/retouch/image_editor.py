@@ -63,15 +63,6 @@ class ImageEditor(QMainWindow):
             return
         super().keyPressEvent(event)
 
-    def eventFilter(self, obj, event):
-        # if event.type() == QEvent.KeyPress and event.key() == Qt.Key_X:
-        #     self.display_manager.start_temp_view()
-        #     return True
-        # if event.type() == QEvent.KeyRelease and event.key() == Qt.Key_X:
-        #     self.display_manager.end_temp_view()
-        #    return True
-        return super().eventFilter(obj, event)
-
     def _check_unsaved_changes(self) -> bool:
         if self.modified:
             reply = QMessageBox.question(
