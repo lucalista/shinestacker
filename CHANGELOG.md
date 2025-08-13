@@ -15,6 +15,7 @@ This page reports the main releases only and the main changes therein.
 * several code refactoring reduces interclass dependencies
 * updated documentation
 * added new sample images and project files
+* examples removed from PyPI distribution
 
 ---
 
