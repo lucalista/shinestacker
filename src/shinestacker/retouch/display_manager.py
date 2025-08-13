@@ -30,8 +30,9 @@ class DisplayManager(QObject):
         self.layer_stack = lambda: self.layer_collection.layer_stack
         self.layer_labels = lambda: self.layer_collection.layer_labels
         self.set_layer_label = lambda i, val: self.layer_collection.set_layer_label(i, val)
-        self.set_layer_labels = lambda labels: self.layer_collection.set_layer_labels(i, labels)
+        self.set_layer_labels = lambda labels: self.layer_collection.set_layer_labels(labels)
         self.current_layer_idx = lambda: self.layer_collection.current_layer_idx
+        self.has_no_master_layer = lambda: self.layer_collection.has_no_master_layer()
         self.image_viewer = image_viewer
         self.master_thumbnail_label = master_thumbnail_label
         self.thumbnail_list = thumbnail_list
@@ -84,24 +85,22 @@ class DisplayManager(QObject):
             thumbnail = self.create_thumbnail(layer)
             thumbnails.append((thumbnail, label, i, i == self.current_layer_idx()))
         self._update_thumbnail_list(thumbnails)
-    
+
     def _update_thumbnail_list(self, thumbnails):
         self.thumbnail_list.clear()
         for thumb_data in thumbnails:
             thumbnail, label, index, is_current = thumb_data
             self.add_thumbnail_item(thumbnail, label, index, is_current)
-    
+
     def update_master_thumbnail(self):
-        master = self.master_layer()
-        if master is None:
+        if self.has_no_master_layer():
             self._clear_master_thumbnail()
         else:
-            thumb = self.create_thumbnail(master)
-            self._set_master_thumbnail(thumb)
-    
+            self._set_master_thumbnail(self.create_thumbnail(self.master_layer()))
+
     def _clear_master_thumbnail(self):
         self.master_thumbnail_label.clear()
-    
+
     def _set_master_thumbnail(self, pixmap):
         self.master_thumbnail_label.setPixmap(pixmap)
 
@@ -127,7 +126,6 @@ class DisplayManager(QObject):
 
         label_widget.doubleClicked.connect(lambda: rename_label(label_widget, label, i))
         layout.addWidget(label_widget)
-
         item = QListWidgetItem()
         item.setSizeHint(QSize(gui_constants.IMG_WIDTH, gui_constants.IMG_HEIGHT))
         self.thumbnail_list.addItem(item)
@@ -137,7 +135,7 @@ class DisplayManager(QObject):
             self.thumbnail_list.setCurrentItem(item)
 
     def set_view_master(self):
-        if self.master_layer() is None:
+        if self.has_no_master_layer():
             return
         self.view_mode = 'master'
         self.temp_view_individual = False
@@ -145,7 +143,7 @@ class DisplayManager(QObject):
         self.status_message_requested.emit("View mode: Master")
 
     def set_view_individual(self):
-        if self.master_layer() is None:
+        if self.has_no_master_layer():
             return
         self.view_mode = 'individual'
         self.temp_view_individual = False

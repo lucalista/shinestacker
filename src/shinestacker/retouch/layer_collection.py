@@ -9,8 +9,20 @@ class LayerCollection:
         self.master_layer = None
         self.master_layer_copy = None
         self.layer_stack = None
-        self.layer_labels = None
+        self.layer_labels = []
         self.current_layer_idx = 0
+
+    def has_master_layer(self):
+        return self.master_layer is not None
+
+    def has_no_master_layer(self):
+        return self.master_layer is None
+
+    def has_master_layer_copy(self):
+        return self.master_layer_copy is not None
+
+    def has_no_master_layer_copy(self):
+        return self.master_layer_copy is None
 
     def number_of_layers(self):
         return len(self.layer_stack)
@@ -44,8 +56,11 @@ class LayerCollection:
     def copy_master_layer(self):
         self.master_layer_copy = self.master_layer.copy()
 
-    def add_layer_labels(self, label):
-        self.layer_labels.append(label)
+    def add_layer_label(self, label):
+        if self.layer_labels is None:
+            self.layer_labels = [label]
+        else:
+            self.layer_labels.append(label)
 
     def add_layer(self, img):
         self.layer_stack = np.append(self.layer_stack, [img], axis=0)

@@ -8,6 +8,17 @@ from .. algorithms.multilayer import write_multilayer_tiff_from_images
 class IOManager:
     def __init__(self, layer_collection):
         self.layer_collection = layer_collection
+        self.master_layer = lambda: self.layer_collection.master_layer
+        self.current_layer = lambda: self.layer_collection.current_layer()
+        self.layer_stack = lambda: self.layer_collection.layer_stack
+        self.set_layer_stack = lambda stk: self.layer_collection.set_layer_stack(stk)
+        self.layer_labels = lambda: self.layer_collection.layer_labels
+        self.set_layer_label = lambda i, val: self.layer_collection.set_layer_label(i, val)
+        self.set_layer_labels = lambda labels: self.layer_collection.set_layer_labels(labels)
+        self.current_layer_idx = lambda: self.layer_collection.current_layer_idx
+        self.set_master_layer = lambda img: self.layer_collection.set_master_layer(img)
+        self.add_layer_label = lambda label: self.layer_collection.add_layer_label(label)
+        self.add_layer = lambda img: self.layer_collection.add_layer(img)
         self.current_file_path = ''
         self.exif_path = ''
         self.exif_data = None
@@ -16,7 +27,7 @@ class IOManager:
         stack = []
         labels = []
         master = None
-        shape, dtype = get_img_metadata(self.layer_collection.master_layer)
+        shape, dtype = get_img_metadata(self.master_layer())
         for path in file_paths:
             try:
                 label = path.split("/")[-1].split(".")[0]
@@ -43,13 +54,13 @@ class IOManager:
         return stack, labels, master
 
     def save_multilayer(self, path):
-        master_layer = {'Master': self.layer_collection.master_layer}
+        master_layer = {'Master': self.master_layer()}
         individual_layers = {label: image for label, image in zip(
-            self.layer_collection.layer_labels, self.layer_collection.layer_stack)}
+            self.layer_labels(), self.layer_stack())}
         write_multilayer_tiff_from_images({**master_layer, **individual_layers}, path, exif_path=self.exif_path)
 
     def save_master(self, path):
-        img = cv2.cvtColor(self.layer_collection.master_layer, cv2.COLOR_RGB2BGR)
+        img = cv2.cvtColor(self.master_layer(), cv2.COLOR_RGB2BGR)
         write_image_with_exif_data(self.exif_data, img, path)
 
     def set_exif_data(self, path):
