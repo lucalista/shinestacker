@@ -28,7 +28,7 @@ The GUI has two main working areas:
 
 <img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/img/gui-project-run.png' width="600" referrerpolicy="no-referrer">
 
-* *Retouch*: interactive final refinements to final blended image from individual frames.
+* *Retouch*: select interactively details from individual frames and apply final filters to the blended image.
 
 <img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/img/gui-retouch.png' width="600" referrerpolicy="no-referrer">
 
