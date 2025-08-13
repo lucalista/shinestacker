@@ -46,7 +46,6 @@ class ImageEditorUI(ImageFilters):
         self.image_viewer.brush_operation_continued.connect(self.continue_copy_brush_area)
         self.image_viewer.brush_operation_ended.connect(self.end_copy_brush_area)
         self.image_viewer.brush_size_change_requested.connect(self.handle_brush_size_change)
-        self.image_viewer.display_manager = self.display_manager
         self.image_viewer.setFocusPolicy(Qt.StrongFocus)
         side_panel = QWidget()
         side_layout = QVBoxLayout(side_panel)

@@ -5,7 +5,6 @@ from .. config.constants import constants
 from .. config.gui_constants import gui_constants
 from .undo_manager import UndoManager
 from .layer_collection import LayerCollection
-from .io_manager import IOManager
 from .io_gui_handler import IOGuiHandler
 from .brush_gradient import create_brush_gradient
 from .display_manager import DisplayManager
@@ -21,7 +20,6 @@ class ImageEditor(QMainWindow):
         self.undo_action = None
         self.redo_action = None
         self.undo_manager.stack_changed.connect(self.update_undo_redo_actions)
-        self.io_manager = IOManager(self.layer_collection)
         self.io_gui_handler = None
         self.display_manager = None
         self.brush_tool = BrushTool()
@@ -31,8 +29,7 @@ class ImageEditor(QMainWindow):
     def setup_ui(self):
         self.display_manager = DisplayManager(self.layer_collection, self.image_viewer,
                                               self.master_thumbnail_label, self.thumbnail_list, parent=self)
-        self.io_gui_handler = IOGuiHandler(self.io_manager, self.layer_collection,
-                                           self.undo_manager, parent=self)
+        self.io_gui_handler = IOGuiHandler(self.layer_collection, self.undo_manager, parent=self)
         self.display_manager.status_message_requested.connect(self.show_status_message)
         self.display_manager.cursor_preview_state_changed.connect(
             lambda state: setattr(self.image_viewer, 'allow_cursor_preview', state))
@@ -96,10 +93,12 @@ class ImageEditor(QMainWindow):
 
     def update_title(self):
         title = constants.APP_TITLE
-        if self.io_manager.current_file_path:
-            title += f" - {self.io_manager.current_file_path.split('/')[-1]}"
-            if self.modified:
-                title += " *"
+        if self.io_gui_handler is not None:
+            path = self.io_gui_handler.io_manager.current_file_path
+            if path != '':
+                title += f" - {path.split('/')[-1]}"
+                if self.modified:
+                    title += " *"
         self.window().setWindowTitle(title)
 
     def mark_as_modified(self):
