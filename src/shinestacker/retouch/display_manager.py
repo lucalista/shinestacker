@@ -30,6 +30,7 @@ class DisplayManager(QObject):
         self.layer_stack = lambda: self.layer_collection.layer_stack
         self.layer_labels = lambda: self.layer_collection.layer_labels
         self.set_layer_label = lambda i, val: self.layer_collection.set_layer_label(i, val)
+        self.set_layer_labels = lambda labels: self.layer_collection.set_layer_labels(i, labels)
         self.current_layer_idx = lambda: self.layer_collection.current_layer_idx
         self.image_viewer = image_viewer
         self.master_thumbnail_label = master_thumbnail_label
