@@ -8,10 +8,12 @@ def open_files(editor, filenames):
         QTimer.singleShot(100, lambda: editor.io_gui_handler.open_file(filenames[0]))
     else:
         def check_thread():
-            if editor.loader_thread is None or editor.loader_thread.isRunning():
+            thread = editor.io_gui_handler.loader_thread
+            if thread is None or thread.isRunning():
                 QTimer.singleShot(100, check_thread)
             else:
-                editor.import_frames_from_files(filenames[1:])
+                editor.io_gui_handler.import_frames_from_files(filenames[1:])
+
         QTimer.singleShot(100, lambda: (
             editor.io_gui_handler.open_file(filenames[0]),
             QTimer.singleShot(100, check_thread)

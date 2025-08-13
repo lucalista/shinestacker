@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0116, C0201
 import os
 import sys
 import platform
@@ -10,18 +11,17 @@ if not config.DISABLE_TQDM:
 
 def check_path_exists(path):
     if not os.path.exists(path):
-        raise Exception('Path does not exist: ' + path)
+        raise RuntimeError('Path does not exist: ' + path)
 
 
 def make_tqdm_bar(name, size, ncols=80):
     if not config.DISABLE_TQDM:
         if config.JUPYTER_NOTEBOOK:
-            bar = tqdm_notebook(desc=name, total=size)
+            tbar = tqdm_notebook(desc=name, total=size)
         else:
-            bar = tqdm(desc=name, total=size, ncols=ncols)
-        return bar
-    else:
-        return None
+            tbar = tqdm(desc=name, total=size, ncols=ncols)
+        return tbar
+    return None
 
 
 def get_app_base_path():
