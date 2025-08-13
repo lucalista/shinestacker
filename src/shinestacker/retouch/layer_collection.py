@@ -12,6 +12,7 @@ class LayerCollection:
         obj.set_layer_labels = lambda labels: obj.layer_collection.set_layer_labels(labels)
         obj.current_layer_idx = lambda: obj.layer_collection.current_layer_idx
         obj.has_no_master_layer = lambda: obj.layer_collection.has_no_master_layer()
+        obj.has_master_layer = lambda: obj.layer_collection.has_master_layer()
         obj.set_layer_stack = lambda stk: obj.layer_collection.set_layer_stack(stk)
         obj.set_master_layer = lambda img: obj.layer_collection.set_master_layer(img)
         obj.add_layer_label = lambda label: obj.layer_collection.add_layer_label(label)

@@ -40,9 +40,13 @@ class ImageEditorUI(ImageFilters):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         layout = QHBoxLayout(central_widget)
-        self.image_viewer = ImageViewer()
+        self.image_viewer = ImageViewer(self.layer_collection)
         self.image_viewer.temp_view_requested.connect(self.handle_temp_view)
-        self.image_viewer.image_editor = self
+        self.image_viewer.brush_operation_started.connect(self.begin_copy_brush_area)
+        self.image_viewer.brush_operation_continued.connect(self.continue_copy_brush_area)
+        self.image_viewer.brush_operation_ended.connect(self.end_copy_brush_area)
+        self.image_viewer.brush_size_change_requested.connect(self.handle_brush_size_change)
+        self.image_viewer.display_manager = self.display_manager
         self.image_viewer.setFocusPolicy(Qt.StrongFocus)
         side_panel = QWidget()
         side_layout = QVBoxLayout(side_panel)
@@ -358,3 +362,9 @@ class ImageEditorUI(ImageFilters):
             self.display_manager.start_temp_view()
         else:
             self.display_manager.end_temp_view()
+
+    def handle_brush_size_change(self, delta):
+        if delta > 0:
+            self.brush_tool.increase_brush_size()
+        else:
+            self.brush_tool.decrease_brush_size()

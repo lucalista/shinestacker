@@ -9,10 +9,15 @@ from .brush_gradient import create_brush_gradient
 
 class ImageViewer(QGraphicsView):
     temp_view_requested = Signal(bool)
+    brush_operation_started = Signal(QPoint)
+    brush_operation_continued = Signal(QPoint)
+    brush_operation_ended = Signal()
+    brush_size_change_requested = Signal(int)  # +1 or -1
 
-    def __init__(self, parent=None):
+    def __init__(self, layer_collection, parent=None):
         super().__init__(parent)
-        self.image_editor = None
+        self.display_manager = None
+        self.layer_collection = layer_collection
         self.brush = None
         self.cursor_style = gui_constants.DEFAULT_CURSOR_STYLE
         self.scene = QGraphicsScene(self)
@@ -39,8 +44,10 @@ class ImageViewer(QGraphicsView):
         self.dragging = False
         self.last_update_time = QTime.currentTime()
         self.brush_preview = BrushPreviewItem()
+        self.layer_collection.add_to(self.brush_preview)
         self.scene.addItem(self.brush_preview)
         self.empty = True
+        self.allow_cursor_preview = True
 
     def set_image(self, qimage):
         pixmap = QPixmap.fromImage(qimage)
@@ -58,7 +65,6 @@ class ImageViewer(QGraphicsView):
         self.empty = False
         self.setFocus()
         self.activateWindow()
-        self.image_editor.layer_collection.add_to(self.brush_preview)
         self.brush_preview.brush = self.brush
 
     def clear_image(self):
@@ -109,7 +115,7 @@ class ImageViewer(QGraphicsView):
     def mousePressEvent(self, event):
         if self.empty:
             return
-        if event.button() == Qt.LeftButton and self.image_editor.layer_collection.master_layer is not None:
+        if event.button() == Qt.LeftButton and self.layer_collection.has_master_layer():
             if self.space_pressed:
                 self.scrolling = True
                 self.last_mouse_pos = event.position()
@@ -118,7 +124,7 @@ class ImageViewer(QGraphicsView):
                     self.brush_cursor.hide()
             else:
                 self.last_brush_pos = event.position()
-                self.image_editor.begin_copy_brush_area(event.position().toPoint())
+                self.brush_operation_started.emit(event.position().toPoint())
                 self.dragging = True
                 if self.brush_cursor:
                     self.brush_cursor.show()
@@ -145,7 +151,7 @@ class ImageViewer(QGraphicsView):
                     for i in range(0, n_steps + 1):
                         pos = QPoint(self.last_brush_pos.x() + i * delta_x,
                                      self.last_brush_pos.y() + i * delta_y)
-                        self.image_editor.continue_copy_brush_area(pos)
+                        self.brush_operation_continued.emit(pos)
                     self.last_brush_pos = position
                 self.last_update_time = current_time
         if self.scrolling and event.buttons() & Qt.LeftButton:
@@ -177,17 +183,14 @@ class ImageViewer(QGraphicsView):
                 self.last_mouse_pos = None
             elif hasattr(self, 'dragging') and self.dragging:
                 self.dragging = False
-                self.image_editor.end_copy_brush_area()
+                self.brush_operation_ended.emit()
         super().mouseReleaseEvent(event)
 
     def wheelEvent(self, event):
         if self.empty:
             return
         if self.control_pressed:
-            if event.angleDelta().y() > 0:
-                self.image_editor.brush_tool.decrease_brush_size()
-            else:
-                self.image_editor.brush_tool.increase_brush_size()
+            self.brush_size_change_requested.emit(1 if event.angleDelta().y() > 0 else -1)
         else:
             zoom_in_factor = 1.10
             zoom_out_factor = 1 / zoom_in_factor
@@ -227,7 +230,7 @@ class ImageViewer(QGraphicsView):
         center_y = scene_pos.y()
         radius = size / 2
         self.brush_cursor.setRect(center_x - radius, center_y - radius, size, size)
-        allow_cursor_preview = self.image_editor.display_manager.allow_cursor_preview()
+        allow_cursor_preview = self.display_manager.allow_cursor_preview()
         if self.cursor_style == 'preview' and allow_cursor_preview:
             self._setup_outline_style()
             self.brush_cursor.hide()
@@ -235,8 +238,8 @@ class ImageViewer(QGraphicsView):
             if isinstance(pos, QPointF):
                 scene_pos = pos
             else:
-                cursor_pos = self.image_editor.image_viewer.mapFromGlobal(pos)
-                scene_pos = self.image_editor.image_viewer.mapToScene(cursor_pos)
+                cursor_pos = self.mapFromGlobal(pos)
+                scene_pos = self.mapToScene(cursor_pos)
             self.brush_preview.update(scene_pos, int(size))
         else:
             self.brush_preview.hide()
