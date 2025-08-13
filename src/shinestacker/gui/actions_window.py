@@ -126,7 +126,9 @@ class ActionsWindow(ProjectEditor):
             file_path, _ = QFileDialog.getOpenFileName(self, "Open Project", "", "Project Files (*.fsp);;All Files (*)")
         if file_path:
             try:
-                self._current_file_wd = '' if os.path.isabs(file_path) else os.getcwd()
+                self._current_file_wd = '' if os.path.isabs(file_path) else os.path.dirname(file_path)
+                if not os.path.isabs(self._current_file_wd):
+                    self._current_file_wd = os.path.abspath(self._current_file_wd)
                 file = open(file_path, 'r')
                 pp = file_path.split('/')
                 if len(pp) > 1:
@@ -223,7 +225,7 @@ class ActionsWindow(ProjectEditor):
         index = self.job_list.row(item)
         if 0 <= index < len(self.project.jobs):
             job = self.project.jobs[index]
-            dialog = ActionConfigDialog(job, self)
+            dialog = ActionConfigDialog(job, self._current_file_wd, self)
             if dialog.exec() == QDialog.Accepted:
                 current_row = self.job_list.currentRow()
                 if current_row >= 0:
@@ -255,7 +257,7 @@ class ActionsWindow(ProjectEditor):
             if current_action:
                 if not is_sub_action:
                     self.set_enabled_sub_actions_gui(current_action.type_name == constants.ACTION_COMBO)
-                dialog = ActionConfigDialog(current_action, self)
+                dialog = ActionConfigDialog(current_action, self._current_file_wd, self)
                 if dialog.exec() == QDialog.Accepted:
                     self.on_job_selected(job_index)
                     self.refresh_ui()
@@ -277,7 +279,7 @@ class ActionsWindow(ProjectEditor):
             self.edit_action(current_action)
 
     def edit_action(self, action):
-        dialog = ActionConfigDialog(action, self)
+        dialog = ActionConfigDialog(action, self._current_file_wd, self)
         if dialog.exec() == QDialog.Accepted:
             self.on_job_selected(self.job_list.currentRow())
             self.mark_as_modified()

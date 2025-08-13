@@ -22,8 +22,9 @@ FIELD_TYPES = [FIELD_TEXT, FIELD_ABS_PATH, FIELD_REL_PATH, FIELD_FLOAT,
 
 
 class ActionConfigurator(ABC):
-    def __init__(self, expert=False):
+    def __init__(self, expert, current_wd):
         self.expert = expert
+        self.current_wd = current_wd
 
     @abstractmethod
     def create_form(self, layout: QFormLayout, params: Dict[str, Any]):
@@ -35,9 +36,10 @@ class ActionConfigurator(ABC):
 
 
 class FieldBuilder:
-    def __init__(self, layout, action):
+    def __init__(self, layout, action, current_wd):
         self.layout = layout
         self.action = action
+        self.current_wd = current_wd
         self.fields = {}
 
     def add_field(self, tag: str, field_type: str, label: str,
@@ -159,6 +161,9 @@ class FieldBuilder:
             if field['type'] == FIELD_REL_PATH and 'working_path' in params:
                 try:
                     working_path = self.get_working_path()
+                    working_path_abs = os.path.isabs(working_path)
+                    if not working_path_abs:
+                        working_path = os.path.join(self.current_wd, working_path)
                     abs_path = os.path.normpath(os.path.join(working_path, params[tag]))
                     if not abs_path.startswith(os.path.normpath(working_path)):
                         QMessageBox.warning(None, "Invalid Path",
@@ -370,8 +375,9 @@ class FieldBuilder:
 
 
 class ActionConfigDialog(QDialog):
-    def __init__(self, action: ActionConfig, parent=None):
+    def __init__(self, action: ActionConfig, current_wd, parent=None):
         super().__init__(parent)
+        self.current_wd = current_wd
         self.action = action
         self.setWindowTitle(f"Configure {action.type_name}")
         self.resize(500, self.height())
@@ -397,18 +403,18 @@ class ActionConfigDialog(QDialog):
 
     def get_configurator(self, action_type: str) -> ActionConfigurator:
         configurators = {
-            constants.ACTION_JOB: JobConfigurator(self.expert()),
-            constants.ACTION_COMBO: CombinedActionsConfigurator(self.expert()),
-            constants.ACTION_NOISEDETECTION: NoiseDetectionConfigurator(self.expert()),
-            constants.ACTION_FOCUSSTACK: FocusStackConfigurator(self.expert()),
-            constants.ACTION_FOCUSSTACKBUNCH: FocusStackBunchConfigurator(self.expert()),
-            constants.ACTION_MULTILAYER: MultiLayerConfigurator(self.expert()),
-            constants.ACTION_MASKNOISE: MaskNoiseConfigurator(self.expert()),
-            constants.ACTION_VIGNETTING: VignettingConfigurator(self.expert()),
-            constants.ACTION_ALIGNFRAMES: AlignFramesConfigurator(self.expert()),
-            constants.ACTION_BALANCEFRAMES: BalanceFramesConfigurator(self.expert()),
+            constants.ACTION_JOB: JobConfigurator(self.expert(), self.current_wd),
+            constants.ACTION_COMBO: CombinedActionsConfigurator(self.expert(), self.current_wd),
+            constants.ACTION_NOISEDETECTION: NoiseDetectionConfigurator(self.expert(), self.current_wd),
+            constants.ACTION_FOCUSSTACK: FocusStackConfigurator(self.expert(), self.current_wd),
+            constants.ACTION_FOCUSSTACKBUNCH: FocusStackBunchConfigurator(self.expert(), self.current_wd),
+            constants.ACTION_MULTILAYER: MultiLayerConfigurator(self.expert(), self.current_wd),
+            constants.ACTION_MASKNOISE: MaskNoiseConfigurator(self.expert(), self.current_wd),
+            constants.ACTION_VIGNETTING: VignettingConfigurator(self.expert(), self.current_wd),
+            constants.ACTION_ALIGNFRAMES: AlignFramesConfigurator(self.expert(), self.current_wd),
+            constants.ACTION_BALANCEFRAMES: BalanceFramesConfigurator(self.expert(), self.current_wd),
         }
-        return configurators.get(action_type, DefaultActionConfigurator(self.expert()))
+        return configurators.get(action_type, DefaultActionConfigurator(self.expert(), self.current_wd))
 
     def accept(self):
         self.parent()._project_buffer.append(self.parent().project.clone())
@@ -428,8 +434,8 @@ class ActionConfigDialog(QDialog):
 
 
 class NoNameActionConfigurator(ActionConfigurator):
-    def __init__(self, expert=False):
-        super().__init__(expert)
+    def __init__(self, expert, current_wd):
+        super().__init__(expert, current_wd)
 
     def get_builder(self):
         return self.builder
@@ -444,17 +450,17 @@ class NoNameActionConfigurator(ActionConfigurator):
 
 
 class DefaultActionConfigurator(NoNameActionConfigurator):
-    def __init__(self, expert=False):
-        super().__init__(expert)
+    def __init__(self, expert, current_wd):
+        super().__init__(expert, current_wd)
 
     def create_form(self, layout, action, tag='Action'):
-        self.builder = FieldBuilder(layout, action)
+        self.builder = FieldBuilder(layout, action, self.current_wd)
         self.builder.add_field('name', FIELD_TEXT, f'{tag} name', required=True)
 
 
 class JobConfigurator(DefaultActionConfigurator):
-    def __init__(self, expert=False):
-        super().__init__(expert)
+    def __init__(self, expert, current_wd):
+        super().__init__(expert, current_wd)
 
     def create_form(self, layout, action):
         super().create_form(layout, action, "Job")
@@ -464,8 +470,8 @@ class JobConfigurator(DefaultActionConfigurator):
 
 
 class NoiseDetectionConfigurator(DefaultActionConfigurator):
-    def __init__(self, expert=False):
-        super().__init__(expert)
+    def __init__(self, expert, current_wd):
+        super().__init__(expert, current_wd)
 
     def create_form(self, layout, action):
         super().create_form(layout, action)
@@ -492,8 +498,8 @@ class NoiseDetectionConfigurator(DefaultActionConfigurator):
 
 
 class FocusStackBaseConfigurator(DefaultActionConfigurator):
-    def __init__(self, expert=False):
-        super().__init__(expert)
+    def __init__(self, expert, current_wd):
+        super().__init__(expert, current_wd)
 
     ENERGY_OPTIONS = ['Laplacian', 'Sobel']
     MAP_TYPE_OPTIONS = ['Average', 'Maximum']
@@ -583,8 +589,8 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
 
 
 class FocusStackConfigurator(FocusStackBaseConfigurator):
-    def __init__(self, expert=False):
-        super().__init__(expert)
+    def __init__(self, expert, current_wd):
+        super().__init__(expert, current_wd)
 
     def create_form(self, layout, action):
         super().create_form(layout, action)
@@ -599,8 +605,8 @@ class FocusStackConfigurator(FocusStackBaseConfigurator):
 
 
 class FocusStackBunchConfigurator(FocusStackBaseConfigurator):
-    def __init__(self, expert=False):
-        super().__init__(expert)
+    def __init__(self, expert, current_wd):
+        super().__init__(expert, current_wd)
 
     def create_form(self, layout, action):
         super().create_form(layout, action)
@@ -614,8 +620,8 @@ class FocusStackBunchConfigurator(FocusStackBaseConfigurator):
 
 
 class MultiLayerConfigurator(DefaultActionConfigurator):
-    def __init__(self, expert=False):
-        super().__init__(expert)
+    def __init__(self, expert, current_wd):
+        super().__init__(expert, current_wd)
 
     def create_form(self, layout, action):
         super().create_form(layout, action)
@@ -635,8 +641,8 @@ class MultiLayerConfigurator(DefaultActionConfigurator):
 
 
 class CombinedActionsConfigurator(DefaultActionConfigurator):
-    def __init__(self, expert=False):
-        super().__init__(expert)
+    def __init__(self, expert, current_wd):
+        super().__init__(expert, current_wd)
 
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
@@ -659,8 +665,8 @@ class CombinedActionsConfigurator(DefaultActionConfigurator):
 
 
 class MaskNoiseConfigurator(NoNameActionConfigurator):
-    def __init__(self, expert=False):
-        super().__init__(expert)
+    def __init__(self, expert, current_wd):
+        super().__init__(expert, current_wd)
 
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
@@ -675,8 +681,8 @@ class MaskNoiseConfigurator(NoNameActionConfigurator):
 
 
 class VignettingConfigurator(NoNameActionConfigurator):
-    def __init__(self, expert=False):
-        super().__init__(expert)
+    def __init__(self, expert, current_wd):
+        super().__init__(expert, current_wd)
 
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
@@ -699,8 +705,8 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
     METHOD_OPTIONS = ['Random Sample Consensus (RANSAC)', 'Least Median (LMEDS)']
     MATCHING_METHOD_OPTIONS = ['K-nearest neighbors', 'Hamming distance']
 
-    def __init__(self, expert=False):
-        super().__init__(expert)
+    def __init__(self, expert, current_wd):
+        super().__init__(expert, current_wd)
 
     def show_info(self, message, timeout=3000):
         self.info_label.setText(message)
@@ -713,7 +719,6 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
         match_method = {k: v for k, v in zip(self.MATCHING_METHOD_OPTIONS,
                                              constants.VALID_MATCHING_METHODS)}[self.matching_method_field.currentText()]
         try:
-            print(detector, descriptor, match_method)
             validate_align_config(detector, descriptor, match_method)
         except Exception as e:
             self.show_info(str(e))
@@ -855,8 +860,8 @@ class BalanceFramesConfigurator(NoNameActionConfigurator):
     CORRECTION_MAP_OPTIONS = ['Linear', 'Gamma', 'Match histograms']
     CHANNEL_OPTIONS = ['Luminosity', 'RGB', 'HSV', 'HLS']
 
-    def __init__(self, expert=False):
-        super().__init__(expert)
+    def __init__(self, expert, current_wd):
+        super().__init__(expert, current_wd)
 
     def create_form(self, layout, action):
         DefaultActionConfigurator.create_form(self, layout, action)
