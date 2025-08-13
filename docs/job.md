@@ -2,6 +2,26 @@
 
 Create a job, then schedule the desired actions in a job, then run the job.
 
+Quick start example:
+
+```python
+from focus_stack import *
+
+job = StackJob("job", "E:/Focus stacking/My image directory/", input_path="src")
+job.add_action(NoiseDetection())
+job.run()
+
+job = StackJob("job", "E:/Focus stacking/My image directory/", input_path="src")
+job.add_action(Actions("align", actions=[MaskNoise(),
+                                         AlignFrames(),
+                                         BalanceFrames(mask_size=0.9, i_min=150, i_max=65385)]))
+job.add_action(FocusStackBunch("batches", PyramidStack(), frames=10, overlap=2, denoise=0.8))
+job.add_action(FocusStack("stack", PyramidStack(), postfix='_py', denoise=0.8))
+job.add_action(FocusStack("stack", DepthMapStack(), input_path='batches', postfix='_dm', denoise=0.8))
+job.add_action(MultiLayer("multilayer", input_path=['batches', 'stack']))
+job.run()
+```
+
 ```python
 job = StackJob(name, working_path [, input_path])
 ```
