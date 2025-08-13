@@ -6,7 +6,7 @@ from .. config.gui_constants import gui_constants
 
 
 class ClickableLabel(QLabel):
-    doubleClicked = Signal()
+    double_clicked = Signal()
 
     def __init__(self, text, parent=None):
         super().__init__(text, parent)
@@ -14,7 +14,7 @@ class ClickableLabel(QLabel):
 
     def mouseDoubleClickEvent(self, event):
         if event.button() == Qt.LeftButton:
-            self.doubleClicked.emit()
+            self.double_clicked.emit()
         super().mouseDoubleClickEvent(event)
 
 
@@ -124,7 +124,7 @@ class DisplayManager(QObject):
                 label_widget.setText(new_label)
                 self.set_layer_labels(i, new_label)
 
-        label_widget.doubleClicked.connect(lambda: rename_label(label_widget, label, i))
+        label_widget.double_clicked.connect(lambda: rename_label(label_widget, label, i))
         layout.addWidget(label_widget)
         item = QListWidgetItem()
         item.setSizeHint(QSize(gui_constants.IMG_WIDTH, gui_constants.IMG_HEIGHT))
