@@ -34,6 +34,7 @@ class ImageEditor(QMainWindow):
         self.display_manager.cursor_preview_state_changed.connect(
             lambda state: setattr(self.image_viewer, 'allow_cursor_preview', state))
         self.io_gui_handler.status_message_requested.connect(self.show_status_message)
+        self.io_gui_handler.update_title_requested.connect(self.update_title)
         self.brush_tool.setup_ui(self.brush, self.brush_preview, self.image_viewer,
                                  self.brush_size_slider, self.hardness_slider, self.opacity_slider,
                                  self.flow_slider)

@@ -10,6 +10,7 @@ from .io_manager import IOManager
 
 class IOGuiHandler(QObject):
     status_message_requested = Signal(str)
+    update_title_requested = Signal()
 
     def __init__(self, layer_collection, undo_manager, parent):
         super().__init__(parent)
@@ -41,7 +42,7 @@ class IOGuiHandler(QObject):
         self.image_viewer.reset_zoom()
         self.status_message_requested.emit(f"Loaded: {self.io_manager.current_file_path}")
         self.parent().thumbnail_list.setFocus()
-        self.parent().update_title()
+        self.update_title_requested.emit()
 
     def on_file_error(self, error_msg):
         QApplication.restoreOverrideCursor()
@@ -150,7 +151,7 @@ class IOGuiHandler(QObject):
             self.io_manager.save_multilayer(path)
             self.io_manager.current_file_path = path
             self.modified = False
-            self.parent().update_title()
+            self.update_title_requested.emit()
             self.status_message_requested.emit(f"Saved multilayer to: {path}")
         except Exception as e:
             traceback.print_tb(e.__traceback__)
@@ -177,7 +178,7 @@ class IOGuiHandler(QObject):
             self.io_manager.save_master(path)
             self.io_manager.current_file_path = path
             self.modified = False
-            self.parent().update_title()
+            self.update_title_requested.emit()
             self.status_message_requested.emit(f"Saved master layer to: {path}")
         except Exception as e:
             traceback.print_tb(e.__traceback__)
@@ -203,5 +204,5 @@ class IOGuiHandler(QObject):
             self.image_viewer.clear_image()
             self.display_manager.thumbnail_list.clear()
             self.display_manager.update_thumbnails()
-            self.parent().update_title()
+            self.update_title_requested.emit()
             self.status_message_requested.emit("File closed")

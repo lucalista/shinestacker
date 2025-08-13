@@ -71,7 +71,7 @@ class BrushPreviewItem(QGraphicsPixmapItem):
 
     def update(self, scene_pos, size):
         try:
-            if self.layer_collection.number_of_layers() == 0 or size <= 0:
+            if self.layer_collection is None or self.number_of_layers() == 0 or size <= 0:
                 self.hide()
                 return
             radius = size // 2
