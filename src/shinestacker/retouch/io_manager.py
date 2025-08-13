@@ -7,18 +7,7 @@ from .. algorithms.multilayer import write_multilayer_tiff_from_images
 
 class IOManager:
     def __init__(self, layer_collection):
-        self.layer_collection = layer_collection
-        self.master_layer = lambda: self.layer_collection.master_layer
-        self.current_layer = lambda: self.layer_collection.current_layer()
-        self.layer_stack = lambda: self.layer_collection.layer_stack
-        self.set_layer_stack = lambda stk: self.layer_collection.set_layer_stack(stk)
-        self.layer_labels = lambda: self.layer_collection.layer_labels
-        self.set_layer_label = lambda i, val: self.layer_collection.set_layer_label(i, val)
-        self.set_layer_labels = lambda labels: self.layer_collection.set_layer_labels(labels)
-        self.current_layer_idx = lambda: self.layer_collection.current_layer_idx
-        self.set_master_layer = lambda img: self.layer_collection.set_master_layer(img)
-        self.add_layer_label = lambda label: self.layer_collection.add_layer_label(label)
-        self.add_layer = lambda img: self.layer_collection.add_layer(img)
+        layer_collection.add_to(self)
         self.current_file_path = ''
         self.exif_path = ''
         self.exif_data = None

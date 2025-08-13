@@ -24,15 +24,7 @@ class DisplayManager(QObject):
     def __init__(self, layer_collection, image_viewer, master_thumbnail_label,
                  thumbnail_list, parent=None):
         super().__init__(parent)
-        self.layer_collection = layer_collection
-        self.master_layer = lambda: self.layer_collection.master_layer
-        self.current_layer = lambda: self.layer_collection.current_layer()
-        self.layer_stack = lambda: self.layer_collection.layer_stack
-        self.layer_labels = lambda: self.layer_collection.layer_labels
-        self.set_layer_label = lambda i, val: self.layer_collection.set_layer_label(i, val)
-        self.set_layer_labels = lambda labels: self.layer_collection.set_layer_labels(labels)
-        self.current_layer_idx = lambda: self.layer_collection.current_layer_idx
-        self.has_no_master_layer = lambda: self.layer_collection.has_no_master_layer()
+        layer_collection.add_to(self)
         self.image_viewer = image_viewer
         self.master_thumbnail_label = master_thumbnail_label
         self.thumbnail_list = thumbnail_list

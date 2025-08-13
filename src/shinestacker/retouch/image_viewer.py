@@ -58,7 +58,7 @@ class ImageViewer(QGraphicsView):
         self.empty = False
         self.setFocus()
         self.activateWindow()
-        self.brush_preview.layer_collection = self.image_editor.layer_collection
+        self.image_editor.layer_collection.add_to(self.brush_preview)
         self.brush_preview.brush = self.brush
 
     def clear_image(self):

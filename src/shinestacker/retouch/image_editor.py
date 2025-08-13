@@ -15,17 +15,8 @@ from .brush_tool import BrushTool
 class ImageEditor(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.layer_collection = LayerCollection()
-        self.master_layer = lambda: self.layer_collection.master_layer
-        self.master_layer_copy = lambda: self.layer_collection.master_layer_copy
-        self.copy_master_layer = lambda: self.layer_collection.copy_master_layer()
-        self.current_layer = lambda: self.layer_collection.current_layer()
-        self.layer_stack = lambda: self.layer_collection.layer_stack
-        self.layer_labels = lambda: self.layer_collection.layer_labels
-        self.current_layer_idx = lambda: self.layer_collection.current_layer_idx
-        self.set_current_layer_idx = lambda idx: self.layer_collection.set_current_layer_idx(idx)
-        self.sort_layers = lambda order: self.layer_collection.sort_layers(order)
-        self.number_of_layers = lambda: self.layer_collection.number_of_layers()
+        layer_collection = LayerCollection()
+        layer_collection.add_to(self)
         self.undo_manager = UndoManager()
         self.undo_action = None
         self.redo_action = None
