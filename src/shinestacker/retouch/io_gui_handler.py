@@ -5,14 +5,15 @@ from PySide6.QtGui import QGuiApplication, QCursor
 from PySide6.QtCore import Qt, QObject, QTimer, Signal
 from .file_loader import FileLoader
 from .exif_data import ExifData
+from .io_manager import IOManager
 
 
 class IOGuiHandler(QObject):
     status_message_requested = Signal(str)
 
-    def __init__(self, io_manager, layer_collection, undo_manager, parent):
+    def __init__(self, layer_collection, undo_manager, parent):
         super().__init__(parent)
-        self.io_manager = io_manager
+        self.io_manager = IOManager(layer_collection)
         self.undo_manager = undo_manager
         layer_collection.add_to(self)
         self.loader_thread = None
