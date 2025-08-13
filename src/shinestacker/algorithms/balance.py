@@ -133,17 +133,16 @@ class Correction:
         self.corrections = np.ones((size, self.channels))
 
     def calc_hist_1ch(self, image):
+        img_subsample = image if self.subsample == 1 else image[::self.subsample, ::self.subsample]
         if self.mask_size == 0:
-            image_sel = image
+            image_sel = img_subsample
         else:
-            height, width = image.shape[:2]
+            height, width = img_subsample.shape[:2]
             xv, yv = np.meshgrid(np.linspace(0, width - 1, width), np.linspace(0, height - 1, height))
             mask_radius = (min(width, height) * self.mask_size / 2)
-            image_sel = image[(xv - width / 2) ** 2 + (yv - height / 2) ** 2 <= mask_radius ** 2]
-        hist, bins = np.histogram((image_sel if self.subsample == 1
-                                   else image_sel[::self.subsample, ::self.subsample]),
-                                  bins=np.linspace(-0.5, self.num_pixel_values - 0.5,
-                                                   self.num_pixel_values + 1))
+            image_sel = img_subsample[(xv - width / 2) ** 2 + (yv - height / 2) ** 2 <= mask_radius ** 2]
+        hist, bins = np.histogram(image_sel, bins=np.linspace(-0.5, self.num_pixel_values - 0.5,
+                                                               self.num_pixel_values + 1))
         return hist
 
     def balance(self, image, idx):
