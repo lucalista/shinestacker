@@ -1,1 +1,2 @@
 prune examples
+prune tests

@@ -48,7 +48,10 @@ shinestacker-project = "shinestacker.app.project:main"
 shinestacker-retouch = "shinestacker.app.retouch:main"
 
 [tool.setuptools.exclude-package-data]
-"*" = ["examples/*"]
+"*" = [
+    "examples/*",
+    "tests/*"
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
