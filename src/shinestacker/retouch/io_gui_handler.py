@@ -215,4 +215,3 @@ class IOGuiHandler(QObject):
             self.display_manager.update_thumbnails()
             self.parent().update_title()
             self.status_message_requested.emit("File closed")
-
