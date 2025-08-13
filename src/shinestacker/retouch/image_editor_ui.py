@@ -340,14 +340,14 @@ class ImageEditorUI(ImageFilters):
             self.close()
 
     def undo(self):
-        if self.undo_manager.undo(self.layer_collection.master_layer):
+        if self.undo_manager.undo(self.master_layer()):
             self.display_manager.display_current_view()
             self.display_manager.update_master_thumbnail()
             self.mark_as_modified()
             self.statusBar().showMessage("Undo applied", 2000)
 
     def redo(self):
-        if self.undo_manager.redo(self.layer_collection.master_layer):
+        if self.undo_manager.redo(self.master_layer()):
             self.display_manager.display_current_view()
             self.display_manager.update_master_thumbnail()
             self.mark_as_modified()

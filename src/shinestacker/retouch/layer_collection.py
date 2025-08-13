@@ -2,6 +2,27 @@ import numpy as np
 
 
 class LayerCollection:
+    def add_to(self, obj):
+        obj.layer_collection = self
+        obj.master_layer = lambda: obj.layer_collection.master_layer
+        obj.current_layer = lambda: obj.layer_collection.current_layer()
+        obj.layer_stack = lambda: obj.layer_collection.layer_stack
+        obj.layer_labels = lambda: obj.layer_collection.layer_labels
+        obj.set_layer_label = lambda i, val: obj.layer_collection.set_layer_label(i, val)
+        obj.set_layer_labels = lambda labels: obj.layer_collection.set_layer_labels(labels)
+        obj.current_layer_idx = lambda: obj.layer_collection.current_layer_idx
+        obj.has_no_master_layer = lambda: obj.layer_collection.has_no_master_layer()
+        obj.set_layer_stack = lambda stk: obj.layer_collection.set_layer_stack(stk)
+        obj.set_master_layer = lambda img: obj.layer_collection.set_master_layer(img)
+        obj.add_layer_label = lambda label: obj.layer_collection.add_layer_label(label)
+        obj.add_layer = lambda img: obj.layer_collection.add_layer(img)
+        obj.master_layer_copy = lambda: obj.layer_collection.master_layer_copy
+        obj.copy_master_layer = lambda: obj.layer_collection.copy_master_layer()
+        obj.set_current_layer_idx = lambda idx: obj.layer_collection.set_current_layer_idx(idx)
+        obj.sort_layers = lambda order: obj.layer_collection.sort_layers(order)
+        obj.number_of_layers = lambda: obj.layer_collection.number_of_layers()
+        obj.valid_current_layer_idx = lambda: obj.layer_collection.valid_current_layer_idx()
+
     def __init__(self):
         self.reset()
 

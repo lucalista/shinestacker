@@ -43,10 +43,6 @@ class BrushPreviewItem(QGraphicsPixmapItem):
     def __init__(self):
         super().__init__()
         self.layer_collection = None
-        self.master_layer = lambda: self.layer_collection.master_layer
-        self.numbe_of_layers = lambda: self.layer_collection.number_of_layers()
-        self.current_layer = lambda: self.layer_collection.current_layer()
-        self.valid_current_layer_idx = lambda: self.layer_collection.valid_current_layer_idx()
         self.setVisible(False)
         self.setZValue(500)
         self.setTransformationMode(Qt.SmoothTransformation)
@@ -75,7 +71,7 @@ class BrushPreviewItem(QGraphicsPixmapItem):
 
     def update(self, scene_pos, size):
         try:
-            if self.numbe_of_layers() == 0 or size <= 0:
+            if self.number_of_layers() == 0 or size <= 0:
                 self.hide()
                 return
             radius = size // 2
