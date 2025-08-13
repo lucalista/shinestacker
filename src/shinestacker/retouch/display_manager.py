@@ -20,6 +20,7 @@ class ClickableLabel(QLabel):
 
 class DisplayManager(QObject):
     status_message_requested = Signal(str)
+    cursor_preview_state_changed = Signal(bool)
 
     def __init__(self, layer_collection, image_viewer, master_thumbnail_label,
                  thumbnail_list, parent=None):
@@ -133,6 +134,7 @@ class DisplayManager(QObject):
         self.temp_view_individual = False
         self.display_master_layer()
         self.status_message_requested.emit("View mode: Master")
+        self.cursor_preview_state_changed.emit(True)  # True = allow preview
 
     def set_view_individual(self):
         if self.has_no_master_layer():
@@ -141,6 +143,7 @@ class DisplayManager(QObject):
         self.temp_view_individual = False
         self.display_current_layer()
         self.status_message_requested.emit("View mode: Individual layers")
+        self.cursor_preview_state_changed.emit(False)  # False = no preview
 
     def start_temp_view(self):
         if not self.temp_view_individual and self.view_mode == 'master':
@@ -155,6 +158,7 @@ class DisplayManager(QObject):
             self.image_viewer.update_brush_cursor()
             self.display_master_layer()
             self.status_message_requested.emit("View mode: Master")
+            self.cursor_preview_state_changed.emit(True)  # Restore preview
 
     def numpy_to_qimage(self, array):
         if array.dtype == np.uint16:

@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QAbstractItemView
 from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush
-from PySide6.QtCore import Qt, QEvent, QPoint
+from PySide6.QtCore import Qt, QPoint
 from .. config.constants import constants
 from .. config.gui_constants import gui_constants
 from .undo_manager import UndoManager
@@ -34,6 +34,8 @@ class ImageEditor(QMainWindow):
         self.io_gui_handler = IOGuiHandler(self.io_manager, self.layer_collection,
                                            self.undo_manager, parent=self)
         self.display_manager.status_message_requested.connect(self.show_status_message)
+        self.display_manager.cursor_preview_state_changed.connect(
+            lambda state: setattr(self.image_viewer, 'allow_cursor_preview', state))
         self.io_gui_handler.status_message_requested.connect(self.show_status_message)
         self.brush_tool.setup_ui(self.brush, self.brush_preview, self.image_viewer,
                                  self.brush_size_slider, self.hardness_slider, self.opacity_slider,
@@ -41,6 +43,7 @@ class ImageEditor(QMainWindow):
         self.image_viewer.brush = self.brush_tool.brush
         self.brush_tool.update_brush_thumb()
         self.io_gui_handler.setup_ui(self.display_manager, self.image_viewer)
+        self.image_viewer.display_manager = self.display_manager
 
     def show_status_message(self, message):
         self.statusBar().showMessage(message)
@@ -63,12 +66,12 @@ class ImageEditor(QMainWindow):
         super().keyPressEvent(event)
 
     def eventFilter(self, obj, event):
-        if event.type() == QEvent.KeyPress and event.key() == Qt.Key_X:
-            self.display_manager.start_temp_view()
-            return True
-        if event.type() == QEvent.KeyRelease and event.key() == Qt.Key_X:
-            self.display_manager.end_temp_view()
-            return True
+        # if event.type() == QEvent.KeyPress and event.key() == Qt.Key_X:
+        #     self.display_manager.start_temp_view()
+        #     return True
+        # if event.type() == QEvent.KeyRelease and event.key() == Qt.Key_X:
+        #     self.display_manager.end_temp_view()
+        #    return True
         return super().eventFilter(obj, event)
 
     def _check_unsaved_changes(self) -> bool:
