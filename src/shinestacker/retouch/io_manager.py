@@ -44,8 +44,7 @@ class IOManager:
 
     def save_multilayer(self, path):
         master_layer = {'Master': self.master_layer()}
-        individual_layers = {label: image for label, image in zip(
-            self.layer_labels(), self.layer_stack())}
+        individual_layers = dict(zip(self.layer_labels(), self.layer_stack()))
         write_multilayer_tiff_from_images({**master_layer, **individual_layers}, path, exif_path=self.exif_path)
 
     def save_master(self, path):
