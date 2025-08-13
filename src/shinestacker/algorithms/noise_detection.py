@@ -86,6 +86,8 @@ class NoiseDetection(FrameMultiDirectory, JobBase):
             progress_callback=progress_callback)
         if not config.DISABLE_TQDM:
             self.bar.close()
+        if mean_img is None:
+            raise RuntimeError("Mean image is None")
         blurred = cv2.GaussianBlur(mean_img, (self.blur_size, self.blur_size), 0)
         diff = cv2.absdiff(mean_img, blurred)
         channels = cv2.split(diff)
