@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, C0116
 import time
 import logging
 from .. config.config import config
@@ -57,7 +58,7 @@ def elapsed_time_str(start):
     ss = dt - mm * 60
     hh = mm // 60
     mm -= hh * 60
-    return ("{:02d}:{:02d}:{:05.2f}s".format(hh, mm, ss))
+    return "{:02d}:{:02d}:{:05.2f}s".format(hh, mm, ss)
 
 
 class JobBase:
