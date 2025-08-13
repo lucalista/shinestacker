@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, C0116, C0103, R0903, W0718, W0104, W0201, E0602
 class _Config:
     _initialized = False
     _instance = None

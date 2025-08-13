@@ -1,5 +1,5 @@
+# pylint: disable=E1101, C0114, C0115, C0116
 import cv2
-from .. core.exceptions import ShapeError, BitDepthError
 from .. algorithms.utils import read_img, validate_image, get_img_metadata
 from .. algorithms.exif import get_exif, write_image_with_exif_data
 from .. algorithms.multilayer import write_multilayer_tiff_from_images
@@ -34,18 +34,15 @@ class IOManager:
                 stack.append(img)
                 if master is None:
                     master = img.copy()
-            except ShapeError as e:
-                raise ShapeError(f"All files must have the same shape.\n{str(e)}")
-            except BitDepthError as e:
-                raise BitDepthError(f"All files must have the same bit depth.\n{str(e)}")
             except Exception as e:
-                raise RuntimeError(f"Error loading file: {path}.\n{str(e)}")
+                raise RuntimeError(f"Error loading file: {path}.\n{str(e)}") from e
         return stack, labels, master
 
     def save_multilayer(self, path):
         master_layer = {'Master': self.master_layer()}
         individual_layers = dict(zip(self.layer_labels(), self.layer_stack()))
-        write_multilayer_tiff_from_images({**master_layer, **individual_layers}, path, exif_path=self.exif_path)
+        write_multilayer_tiff_from_images({**master_layer, **individual_layers},
+                                          path, exif_path=self.exif_path)
 
     def save_master(self, path):
         img = cv2.cvtColor(self.master_layer(), cv2.COLOR_RGB2BGR)
