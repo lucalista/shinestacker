@@ -21,6 +21,12 @@ class LayerCollection:
     def set_layer_label(self, i, val):
         self.layer_labels[i] = val
 
+    def set_layer_labels(self, labels):
+        self.layer_labels = labels
+
+    def set_layer_stack(self, stk):
+        self.layer_stack = stk
+
     def set_current_layer_idx(self, idx):
         self.current_layer_idx = idx
 
@@ -32,8 +38,17 @@ class LayerCollection:
             return self.layer_stack[self.current_layer_idx]
         return None
 
+    def set_master_layer(self, img):
+        self.master_layer = img
+
     def copy_master_layer(self):
         self.master_layer_copy = self.master_layer.copy()
+
+    def add_layer_labels(self, label):
+        self.layer_labels.append(label)
+
+    def add_layer(self, img):
+        self.layer_stack = np.append(self.layer_stack, [img], axis=0)
 
     def sort_layers(self, order):
         master_index = -1

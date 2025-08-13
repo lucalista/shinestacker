@@ -15,6 +15,17 @@ class IOGuiHandler(QObject):
         self.io_manager = io_manager
         self.undo_manager = undo_manager
         self.layer_collection = layer_collection
+        self.master_layer = lambda: self.layer_collection.master_layer
+        self.current_layer = lambda: self.layer_collection.current_layer()
+        self.layer_stack = lambda: self.layer_collection.layer_stack
+        self.set_layer_stack = lambda stk: self.layer_collection.set_layer_stack(stk)
+        self.layer_labels = lambda: self.layer_collection.layer_labels
+        self.set_layer_label = lambda i, val: self.layer_collection.set_layer_label(i, val)
+        self.set_layer_labels = lambda labels: self.layer_collection.set_layer_labels(labels)
+        self.current_layer_idx = lambda: self.layer_collection.current_layer_idx
+        self.set_master_layer = lambda img: self.layer_collection.set_master_layer(img)
+        self.add_layer_label = lambda label: self.layer_collection.add_layer_label(label)
+        self.add_layer = lambda img: self.layer_collection.add_layer(img)
         self.loader_thread = None
 
     def setup_ui(self, display_manager, image_viewer):
@@ -25,12 +36,12 @@ class IOGuiHandler(QObject):
         QApplication.restoreOverrideCursor()
         self.loading_timer.stop()
         self.loading_dialog.hide()
-        self.layer_collection.layer_stack = stack
+        self.set_layer_stack(stack)
         if labels is None:
-            self.layer_collection.layer_labels = [f'Layer {i:03d}' for i in range(len(stack))]
+            self.set_layer_labels([f'Layer {i:03d}' for i in range(len(stack))])
         else:
-            self.layer_collection.layer_labels = labels
-        self.layer_collection.master_layer = master_layer
+            self.set_layer_labels(labels)
+        self.set_master_layer(master_layer)
         self.modified = False
         self.undo_manager.reset()
         self.blank_layer = np.zeros(master_layer.shape[:2])
@@ -48,7 +59,7 @@ class IOGuiHandler(QObject):
         self.loading_dialog.accept()
         self.loading_dialog.deleteLater()
         QMessageBox.critical(self, "Error", error_msg)
-        elf.status_message_requested.emit(f"Error loading: {self.io_manager.current_file_path}")
+        self.status_message_requested.emit(f"Error loading: {self.io_manager.current_file_path}")
 
     def open_file(self, file_paths=None):
         if file_paths is None:
@@ -98,16 +109,15 @@ class IOGuiHandler(QObject):
             msg.setText(str(e))
             msg.exec()
             return
-        if self.layer_collection.layer_stack is None and len(stack) > 0:
-            self.layer_collection.layer_stack = np.array(stack)
-            self.layer_collection.layer_labels = labels
-            self.layer_collection.master_layer = master
+        if self.layer_stack() is None and len(stack) > 0:
+            self.set_layer_stack(np.array(stack))
+            self.set_layer_labels(labels)
+            self.set_master_layer(master)
             self.blank_layer = np.zeros(master.shape[:2])
         else:
             for img, label in zip(stack, labels):
-                self.layer_collection.layer_labels.append(label)
-                self.layer_collection.layer_stack = np.append(
-                    self.layer_collection.layer_stack, [img], axis=0)
+                self.add_layer_label(label)
+                self.add_layer(img)
         self.parent().mark_as_modified()
         self.parent().change_layer(0)
         self.image_viewer.reset_zoom()
@@ -127,7 +137,7 @@ class IOGuiHandler(QObject):
             self.save_multilayer_as()
 
     def save_multilayer(self):
-        if self.layer_collection.layer_stack is None:
+        if self.layer_stack() is None:
             return
         if self.io_manager.current_file_path != '':
             extension = self.io_manager.current_file_path.split('.')[-1]
@@ -136,7 +146,7 @@ class IOGuiHandler(QObject):
                 return
 
     def save_multilayer_as(self):
-        if self.layer_collection.layer_stack is None:
+        if self.layer_stack() is None:
             return
         path, _ = QFileDialog.getSaveFileName(self.parent(), "Save Image", "",
                                               "TIFF Files (*.tif *.tiff);;All Files (*)")
@@ -151,13 +161,13 @@ class IOGuiHandler(QObject):
             self.io_manager.current_file_path = path
             self.modified = False
             self.parent().update_title()
-            elf.status_message_requested.emit(f"Saved multilayer to: {path}")
+            self.status_message_requested.emit(f"Saved multilayer to: {path}")
         except Exception as e:
             traceback.print_tb(e.__traceback__)
             QMessageBox.critical(self.parent(), "Save Error", f"Could not save file: {str(e)}")
 
     def save_master(self):
-        if self.layer_collection.master_layer is None:
+        if self.master_layer() is None:
             return
         if self.io_manager.current_file_path != '':
             self.save_master_to_path(self.io_manager.current_file_path)
@@ -165,7 +175,7 @@ class IOGuiHandler(QObject):
         self.save_master_as()
 
     def save_master_as(self):
-        if self.layer_collection.layer_stack is None:
+        if self.layer_stack() is None:
             return
         path, _ = QFileDialog.getSaveFileName(self.parent(), "Save Image", "",
                                               "TIFF Files (*.tif *.tiff);;JPEG Files (*.jpg *.jpeg);;All Files (*)")
@@ -177,8 +187,8 @@ class IOGuiHandler(QObject):
             self.io_manager.save_master(path)
             self.io_manager.current_file_path = path
             self.modified = False
-            self.parent.update_title()
-            elf.status_message_requested.emit(f"Saved master layer to: {path}")
+            self.parent().update_title()
+            self.status_message_requested.emit(f"Saved master layer to: {path}")
         except Exception as e:
             traceback.print_tb(e.__traceback__)
             QMessageBox.critical(self.parent(), "Save Error", f"Could not save file: {str(e)}")
@@ -187,13 +197,13 @@ class IOGuiHandler(QObject):
         path, _ = QFileDialog.getOpenFileName(None, "Select file with exif data")
         if path:
             self.io_manager.set_exif_data(path)
-            elf.status_message_requested.emit(f"EXIF data extracted from {path}.")
+            self.status_message_requested.emit(f"EXIF data extracted from {path}.")
         self._exif_dialog = ExifData(self.io_manager.exif_data, self.parent())
         self._exif_dialog.exec()
 
     def close_file(self):
         if self.parent()._check_unsaved_changes():
-            self.layer_collection.master_layer = None
+            self.set_master_layer(None)
             self.blank_layer = None
             self.current_stack = None
             self.layer_collection.reset()
