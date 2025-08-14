@@ -31,7 +31,7 @@ class ActionsWindow(ProjectEditor):
 
     def mark_as_modified(self):
         self._modified_project = True
-        self._project_buffer.append(self.project.clone())
+        self.project_buffer.append(self.project.clone())
         self.update_title()
 
     def close_project(self):

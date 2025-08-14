@@ -1,4 +1,5 @@
-# pylint: disable=C0114, C0115, C0116, E0611, R0913, R0917, R0915, R0912, E0606
+# pylint: disable=C0114, C0115, C0116, E0611, R0913, R0917, R0915, R0912
+# pylint: disable=E0606, C0201, W0718, R1702, W0102
 from abc import ABC, abstractmethod
 from typing import Dict, Any
 import os.path
@@ -29,11 +30,11 @@ class ActionConfigurator(ABC):
         self.current_wd = current_wd
 
     @abstractmethod
-    def create_form(self, layout: QFormLayout, params: Dict[str, Any]):
+    def create_form(self, layout: QFormLayout, action: ActionConfig, tag: str = "Action"):
         pass
 
     @abstractmethod
-    def update_params(self, params: Dict[str, Any]):
+    def update_params(self, params: Dict[str, Any]) -> bool:
         pass
 
 
@@ -53,13 +54,13 @@ class FieldBuilder:
         elif field_type == FIELD_REL_PATH:
             widget = self.create_rel_path_field(tag, **kwargs)
         elif field_type == FIELD_FLOAT:
-            widget = self.create_float_field(tag, **kwargs)
+            widget = self.create_float_field(tag)
         elif field_type == FIELD_INT:
-            widget = self.create_int_field(tag, **kwargs)
+            widget = self.create_int_field(tag)
         elif field_type == FIELD_INT_TUPLE:
             widget = self.create_int_tuple_field(tag, **kwargs)
         elif field_type == FIELD_BOOL:
-            widget = self.create_bool_field(tag, **kwargs)
+            widget = self.create_bool_field(tag)
         elif field_type == FIELD_COMBO:
             widget = self.create_combo_field(tag, **kwargs)
         else:
@@ -132,8 +133,7 @@ class FieldBuilder:
             if 'working_path' in parent.params.keys() and parent.params['working_path'] != '':
                 return parent.params['working_path']
             parent = parent.parent
-        else:
-            return ''
+        return ''
 
     def update_params(self, params: Dict[str, Any]) -> bool:
         for tag, field in self.fields.items():
@@ -155,7 +155,7 @@ class FieldBuilder:
                 options = field.get('options', None)
                 text = field['widget'].currentText()
                 if values is not None and options is not None:
-                    text = {k: v for k, v in zip(options, values)}[text]
+                    text = dict((options, values))[text]
                 params[tag] = text
             if field['required'] and not params[tag]:
                 required = True
@@ -333,30 +333,30 @@ class FieldBuilder:
         container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         return container
 
-    def create_float_field(self, tag, default=0.0, min=0.0, max=1.0,
-                           step=0.1, decimals=2, **kwargs):
+    def create_float_field(self, tag, default=0.0, min_val=0.0, max_val=1.0,
+                           step=0.1, decimals=2):
         spin = QDoubleSpinBox()
         spin.setValue(self.action.params.get(tag, default))
-        spin.setRange(min, max)
+        spin.setRange(min_val, max_val)
         spin.setDecimals(decimals)
         spin.setSingleStep(step)
         return spin
 
-    def create_int_field(self, tag, default=0, min=0, max=100, **kwargs):
+    def create_int_field(self, tag, default=0, min_val=0, max_val=100):
         spin = QSpinBox()
-        spin.setRange(min, max)
+        spin.setRange(min_val, max_val)
         spin.setValue(self.action.params.get(tag, default))
         return spin
 
     def create_int_tuple_field(self, tag, size=1,
-                               default=[0] * 100, min=[0] * 100, max=[100] * 100,
+                               default=[0] * 100, min_val=[0] * 100, max_val=[100] * 100,
                                **kwargs):
         layout = QHBoxLayout()
         spins = [QSpinBox() for i in range(size)]
         labels = kwargs.get('labels', ('') * size)
         value = self.action.params.get(tag, default)
         for i, spin in enumerate(spins):
-            spin.setRange(min[i], max[i])
+            spin.setRange(min_val[i], max_val[i])
             spin.setValue(value[i])
             spin.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             label = QLabel(labels[i] + ":")
@@ -377,11 +377,11 @@ class FieldBuilder:
         combo.addItems(options)
         value = self.action.params.get(tag, default or options[0] if options else '')
         if values is not None and len(options) > 0:
-            value = {k: v for k, v in zip(values, options)}.get(value, value)
+            value = dict(zip(values, options)).get(value, value)
         combo.setCurrentText(value)
         return combo
 
-    def create_bool_field(self, tag, default=False, **kwargs):
+    def create_bool_field(self, tag, default=False):
         checkbox = QCheckBox()
         checkbox.setChecked(self.action.params.get(tag, default))
         return checkbox
@@ -441,12 +441,12 @@ class ActionConfigDialog(QDialog):
                                  DefaultActionConfigurator(self.expert(), self.current_wd))
 
     def accept(self):
-        self.parent()._project_buffer.append(self.parent().project.clone())
+        self.parent().project_buffer.append(self.parent().project.clone())
         if self.configurator.update_params(self.action.params):
             self.parent().mark_as_modified()
             super().accept()
         else:
-            self.parent()._project_buffer.pop()
+            self.parent().project_buffer.pop()
 
     def reset_to_defaults(self):
         builder = self.configurator.get_builder()
@@ -460,11 +460,12 @@ class ActionConfigDialog(QDialog):
 class NoNameActionConfigurator(ActionConfigurator):
     def __init__(self, expert, current_wd):
         super().__init__(expert, current_wd)
+        self.builder = None
 
     def get_builder(self):
         return self.builder
 
-    def update_params(self, params):
+    def update_params(self, params: Dict[str, Any]) -> bool:
         return self.builder.update_params(params)
 
     def add_bold_label(self, label):
@@ -474,19 +475,13 @@ class NoNameActionConfigurator(ActionConfigurator):
 
 
 class DefaultActionConfigurator(NoNameActionConfigurator):
-    def __init__(self, expert, current_wd):
-        super().__init__(expert, current_wd)
-
     def create_form(self, layout, action, tag='Action'):
         self.builder = FieldBuilder(layout, action, self.current_wd)
         self.builder.add_field('name', FIELD_TEXT, f'{tag} name', required=True)
 
 
 class JobConfigurator(DefaultActionConfigurator):
-    def __init__(self, expert, current_wd):
-        super().__init__(expert, current_wd)
-
-    def create_form(self, layout, action):
+    def create_form(self, layout, action, _tag=''):
         super().create_form(layout, action, "Job")
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
         self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
@@ -494,10 +489,7 @@ class JobConfigurator(DefaultActionConfigurator):
 
 
 class NoiseDetectionConfigurator(DefaultActionConfigurator):
-    def __init__(self, expert, current_wd):
-        super().__init__(expert, current_wd)
-
-    def create_form(self, layout, action):
+    def create_form(self, layout, action, _tag=''):
         super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True,
                                placeholder='inherit from job')
@@ -506,14 +498,15 @@ class NoiseDetectionConfigurator(DefaultActionConfigurator):
                                required=False, multiple_entries=True,
                                placeholder='relative to working path')
         self.builder.add_field('max_frames', FIELD_INT, 'Max. num. of frames', required=False,
-                               default=-1, min=-1, max=1000)
+                               default=-1, min_val=-1, max_val=1000)
         self.builder.add_field('channel_thresholds', FIELD_INT_TUPLE, 'Noise threshold',
                                required=False, size=3,
                                default=constants.DEFAULT_CHANNEL_THRESHOLDS,
-                               labels=constants.RGB_LABELS, min=[1] * 3, max=[1000] * 3)
+                               labels=constants.RGB_LABELS, min_val=[1] * 3,
+                               max_val=[1000] * 3)
         if self.expert:
             self.builder.add_field('blur_size', FIELD_INT, 'Blur size (px)', required=False,
-                                   default=constants.DEFAULT_BLUR_SIZE, min=1, max=50)
+                                   default=constants.DEFAULT_BLUR_SIZE, min_val=1, max_val=50)
         self.builder.add_field('file_name', FIELD_TEXT, 'File name', required=False,
                                default=constants.DEFAULT_NOISE_MAP_FILENAME,
                                placeholder=constants.DEFAULT_NOISE_MAP_FILENAME)
@@ -525,18 +518,15 @@ class NoiseDetectionConfigurator(DefaultActionConfigurator):
                                placeholder='relative to working path')
         self.builder.add_field('plot_range', FIELD_INT_TUPLE, 'Plot range', required=False,
                                size=2, default=constants.DEFAULT_NOISE_PLOT_RANGE,
-                               labels=['min', 'max'], min=[0] * 2, max=[1000] * 2)
+                               labels=['min', 'max'], min_val=[0] * 2, max_val=[1000] * 2)
 
 
 class FocusStackBaseConfigurator(DefaultActionConfigurator):
-    def __init__(self, expert, current_wd):
-        super().__init__(expert, current_wd)
-
     ENERGY_OPTIONS = ['Laplacian', 'Sobel']
     MAP_TYPE_OPTIONS = ['Average', 'Maximum']
     FLOAT_OPTIONS = ['float 32 bits', 'float 64 bits']
 
-    def create_form(self, layout, action):
+    def create_form(self, layout, action, _tag=''):
         super().create_form(layout, action)
         if self.expert:
             self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=False)
@@ -547,9 +537,9 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
         self.builder.add_field('scratch_output_dir', FIELD_BOOL, 'Scratch output dir.',
                                required=False, default=True)
 
-    def common_fields(self, layout, action):
+    def common_fields(self, layout):
         self.builder.add_field('denoise_amount', FIELD_FLOAT, 'Denoise', required=False,
-                               default=0, min=0, max=10)
+                               default=0, min_val=0, max_val=10)
         self.add_bold_label("Stacking algorithm:")
         combo = self.builder.add_field('stacker', FIELD_COMBO, 'Stacking algorithm', required=True,
                                        options=constants.STACK_ALGO_OPTIONS,
@@ -576,64 +566,58 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
         if self.expert:
             self.builder.add_field('pyramid_min_size', FIELD_INT, 'Minimum size (px)',
                                    required=False, add_to_layout=q_pyramid.layout(),
-                                   default=constants.DEFAULT_PY_MIN_SIZE, min=2, max=256)
+                                   default=constants.DEFAULT_PY_MIN_SIZE, min_val=2, max_val=256)
             self.builder.add_field('pyramid_kernel_size', FIELD_INT, 'Kernel size (px)',
                                    required=False, add_to_layout=q_pyramid.layout(),
-                                   default=constants.DEFAULT_PY_KERNEL_SIZE, min=3, max=21)
+                                   default=constants.DEFAULT_PY_KERNEL_SIZE, min_val=3, max_val=21)
             self.builder.add_field('pyramid_gen_kernel', FIELD_FLOAT, 'Gen. kernel',
                                    required=False, add_to_layout=q_pyramid.layout(),
-                                   default=constants.DEFAULT_PY_GEN_KERNEL, min=0.0, max=2.0)
+                                   default=constants.DEFAULT_PY_GEN_KERNEL,
+                                   min_val=0.0, max_val=2.0)
             self.builder.add_field('pyramid_float_type', FIELD_COMBO, 'Precision', required=False,
                                    add_to_layout=q_pyramid.layout(),
                                    options=self.FLOAT_OPTIONS, values=constants.VALID_FLOATS,
-                                   default={k: v for k, v in
-                                            zip(constants.VALID_FLOATS,
-                                                self.FLOAT_OPTIONS)}[constants.DEFAULT_PY_FLOAT])
+                                   default=dict(zip(constants.VALID_FLOATS,
+                                                self.FLOAT_OPTIONS))[constants.DEFAULT_PY_FLOAT])
         self.builder.add_field('depthmap_energy', FIELD_COMBO, 'Energy', required=False,
                                add_to_layout=q_depthmap.layout(),
                                options=self.ENERGY_OPTIONS, values=constants.VALID_DM_ENERGY,
-                               default={k: v for k, v in
-                                        zip(constants.VALID_DM_ENERGY,
-                                            self.ENERGY_OPTIONS)}[constants.DEFAULT_DM_ENERGY])
+                               default=dict(zip(constants.VALID_DM_ENERGY,
+                                            self.ENERGY_OPTIONS))[constants.DEFAULT_DM_ENERGY])
         self.builder.add_field('map_type', FIELD_COMBO, 'Map type', required=False,
                                add_to_layout=q_depthmap.layout(),
                                options=self.MAP_TYPE_OPTIONS, values=constants.VALID_DM_MAP,
-                               default={k: v for k, v in
-                                        zip(constants.VALID_DM_MAP,
-                                            self.MAP_TYPE_OPTIONS)}[constants.DEFAULT_DM_MAP])
+                               default=dict(zip(constants.VALID_DM_MAP,
+                                            self.MAP_TYPE_OPTIONS))[constants.DEFAULT_DM_MAP])
         if self.expert:
             self.builder.add_field('depthmap_kernel_size', FIELD_INT, 'Kernel size (px)',
                                    required=False, add_to_layout=q_depthmap.layout(),
-                                   default=constants.DEFAULT_DM_KERNEL_SIZE, min=3, max=21)
+                                   default=constants.DEFAULT_DM_KERNEL_SIZE, min_val=3, max_val=21)
             self.builder.add_field('depthmap_blur_size', FIELD_INT, 'Blurl size (px)',
                                    required=False, add_to_layout=q_depthmap.layout(),
-                                   default=constants.DEFAULT_DM_BLUR_SIZE, min=1, max=21)
+                                   default=constants.DEFAULT_DM_BLUR_SIZE, min_val=1, max_val=21)
             self.builder.add_field('depthmap_smooth_size', FIELD_INT, 'Smooth size (px)',
                                    required=False, add_to_layout=q_depthmap.layout(),
-                                   default=constants.DEFAULT_DM_SMOOTH_SIZE, min=0, max=256)
+                                   default=constants.DEFAULT_DM_SMOOTH_SIZE, min_val=0, max_val=256)
             self.builder.add_field('depthmap_temperature', FIELD_FLOAT, 'Temperature',
                                    required=False,
                                    add_to_layout=q_depthmap.layout(),
                                    default=constants.DEFAULT_DM_TEMPERATURE,
-                                   min=0, max=1, step=0.05)
+                                   min_val=0, max_val=1, step=0.05)
             self.builder.add_field('depthmap_levels', FIELD_INT, 'Levels', required=False,
                                    add_to_layout=q_depthmap.layout(),
-                                   default=constants.DEFAULT_DM_LEVELS, min=2, max=6)
+                                   default=constants.DEFAULT_DM_LEVELS, min_val=2, max_val=6)
             self.builder.add_field('depthmap_float_type', FIELD_COMBO, 'Precision', required=False,
                                    add_to_layout=q_depthmap.layout(), options=self.FLOAT_OPTIONS,
                                    values=constants.VALID_FLOATS,
-                                   default={k: v for k, v in
-                                            zip(constants.VALID_FLOATS,
-                                                self.FLOAT_OPTIONS)}[constants.DEFAULT_DM_FLOAT])
+                                   default=dict(zip(constants.VALID_FLOATS,
+                                                self.FLOAT_OPTIONS))[constants.DEFAULT_DM_FLOAT])
         self.builder.layout.addRow(stacked)
         combo.currentIndexChanged.connect(change)
 
 
 class FocusStackConfigurator(FocusStackBaseConfigurator):
-    def __init__(self, expert, current_wd):
-        super().__init__(expert, current_wd)
-
-    def create_form(self, layout, action):
+    def create_form(self, layout, action, _tag=''):
         super().create_form(layout, action)
         if self.expert:
             self.builder.add_field('exif_path', FIELD_REL_PATH, 'Exif data path', required=False,
@@ -642,29 +626,23 @@ class FocusStackConfigurator(FocusStackBaseConfigurator):
                                    default=constants.DEFAULT_STACK_PREFIX, placeholder="_stack")
         self.builder.add_field('plot_stack', FIELD_BOOL, 'Plot stack', required=False,
                                default=constants.DEFAULT_PLOT_STACK)
-        super().common_fields(layout, action)
+        super().common_fields(layout)
 
 
 class FocusStackBunchConfigurator(FocusStackBaseConfigurator):
-    def __init__(self, expert, current_wd):
-        super().__init__(expert, current_wd)
-
-    def create_form(self, layout, action):
+    def create_form(self, layout, action, _tag=''):
         super().create_form(layout, action)
         self.builder.add_field('frames', FIELD_INT, 'Frames', required=False,
-                               default=constants.DEFAULT_FRAMES, min=1, max=100)
+                               default=constants.DEFAULT_FRAMES, min_val=1, max_val=100)
         self.builder.add_field('overlap', FIELD_INT, 'Overlapping frames', required=False,
-                               default=constants.DEFAULT_OVERLAP, min=0, max=100)
+                               default=constants.DEFAULT_OVERLAP, min_val=0, max_val=100)
         self.builder.add_field('plot_stack', FIELD_BOOL, 'Plot stack', required=False,
                                default=constants.DEFAULT_PLOT_STACK_BUNCH)
-        super().common_fields(layout, action)
+        super().common_fields(layout)
 
 
 class MultiLayerConfigurator(DefaultActionConfigurator):
-    def __init__(self, expert, current_wd):
-        super().__init__(expert, current_wd)
-
-    def create_form(self, layout, action):
+    def create_form(self, layout, action, _tag=''):
         super().create_form(layout, action)
         if self.expert:
             self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=False)
@@ -684,11 +662,8 @@ class MultiLayerConfigurator(DefaultActionConfigurator):
 
 
 class CombinedActionsConfigurator(DefaultActionConfigurator):
-    def __init__(self, expert, current_wd):
-        super().__init__(expert, current_wd)
-
-    def create_form(self, layout, action):
-        DefaultActionConfigurator.create_form(self, layout, action)
+    def create_form(self, layout, action, _tag=''):
+        super().create_form(layout, action)
         if self.expert:
             self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=False)
             self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
@@ -701,44 +676,39 @@ class CombinedActionsConfigurator(DefaultActionConfigurator):
             self.builder.add_field('plot_path', FIELD_REL_PATH, 'Plots path', required=False,
                                    default="plots", placeholder='relative to working path')
             self.builder.add_field('resample', FIELD_INT, 'Resample frame stack', required=False,
-                                   default=1, min=1, max=100)
+                                   default=1, min_val=1, max_val=100)
             self.builder.add_field('ref_idx', FIELD_INT, 'Reference frame index', required=False,
-                                   default=-1, min=-1, max=1000)
+                                   default=-1, min_val=-1, max_val=1000)
             self.builder.add_field('step_process', FIELD_BOOL, 'Step process', required=False,
                                    default=True)
 
 
-class MaskNoiseConfigurator(NoNameActionConfigurator):
-    def __init__(self, expert, current_wd):
-        super().__init__(expert, current_wd)
-
-    def create_form(self, layout, action):
-        DefaultActionConfigurator.create_form(self, layout, action)
+class MaskNoiseConfigurator(DefaultActionConfigurator):
+    def create_form(self, layout, action, _tag=''):
+        super().create_form(layout, action)
         self.builder.add_field('noise_mask', FIELD_REL_PATH, 'Noise mask file', required=False,
                                path_type='file', must_exist=True,
                                default=constants.DEFAULT_NOISE_MAP_FILENAME,
                                placeholder=constants.DEFAULT_NOISE_MAP_FILENAME)
         if self.expert:
             self.builder.add_field('kernel_size', FIELD_INT, 'Kernel size', required=False,
-                                   default=constants.DEFAULT_MN_KERNEL_SIZE, min=1, max=10)
+                                   default=constants.DEFAULT_MN_KERNEL_SIZE, min_va=1, max_val=10)
             self.builder.add_field('method', FIELD_COMBO, 'Interpolation method', required=False,
                                    options=['Mean', 'Median'], default='Mean')
 
 
-class VignettingConfigurator(NoNameActionConfigurator):
-    def __init__(self, expert, current_wd):
-        super().__init__(expert, current_wd)
-
-    def create_form(self, layout, action):
-        DefaultActionConfigurator.create_form(self, layout, action)
+class VignettingConfigurator(DefaultActionConfigurator):
+    def create_form(self, layout, action, _tag=''):
+        super().create_form(layout, action)
         if self.expert:
             self.builder.add_field('r_steps', FIELD_INT, 'Radial steps', required=False,
-                                   default=constants.DEFAULT_R_STEPS, min=1, max=1000)
+                                   default=constants.DEFAULT_R_STEPS, min_val=1, max_val=1000)
             self.builder.add_field('black_threshold', FIELD_INT, 'Black intensity threshold',
-                                   required=False,
-                                   default=constants.DEFAULT_BLACK_THRESHOLD, min=0, max=1000)
+                                   required=False, default=constants.DEFAULT_BLACK_THRESHOLD,
+                                   min_val=0, max_val=1000)
         self.builder.add_field('max_correction', FIELD_FLOAT, 'Max. correction', required=False,
-                               default=constants.DEFAULT_MAX_CORRECTION, min=0, max=1, step=0.05)
+                               default=constants.DEFAULT_MAX_CORRECTION,
+                               min_val=0, max_val=1, step=0.05)
         self.add_bold_label("Miscellanea:")
         self.builder.add_field('plot_correction', FIELD_BOOL, 'Plot correction', required=False,
                                default=False)
@@ -748,7 +718,7 @@ class VignettingConfigurator(NoNameActionConfigurator):
                                default=True)
 
 
-class AlignFramesConfigurator(NoNameActionConfigurator):
+class AlignFramesConfigurator(DefaultActionConfigurator):
     BORDER_MODE_OPTIONS = ['Constant', 'Replicate', 'Replicate and blur']
     TRANSFORM_OPTIONS = ['Rigid', 'Homography']
     METHOD_OPTIONS = ['Random Sample Consensus (RANSAC)', 'Least Median (LMEDS)']
@@ -756,6 +726,10 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
 
     def __init__(self, expert, current_wd):
         super().__init__(expert, current_wd)
+        self.matching_method_field = None
+        self.info_label = None
+        self.detector_field = None
+        self.descriptor_field = None
 
     def show_info(self, message, timeout=3000):
         self.info_label.setText(message)
@@ -765,10 +739,8 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
     def change_match_config(self):
         detector = self.detector_field.currentText()
         descriptor = self.descriptor_field.currentText()
-        match_method = {
-            k: v for k, v in
-            zip(self.MATCHING_METHOD_OPTIONS,
-                constants.VALID_MATCHING_METHODS)}[self.matching_method_field.currentText()]
+        match_method = dict(zip(self.MATCHING_METHOD_OPTIONS,
+            constants.VALID_MATCHING_METHODS))[self.matching_method_field.currentText()]
         try:
             validate_align_config(detector, descriptor, match_method)
         except Exception as e:
@@ -790,8 +762,8 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
                 if match_method == constants.MATCHING_KNN:
                     self.matching_method_field.setCurrentText(self.MATCHING_METHOD_OPTIONS[1])
 
-    def create_form(self, layout, action):
-        DefaultActionConfigurator.create_form(self, layout, action)
+    def create_form(self, layout, action, _tag=''):
+        super().create_form(layout, action)
         self.detector_field = 0
         self.descriptor_field = 0
         if self.expert:
@@ -802,15 +774,15 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
             self.info_label.setVisible(False)
             layout.addRow(self.info_label)
 
-            detector = self.detector_field = self.builder.add_field(
+            self.detector_field = self.builder.add_field(
                 'detector', FIELD_COMBO, 'Detector', required=False,
                 options=constants.VALID_DETECTORS, default=constants.DEFAULT_DETECTOR)
-            descriptor = self.descriptor_field = self.builder.add_field(
+            self.descriptor_field = self.builder.add_field(
                 'descriptor', FIELD_COMBO, 'Descriptor', required=False,
                 options=constants.VALID_DESCRIPTORS, default=constants.DEFAULT_DESCRIPTOR)
 
             self.add_bold_label("Feature matching:")
-            match_method = self.matching_method_field = self.builder.add_field(
+            self.matching_method_field = self.builder.add_field(
                 'match_method', FIELD_COMBO, 'Match method', required=False,
                 options=self.MATCHING_METHOD_OPTIONS, values=constants.VALID_MATCHING_METHODS,
                 default=constants.DEFAULT_MATCHING_METHOD)
@@ -828,19 +800,22 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
                 "Automatically selected based on detector/descriptor combination"
             )
 
-            detector.currentIndexChanged.connect(self.change_match_config)
-            descriptor.currentIndexChanged.connect(self.change_match_config)
-            match_method.currentIndexChanged.connect(self.change_match_config)
+            self.detector_field.currentIndexChanged.connect(self.change_match_config)
+            self.descriptor_field.currentIndexChanged.connect(self.change_match_config)
+            self.matching_method_field.currentIndexChanged.connect(self.change_match_config)
             self.builder.add_field('flann_idx_kdtree', FIELD_INT, 'Flann idx kdtree',
                                    required=False,
-                                   default=constants.DEFAULT_FLANN_IDX_KDTREE, min=0, max=10)
+                                   default=constants.DEFAULT_FLANN_IDX_KDTREE,
+                                   min_val=0, max_val   =10)
             self.builder.add_field('flann_trees', FIELD_INT, 'Flann trees', required=False,
-                                   default=constants.DEFAULT_FLANN_TREES, min=0, max=10)
+                                   default=constants.DEFAULT_FLANN_TREES,
+                                   min_val=0, max_val=10)
             self.builder.add_field('flann_checks', FIELD_INT, 'Flann checks', required=False,
-                                   default=constants.DEFAULT_FLANN_CHECKS, min=0, max=1000)
+                                   default=constants.DEFAULT_FLANN_CHECKS,
+                                   min_val=0, max_val=1000)
             self.builder.add_field('threshold', FIELD_FLOAT, 'Threshold', required=False,
-                                   default=constants.DEFAULT_ALIGN_THRESHOLD, min=0, max=1,
-                                   step=0.05)
+                                   default=constants.DEFAULT_ALIGN_THRESHOLD,
+                                   min_val=0, max_val=1, step=0.05)
 
             self.add_bold_label("Transform:")
             transform = self.builder.add_field(
@@ -853,7 +828,7 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
                 default=constants.DEFAULT_ALIGN_METHOD)
             rans_threshold = self.builder.add_field(
                 'rans_threshold', FIELD_FLOAT, 'RANSAC threshold (px)', required=False,
-                default=constants.DEFAULT_RANS_THRESHOLD, min=0, max=20, step=0.1)
+                default=constants.DEFAULT_RANS_THRESHOLD, min_val=0, max_val=20, step=0.1)
 
             def change_method():
                 text = method.currentText()
@@ -865,15 +840,15 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
             change_method()
             self.builder.add_field('align_confidence', FIELD_FLOAT, 'Confidence (%)',
                                    required=False, decimals=1,
-                                   default=constants.DEFAULT_ALIGN_CONFIDENCE, min=70.0, max=100.0,
-                                   step=0.1)
+                                   default=constants.DEFAULT_ALIGN_CONFIDENCE,
+                                   min_val=70.0, max_val=100.0, step=0.1)
 
             refine_iters = self.builder.add_field(
                 'refine_iters', FIELD_INT, 'Refinement iterations (Rigid)', required=False,
-                default=constants.DEFAULT_REFINE_ITERS, min=0, max=1000)
+                default=constants.DEFAULT_REFINE_ITERS, min_val=0, max_val=1000)
             max_iters = self.builder.add_field(
                 'max_iters', FIELD_INT, 'Max. iterations (Homography)', required=False,
-                default=constants.DEFAULT_ALIGN_MAX_ITERS, min=0, max=5000)
+                default=constants.DEFAULT_ALIGN_MAX_ITERS, min_val=0, max_val=5000)
 
             def change_transform():
                 text = transform.currentText()
@@ -887,7 +862,7 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
             change_transform()
             subsample = self.builder.add_field(
                 'subsample', FIELD_INT, 'Subsample factor', required=False,
-                default=constants.DEFAULT_ALIGN_SUBSAMPLE, min=0, max=256)
+                default=constants.DEFAULT_ALIGN_SUBSAMPLE, min_val=0, max_val=256)
             fast_subsampling = self.builder.add_field(
                 'fast_subsampling', FIELD_BOOL, 'Fast subsampling', required=False,
                 default=constants.DEFAULT_ALIGN_FAST_SUBSAMPLING)
@@ -905,9 +880,10 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
                                    'Border value (if constant)', required=False, size=4,
                                    default=constants.DEFAULT_BORDER_VALUE,
                                    labels=constants.RGBA_LABELS,
-                                   min=constants.DEFAULT_BORDER_VALUE, max=[255] * 4)
+                                   min_val=constants.DEFAULT_BORDER_VALUE, max_val=[255] * 4)
             self.builder.add_field('border_blur', FIELD_FLOAT, 'Border blur', required=False,
-                                   default=constants.DEFAULT_BORDER_BLUR, min=0, max=1000, step=1)
+                                   default=constants.DEFAULT_BORDER_BLUR,
+                                   min_val=0, max_val=1000, step=1)
         self.add_bold_label("Miscellanea:")
         self.builder.add_field('plot_summary', FIELD_BOOL, 'Plot summary',
                                required=False, default=False)
@@ -919,36 +895,32 @@ class AlignFramesConfigurator(NoNameActionConfigurator):
             try:
                 detector = self.detector_field.currentText()
                 descriptor = self.descriptor_field.currentText()
-                match_method = {
-                    k: v for k, v in
-                    zip(self.MATCHING_METHOD_OPTIONS,
-                        constants.VALID_MATCHING_METHODS)}[self.matching_method_field.currentText()]
+                match_method = dict(zip(self.MATCHING_METHOD_OPTIONS,
+                    constants.VALID_MATCHING_METHODS))[self.matching_method_field.currentText()]
                 validate_align_config(detector, descriptor, match_method)
                 return super().update_params(params)
             except Exception as e:
                 QMessageBox.warning(None, "Error", f"{str(e)}")
                 return False
+        return False
 
-
-class BalanceFramesConfigurator(NoNameActionConfigurator):
+class BalanceFramesConfigurator(DefaultActionConfigurator):
     CORRECTION_MAP_OPTIONS = ['Linear', 'Gamma', 'Match histograms']
     CHANNEL_OPTIONS = ['Luminosity', 'RGB', 'HSV', 'HLS']
 
-    def __init__(self, expert, current_wd):
-        super().__init__(expert, current_wd)
-
-    def create_form(self, layout, action):
-        DefaultActionConfigurator.create_form(self, layout, action)
+    def create_form(self, layout, action, _tag=''):
+        super().create_form(layout, action)
         if self.expert:
             self.builder.add_field('mask_size', FIELD_FLOAT, 'Mask size', required=False,
-                                   default=0, min=0, max=5, step=0.1)
+                                   default=0, min_val=0, max_val=5, step=0.1)
             self.builder.add_field('intensity_interval', FIELD_INT_TUPLE, 'Intensity range',
                                    required=False, size=2,
                                    default=[v for k, v in
                                             constants.DEFAULT_INTENSITY_INTERVAL.items()],
-                                   labels=['min', 'max'], min=[-1] * 2, max=[65536] * 2)
+                                   labels=['min', 'max'], min_val=[-1] * 2, max_val=[65536] * 2)
             self.builder.add_field('subsample', FIELD_INT, 'Subsample factor', required=False,
-                                   default=constants.DEFAULT_BALANCE_SUBSAMPLE, min=1, max=256)
+                                   default=constants.DEFAULT_BALANCE_SUBSAMPLE,
+                                   min_val=1, max_val=256)
         self.builder.add_field('corr_map', FIELD_COMBO, 'Correction map', required=False,
                                options=self.CORRECTION_MAP_OPTIONS, values=constants.VALID_BALANCE,
                                default='Linear')
