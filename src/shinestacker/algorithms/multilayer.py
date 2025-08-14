@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, C0116, E1101, R0914, E0606
 import os
 import logging
 import cv2
@@ -21,15 +22,15 @@ def read_multilayer_tiff(input_file):
 
 
 def write_multilayer_tiff(input_files, output_file, labels=None, exif_path='', callbacks=None):
-    extensions = list(set([file.split(".")[-1] for file in input_files]))
+    extensions = list({file.split(".")[-1] for file in input_files})
     if len(extensions) > 1:
         msg = ", ".join(extensions)
-        raise Exception("All input files must have the same extension. "
-                        f"Input list has the following extensions: {msg}.")
+        raise RuntimeError("All input files must have the same extension. "
+                           f"Input list has the following extensions: {msg}.")
     extension = extensions[0]
-    if extension == 'tif' or extension == 'tiff':
+    if extension in ('tif', 'tiff'):
         images = [tifffile.imread(p) for p in input_files]
-    elif extension == 'jpg' or extension == 'jpeg':
+    elif extension in ('jpg', 'jpeg'):
         images = [cv2.imread(p) for p in input_files]
         images = [cv2.cvtColor(i, cv2.COLOR_BGR2RGB) for i in images]
     elif extension == 'png':
@@ -40,9 +41,9 @@ def write_multilayer_tiff(input_files, output_file, labels=None, exif_path='', c
                       for file, image in zip(input_files, images)}
     else:
         if len(labels) != len(input_files):
-            raise Exception("input_files and labels "
-                            "must have the same length if labels are provided.")
-        image_dict = {label: image for label, image in zip(labels, images)}
+            raise RuntimeError("input_files and labels "
+                               "must have the same length if labels are provided.")
+        image_dict = dict(zip(labels, images))
     write_multilayer_tiff_from_images(image_dict, output_file,
                                       exif_path=exif_path, callbacks=callbacks)
 
@@ -51,13 +52,13 @@ def write_multilayer_tiff_from_images(image_dict, output_file, exif_path='', cal
     if isinstance(image_dict, (list, tuple, np.ndarray)):
         fmt = 'Layer {:03d}'
         image_dict = {fmt.format(i + 1): img for i, img in enumerate(image_dict)}
-    shapes = list(set([image.shape[:2] for image in image_dict.values()]))
+    shapes = list({image.shape[:2] for image in image_dict.values()})
     if len(shapes) > 1:
-        raise Exception("All input files must have the same dimensions.")
+        raise RuntimeError("All input files must have the same dimensions.")
     shape = shapes[0]
-    dtypes = list(set([image.dtype for image in image_dict.values()]))
+    dtypes = list({image.dtype for image in image_dict.values()})
     if len(dtypes) > 1:
-        raise Exception("All input files must all have 8 bit or 16 bit depth.")
+        raise RuntimeError("All input files must all have 8 bit or 16 bit depth.")
     dtype = dtypes[0]
     max_pixel_value = constants.MAX_UINT16 if dtype == np.uint16 else constants.MAX_UINT8
     transp = np.full_like(list(image_dict.values())[0][..., 0], max_pixel_value)
@@ -131,7 +132,7 @@ def write_multilayer_tiff_from_images(image_dict, output_file, exif_path='', cal
         if os.path.isfile(exif_path):
             extra_tags, exif_tags = exif_extra_tags_for_tif(get_exif(exif_path))
         elif os.path.isdir(exif_path):
-            dirpath, _, fnames = next(os.walk(exif_path))
+            _dirpath, _, fnames = next(os.walk(exif_path))
             fnames = [name for name in fnames
                       if os.path.splitext(name)[-1][1:].lower() in constants.EXTENSIONS]
             extra_tags, exif_tags = exif_extra_tags_for_tif(get_exif(exif_path + '/' + fnames[0]))
@@ -173,15 +174,15 @@ class MultiLayer(JobBase, FrameMultiDirectory):
         elif hasattr(self.input_full_path, "__len__"):
             paths = self.input_path
         else:
-            raise Exception("input_path option must contain a path or an array of paths")
+            raise RuntimeError("input_path option must contain a path or an array of paths")
         if len(paths) == 0:
             self.print_message(color_str("no input paths specified", "red"), level=logging.WARNING)
             return
         files = self.folder_filelist()
         if len(files) == 0:
             self.print_message(
-                color_str("no input in {} specified path{}:"
-                          " ".format(len(paths), 's' if len(paths) > 1 else '') +
+                color_str(f"no input in {len(paths)} specified path" +
+                          ('s' if len(paths) > 1 else '') + ": "
                           ", ".join([f"'{p}'" for p in paths]),
                           "red"),
                 level=logging.WARNING)

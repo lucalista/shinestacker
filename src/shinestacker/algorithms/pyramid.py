@@ -2,16 +2,17 @@
 import numpy as np
 import cv2
 from .. config.constants import constants
-from .. core.colors import color_str
-from .. core.exceptions import RunStopException, ImageLoadError, InvalidOptionError
-from .utils import read_img, get_img_metadata, validate_image
+from .. core.exceptions import RunStopException
+from .utils import read_img
+from .base_stack_algo import BaseStackAlgo
 
 
-class PyramidBase:
+class PyramidBase(BaseStackAlgo):
     def __init__(self, min_size=constants.DEFAULT_PY_MIN_SIZE,
                  kernel_size=constants.DEFAULT_PY_KERNEL_SIZE,
                  gen_kernel=constants.DEFAULT_PY_GEN_KERNEL,
                  float_type=constants.DEFAULT_PY_FLOAT):
+        super().__init__("pyramid", 1, float_type)
         self.min_size = min_size
         self.kernel_size = kernel_size
         self.pad_amount = (kernel_size - 1) // 2
@@ -19,20 +20,6 @@ class PyramidBase:
         kernel = np.array([0.25 - gen_kernel / 2.0, 0.25,
                            gen_kernel, 0.25, 0.25 - gen_kernel / 2.0])
         self.gen_kernel = np.outer(kernel, kernel)
-        if float_type == constants.FLOAT_32:
-            self.float_type = np.float32
-        elif float_type == constants.FLOAT_64:
-            self.float_type = np.float64
-        else:
-            raise InvalidOptionError(
-                "float_type", float_type,
-                details=" valid values are FLOAT_32 and FLOAT_64")
-
-    def print_message(self, msg):
-        self.process.sub_message_r(color_str(msg, "light_blue"))
-
-    def steps_per_frame(self):
-        return 1
 
     def convolve(self, image):
         return cv2.filter2D(image, -1, self.gen_kernel, borderType=cv2.BORDER_REFLECT101)
@@ -135,9 +122,6 @@ class PyramidStack(PyramidBase):
         self.num_pixel_values = None
         self.max_pixel_value = None
 
-    def name(self):
-        return "pyramid"
-
     def process_single_image(self, img, levels):
         pyramid = [img.astype(self.float_type)]
         for _ in range(levels):
@@ -169,19 +153,17 @@ class PyramidStack(PyramidBase):
         levels = None
         for i, img_path in enumerate(filenames):
             self.print_message(f': validating file {img_path.split('/')[-1]}')
-            img = read_img(img_path)
-            if img is None:
-                raise ImageLoadError(img_path)
-            if metadata is None:
-                metadata = get_img_metadata(img)
+
+            img, metadata, updated = self.read_image_and_update_metadata(img_path, metadata)
+
+            if updated:
                 self.dtype = metadata[1]
                 self.num_pixel_values = constants.NUM_UINT8 \
                     if self.dtype == np.uint8 else constants.NUM_UINT16
                 self.max_pixel_value = constants.MAX_UINT8 \
                     if self.dtype == np.uint8 else constants.MAX_UINT16
                 levels = int(np.log2(min(img.shape[:2]) / self.min_size))
-            else:
-                validate_image(img, *metadata)
+
             if self.do_step_callback:
                 self.process.callback('after_step', self.process.id, self.process.name, i)
             if self.process.callback('check_running', self.process.id, self.process.name) is False:
