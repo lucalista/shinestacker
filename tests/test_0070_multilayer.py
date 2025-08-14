@@ -1,6 +1,7 @@
 import os
 from shinestacker.algorithms.stack_framework import StackJob
-from shinestacker.algorithms.multilayer import MultiLayer, write_multilayer_tiff, read_multilayer_tiff
+from shinestacker.algorithms.multilayer import (
+    MultiLayer, write_multilayer_tiff, read_multilayer_tiff)
 
 test_path = "output/img-tif-multi"
 test_file = "/multi-out.tif"

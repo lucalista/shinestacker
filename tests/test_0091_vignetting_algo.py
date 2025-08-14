@@ -104,7 +104,8 @@ def test_correct_vignetting(vignetting_instance, vignetted_images):
 
 def test_run_frame(vignetting_instance, vignetted_images):
     filenames, images = vignetted_images
-    vignetting_instance.corrections = [np.full(len(images), None, dtype=float) for _ in vignetting_instance.percentiles]
+    vignetting_instance.corrections = [
+        np.full(len(images), None, dtype=float) for _ in vignetting_instance.percentiles]
     result = vignetting_instance.run_frame(0, 0, images[0])
     assert result.shape == images[0].shape
     assert result.dtype == images[0].dtype

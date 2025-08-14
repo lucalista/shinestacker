@@ -24,7 +24,9 @@ def brush_profile(r, hardness):
         result = 0.5 * (np.cos(np.pi * np.power(np.where(r < 1.0, r, 1.0), k)) + 1.0)
     elif h < 0:
         k = 1.0 / (1.0 + hardness)
-        result = np.where(r < 1.0, 0.5 * (1.0 - np.cos(np.pi * np.power(1.0 - np.where(r < 1.0, r, 1.0), k))), 0.0)
+        result = np.where(
+            r < 1.0,
+            0.5 * (1.0 - np.cos(np.pi * np.power(1.0 - np.where(r < 1.0, r, 1.0), k))), 0.0)
     else:
         result = np.zeros_like(r)
     return result
@@ -97,7 +99,8 @@ class BrushPreviewItem(QGraphicsPixmapItem, LayerCollectionHandler):
             mask_area = full_mask[mask_y_start:mask_y_end, mask_x_start:mask_x_end]
             area = (layer_area * mask_area + master_area * (1 - mask_area)) * 255.0
             area = area.astype(np.uint8)
-            qimage = QImage(area.data, area.shape[1], area.shape[0], area.strides[0], QImage.Format_RGB888)
+            qimage = QImage(area.data, area.shape[1], area.shape[0],
+                            area.strides[0], QImage.Format_RGB888)
             mask = QPixmap(w, h)
             mask.fill(Qt.transparent)
             painter = QPainter(mask)

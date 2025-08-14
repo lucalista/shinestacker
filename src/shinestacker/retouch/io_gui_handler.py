@@ -57,7 +57,8 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
     def open_file(self, file_paths=None):
         if file_paths is None:
             file_paths, _ = QFileDialog.getOpenFileNames(
-                self.parent(), "Open Image", "", "Images (*.tif *.tiff *.jpg *.jpeg);;All Files (*)")
+                self.parent(), "Open Image", "",
+                "Images (*.tif *.tiff *.jpg *.jpeg);;All Files (*)")
         if not file_paths:
             return
         if self.loader_thread and self.loader_thread.isRunning():
@@ -86,8 +87,9 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
         self.loader_thread.start()
 
     def import_frames(self):
-        file_paths, _ = QFileDialog.getOpenFileNames(self.parent(), "Select frames", "",
-                                                     "Images Images (*.tif *.tiff *.jpg *.jpeg);;All Files (*)")
+        file_paths, _ = QFileDialog.getOpenFileNames(
+            self.parent(), "Select frames", "",
+            "Images Images (*.tif *.tiff *.jpg *.jpeg);;All Files (*)")
         if file_paths:
             self.import_frames_from_files(file_paths)
         self.status_message_requested.emit("Imported selected frames")
@@ -170,8 +172,9 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
     def save_master_as(self):
         if self.layer_stack() is None:
             return
-        path, _ = QFileDialog.getSaveFileName(self.parent(), "Save Image", "",
-                                              "TIFF Files (*.tif *.tiff);;JPEG Files (*.jpg *.jpeg);;All Files (*)")
+        path, _ = QFileDialog.getSaveFileName(
+            self.parent(), "Save Image", "",
+            "TIFF Files (*.tif *.tiff);;JPEG Files (*.jpg *.jpeg);;All Files (*)")
         if path:
             self.save_master_to_path(path)
 

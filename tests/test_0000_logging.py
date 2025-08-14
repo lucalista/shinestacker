@@ -4,7 +4,8 @@ from tqdm import tqdm
 from tqdm.notebook import tqdm_notebook
 from shinestacker.config.config import config
 from shinestacker.config.constants import constants
-from shinestacker.core.logging import setup_logging, console_logging_overwrite, console_logging_newline
+from shinestacker.core.logging import (
+    setup_logging, console_logging_overwrite, console_logging_newline)
 
 
 def test_log():

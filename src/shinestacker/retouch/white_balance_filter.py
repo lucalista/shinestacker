@@ -1,6 +1,5 @@
-from PySide6.QtWidgets import (QHBoxLayout,
-                               QPushButton, QFrame, QVBoxLayout, QLabel, QDialog, QApplication, QSlider,
-                               QCheckBox, QDialogButtonBox)
+from PySide6.QtWidgets import (QHBoxLayout, QPushButton, QFrame, QVBoxLayout, QLabel, QDialog,
+                               QApplication, QSlider, QCheckBox, QDialogButtonBox)
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QCursor
 from .filter_base import BaseFilter
@@ -48,7 +47,11 @@ class WhiteBalanceFilter(BaseFilter):
         preview_check = QCheckBox("Preview")
         preview_check.setChecked(True)
         layout.addWidget(preview_check)
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Reset | QDialogButtonBox.Cancel)
+        button_box = QDialogButtonBox(
+            QDialogButtonBox.Ok |
+            QDialogButtonBox.Reset |
+            QDialogButtonBox.Cancel
+        )
         layout.addWidget(button_box)
         self.preview_timer = QTimer()
         self.preview_timer.setSingleShot(True)

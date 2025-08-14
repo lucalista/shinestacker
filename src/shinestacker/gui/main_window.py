@@ -484,9 +484,9 @@ class MainWindow(ActionsWindow, LogManager):
                 if running_under_windows():
                     os.startfile(os.path.normpath(p))
                 elif running_under_macos():
-                    subprocess.run(['open', p], check = True)
+                    subprocess.run(['open', p], check=True)
                 else:
-                    subprocess.run(['xdg-open', p], check = True)
+                    subprocess.run(['xdg-open', p], check=True)
 
     def browse_working_path_path(self):
         self.browse_path(self.current_action_working_path)

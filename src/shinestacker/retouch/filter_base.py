@@ -62,7 +62,7 @@ class BaseFilter(ABC):
             active_worker.start()
 
         def restore_original():
-            self.editor.layer_collection.master_layer = self.editor.layer_collection.master_layer_copy.copy()
+            self.editor.copy_master_layer()
             self.editor.display_manager.display_master_layer()
             try:
                 dlg.activateWindow()

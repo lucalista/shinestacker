@@ -7,9 +7,20 @@ from unittest.mock import patch
 from PySide6.QtWidgets import QMessageBox
 from shinestacker.gui.actions_window import ActionsWindow
 from shinestacker.gui.project_model import Project
-from shinestacker.gui.project_model import get_action_working_path, get_action_input_path, get_action_output_path
+from shinestacker.gui.project_model import (get_action_working_path, get_action_input_path,
+                                            get_action_output_path)
 
-project_data = {"project": [{"type_name": "Job", "params": {"name": "test", "working_path": ".", "input_path": ""}}], "version": 1}
+project_data = {
+    "project": [{
+        "type_name": "Job",
+        "params": {
+            "name": "test",
+            "working_path": ".",
+            "input_path": ""
+        }
+    }],
+    "version": 1
+}
 
 
 @pytest.fixture

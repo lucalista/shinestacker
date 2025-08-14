@@ -1,9 +1,10 @@
 import pytest
 from unittest.mock import MagicMock, patch
 from PySide6.QtWidgets import QApplication, QFormLayout
-from shinestacker.gui.action_config import (FieldBuilder, ActionConfigDialog, DefaultActionConfigurator,
-                                            FIELD_TEXT, FIELD_ABS_PATH, FIELD_REL_PATH, FIELD_FLOAT,
-                                            FIELD_INT, FIELD_INT_TUPLE, FIELD_BOOL, FIELD_COMBO)
+from shinestacker.gui.action_config import (
+    FieldBuilder, ActionConfigDialog, DefaultActionConfigurator,
+    FIELD_TEXT, FIELD_ABS_PATH, FIELD_REL_PATH, FIELD_FLOAT,
+    FIELD_INT, FIELD_INT_TUPLE, FIELD_BOOL, FIELD_COMBO)
 
 
 @pytest.fixture(scope="session")
@@ -85,7 +86,9 @@ def test_field_builder_update_params(form_layout, mock_action, tmp_path, qapp):
     builder = FieldBuilder(form_layout, mock_action, current_wd)
     builder.add_field('text_field', FIELD_TEXT, 'Text Field')
     builder.add_field('abs_path', FIELD_ABS_PATH, 'Absolute Path')
-    builder.add_field('float_field', FIELD_FLOAT, 'Float Field', default=3.14, min_val=0.0, max_val=10.0, step=0.1)
+    builder.add_field(
+        'float_field', FIELD_FLOAT,
+        'Float Field', default=3.14, min_val=0.0, max_val=10.0, step=0.1)
     builder.add_field('int_field', FIELD_INT, 'Integer Field')
     builder.add_field('bool_field', FIELD_BOOL, 'Boolean Field')
     builder.add_field('combo_field', FIELD_COMBO, 'Combo Field',

@@ -47,7 +47,8 @@ class ImageFilters(ImageEditor):
                 x1 = min(master_layer.shape[1], x + radius + 1)
                 y0 = max(0, y - radius)
                 y1 = min(master_layer.shape[0], y + radius + 1)
-                mask = mask[radius - (y - y0): radius + (y1 - y), radius - (x - x0): radius + (x1 - x)]
+                mask = mask[radius - (y - y0): radius + (y1 - y),
+                            radius - (x - x0): radius + (x1 - x)]
                 region = master_layer[y0:y1, x0:x1]
                 if region.size == 0:
                     pixel = master_layer[y, x]
