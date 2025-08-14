@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, C0116, R0911
 from copy import deepcopy
 from .. config.constants import constants
 
@@ -28,7 +29,7 @@ class ActionConfig:
         if index < len(self.sub_actions):
             self.sub_actions.pop(index)
         else:
-            raise Exception(f"can't pop sub-action {index}, lenght is {len(self.sub_actions)}")
+            raise RuntimeError(f"can't pop sub-action {index}, lenght is {len(self.sub_actions)}")
 
     def clone(self, name_postfix=''):
         c = ActionConfig(self.type_name, deepcopy(self.params))
@@ -40,13 +41,10 @@ class ActionConfig:
         return c
 
     def to_dict(self):
-        dict = {
-            'type_name': self.type_name,
-            'params': self.params,
-        }
+        project_dict = {'type_name': self.type_name, 'params': self.params}
         if len(self.sub_actions) > 0:
-            dict['sub_actions'] = [a.to_dict() for a in self.sub_actions]
-        return dict
+            project_dict['sub_actions'] = [a.to_dict() for a in self.sub_actions]
+        return project_dict
 
     @classmethod
     def from_dict(cls, data):
@@ -93,8 +91,7 @@ def get_action_working_path(action, get_name=False):
     wp = action.params.get('working_path', '')
     if wp != '':
         return wp, (f" {action.params.get('name', '')} [{action.type_name}]" if get_name else '')
-    else:
-        return get_action_working_path(action.parent, True)
+    return get_action_working_path(action.parent, True)
 
 
 def get_action_output_path(action, get_name=False):
@@ -122,17 +119,12 @@ def get_action_input_path(action, get_name=False):
                 action = action.sub_actions[0]
                 path = action.params.get('input_path', '')
                 return path, f" {action.params.get('name', '')} [{action.type_name}]"
-            else:
-                return '', ''
-        else:
-            actions = action.parent.sub_actions
-            if action in actions:
-                i = actions.index(action)
-                if i == 0:
-                    return get_action_input_path(action.parent, True)
-                else:
-                    return get_action_output_path(actions[i - 1], True)
-            else:
-                return '', ''
-    else:
-        return path, (f" {action.params.get('name', '')} [{action.type_name}]" if get_name else '')
+            return '', ''
+        actions = action.parent.sub_actions
+        if action in actions:
+            i = actions.index(action)
+            if i == 0:
+                return get_action_input_path(action.parent, True)
+            return get_action_output_path(actions[i - 1], True)
+        return '', ''
+    return path, (f" {action.params.get('name', '')} [{action.type_name}]" if get_name else '')

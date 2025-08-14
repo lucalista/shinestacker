@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, C0116, E0611, W0212, R0903
 import logging
 from PySide6.QtWidgets import QWidget, QTextEdit, QMessageBox, QStatusBar
 from PySide6.QtGui import QTextCursor, QTextOption, QFont
@@ -87,8 +88,8 @@ class SimpleHtmlHandler(QObject, logging.Handler):
         try:
             msg = self.format(record)
             self.html_signal.emit(msg)
-        except Exception as e:
-            logging.error(f"Logging error: {e}")
+        except RuntimeError as e:
+            logging.error(msg=f"Logging error: {e}")
 
 
 class GuiLogger(QWidget):
