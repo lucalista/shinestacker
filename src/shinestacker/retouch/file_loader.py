@@ -1,7 +1,7 @@
+import os
 import numpy as np
 import traceback
 import cv2
-import os
 from psdtags import PsdChannelId
 from PySide6.QtCore import QThread, Signal
 from .. algorithms.utils import read_img
@@ -23,7 +23,8 @@ class FileLoader(QThread):
                 self.error.emit("Empty or invalid stack")
                 return
             if current_labels:
-                master_indices = [i for i, label in enumerate(current_labels) if label.lower() == "master"]
+                master_indices = [i for i, label in enumerate(current_labels)
+                                  if label.lower() == "master"]
             else:
                 master_indices = []
             master_index = -1 if len(master_indices) == 0 else master_indices[0]
@@ -76,7 +77,8 @@ class FileLoader(QThread):
                 if layers:
                     stack = np.array(layers)
                     if labels:
-                        master_indices = [i for i, label in enumerate(labels) if label.lower() == "master"]
+                        master_indices = [i for i, label in enumerate(labels)
+                                          if label.lower() == "master"]
                         if master_indices:
                             master_index = master_indices[0]
                             master_label = labels.pop(master_index)

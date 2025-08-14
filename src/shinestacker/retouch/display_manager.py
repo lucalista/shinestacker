@@ -68,7 +68,8 @@ class DisplayManager(QObject, LayerCollectionHandler):
             qimg = QImage(layer.data, width, height, 3 * width, QImage.Format_RGB888)
         else:
             qimg = QImage(layer.data, width, height, width, QImage.Format_Grayscale8)
-        return QPixmap.fromImage(qimg.scaled(*gui_constants.UI_SIZES['thumbnail'], Qt.KeepAspectRatio))
+        return QPixmap.fromImage(
+            qimg.scaled(*gui_constants.UI_SIZES['thumbnail'], Qt.KeepAspectRatio))
 
     def update_thumbnails(self):
         self.update_master_thumbnail()
@@ -113,7 +114,8 @@ class DisplayManager(QObject, LayerCollectionHandler):
         label_widget.setAlignment(Qt.AlignCenter)
 
         def rename_label(label_widget, old_label, i):
-            new_label, ok = QInputDialog.getText(self.thumbnail_list, "Rename Label", "New label name:", text=old_label)
+            new_label, ok = QInputDialog.getText(
+                self.thumbnail_list, "Rename Label", "New label name:", text=old_label)
             if ok and new_label and new_label != old_label:
                 label_widget.setText(new_label)
                 self.set_layer_labels(i, new_label)

@@ -35,8 +35,10 @@ class MainApp(QMainWindow):
         self.stacked_widget.addWidget(self.project_window)
         self.stacked_widget.addWidget(self.retouch_window)
         self.app_menu = self.create_menu()
-        self.project_window.menuBar().insertMenu(self.project_window.menuBar().actions()[0], self.app_menu)
-        self.retouch_window.menuBar().insertMenu(self.retouch_window.menuBar().actions()[0], self.app_menu)
+        self.project_window.menuBar().insertMenu(
+            self.project_window.menuBar().actions()[0], self.app_menu)
+        self.retouch_window.menuBar().insertMenu(
+            self.retouch_window.menuBar().actions()[0], self.app_menu)
         add_help_action(self.project_window)
         add_help_action(self.retouch_window)
 

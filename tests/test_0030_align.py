@@ -19,7 +19,8 @@ def test_align():
 def test_align_homo():
     try:
         img_1, img_2 = [read_img(f"examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
-        n_good_matches, M, img_warp = align_images(img_1, img_2, alignment_config={'transform': constants.ALIGN_HOMOGRAPHY})
+        n_good_matches, M, img_warp = align_images(
+            img_1, img_2, alignment_config={'transform': constants.ALIGN_HOMOGRAPHY})
         assert img_warp is not None
         assert n_good_matches > 10
     except Exception:
@@ -29,7 +30,8 @@ def test_align_homo():
 def test_align_rescale():
     try:
         img_1, img_2 = [read_img(f"examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
-        n_good_matches, M, img_warp = align_images(img_1, img_2, alignment_config={'subsample': 4})
+        n_good_matches, M, img_warp = align_images(
+            img_1, img_2, alignment_config={'subsample': 4})
         assert img_warp is not None
         assert n_good_matches > 10
     except Exception:
@@ -39,7 +41,8 @@ def test_align_rescale():
 def test_align_ecc():
     try:
         img_1, img_2 = [read_img(f"examples/input/img-jpg/000{i}.jpg") for i in (2, 3)]
-        n_good_matches, M, img_warp = align_images(img_1, img_2, alignment_config={'ecc_refinement': True})
+        n_good_matches, M, img_warp = align_images(
+            img_1, img_2, alignment_config={'ecc_refinement': True})
         assert img_warp is not None
         assert n_good_matches > 10
     except Exception:

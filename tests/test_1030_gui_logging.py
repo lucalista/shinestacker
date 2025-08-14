@@ -95,7 +95,9 @@ def test_log_manager_start_thread(qtbot, log_manager, text_edit_logger):
         worker.log_signal.emit("INFO", "Test log message")
     worker.run = mock_run
     log_manager.start_thread(worker)
-    qtbot.waitUntil(lambda: "Test message from worker" in text_edit_logger.text_edit.toHtml(), timeout=1000)
+    qtbot.waitUntil(
+        lambda: "Test message from worker" in text_edit_logger.text_edit.toHtml(),
+        timeout=1000)
     logger = logging.getLogger(text_edit_logger.id_str())
     assert logger.level == logging.DEBUG
     assert len(logger.handlers) == 1

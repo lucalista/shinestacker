@@ -8,7 +8,8 @@ class InvalidOptionError(FocusStackError):
         self.option = option
         self.value = value
         self.details = details
-        super().__init__(f"Invalid option {option} = {value}" + ("" if details == "" else f": {details}"))
+        super().__init__(f"Invalid option {option} = {value}" +
+                         ("" if details == "" else f": {details}"))
 
 
 class ImageLoadError(FocusStackError):

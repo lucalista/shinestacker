@@ -42,7 +42,8 @@ class BrushTool:
             normalized = slider_val / gui_constants.BRUSH_SIZE_SLIDER_MAX
             size = gui_constants.BRUSH_SIZES['min'] + \
                 gui_constants.BRUSH_SIZES['max'] * (normalized ** gui_constants.BRUSH_GAMMA)
-            return max(gui_constants.BRUSH_SIZES['min'], min(gui_constants.BRUSH_SIZES['max'], size))
+            return max(gui_constants.BRUSH_SIZES['min'],
+                       min(gui_constants.BRUSH_SIZES['max'], size))
 
         self.brush.size = slider_to_brush_size(slider_val)
         self.update_brush_thumb()
@@ -97,13 +98,19 @@ class BrushTool:
                 opacity=self.brush.opacity
             )
             painter.setBrush(QBrush(gradient))
-            painter.setPen(QPen(QColor(*gui_constants.BRUSH_COLORS['outer']), gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
+            painter.setPen(
+                QPen(QColor(*gui_constants.BRUSH_COLORS['outer']),
+                     gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
         elif self.image_viewer.cursor_style == 'outline':
             painter.setBrush(Qt.NoBrush)
-            painter.setPen(QPen(QColor(*gui_constants.BRUSH_COLORS['outer']), gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
+            painter.setPen(
+                QPen(QColor(*gui_constants.BRUSH_COLORS['outer']),
+                     gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
         else:
             painter.setBrush(QBrush(QColor(*gui_constants.BRUSH_COLORS['cursor_inner'])))
-            painter.setPen(QPen(QColor(*gui_constants.BRUSH_COLORS['pen']), gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
+            painter.setPen(
+                QPen(QColor(*gui_constants.BRUSH_COLORS['pen']),
+                     gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
         painter.drawEllipse(QPoint(center_x, center_y), radius, radius)
         if self.image_viewer.cursor_style == 'preview':
             painter.setPen(QPen(QColor(0, 0, 160)))
@@ -115,7 +122,8 @@ class BrushTool:
         self.brush_preview.setPixmap(pixmap)
         self.image_viewer.update_brush_cursor()
 
-    def apply_brush_operation(self, master_layer, source_layer, dest_layer, mask_layer, view_pos, image_viewer):
+    def apply_brush_operation(self, master_layer, source_layer, dest_layer, mask_layer,
+                              view_pos, image_viewer):
         if master_layer is None or source_layer is None:
             return False
         if dest_layer is None:
@@ -136,8 +144,11 @@ class BrushTool:
         source_area = source_layer[y_start:y_end, x_start:x_end]
         dest_area = dest_layer[y_start:y_end, x_start:x_end]
         mask_layer_area = mask_layer[y_start:y_end, x_start:x_end]
-        mask_area = mask[y_start - (y_center - radius):y_end - (y_center - radius), x_start - (x_center - radius):x_end - (x_center - radius)]
-        mask_layer_area[:] = np.clip(mask_layer_area + mask_area * self.brush.flow / 100.0, 0.0, 1.0)  # np.maximum(mask_layer_area, mask_area)
+        mask_area = mask[y_start - (y_center - radius):y_end - (y_center - radius),
+                         x_start - (x_center - radius):x_end - (x_center - radius)]
+        mask_layer_area[:] = np.clip(
+            mask_layer_area + mask_area * self.brush.flow / 100.0, 0.0,
+            1.0)
         self.apply_mask(master_area, source_area, mask_layer_area, dest_area)
         return x_start, y_start, x_end, y_end
 
@@ -158,7 +169,9 @@ class BrushTool:
             dest_area[:] = np.clip(master_area * (1 - effective_mask[..., np.newaxis]) + source_area * # noqa
                                    effective_mask[..., np.newaxis], 0, max_px_value).astype(dtype)
         else:
-            dest_area[:] = np.clip(master_area * (1 - effective_mask) + source_area * effective_mask, 0, max_px_value).astype(dtype)
+            dest_area[:] = np.clip(
+                master_area * (1 - effective_mask) + source_area * effective_mask, 0,
+                max_px_value).astype(dtype)
 
     def clear_cache(self):
         self._brush_mask_cache.clear()

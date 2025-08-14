@@ -114,9 +114,11 @@ def test_project_with_multiple_jobs(converter, tmp_path):
     os.makedirs(working_path1)
     os.makedirs(working_path2)
     project = Project()
-    job1 = ActionConfig("JOB_TYPE", {"name": "job1", "enabled": True, "working_path": working_path1})
+    job1 = ActionConfig("JOB_TYPE",
+                        {"name": "job1", "enabled": True, "working_path": working_path1})
     job1.sub_actions = []
-    job2 = ActionConfig("JOB_TYPE", {"name": "job2", "enabled": True, "working_path": working_path2})
+    job2 = ActionConfig("JOB_TYPE",
+                        {"name": "job2", "enabled": True, "working_path": working_path2})
     job2.sub_actions = []
     project.jobs = [job1, job2]
     jobs = converter.project(project)
@@ -149,8 +151,11 @@ def test_run_project(converter):
     job2 = ActionConfig("JOB_TYPE", {"name": "job2", "enabled": True, "working_path": "/tmp/job2"})
     job2.sub_actions = []
     project.jobs = [job1, job2]
-    with patch.object(converter, 'project', return_value=[MagicMock(), MagicMock()]) as mock_project:
-        with patch.object(converter, 'run', side_effect=[(constants.RUN_COMPLETED, ""), (constants.RUN_COMPLETED, "")]):
+    with patch.object(converter, 'project',
+                      return_value=[MagicMock(), MagicMock()]) as mock_project:
+        with patch.object(converter, 'run',
+                          side_effect=[(constants.RUN_COMPLETED, ""),
+                                       (constants.RUN_COMPLETED, "")]):
             status, msg = converter.run_project(project)
     assert status == constants.RUN_COMPLETED
     assert msg == ""

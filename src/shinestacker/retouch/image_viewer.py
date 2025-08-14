@@ -142,7 +142,8 @@ class ImageViewer(QGraphicsView, LayerCollectionHandler):
         if self.dragging and event.buttons() & Qt.LeftButton:
             current_time = QTime.currentTime()
             if self.last_update_time.msecsTo(current_time) >= gui_constants.PAINT_REFRESH_TIMER:
-                min_step = brush_size * gui_constants.MIN_MOUSE_STEP_BRUSH_FRACTION * self.zoom_factor
+                min_step = brush_size * \
+                    gui_constants.MIN_MOUSE_STEP_BRUSH_FRACTION * self.zoom_factor
                 x, y = position.x(), position.y()
                 xp, yp = self.last_brush_pos.x(), self.last_brush_pos.y()
                 distance = math.sqrt((x - xp)**2 + (y - yp)**2)
@@ -213,7 +214,8 @@ class ImageViewer(QGraphicsView, LayerCollectionHandler):
         self.setCursor(Qt.BlankCursor)
         pen = QPen(QColor(*gui_constants.BRUSH_COLORS['pen']), 1)
         brush = QBrush(QColor(*gui_constants.BRUSH_COLORS['cursor_inner']))
-        self.brush_cursor = self.scene.addEllipse(0, 0, self.brush.size, self.brush.size, pen, brush)
+        self.brush_cursor = self.scene.addEllipse(
+            0, 0, self.brush.size, self.brush.size, pen, brush)
         self.brush_cursor.setZValue(1000)
         self.brush_cursor.hide()
 

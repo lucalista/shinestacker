@@ -1,4 +1,5 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QListWidget, QSlider
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel,
+                               QListWidget, QSlider)
 from PySide6.QtGui import QShortcut, QKeySequence, QAction, QActionGroup
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication
@@ -14,7 +15,8 @@ def brush_size_to_slider(size):
         return 0
     if size >= gui_constants.BRUSH_SIZES['max']:
         return gui_constants.BRUSH_SIZE_SLIDER_MAX
-    normalized = ((size - gui_constants.BRUSH_SIZES['min']) / gui_constants.BRUSH_SIZES['max']) ** (1 / gui_constants.BRUSH_GAMMA)
+    normalized = ((size - gui_constants.BRUSH_SIZES['min']) /
+                  gui_constants.BRUSH_SIZES['max']) ** (1 / gui_constants.BRUSH_GAMMA)
     return int(normalized * gui_constants.BRUSH_SIZE_SLIDER_MAX)
 
 
@@ -129,7 +131,8 @@ class ImageEditorUI(ImageFilters):
         master_thumbnail_layout.setContentsMargins(2, 2, 2, 2)
         self.master_thumbnail_label = QLabel()
         self.master_thumbnail_label.setAlignment(Qt.AlignCenter)
-        self.master_thumbnail_label.setFixedSize(gui_constants.THUMB_WIDTH, gui_constants.THUMB_HEIGHT)
+        self.master_thumbnail_label.setFixedSize(
+            gui_constants.THUMB_WIDTH, gui_constants.THUMB_HEIGHT)
         self.master_thumbnail_label.mousePressEvent = lambda e: self.set_view_master()
         master_thumbnail_layout.addWidget(self.master_thumbnail_label)
         side_layout.addWidget(self.master_thumbnail_frame)

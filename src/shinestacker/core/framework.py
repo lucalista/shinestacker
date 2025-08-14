@@ -98,6 +98,7 @@ class JobBase:
         msg_completed = color_str("completed", "green")
         self.get_logger().info(msg=f"{msg_name} {msg_time}{TRAILING_SPACES}")
         self.get_logger().info(msg=f"{msg_name} {msg_completed}{TRAILING_SPACES}")
+
     def get_logger(self, tqdm=False):
         if config.DISABLE_TQDM:
             tqdm = False

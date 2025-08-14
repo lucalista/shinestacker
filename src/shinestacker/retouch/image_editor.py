@@ -27,8 +27,9 @@ class ImageEditor(QMainWindow, LayerCollectionHandler):
         self.installEventFilter(self)
 
     def setup_ui(self):
-        self.display_manager = DisplayManager(self.layer_collection, self.image_viewer,
-                                              self.master_thumbnail_label, self.thumbnail_list, parent=self)
+        self.display_manager = DisplayManager(
+            self.layer_collection, self.image_viewer,
+            self.master_thumbnail_label, self.thumbnail_list, parent=self)
         self.io_gui_handler = IOGuiHandler(self.layer_collection, self.undo_manager, parent=self)
         self.display_manager.status_message_requested.connect(self.show_status_message)
         self.display_manager.cursor_preview_state_changed.connect(
@@ -124,7 +125,8 @@ class ImageEditor(QMainWindow, LayerCollectionHandler):
 
     def highlight_thumbnail(self, index):
         self.thumbnail_list.setCurrentRow(index)
-        self.thumbnail_list.scrollToItem(self.thumbnail_list.item(index), QAbstractItemView.PositionAtCenter)
+        self.thumbnail_list.scrollToItem(
+            self.thumbnail_list.item(index), QAbstractItemView.PositionAtCenter)
 
     def copy_layer_to_master(self):
         if self.layer_stack() is None or self.master_layer() is None:
@@ -173,13 +175,19 @@ class ImageEditor(QMainWindow, LayerCollectionHandler):
                 opacity=self.brush.opacity
             )
             painter.setBrush(QBrush(gradient))
-            painter.setPen(QPen(QColor(*gui_constants.BRUSH_COLORS['outer']), gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
+            painter.setPen(
+                QPen(QColor(*gui_constants.BRUSH_COLORS['outer']),
+                     gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
         elif self.image_viewer.cursor_style == 'outline':
             painter.setBrush(Qt.NoBrush)
-            painter.setPen(QPen(QColor(*gui_constants.BRUSH_COLORS['outer']), gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
+            painter.setPen(
+                QPen(QColor(*gui_constants.BRUSH_COLORS['outer']),
+                     gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
         else:
             painter.setBrush(QBrush(QColor(*gui_constants.BRUSH_COLORS['cursor_inner'])))
-            painter.setPen(QPen(QColor(*gui_constants.BRUSH_COLORS['pen']), gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
+            painter.setPen(
+                QPen(QColor(*gui_constants.BRUSH_COLORS['pen']),
+                     gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
         painter.drawEllipse(QPoint(center_x, center_y), radius, radius)
         if self.image_viewer.cursor_style == 'preview':
             painter.setPen(QPen(QColor(0, 0, 160)))
