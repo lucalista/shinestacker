@@ -7,7 +7,7 @@ from .. config.gui_constants import gui_constants
 from .undo_manager import UndoManager
 from .layer_collection import LayerCollection
 from .io_gui_handler import IOGuiHandler
-from .brush_gradient import create_brush_gradient
+from .brush_gradient import create_default_brush_gradient
 from .display_manager import DisplayManager
 from .brush_tool import BrushTool
 from .layer_collection import LayerCollectionHandler
@@ -171,13 +171,7 @@ class ImageEditor(QMainWindow, LayerCollectionHandler):
         center_x, center_y = width // 2, height // 2
         radius = preview_size // 2
         if self.image_viewer.cursor_style == 'preview':
-            gradient = create_brush_gradient(
-                center_x, center_y, radius,
-                self.brush.hardness,
-                inner_color=QColor(*gui_constants.BRUSH_COLORS['inner']),
-                outer_color=QColor(*gui_constants.BRUSH_COLORS['gradient_end']),
-                opacity=self.brush.opacity
-            )
+            gradient = create_default_brush_gradient(center_x, center_y, radius, self.brush)
             painter.setBrush(QBrush(gradient))
             painter.setPen(
                 QPen(QColor(*gui_constants.BRUSH_COLORS['outer']),

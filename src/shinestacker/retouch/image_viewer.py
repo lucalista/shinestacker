@@ -5,7 +5,7 @@ from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QCursor, QSho
 from PySide6.QtCore import Qt, QRectF, QTime, QPoint, QPointF, Signal
 from .. config.gui_constants import gui_constants
 from .brush_preview import BrushPreviewItem
-from .brush_gradient import create_brush_gradient
+from .brush_gradient import create_default_brush_gradient
 from .layer_collection import LayerCollectionHandler
 
 
@@ -280,13 +280,7 @@ class ImageViewer(QGraphicsView, LayerCollectionHandler):
         self.brush_cursor.setBrush(Qt.NoBrush)
 
     def _setup_simple_brush_style(self, center_x, center_y, radius):
-        gradient = create_brush_gradient(
-            center_x, center_y, radius,
-            self.brush.hardness,
-            inner_color=QColor(*gui_constants.BRUSH_COLORS['inner']),
-            outer_color=QColor(*gui_constants.BRUSH_COLORS['gradient_end']),
-            opacity=self.brush.opacity
-        )
+        gradient = create_default_brush_gradient(center_x, center_y, radius, self.brush)
         self.brush_cursor.setPen(QPen(QColor(*gui_constants.BRUSH_COLORS['pen']),
                                       gui_constants.BRUSH_LINE_WIDTH / self.zoom_factor))
         self.brush_cursor.setBrush(QBrush(gradient))
