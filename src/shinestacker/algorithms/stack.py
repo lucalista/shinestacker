@@ -1,6 +1,6 @@
-# pylint: disable=C0114, C0115, R0913, R0917
-import numpy as np
+# pylint: disable=C0114, C0115, C0116, R0913, R0917
 import os
+import numpy as np
 from .. config.constants import constants
 from .. core.colors import color_str
 from .. core.framework import JobBase
@@ -11,15 +11,15 @@ from .exif import copy_exif_from_file_to_file
 from .denoise import denoise
 
 
-class FocusStackBase:
-    def __init__(self, stack_algo, exif_path='',
-                 prefix=constants.DEFAULT_STACK_PREFIX,
-                 denoise_amount=0, plot_stack=False):
+class FocusStackBase(JobBase, FrameDirectory):
+    def __init__(self, name, stack_algo, enabled=True, **kwargs):
+        JobBase.__init__(self, name, enabled)
+        FrameDirectory.__init__(self, name, **kwargs)
         self.stack_algo = stack_algo
-        self.exif_path = exif_path
-        self.prefix = prefix if prefix != '' else constants.DEFAULT_STACK_PREFIX
-        self.denoise_amount = denoise_amount
-        self.plot_stack = plot_stack
+        self.exif_path = kwargs.pop('exif_path', '')
+        self.prefix = kwargs.pop('prefix', constants.DEFAULT_STACK_PREFIX)
+        self.denoise_amount = kwargs.pop('denoise_amount', 0)
+        self.plot_stack = kwargs.pop('plot_stack', constants.DEFAULT_PLOT_STACK)
         self.stack_algo.process = self
         self.frame_count = -1
 
@@ -36,14 +36,14 @@ class FocusStackBase:
         write_img(out_filename, stacked_img)
         if self.exif_path != '' and stacked_img.dtype == np.uint8:
             self.sub_message_r(': copy exif data')
-            dirpath, _, fnames = next(os.walk(self.exif_path))
+            _dirpath, _, fnames = next(os.walk(self.exif_path))
             fnames = [name for name in fnames
                       if os.path.splitext(name)[-1][1:].lower() in constants.EXTENSIONS]
             exif_filename = f"{self.exif_path}/{fnames[0]}"
             copy_exif_from_file_to_file(exif_filename, out_filename)
             self.sub_message_r(' ' * 60)
         if self.plot_stack:
-            idx_str = "{:04d}".format(self.frame_count) if self.frame_count >= 0 else ''
+            idx_str = f"{self.frame_count:04d}" if self.frame_count >= 0 else ''
             name = f"{self.name}: {self.stack_algo.name()}"
             if idx_str != '':
                 name += f"\nbunch: {idx_str}"
@@ -51,23 +51,18 @@ class FocusStackBase:
         if self.frame_count >= 0:
             self.frame_count += 1
 
-    def init(self, job, working_path):
+    def init(self, job, working_path=''):
         if self.exif_path is None:
             self.exif_path = job.paths[0]
         if self.exif_path != '':
             self.exif_path = working_path + "/" + self.exif_path
 
 
-class FocusStackBunch(FocusStackBase, FrameDirectory, ActionList):
+class FocusStackBunch(ActionList, FocusStackBase):
     def __init__(self, name, stack_algo, enabled=True, **kwargs):
-        FocusStackBase.__init__(self, stack_algo,
-                                exif_path=kwargs.pop('exif_path', ''),
-                                prefix=kwargs.pop('prefix', constants.DEFAULT_STACK_PREFIX),
-                                denoise_amount=kwargs.pop('denoise_amount', 0),
-                                plot_stack=kwargs.pop('plot_stack',
-                                                      constants.DEFAULT_PLOT_STACK_BUNCH))
-        FrameDirectory.__init__(self, name, **kwargs)
         ActionList.__init__(self, name, enabled)
+        FocusStackBase.__init__(self, name, stack_algo, enabled, **kwargs)
+        self._chunks = None
         self.frame_count = 0
         self.frames = kwargs.get('frames', constants.DEFAULT_FRAMES)
         self.overlap = kwargs.get('overlap', constants.DEFAULT_OVERLAP)
@@ -77,35 +72,29 @@ class FocusStackBunch(FocusStackBase, FrameDirectory, ActionList):
             raise InvalidOptionError("overlap", self.overlap,
                                      "overlap must be smaller than batch size")
 
-    def init(self, job):
+    def init(self, job, _working_path=''):
         FrameDirectory.init(self, job)
         FocusStackBase.init(self, job, self.working_path)
 
     def begin(self):
         ActionList.begin(self)
         fnames = self.folder_filelist(self.input_full_path)
-        self.__chunks = [fnames[x:x + self.frames]
-                         for x in range(0, len(fnames) - self.overlap, self.frames - self.overlap)]
-        self.set_counts(len(self.__chunks))
+        self._chunks = [fnames[x:x + self.frames]
+                        for x in range(0, len(fnames) - self.overlap, self.frames - self.overlap)]
+        self.set_counts(len(self._chunks))
 
     def end(self):
         ActionList.end(self)
 
     def run_step(self):
-        self.print_message_r(color_str("fusing bunch: {}".format(self.count), "blue"))
-        self.focus_stack(self.__chunks[self.count - 1])
+        self.print_message_r(color_str(f"fusing bunch: {self.count}", "blue"))
+        self.focus_stack(self._chunks[self.count - 1])
         self.callback('after_step', self.id, self.name, self.count)
 
 
-class FocusStack(FocusStackBase, FrameDirectory, JobBase):
+class FocusStack(FocusStackBase):
     def __init__(self, name, stack_algo, enabled=True, **kwargs):
-        FocusStackBase.__init__(self, stack_algo,
-                                exif_path=kwargs.pop('exif_path', ''),
-                                prefix=kwargs.pop('prefix', constants.DEFAULT_STACK_PREFIX),
-                                denoise_amount=kwargs.pop('denoise_amount', 0),
-                                plot_stack=kwargs.pop('plot_stack', constants.DEFAULT_PLOT_STACK))
-        FrameDirectory.__init__(self, name, **kwargs)
-        JobBase.__init__(self, name, enabled)
+        super().__init__(name, stack_algo, enabled, **kwargs)
         self.stack_algo.do_step_callback = True
 
     def run_core(self):
@@ -114,6 +103,6 @@ class FocusStack(FocusStackBase, FrameDirectory, JobBase):
                       self.stack_algo.steps_per_frame() * len(self.filenames))
         self.focus_stack(self.filenames)
 
-    def init(self, job):
+    def init(self, job, _working_path=''):
         FrameDirectory.init(self, job)
         FocusStackBase.init(self, job, self.working_path)

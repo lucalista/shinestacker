@@ -97,7 +97,7 @@ class FrameDirectory(FramePaths):
             filelist = filelist[0::self.resample]
         return filelist
 
-    def init(self, job):
+    def init(self, job, _working_path=''):
         FramePaths.init(self, job)
         self.input_full_path = self.working_path + ('' if self.working_path[-1] == '/' else '/') + self.input_path
         check_path_exists(self.input_full_path)
