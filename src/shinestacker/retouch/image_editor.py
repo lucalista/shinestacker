@@ -1,13 +1,9 @@
 # pylint: disable=C0114, C0115, C0116, E0611, R0902
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QAbstractItemView
-from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush
-from PySide6.QtCore import Qt, QPoint
 from .. config.constants import constants
-from .. config.gui_constants import gui_constants
 from .undo_manager import UndoManager
 from .layer_collection import LayerCollection
 from .io_gui_handler import IOGuiHandler
-from .brush_gradient import create_default_brush_gradient
 from .display_manager import DisplayManager
 from .brush_tool import BrushTool
 from .layer_collection import LayerCollectionHandler
@@ -160,42 +156,6 @@ class ImageEditor(QMainWindow, LayerCollectionHandler):
             self.master_layer(), self.mask_layer,
             view_pos, self.image_viewer)
         self.undo_manager.extend_undo_area(*area)
-
-    def update_brush_thumb(self):
-        width, height = gui_constants.UI_SIZES['brush_preview']
-        pixmap = QPixmap(width, height)
-        pixmap.fill(Qt.transparent)
-        painter = QPainter(pixmap)
-        painter.setRenderHint(QPainter.Antialiasing)
-        preview_size = min(self.brush.size, width + 30, height + 30)
-        center_x, center_y = width // 2, height // 2
-        radius = preview_size // 2
-        if self.image_viewer.cursor_style == 'preview':
-            gradient = create_default_brush_gradient(center_x, center_y, radius, self.brush)
-            painter.setBrush(QBrush(gradient))
-            painter.setPen(
-                QPen(QColor(*gui_constants.BRUSH_COLORS['outer']),
-                     gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
-        elif self.image_viewer.cursor_style == 'outline':
-            painter.setBrush(Qt.NoBrush)
-            painter.setPen(
-                QPen(QColor(*gui_constants.BRUSH_COLORS['outer']),
-                     gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
-        else:
-            painter.setBrush(QBrush(QColor(*gui_constants.BRUSH_COLORS['cursor_inner'])))
-            painter.setPen(
-                QPen(QColor(*gui_constants.BRUSH_COLORS['pen']),
-                     gui_constants.BRUSH_PREVIEW_LINE_WIDTH))
-        painter.drawEllipse(QPoint(center_x, center_y), radius, radius)
-        if self.image_viewer.cursor_style == 'preview':
-            painter.setPen(QPen(QColor(0, 0, 160)))
-            painter.drawText(0, 10, f"Size: {int(self.brush.size)}px")
-            painter.drawText(0, 25, f"Hardness: {self.brush.hardness}%")
-            painter.drawText(0, 40, f"Opacity: {self.brush.opacity}%")
-            painter.drawText(0, 55, f"Flow: {self.brush.flow}%")
-        painter.end()
-        self.brush_preview.setPixmap(pixmap)
-        self.image_viewer.update_brush_cursor()
 
     def begin_copy_brush_area(self, pos):
         if self.display_manager.allow_cursor_preview():
