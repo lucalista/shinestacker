@@ -1,7 +1,8 @@
-import cv2
+# pylint: disable=C0114, C0116, E1101
 import os
-import numpy as np
 import logging
+import numpy as np
+import cv2
 import matplotlib.pyplot as plt
 from .. config.config import config
 from .. core.exceptions import ShapeError, BitDepthError
@@ -9,20 +10,21 @@ from .. core.exceptions import ShapeError, BitDepthError
 
 def read_img(file_path):
     if not os.path.isfile(file_path):
-        raise Exception("File does not exist: " + file_path)
+        raise RuntimeError("File does not exist: " + file_path)
     ext = file_path.split(".")[-1]
-    if ext == 'jpeg' or ext == 'jpg':
+    img = None
+    if ext in ['jpeg', 'jpg']:
         img = cv2.imread(file_path)
-    elif ext == 'tiff' or ext == 'tif' or ext == 'png':
+    elif ext in ['tiff', 'tif', 'png']:
         img = cv2.imread(file_path, cv2.IMREAD_UNCHANGED)
     return img
 
 
 def write_img(file_path, img):
     ext = file_path.split(".")[-1]
-    if ext == 'jpeg' or ext == 'jpg':
+    if ext in ['jpeg', 'jpg']:
         cv2.imwrite(file_path, img, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
-    elif ext == 'tiff' or ext == 'tif':
+    elif ext in ['tiff', 'tif']:
         cv2.imwrite(file_path, img, [int(cv2.IMWRITE_TIFF_COMPRESSION), 1])
     elif ext == 'png':
         cv2.imwrite(file_path, img)
@@ -36,10 +38,9 @@ def img_bw_8bit(img):
     img = img_8bit(img)
     if len(img.shape) == 3:
         return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    elif len(img.shape) == 2:
+    if len(img.shape) == 2:
         return img
-    else:
-        raise ValueError(f"Unsupported image format: {img.shape}")
+    raise ValueError(f"Unsupported image format: {img.shape}")
 
 
 def img_bw(img):
@@ -63,7 +64,7 @@ def validate_image(img, expected_shape=None, expected_dtype=None):
 
 
 def save_plot(filename):
-    logging.getLogger(__name__).debug("save plot file: " + filename)
+    logging.getLogger(__name__).debug(msg=f"save plot file: {filename}")
     dir_path = os.path.dirname(filename)
     if not dir_path:
         dir_path = '.'
