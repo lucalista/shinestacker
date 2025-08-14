@@ -1,6 +1,8 @@
+# pylint: disable=C0114, C0115, C0116, E0611, W0221, R0902, R0914
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QSlider, QCheckBox, QDialogButtonBox
 from PySide6.QtCore import Qt, QTimer
-from .filter_base import BaseFilter
+from .. algorithms.sharpen import unsharp_mask
+from .base_filter import BaseFilter
 
 
 class UnsharpMaskFilter(BaseFilter):
@@ -80,5 +82,4 @@ class UnsharpMaskFilter(BaseFilter):
         )
 
     def apply(self, image, radius, amount, threshold):
-        from .. algorithms.sharpen import unsharp_mask
         return unsharp_mask(image, radius, amount, threshold)

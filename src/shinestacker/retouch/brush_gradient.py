@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0116, R0913, R0917, E0611
 from PySide6.QtGui import QRadialGradient
 from PySide6.QtGui import QColor
 from .. config.gui_constants import gui_constants

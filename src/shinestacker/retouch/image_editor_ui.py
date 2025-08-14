@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, C0116, E0611, R0902, R0914, R0915
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel,
                                QListWidget, QSlider)
 from PySide6.QtGui import QShortcut, QKeySequence, QAction, QActionGroup
@@ -27,6 +28,7 @@ class ImageEditorUI(ImageFilters):
         self.setup_ui()
         self.setup_menu()
         self.setup_shortcuts()
+        self._dialog = None
 
     def setup_shortcuts(self):
         prev_layer = QShortcut(QKeySequence(Qt.Key_Up), self, context=Qt.ApplicationShortcut)

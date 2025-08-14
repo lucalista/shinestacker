@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, C0116, E0611, R0902, R0913, R0917, R0914
 import numpy as np
 from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush
 from PySide6.QtCore import Qt, QPoint
@@ -154,7 +155,7 @@ class BrushTool:
 
     def get_brush_mask(self, radius):
         mask_key = (radius, self.brush.hardness)
-        if mask_key not in self._brush_mask_cache.keys():
+        if mask_key not in self._brush_mask_cache:
             full_mask = create_brush_mask(size=radius * 2 + 1, hardness_percent=self.brush.hardness,
                                           opacity_percent=self.brush.opacity)
             self._brush_mask_cache[mask_key] = full_mask
@@ -166,8 +167,9 @@ class BrushTool:
         dtype = master_area.dtype
         max_px_value = constants.MAX_UINT16 if dtype == np.uint16 else constants.MAX_UINT8
         if master_area.ndim == 3:
-            dest_area[:] = np.clip(master_area * (1 - effective_mask[..., np.newaxis]) + source_area * # noqa
-                                   effective_mask[..., np.newaxis], 0, max_px_value).astype(dtype)
+            dest_area[:] = np.clip(
+                master_area * (1 - effective_mask[..., np.newaxis]) +
+                source_area * effective_mask[..., np.newaxis], 0, max_px_value).astype(dtype)
         else:
             dest_area[:] = np.clip(
                 master_area * (1 - effective_mask) + source_area * effective_mask, 0,

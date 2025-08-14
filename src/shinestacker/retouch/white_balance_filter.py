@@ -1,8 +1,10 @@
+# pylint: disable=C0114, C0115, C0116, E0611, W0221, R0913, R0914, R0917
 from PySide6.QtWidgets import (QHBoxLayout, QPushButton, QFrame, QVBoxLayout, QLabel, QDialog,
                                QApplication, QSlider, QCheckBox, QDialogButtonBox)
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QCursor
-from .filter_base import BaseFilter
+from .. algorithms.white_balance import white_balance_from_rgb
+from .base_filter import BaseFilter
 
 
 class WhiteBalanceFilter(BaseFilter):
@@ -14,6 +16,7 @@ class WhiteBalanceFilter(BaseFilter):
         self.value_labels = {}
         self.color_preview = None
         self.preview_timer = None
+        self.original_mouse_press = None
 
     def setup_ui(self, dlg, layout, do_preview, restore_original, init_val=None):
         if init_val:
@@ -110,5 +113,4 @@ class WhiteBalanceFilter(BaseFilter):
         return tuple(self.sliders[n].value() for n in ("R", "G", "B"))
 
     def apply(self, image, r, g, b):
-        from .. algorithms.white_balance import white_balance_from_rgb
         return white_balance_from_rgb(image, (r, g, b))

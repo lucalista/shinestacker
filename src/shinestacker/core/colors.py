@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0116, C0201
+# pylint: disable=C0114, C0116
 COLORS = {
     "black": 30,
     "red": 31,
@@ -50,11 +50,11 @@ EFFECTS = {
 def color_str(text, *args):
     text_colored = text
     for arg in args:
-        if arg in COLORS.keys():
+        if arg in COLORS:
             text_colored = f"\033[{COLORS[arg]}m{text_colored}"
-        elif arg in BG_COLORS.keys():
+        elif arg in BG_COLORS:
             text_colored = f"\033[{BG_COLORS[arg]}m{text_colored}"
-        elif arg in EFFECTS.keys():
+        elif arg in EFFECTS:
             text_colored = f"\033[{EFFECTS[arg]}m{text_colored}"
         else:
             raise ValueError(f"Color or effect not supported: {arg}")

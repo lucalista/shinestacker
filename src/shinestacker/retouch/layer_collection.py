@@ -53,6 +53,9 @@ class LayerCollection:
     def set_master_layer(self, img):
         self.master_layer = img
 
+    def restore_master_layer(self):
+        self.master_layer = self.master_layer_copy.copy()
+
     def copy_master_layer(self):
         self.master_layer_copy = self.master_layer.copy()
 
@@ -147,6 +150,9 @@ class LayerCollectionHandler:
 
     def copy_master_layer(self):
         self.layer_collection.copy_master_layer()
+
+    def restore_master_layer(self):
+        self.layer_collection.restore_master_layer()
 
     def set_current_layer_idx(self, idx):
         self.layer_collection.set_current_layer_idx(idx)

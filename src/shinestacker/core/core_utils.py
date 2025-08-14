@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0116, C0201
+# pylint: disable=C0114, C0116
 import os
 import sys
 import platform

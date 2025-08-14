@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0115, C0116, C0201, E1101, R0914, R0913, R0917, R0912, R0915, R0902
+# pylint: disable=C0114, C0115, C0116, E1101, R0914, R0913, R0917, R0912, R0915, R0902
 import logging
 import numpy as np
 import matplotlib.pyplot as plt
@@ -161,7 +161,7 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
         raise InvalidOptionError("border_mode", alignment_config['border_mode']) from e
     min_matches = 4 if alignment_config['transform'] == constants.ALIGN_HOMOGRAPHY else 3
     validate_image(img_0, *get_img_metadata(img_1))
-    if callbacks and 'message' in callbacks.keys():
+    if callbacks and 'message' in callbacks:
         callbacks['message']()
     subsample = alignment_config['subsample']
     if subsample > 1:
@@ -179,7 +179,7 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
     kp_0, kp_1, good_matches = detect_and_compute(img_0_sub, img_1_sub,
                                                   feature_config, matching_config)
     n_good_matches = len(good_matches)
-    if callbacks and 'matches_message' in callbacks.keys():
+    if callbacks and 'matches_message' in callbacks:
         callbacks['matches_message'](n_good_matches)
     img_warp = None
     m = None
@@ -201,7 +201,7 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
             plt.figure(figsize=(10, 5))
             plt.imshow(img_match, 'gray')
             plt.savefig(plot_path)
-            if callbacks and 'save_plot' in callbacks.keys():
+            if callbacks and 'save_plot' in callbacks:
                 callbacks['save_plot'](plot_path)
         h, w = img_0.shape[:2]
         h_sub, w_sub = img_0_sub.shape[:2]
@@ -221,7 +221,7 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
                 m[:, 2] = translation_fullres
             else:
                 raise InvalidOptionError("transform", transform)
-        if callbacks and 'align_message' in callbacks.keys():
+        if callbacks and 'align_message' in callbacks:
             callbacks['align_message']()
         img_mask = np.ones_like(img_0, dtype=np.uint8)
         if alignment_config['transform'] == constants.ALIGN_HOMOGRAPHY:
@@ -239,7 +239,7 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
                 mask = cv2.warpAffine(img_mask, m, (w, h),
                                       borderMode=cv2.BORDER_CONSTANT, borderValue=0)
         if alignment_config['border_mode'] == constants.BORDER_REPLICATE_BLUR:
-            if callbacks and 'blur_message' in callbacks.keys():
+            if callbacks and 'blur_message' in callbacks:
                 callbacks['blur_message']()
             mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
             blurred_warp = cv2.GaussianBlur(

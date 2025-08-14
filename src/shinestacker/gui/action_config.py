@@ -1,5 +1,5 @@
 # pylint: disable=C0114, C0115, C0116, E0611, R0913, R0917, R0915, R0912
-# pylint: disable=E0606, C0201, W0718, R1702, W0102
+# pylint: disable=E0606, W0718, R1702, W0102
 import traceback
 from abc import ABC, abstractmethod
 from typing import Dict, Any
