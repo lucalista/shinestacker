@@ -1,4 +1,5 @@
-# pylint: disable=C0114, C0115, C0116, W0102, R0902, R0903, R0917, R0913, R1702, R0912, E1111, E1121
+# pylint: disable=C0114, C0115, C0116, W0102, R0902, R0903
+# pylint: disable=R0917, R0913, R1702, R0912, E1111, E1121, W0613
 import logging
 import os
 from .. config.constants import constants

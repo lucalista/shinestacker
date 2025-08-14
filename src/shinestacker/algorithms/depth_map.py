@@ -2,12 +2,12 @@
 import numpy as np
 import cv2
 from .. config.constants import constants
-from .. core.colors import color_str
-from .. core.exceptions import ImageLoadError, InvalidOptionError, RunStopException
-from .utils import read_img, get_img_metadata, validate_image, img_bw
+from .. core.exceptions import InvalidOptionError, RunStopException
+from .utils import read_img, img_bw
+from .base_stack_algo import BaseStackAlgo
 
 
-class DepthMapStack:
+class DepthMapStack(BaseStackAlgo):
     def __init__(self, map_type=constants.DEFAULT_DM_MAP,
                  energy=constants.DEFAULT_DM_ENERGY,
                  kernel_size=constants.DEFAULT_DM_KERNEL_SIZE,
@@ -16,6 +16,7 @@ class DepthMapStack:
                  temperature=constants.DEFAULT_DM_TEMPERATURE,
                  levels=constants.DEFAULT_DM_LEVELS,
                  float_type=constants.DEFAULT_DM_FLOAT):
+        super().__init__("depth map", 2, float_type)
         self.map_type = map_type
         self.energy = energy
         self.kernel_size = kernel_size
@@ -23,24 +24,6 @@ class DepthMapStack:
         self.smooth_size = smooth_size
         self.temperature = temperature
         self.levels = levels
-        if float_type == constants.FLOAT_32:
-            self.float_type = np.float32
-        elif float_type == constants.FLOAT_64:
-            self.float_type = np.float64
-        else:
-            raise InvalidOptionError(
-                "float_type", float_type,
-                details=" valid values are FLOAT_32 and FLOAT_64"
-            )
-
-    def name(self):
-        return "depth map"
-
-    def steps_per_frame(self):
-        return 2
-
-    def print_message(self, msg):
-        self.process.sub_message_r(color_str(msg, "light_blue"))
 
     def get_sobel_map(self, gray_images):
         energies = np.zeros(gray_images.shape, dtype=self.float_type)
@@ -113,13 +96,9 @@ class DepthMapStack:
         metadata = None
         for i, img_path in enumerate(filenames):
             self.print_message(f': reading file (1/2) {img_path.split('/')[-1]}')
-            img = read_img(img_path)
-            if img is None:
-                raise ImageLoadError(img_path)
-            if metadata is None:
-                metadata = get_img_metadata(img)
-            else:
-                validate_image(img, *metadata)
+
+            img, metadata, _updated = self.read_image_and_update_metadata(img_path, metadata)
+
             gray = img_bw(img)
             gray_images.append(gray)
             self.process.callback('after_step', self.process.id, self.process.name, i)
