@@ -78,7 +78,7 @@ class FocusStackBunch(ActionList, FocusStackBase):
 
     def begin(self):
         ActionList.begin(self)
-        fnames = self.folder_filelist(self.input_full_path)
+        fnames = self.folder_filelist()
         self._chunks = [fnames[x:x + self.frames]
                         for x in range(0, len(fnames) - self.overlap, self.frames - self.overlap)]
         self.set_counts(len(self._chunks))

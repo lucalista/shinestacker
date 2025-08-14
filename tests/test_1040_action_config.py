@@ -36,7 +36,8 @@ def mock_action():
 
 
 def test_field_builder_add_field(form_layout, mock_action, qapp):
-    builder = FieldBuilder(form_layout, mock_action)
+    current_wd = '.'
+    builder = FieldBuilder(form_layout, mock_action, current_wd)
     text_field = builder.add_field('text_field', FIELD_TEXT, 'Test Text Field')
     assert text_field is not None
     assert 'text_field' in builder.fields
@@ -70,7 +71,8 @@ def test_action_config_dialog(qtbot, mock_action):
     mock_parent.expert_options = False
     mock_action.type_name = "ProjectEditor"
     with patch.object(ActionConfigDialog, 'parent', return_value=mock_parent):
-        dialog = ActionConfigDialog(mock_action)
+        current_wd = '.'
+        dialog = ActionConfigDialog(mock_action, current_wd)
         qtbot.addWidget(dialog)
     assert dialog.windowTitle() == f"Configure {mock_action.type_name}"
     assert dialog.layout is not None
@@ -79,7 +81,8 @@ def test_action_config_dialog(qtbot, mock_action):
 
 
 def test_field_builder_update_params(form_layout, mock_action, tmp_path, qapp):
-    builder = FieldBuilder(form_layout, mock_action)
+    current_wd = '.'
+    builder = FieldBuilder(form_layout, mock_action, current_wd)
     builder.add_field('text_field', FIELD_TEXT, 'Text Field')
     builder.add_field('abs_path', FIELD_ABS_PATH, 'Absolute Path')
     builder.add_field('float_field', FIELD_FLOAT, 'Float Field', default=3.14, min=0.0, max=10.0, step=0.1)
@@ -107,7 +110,8 @@ def test_field_builder_update_params(form_layout, mock_action, tmp_path, qapp):
 
 
 def test_field_builder_required_fields(form_layout, mock_action, qapp):
-    builder = FieldBuilder(form_layout, mock_action)
+    current_wd = '.'
+    builder = FieldBuilder(form_layout, mock_action, current_wd)
     builder.add_field('required_field', FIELD_TEXT, 'Required Field', required=True)
     builder.fields['required_field']['widget'].setText("")
     params = {}

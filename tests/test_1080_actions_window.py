@@ -97,7 +97,7 @@ def test_open_mock_project_file(actions_window, qtbot, mock_project_file):
         with patch.object(actions_window, '_check_unsaved_changes', return_value=True):
             actions_window.open_project(mock_project_file)
             mock_critical.assert_not_called()
-    assert actions_window._current_file == mock_project_file
+    assert actions_window._current_file == os.path.basename(mock_project_file)
     assert not actions_window._modified_project
     assert actions_window.job_list.count() == 0
     os.unlink(mock_project_file)
