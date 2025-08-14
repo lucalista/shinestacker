@@ -44,9 +44,9 @@ class TqdmLoggingHandler(logging.StreamHandler):
 
 def setup_logging(console_level=logging.INFO, file_level=logging.DEBUG, log_file='',
                   disable_console=False):
-    if hasattr(setup_logging, '_called'):
+    if hasattr(setup_logging, 'called'):
         return
-    setup_logging._called = True
+    setup_logging.called = True
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
     if not disable_console:

@@ -1,4 +1,4 @@
 [flake8]
 exclude = */.ipynb_checkpoints/*,src/focusstack/_version.py
-max-line-length = 160
+max-line-length = 100
 ignore = E402
