@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, C0116
 import logging
 import sys
 from pathlib import Path
@@ -26,19 +27,17 @@ class ConsoleFormatter(logging.Formatter):
 
 class FileFormatter(logging.Formatter):
     def format(self, record):
-        fmt = f"[%(levelname).3s %(asctime)s] %(message)s"  # noqa
-        return constants.ANSI_ESCAPE.sub('', logging.Formatter(fmt).format(record).replace("\r", "").rstrip())
+        fmt = "[%(levelname).3s %(asctime)s] %(message)s"
+        return constants.ANSI_ESCAPE.sub(
+            '',
+            logging.Formatter(fmt).format(record).replace("\r", "").rstrip()
+        )
 
 
 class TqdmLoggingHandler(logging.StreamHandler):
     def emit(self, record):
         if not config.DISABLE_TQDM:
-            try:
-                tqdm.write(self.format(record), end=self.terminator)
-            except RecursionError:
-                raise
-            except Exception:
-                self.handleError(record)
+            tqdm.write(self.format(record), end=self.terminator)
         else:
             logging.StreamHandler.emit(self, record)
 
