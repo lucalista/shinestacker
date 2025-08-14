@@ -142,7 +142,7 @@ class Correction:
             mask_radius = (min(width, height) * self.mask_size / 2)
             image_sel = img_subsample[(xv - width / 2) ** 2 + (yv - height / 2) ** 2 <= mask_radius ** 2]
         hist, bins = np.histogram(image_sel, bins=np.linspace(-0.5, self.num_pixel_values - 0.5,
-                                                               self.num_pixel_values + 1))
+                                                              self.num_pixel_values + 1))
         return hist
 
     def balance(self, image, idx):

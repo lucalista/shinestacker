@@ -2,6 +2,7 @@ import numpy as np
 from PySide6.QtWidgets import QGraphicsPixmapItem
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPixmap, QPainter, QImage
+from .layer_collection import LayerCollectionHandler
 
 
 def brush_profile_lower_limited(r, hardness):
@@ -39,10 +40,10 @@ def create_brush_mask(size, hardness_percent, opacity_percent):
     return mask
 
 
-class BrushPreviewItem(QGraphicsPixmapItem):
-    def __init__(self):
-        super().__init__()
-        self.layer_collection = None
+class BrushPreviewItem(QGraphicsPixmapItem, LayerCollectionHandler):
+    def __init__(self, layer_collection):
+        QGraphicsPixmapItem.__init__(self)
+        LayerCollectionHandler.__init__(self, layer_collection)
         self.setVisible(False)
         self.setZValue(500)
         self.setTransformationMode(Qt.SmoothTransformation)

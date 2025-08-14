@@ -5,9 +5,10 @@ from PySide6.QtCore import Qt, QRectF, QTime, QPoint, QPointF, Signal
 from .. config.gui_constants import gui_constants
 from .brush_preview import BrushPreviewItem
 from .brush_gradient import create_brush_gradient
+from .layer_collection import LayerCollectionHandler
 
 
-class ImageViewer(QGraphicsView):
+class ImageViewer(QGraphicsView, LayerCollectionHandler):
     temp_view_requested = Signal(bool)
     brush_operation_started = Signal(QPoint)
     brush_operation_continued = Signal(QPoint)
@@ -15,7 +16,8 @@ class ImageViewer(QGraphicsView):
     brush_size_change_requested = Signal(int)  # +1 or -1
 
     def __init__(self, layer_collection, parent=None):
-        super().__init__(parent)
+        QGraphicsView.__init__(self)
+        LayerCollectionHandler.__init__(self)
         self.display_manager = None
         self.layer_collection = layer_collection
         self.brush = None
@@ -43,8 +45,8 @@ class ImageViewer(QGraphicsView):
         self.scrolling = False
         self.dragging = False
         self.last_update_time = QTime.currentTime()
-        self.brush_preview = BrushPreviewItem()
-        self.layer_collection.add_to(self.brush_preview)
+        self.set_layer_collection(layer_collection)
+        self.brush_preview = BrushPreviewItem(self.layer_collection)
         self.scene.addItem(self.brush_preview)
         self.empty = True
         self.allow_cursor_preview = True
@@ -73,7 +75,7 @@ class ImageViewer(QGraphicsView):
         self.scene.addItem(self.pixmap_item)
         self.zoom_factor = 1.0
         self.setup_brush_cursor()
-        self.brush_preview = BrushPreviewItem()
+        self.brush_preview = BrushPreviewItem(self.layer_collection)
         self.scene.addItem(self.brush_preview)
         self.setCursor(Qt.ArrowCursor)
         self.brush_cursor.hide()

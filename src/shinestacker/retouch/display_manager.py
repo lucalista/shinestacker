@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QWidget, QListWidgetItem, QVBoxLayout, QLabel, QIn
 from PySide6.QtGui import QPixmap, QImage
 from PySide6.QtCore import Qt, QObject, QTimer, QSize, Signal
 from .. config.gui_constants import gui_constants
+from .layer_collection import LayerCollectionHandler
 
 
 class ClickableLabel(QLabel):
@@ -18,14 +19,14 @@ class ClickableLabel(QLabel):
         super().mouseDoubleClickEvent(event)
 
 
-class DisplayManager(QObject):
+class DisplayManager(QObject, LayerCollectionHandler):
     status_message_requested = Signal(str)
     cursor_preview_state_changed = Signal(bool)
 
     def __init__(self, layer_collection, image_viewer, master_thumbnail_label,
                  thumbnail_list, parent=None):
-        super().__init__(parent)
-        layer_collection.add_to(self)
+        QObject.__init__(self, parent)
+        LayerCollectionHandler.__init__(self, layer_collection)
         self.image_viewer = image_viewer
         self.master_thumbnail_label = master_thumbnail_label
         self.thumbnail_list = thumbnail_list
