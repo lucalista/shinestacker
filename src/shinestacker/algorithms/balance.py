@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, C0116, E1101, R0902, E1128, E0606, W0640, R0913, R0917
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
@@ -22,8 +23,8 @@ class CorrectionMapBase:
         self.channels = len(ref_hist)
         self.reference = None
 
-    def lut(self, correction, reference):
-        assert False, 'abstract method'
+    def lut(self, _correction, _reference):
+        return None
 
     def apply_lut(self, correction, reference, img):
         lut = self.lut(correction, reference)
@@ -32,13 +33,18 @@ class CorrectionMapBase:
     def adjust(self, image, correction):
         if self.channels == 1:
             return self.apply_lut(correction[0], self.reference[0], image)
-        else:
-            chans = cv2.split(image)
-            if self.channels == 2:
-                ch_out = [chans[0]] + [self.apply_lut(correction[c - 1], self.reference[c - 1], chans[c]) for c in range(1, 3)]
-            elif self.channels == 3:
-                ch_out = [self.apply_lut(correction[c], self.reference[c], chans[c]) for c in range(3)]
-            return cv2.merge(ch_out)
+        chans = cv2.split(image)
+        if self.channels == 2:
+            ch_out = [chans[0]] + [self.apply_lut(
+                correction[c - 1],
+                self.reference[c - 1], chans[c]
+            ) for c in range(1, 3)]
+        elif self.channels == 3:
+            ch_out = [self.apply_lut(
+                correction[c],
+                self.reference[c], chans[c]
+            ) for c in range(3)]
+        return cv2.merge(ch_out)
 
     def correction_size(self, correction):
         return correction
@@ -64,7 +70,10 @@ class MatchHist(CorrectionMapBase):
             i0, i1 = self.id_lut[lut == l0], self.id_lut[lut == l1]
             i0_max = i0.max()
             lut[lut == l0] = (i0 / i0_max * l_min) if i0_max > 0 else 0
-            lut[lut == l1] = i1 + (i1 - self.max_pixel_value) * (self.max_pixel_value - l_max) / float(i1.size) if i1.size > 0 else self.max_pixel_value
+            lut[lut == l1] = i1 + \
+                (i1 - self.max_pixel_value) * \
+                (self.max_pixel_value - l_max) / \
+                float(i1.size) if i1.size > 0 else self.max_pixel_value
         return lut.astype(self.dtype)
 
     def correction(self, hist):
@@ -88,26 +97,31 @@ class GammaMap(CorrectionMap):
         CorrectionMap.__init__(self, dtype, ref_hist, intensity_interval)
 
     def correction(self, hist):
-        return [bisect(lambda x: self.mid_val(self.lut(x), h) - r, 0.1, 5) for h, r in zip(hist, self.reference)]
+        return [bisect(lambda x: self.mid_val(self.lut(x), h) - r, 0.1, 5)
+                for h, r in zip(hist, self.reference)]
 
-    def lut(self, correction, reference=None):
+    def lut(self, correction, _reference=None):
         gamma_inv = 1.0 / correction
-        return (((np.arange(0, self.num_pixel_values) / self.max_pixel_value) ** gamma_inv) * self.max_pixel_value).astype(self.dtype)
+        ar = np.arange(0, self.num_pixel_values)
+        corr_lut = ((ar / self.max_pixel_value) ** gamma_inv) * self.max_pixel_value
+        return corr_lut.astype(self.dtype)
 
 
 class LinearMap(CorrectionMap):
     def __init__(self, dtype, ref_hist, intensity_interval=None):
         CorrectionMap.__init__(self, dtype, ref_hist, intensity_interval)
 
-    def lut(self, correction, reference=None):
-        return np.clip(np.arange(0, self.num_pixel_values) * correction, 0, self.max_pixel_value).astype(self.dtype)
+    def lut(self, correction, _reference=None):
+        ar = np.arange(0, self.num_pixel_values)
+        return np.clip(ar * correction, 0, self.max_pixel_value).astype(self.dtype)
 
     def correction(self, hist):
         return [r / self.mid_val(self.id_lut, h) for h, r in zip(hist, self.reference)]
 
 
 class Correction:
-    def __init__(self, channels, mask_size=0, intensity_interval=None, subsample=-1, corr_map=constants.DEFAULT_CORR_MAP,
+    def __init__(self, channels, mask_size=0, intensity_interval=None,
+                 subsample=-1, corr_map=constants.DEFAULT_CORR_MAP,
                  plot_histograms=False, plot_summary=False):
         self.mask_size = mask_size
         self.intensity_interval = intensity_interval
@@ -116,10 +130,16 @@ class Correction:
         self.subsample = constants.DEFAULT_BALANCE_SUBSAMPLE if subsample == -1 else subsample
         self.corr_map = corr_map
         self.channels = channels
+        self.dtype = None
+        self.num_pixel_values = None
+        self. max_pixel_value = None
+        self.corrections = None
+        self.process = None
 
     def begin(self, ref_image, size, ref_idx):
         self.dtype = ref_image.dtype
-        self.num_pixel_values = constants.NUM_UINT8 if ref_image.dtype == np.uint8 else constants.NUM_UINT16
+        self.num_pixel_values = constants.NUM_UINT8 if ref_image.dtype == np.uint8 \
+            else constants.NUM_UINT16
         self.max_pixel_value = self.num_pixel_values - 1
         hist = self.get_hist(self.preprocess(ref_image), ref_idx)
         if self.corr_map == constants.BALANCE_LINEAR:
@@ -138,22 +158,30 @@ class Correction:
             image_sel = img_subsample
         else:
             height, width = img_subsample.shape[:2]
-            xv, yv = np.meshgrid(np.linspace(0, width - 1, width), np.linspace(0, height - 1, height))
-            mask_radius = (min(width, height) * self.mask_size / 2)
-            image_sel = img_subsample[(xv - width / 2) ** 2 + (yv - height / 2) ** 2 <= mask_radius ** 2]
-        hist, bins = np.histogram(image_sel, bins=np.linspace(-0.5, self.num_pixel_values - 0.5,
-                                                              self.num_pixel_values + 1))
+            xv, yv = np.meshgrid(
+                np.linspace(0, width - 1, width),
+                np.linspace(0, height - 1, height)
+            )
+            mask_radius = min(width, height) * self.mask_size / 2
+            image_sel = img_subsample[
+                (xv - width / 2) ** 2 + (yv - height / 2) ** 2 <= mask_radius ** 2
+            ]
+        hist, _bins = np.histogram(
+            image_sel,
+            bins=np.linspace(-0.5, self.num_pixel_values - 0.5,
+                             self.num_pixel_values + 1)
+        )
         return hist
 
     def balance(self, image, idx):
         correction = self.corr_map.correction(self.get_hist(image, idx))
         return correction, self.corr_map.adjust(image, correction)
 
-    def get_hist(self, image, idx):
-        assert False, 'abstract method'
+    def get_hist(self, _image, _idx):
+        return None
 
-    def end(self):
-        assert False, 'abstract method'
+    def end(self, _ref_idx):
+        pass
 
     def apply_correction(self, idx, image):
         image = self.preprocess(image)
@@ -176,17 +204,26 @@ class Correction:
         ax.plot(hist, color=color, alpha=alpha)
 
     def save_plot(self, idx):
-        idx_str = "{:04d}".format(idx)
-        plot_path = f"{self.process.working_path}/{self.process.plot_path}/{self.process.name}-hist-{idx_str}.pdf"
+        idx_str = f"{idx:04d}"
+        plot_path = f"{self.process.working_path}/" \
+            f"{self.process.plot_path}/{self.process.name}-hist-{idx_str}.pdf"
         save_plot(plot_path)
         plt.close('all')
-        self.process.callback('save_plot', self.process.id, f"{self.process.name}: balance\nframe {idx_str}", plot_path)
+        self.process.callback(
+            'save_plot',
+            self.process.id, f"{self.process.name}: balance\nframe {idx_str}",
+            plot_path
+        )
 
     def save_summary_plot(self, name='balance'):
-        plot_path = f"{self.process.working_path}/{self.process.plot_path}/{self.process.name}-{name}.pdf"
+        plot_path = f"{self.process.working_path}/" \
+            f"{self.process.plot_path}/{self.process.name}-{name}.pdf"
         save_plot(plot_path)
         plt.close('all')
-        self.process.callback('save_plot', self.process.id, f"{self.process.name}: {name}", plot_path)
+        self.process.callback(
+            'save_plot', self.process.id,
+            f"{self.process.name}: {name}", plot_path
+        )
 
 
 class LumiCorrection(Correction):
@@ -198,7 +235,7 @@ class LumiCorrection(Correction):
         chans = cv2.split(image)
         colors = ("r", "g", "b")
         if self.plot_histograms:
-            fig, axs = plt.subplots(1, 2, figsize=(10, 5), sharey=True)
+            _fig, axs = plt.subplots(1, 2, figsize=(10, 5), sharey=True)
             self.histo_plot(axs[0], hist, "pixel luminosity", 'black')
             for (chan, color) in zip(chans, colors):
                 hist_col = self.calc_hist_1ch(chan)
@@ -212,8 +249,10 @@ class LumiCorrection(Correction):
             plt.figure(figsize=(10, 5))
             x = np.arange(1, len(self.corrections) + 1, dtype=int)
             y = self.corrections
-            plt.plot([ref_idx + 1, ref_idx + 1], [0, 1], color='cornflowerblue', linestyle='--', label='reference frame')
-            plt.plot([x[0], x[-1]], [1, 1], color='lightgray', linestyle='--', label='no correction')
+            plt.plot([ref_idx + 1, ref_idx + 1], [0, 1], color='cornflowerblue',
+                     linestyle='--', label='reference frame')
+            plt.plot([x[0], x[-1]], [1, 1], color='lightgray', linestyle='--',
+                     label='no correction')
             plt.plot(x, y, color='navy', label='luminosity correction')
             plt.xlabel('frame')
             plt.ylabel('correction')
@@ -231,7 +270,7 @@ class RGBCorrection(Correction):
         hist = [self.calc_hist_1ch(chan) for chan in cv2.split(image)]
         colors = ("r", "g", "b")
         if self.plot_histograms:
-            fig, axs = plt.subplots(1, 3, figsize=(10, 5), sharey=True)
+            _fig, axs = plt.subplots(1, 3, figsize=(10, 5), sharey=True)
             for c in [2, 1, 0]:
                 self.histo_plot(axs[c], hist[c], colors[c] + " luminosity", colors[c])
             plt.xlim(0, self.max_pixel_value)
@@ -243,8 +282,10 @@ class RGBCorrection(Correction):
             plt.figure(figsize=(10, 5))
             x = np.arange(1, len(self.corrections) + 1, dtype=int)
             y = self.corrections
-            plt.plot([ref_idx + 1, ref_idx + 1], [0, 1], color='cornflowerblue', linestyle='--', label='reference frame')
-            plt.plot([x[0], x[-1]], [1, 1], color='lightgray', linestyle='--', label='no correction')
+            plt.plot([ref_idx + 1, ref_idx + 1], [0, 1], color='cornflowerblue',
+                     linestyle='--', label='reference frame')
+            plt.plot([x[0], x[-1]], [1, 1], color='lightgray', linestyle='--',
+                     label='no correction')
             plt.plot(x, y[:, 0], color='r', label='R correction')
             plt.plot(x, y[:, 1], color='g', label='G correction')
             plt.plot(x, y[:, 2], color='b', label='B correction')
@@ -269,7 +310,7 @@ class Ch2Correction(Correction):
     def get_hist(self, image, idx):
         hist = [self.calc_hist_1ch(chan) for chan in cv2.split(image)]
         if self.plot_histograms:
-            fig, axs = plt.subplots(1, 3, figsize=(10, 5), sharey=True)
+            _fig, axs = plt.subplots(1, 3, figsize=(10, 5), sharey=True)
             for c in range(3):
                 self.histo_plot(axs[c], hist[c], self.labels[c], self.colors[c])
             plt.xlim(0, self.max_pixel_value)
@@ -281,8 +322,10 @@ class Ch2Correction(Correction):
             plt.figure(figsize=(10, 5))
             x = np.arange(1, len(self.corrections) + 1, dtype=int)
             y = self.corrections
-            plt.plot([ref_idx + 1, ref_idx + 1], [0, 1], color='cornflowerblue', linestyle='--', label='reference frame')
-            plt.plot([x[0], x[-1]], [1, 1], color='lightgray', linestyle='--', label='no correction')
+            plt.plot([ref_idx + 1, ref_idx + 1], [0, 1], color='cornflowerblue',
+                     linestyle='--', label='reference frame')
+            plt.plot([x[0], x[-1]], [1, 1], color='lightgray', linestyle='--',
+                     label='no correction')
             plt.plot(x, y[:, 0], color=self.colors[1], label=self.labels[1] + ' correction')
             plt.plot(x, y[:, 1], color=self.colors[2], label=self.labels[2] + ' correction')
             plt.xlabel('frame')
@@ -322,10 +365,14 @@ class LSCorrection(Ch2Correction):
 class BalanceFrames(SubAction):
     def __init__(self, enabled=True, **kwargs):
         super().__init__(enabled=enabled)
+        self.process = None
+        self.shape = None
         corr_map = kwargs.get('corr_map', constants.DEFAULT_CORR_MAP)
         subsample = kwargs.get('subsample', constants.DEFAULT_BALANCE_SUBSAMPLE)
         channel = kwargs.pop('channel', constants.DEFAULT_CHANNEL)
-        kwargs['subsample'] = (1 if corr_map == constants.BALANCE_MATCH_HIST else constants.DEFAULT_BALANCE_SUBSAMPLE) if subsample == -1 else subsample
+        kwargs['subsample'] = (
+            1 if corr_map == constants.BALANCE_MATCH_HIST
+            else constants.DEFAULT_BALANCE_SUBSAMPLE) if subsample == -1 else subsample
         self.mask_size = kwargs.get('mask_size', 0)
         self.plot_summary = kwargs.get('plot_summary', False)
         if channel == constants.BALANCE_LUMI:
@@ -359,7 +406,7 @@ class BalanceFrames(SubAction):
             plt.imshow(img, 'gray')
             self.correction.save_summary_plot("mask")
 
-    def run_frame(self, idx, ref_idx, image):
+    def run_frame(self, idx, _ref_idx, image):
         if idx != self.process.ref_idx:
             self.process.sub_message_r(': balance image')
             image = self.correction.apply_correction(idx, image)

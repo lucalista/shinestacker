@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0115, C0116
+# pylint: disable=C0114, C0115, C0116, R0917, R0913, R0902
 import time
 import logging
 from .. config.config import config
@@ -8,7 +8,7 @@ from .core_utils import make_tqdm_bar
 from .exceptions import RunStopException
 
 LINE_UP = "\r\033[A"
-trailing_spaces = " " * 30
+TRAILING_SPACES = " " * 30
 
 
 class TqdmCallbacks:
@@ -17,12 +17,12 @@ class TqdmCallbacks:
     callbacks = {
         'step_counts': lambda id, name, counts: TqdmCallbacks.instance().step_counts(name, counts),
         'begin_steps': lambda id, name: TqdmCallbacks.instance().begin_steps(name),
-        'end_steps': lambda id, name: TqdmCallbacks.instance().end_steps(name),
-        'after_step': lambda id, name, steps: TqdmCallbacks.instance().after_step(name)
+        'end_steps': lambda id, name: TqdmCallbacks.instance().end_steps(),
+        'after_step': lambda id, name, steps: TqdmCallbacks.instance().after_step()
     }
 
     def __init__(self):
-        self.bar = None
+        self.tbar = None
         self.counts = -1
 
     @classmethod
@@ -33,20 +33,20 @@ class TqdmCallbacks:
 
     def step_counts(self, name, counts):
         self.counts = counts
-        self.bar = make_tqdm_bar(name, self.counts)
+        self.tbar = make_tqdm_bar(name, self.counts)
 
     def begin_steps(self, name):
         pass
 
-    def end_steps(self, name):
-        if self.bar is None:
+    def end_steps(self):
+        if self.tbar is None:
             raise RuntimeError("tqdm bar not initialized")
-        self.bar.close()
-        self.bar = None
+        self.tbar.close()
+        self.tbar = None
 
-    def after_step(self, name):
-        self.bar.write("")
-        self.bar.update(1)
+    def after_step(self):
+        self.tbar.write("")
+        self.tbar.update(1)
 
 
 tqdm_callbacks = TqdmCallbacks()
@@ -58,7 +58,7 @@ def elapsed_time_str(start):
     ss = dt - mm * 60
     hh = mm // 60
     mm -= hh * 60
-    return "{:02d}:{:02d}:{:05.2f}s".format(hh, mm, ss)
+    return f"{hh:02d}:{mm:02d}:{ss:05.2f}s"
 
 
 class JobBase:
@@ -67,8 +67,11 @@ class JobBase:
         self.name = name
         self.enabled = enabled
         self.base_message = ''
+        self.logger = None
+        self._t0 = None
+        self.callbacks = None
         if config.JUPYTER_NOTEBOOK:
-            self.begin_r, self.end_r = "", "\r",
+            self.begin_r, self.end_r = "", "\r"
         else:
             self.begin_r, self.end_r = LINE_UP, None
 
@@ -80,29 +83,27 @@ class JobBase:
                 return callback(*args)
         return None
 
+    def run_core(self):
+        pass
+
     def run(self):
-        self.__t0 = time.time()
+        self._t0 = time.time()
         if not self.enabled:
             self.get_logger().warning(color_str(self.name + ": entire job disabled", 'red'))
         self.callback('before_action', self.id, self.name)
         self.run_core()
         self.callback('after_action', self.id, self.name)
-        self.get_logger().info(
-            color_str(self.name + ": ",
-                      "green", "bold") + color_str("elapsed "
-                                                   "time: {}".format(elapsed_time_str(self.__t0)),
-                                                   "green") + trailing_spaces)
-        self.get_logger().info(
-            color_str(self.name + ": ",
-                      "green", "bold") + color_str("completed", "green") + trailing_spaces)
-
+        msg_name = color_str(self.name + ":", "green", "bold")
+        msg_time = color_str(f"elapsed time: {elapsed_time_str(self._t0)}", "green")
+        msg_completed = color_str("completed", "green")
+        self.get_logger().info(msg=f"{msg_name} {msg_time}{TRAILING_SPACES}")
+        self.get_logger().info(msg=f"{msg_name} {msg_completed}{TRAILING_SPACES}")
     def get_logger(self, tqdm=False):
         if config.DISABLE_TQDM:
             tqdm = False
         if self.logger is None:
             return logging.getLogger("tqdm" if tqdm else __name__)
-        else:
-            return self.logger
+        return self.logger
 
     def set_terminator(self, tqdm=False, end='\n'):
         if config.DISABLE_TQDM:
@@ -117,14 +118,20 @@ class JobBase:
         if msg != '':
             self.base_message += (': ' + msg)
         self.set_terminator(tqdm, end)
-        self.get_logger(tqdm).log(level, begin + color_str(self.base_message, 'blue', 'bold') + trailing_spaces)
+        self.get_logger(tqdm).log(
+            level=level,
+            msg=f"{begin}{color_str(self.base_message, 'blue', 'bold')}{TRAILING_SPACES}"
+        )
         self.set_terminator(tqdm)
 
     def sub_message(self, msg, level=logging.INFO, end=None, begin='', tqdm=False):
         if config.DISABLE_TQDM:
             tqdm = False
         self.set_terminator(tqdm, end)
-        self.get_logger(tqdm).log(level, begin + self.base_message + msg + trailing_spaces)
+        self.get_logger(tqdm).log(
+            level=level,
+            msg=f"{begin}{self.base_message}{msg}{TRAILING_SPACES}"
+        )
         self.set_terminator(tqdm)
 
     def print_message_r(self, msg='', level=logging.INFO):
@@ -141,11 +148,12 @@ class Job(JobBase):
         self.__actions = []
         if logger_name is None:
             setup_logging(log_file=log_file)
-        self.logger = None if logger_name is None else logging.getLogger(logger_name)
+        if logger_name is not None:
+            self.logger = logging.getLogger(logger_name)
         self.callbacks = TqdmCallbacks.callbacks if callbacks == 'tqdm' else callbacks
 
     def time(self):
-        return time.time() - self.__t0
+        return time.time() - self._t0
 
     def init(self, a):
         pass
@@ -177,6 +185,8 @@ class Job(JobBase):
 class ActionList(JobBase):
     def __init__(self, name, enabled=True, **kwargs):
         JobBase.__init__(self, name, enabled, **kwargs)
+        self.counts = None
+        self.count = None
 
     def set_counts(self, counts):
         self.counts = counts
@@ -192,19 +202,21 @@ class ActionList(JobBase):
         self.count = 1
         return self
 
+    def run_step(self):
+        pass
+
     def __next__(self):
         if self.count <= self.counts:
             self.run_step()
             x = self.count
             self.count += 1
             return x
-        else:
-            raise StopIteration
+        raise StopIteration
 
     def run_core(self):
         self.print_message('begin run', end='\n')
         self.begin()
-        for x in iter(self):
+        for _ in iter(self):
             self.callback('after_step', self.id, self.name, self.count)
             if self.callback('check_running', self.id, self.name) is False:
                 raise RunStopException(self.name)

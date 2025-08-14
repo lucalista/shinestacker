@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, C0116, E1101, R0902, R0913, R0917, R0914, R0912, R0915
 import numpy as np
 import cv2
 from .. config.constants import constants
@@ -7,10 +8,14 @@ from .utils import read_img, get_img_metadata, validate_image, img_bw
 
 
 class DepthMapStack:
-    def __init__(self, map_type=constants.DEFAULT_DM_MAP, energy=constants.DEFAULT_DM_ENERGY,
-                 kernel_size=constants.DEFAULT_DM_KERNEL_SIZE, blur_size=constants.DEFAULT_DM_BLUR_SIZE,
-                 smooth_size=constants.DEFAULT_DM_SMOOTH_SIZE, temperature=constants.DEFAULT_DM_TEMPERATURE,
-                 levels=constants.DEFAULT_DM_LEVELS, float_type=constants.DEFAULT_DM_FLOAT):
+    def __init__(self, map_type=constants.DEFAULT_DM_MAP,
+                 energy=constants.DEFAULT_DM_ENERGY,
+                 kernel_size=constants.DEFAULT_DM_KERNEL_SIZE,
+                 blur_size=constants.DEFAULT_DM_BLUR_SIZE,
+                 smooth_size=constants.DEFAULT_DM_SMOOTH_SIZE,
+                 temperature=constants.DEFAULT_DM_TEMPERATURE,
+                 levels=constants.DEFAULT_DM_LEVELS,
+                 float_type=constants.DEFAULT_DM_FLOAT):
         self.map_type = map_type
         self.energy = energy
         self.kernel_size = kernel_size
@@ -23,7 +28,10 @@ class DepthMapStack:
         elif float_type == constants.FLOAT_64:
             self.float_type = np.float64
         else:
-            raise InvalidOptionError("float_type", float_type, details=" valid values are FLOAT_32 and FLOAT_64")
+            raise InvalidOptionError(
+                "float_type", float_type,
+                details=" valid values are FLOAT_32 and FLOAT_64"
+            )
 
     def name(self):
         return "depth map"
@@ -63,13 +71,12 @@ class DepthMapStack:
         if self.map_type == constants.DM_MAP_AVERAGE:
             sum_energies = np.sum(energies, axis=0)
             return np.divide(energies, sum_energies, where=sum_energies != 0)
-        elif self.map_type == constants.DM_MAP_MAX:
+        if self.map_type == constants.DM_MAP_MAX:
             max_energy = np.max(energies, axis=0)
             relative = np.exp((energies - max_energy) / self.temperature)
             return relative / np.sum(relative, axis=0)
-        else:
-            raise InvalidOptionError("map_type", self.map_type, details=f" valid values are "
-                                     f"{constants.DM_MAP_AVERAGE} and {constants.DM_MAP_MAX}.")
+        raise InvalidOptionError("map_type", self.map_type, details=f" valid values are "
+                                 f"{constants.DM_MAP_AVERAGE} and {constants.DM_MAP_MAX}.")
 
     def pyramid_blend(self, images, weights):
         blended = None
@@ -105,7 +112,7 @@ class DepthMapStack:
         gray_images = []
         metadata = None
         for i, img_path in enumerate(filenames):
-            self.print_message(': reading file (1/2) {}'.format(img_path.split('/')[-1]))
+            self.print_message(f': reading file (1/2) {img_path.split('/')[-1]}')
             img = read_img(img_path)
             if img is None:
                 raise ImageLoadError(img_path)
@@ -125,8 +132,10 @@ class DepthMapStack:
         elif self.energy == constants.DM_ENERGY_LAPLACIAN:
             energies = self.get_laplacian_map(gray_images)
         else:
-            raise InvalidOptionError('energy', self.energy, details=f" valid values are "
-                                     f"{constants.DM_ENERGY_SOBEL} and {constants.DM_ENERGY_LAPLACIAN}.")
+            raise InvalidOptionError(
+                'energy', self.energy, details=f" valid values are "
+                f"{constants.DM_ENERGY_SOBEL} and {constants.DM_ENERGY_LAPLACIAN}."
+            )
         max_energy = np.max(energies)
         if max_energy > 0:
             energies = energies / max_energy
@@ -135,7 +144,7 @@ class DepthMapStack:
         weights = self.get_focus_map(energies)
         blended_pyramid = None
         for i, img_path in enumerate(filenames):
-            self.print_message(': reading file (2/2) {}'.format(img_path.split('/')[-1]))
+            self.print_message(f': reading file (2/2) {img_path.split('/')[-1]}')
             img = read_img(img_path).astype(self.float_type)
             weight = weights[i]
             gp_img = [img]
@@ -152,7 +161,8 @@ class DepthMapStack:
                              for j in range(self.levels)]
             blended_pyramid = current_blend if blended_pyramid is None \
                 else [np.add(bp, cb) for bp, cb in zip(blended_pyramid, current_blend)]
-            self.process.callback('after_step', self.process.id, self.process.name, i + len(filenames))
+            self.process.callback('after_step', self.process.id,
+                                  self.process.name, i + len(filenames))
             if self.process.callback('check_running', self.process.id, self.process.name) is False:
                 raise RunStopException(self.name)
         result = blended_pyramid[0]

@@ -14,7 +14,7 @@ class ImageFilters(ImageEditor):
         self.filter_manager.register_filter("unsharp_mask", UnsharpMaskFilter)
         self.filter_manager.register_filter("white_balance", WhiteBalanceFilter)
 
-    def denoise(self):
+    def denoise_filter(self):
         self.filter_manager.apply("denoise")
 
     def unsharp_mask(self):

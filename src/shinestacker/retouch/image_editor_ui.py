@@ -313,7 +313,7 @@ class ImageEditorUI(ImageFilters):
         filter_menu = menubar.addMenu("&Filter")
         filter_menu.setObjectName("Filter")
         denoise_action = QAction("Denoise", self)
-        denoise_action.triggered.connect(self.denoise)
+        denoise_action.triggered.connect(self.denoise_filter)
         filter_menu.addAction(denoise_action)
         unsharp_mask_action = QAction("Unsharp Mask", self)
         unsharp_mask_action.triggered.connect(self.unsharp_mask)

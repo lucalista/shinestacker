@@ -517,7 +517,7 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
                                required=False, default=True)
 
     def common_fields(self, layout, action):
-        self.builder.add_field('denoise', FIELD_FLOAT, 'Denoise', required=False,
+        self.builder.add_field('denoise_amount', FIELD_FLOAT, 'Denoise', required=False,
                                default=0, min=0, max=10)
         self.add_bold_label("Stacking algorithm:")
         combo = self.builder.add_field('stacker', FIELD_COMBO, 'Stacking algorithm', required=True,

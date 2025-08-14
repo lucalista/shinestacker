@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, R0913, R0917
 import numpy as np
 import os
 from .. config.constants import constants
@@ -13,11 +14,11 @@ from .denoise import denoise
 class FocusStackBase:
     def __init__(self, stack_algo, exif_path='',
                  prefix=constants.DEFAULT_STACK_PREFIX,
-                 denoise=0, plot_stack=False):
+                 denoise_amount=0, plot_stack=False):
         self.stack_algo = stack_algo
         self.exif_path = exif_path
         self.prefix = prefix if prefix != '' else constants.DEFAULT_STACK_PREFIX
-        self.denoise = denoise
+        self.denoise_amount = denoise_amount
         self.plot_stack = plot_stack
         self.stack_algo.process = self
         self.frame_count = -1
@@ -27,15 +28,17 @@ class FocusStackBase:
         img_files = sorted([os.path.join(self.input_full_path, name) for name in filenames])
         stacked_img = self.stack_algo.focus_stack(img_files)
         in_filename = filenames[0].split(".")
-        out_filename = f"{self.output_dir}/{self.prefix}{in_filename[0]}." + '.'.join(in_filename[1:])
-        if self.denoise > 0:
+        out_filename = f"{self.output_dir}/{self.prefix}{in_filename[0]}." + \
+            '.'.join(in_filename[1:])
+        if self.denoise_amount > 0:
             self.sub_message_r(': denoise image')
-            stacked_img = denoise(stacked_img, self.denoise, self.denoise)
+            stacked_img = denoise(stacked_img, self.denoise_amount, self.denoise_amount)
         write_img(out_filename, stacked_img)
         if self.exif_path != '' and stacked_img.dtype == np.uint8:
             self.sub_message_r(': copy exif data')
             dirpath, _, fnames = next(os.walk(self.exif_path))
-            fnames = [name for name in fnames if os.path.splitext(name)[-1][1:].lower() in constants.EXTENSIONS]
+            fnames = [name for name in fnames
+                      if os.path.splitext(name)[-1][1:].lower() in constants.EXTENSIONS]
             exif_filename = f"{self.exif_path}/{fnames[0]}"
             copy_exif_from_file_to_file(exif_filename, out_filename)
             self.sub_message_r(' ' * 60)
@@ -60,17 +63,19 @@ class FocusStackBunch(FocusStackBase, FrameDirectory, ActionList):
         FocusStackBase.__init__(self, stack_algo,
                                 exif_path=kwargs.pop('exif_path', ''),
                                 prefix=kwargs.pop('prefix', constants.DEFAULT_STACK_PREFIX),
-                                denoise=kwargs.pop('denoise', 0),
-                                plot_stack=kwargs.pop('plot_stack', constants.DEFAULT_PLOT_STACK_BUNCH))
+                                denoise_amount=kwargs.pop('denoise_amount', 0),
+                                plot_stack=kwargs.pop('plot_stack',
+                                                      constants.DEFAULT_PLOT_STACK_BUNCH))
         FrameDirectory.__init__(self, name, **kwargs)
         ActionList.__init__(self, name, enabled)
         self.frame_count = 0
         self.frames = kwargs.get('frames', constants.DEFAULT_FRAMES)
         self.overlap = kwargs.get('overlap', constants.DEFAULT_OVERLAP)
-        self.denoise = kwargs.get('denoise', 0)
+        self.denoise_amount = kwargs.get('denoise_amount', 0)
         self.stack_algo.do_step_callback = False
         if self.overlap >= self.frames:
-            raise InvalidOptionError("overlap", self.overlap, "overlap must be smaller than batch size")
+            raise InvalidOptionError("overlap", self.overlap,
+                                     "overlap must be smaller than batch size")
 
     def init(self, job):
         FrameDirectory.init(self, job)
@@ -79,7 +84,8 @@ class FocusStackBunch(FocusStackBase, FrameDirectory, ActionList):
     def begin(self):
         ActionList.begin(self)
         fnames = self.folder_filelist(self.input_full_path)
-        self.__chunks = [fnames[x:x + self.frames] for x in range(0, len(fnames) - self.overlap, self.frames - self.overlap)]
+        self.__chunks = [fnames[x:x + self.frames]
+                         for x in range(0, len(fnames) - self.overlap, self.frames - self.overlap)]
         self.set_counts(len(self.__chunks))
 
     def end(self):
@@ -96,7 +102,7 @@ class FocusStack(FocusStackBase, FrameDirectory, JobBase):
         FocusStackBase.__init__(self, stack_algo,
                                 exif_path=kwargs.pop('exif_path', ''),
                                 prefix=kwargs.pop('prefix', constants.DEFAULT_STACK_PREFIX),
-                                denoise=kwargs.pop('denoise', 0),
+                                denoise_amount=kwargs.pop('denoise_amount', 0),
                                 plot_stack=kwargs.pop('plot_stack', constants.DEFAULT_PLOT_STACK))
         FrameDirectory.__init__(self, name, **kwargs)
         JobBase.__init__(self, name, enabled)
@@ -104,7 +110,8 @@ class FocusStack(FocusStackBase, FrameDirectory, JobBase):
 
     def run_core(self):
         self.set_filelist()
-        self.callback('step_counts', self.id, self.name, self.stack_algo.steps_per_frame() * len(self.filenames))
+        self.callback('step_counts', self.id, self.name,
+                      self.stack_algo.steps_per_frame() * len(self.filenames))
         self.focus_stack(self.filenames)
 
     def init(self, job):
