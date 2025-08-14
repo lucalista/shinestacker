@@ -45,9 +45,9 @@ def test_read():
 
 def test_jpg():
     try:
-        job = StackJob("job", "examples", input_path="input/img-jpg")
+        job = StackJob("job", "examples/", input_path="input/img-jpg")
         job.add_action(MultiLayer("multi", output_path="output/img-jpg-multilayer",
-                                  input_path=["examples/input/img-jpg", "output/img-jpg-stack"],
+                                  input_path=["output/img-jpg-stack", "input/img-jpg"],
                                   reverse_order=True))
         job.run()
     except Exception:
@@ -56,7 +56,7 @@ def test_jpg():
 
 def test_tif():
     try:
-        job = StackJob("job", "examples", input_path="input/img-tif")
+        job = StackJob("job", "examples/", input_path="input/img-tif")
         job.add_action(MultiLayer("multi", output_path="output/img-tif-multilayer",
                                   input_path=["output/img-tif-stack", "input/img-tif"],
                                   exif_path='input/img-tif',

@@ -45,7 +45,7 @@ def mean_image(file_paths, max_frames=-1, message_callback=None, progress_callba
     return None if mean_img is None else (mean_img / counter).astype(np.uint8)
 
 
-class NoiseDetection(FrameMultiDirectory, JobBase):
+class NoiseDetection(JobBase, FrameMultiDirectory):
     def __init__(self, name="noise-map", enabled=True, **kwargs):
         FrameMultiDirectory.__init__(self, name, **kwargs)
         JobBase.__init__(self, name, enabled)
