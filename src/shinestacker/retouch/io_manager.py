@@ -3,11 +3,12 @@ import cv2
 from .. algorithms.utils import read_img, validate_image, get_img_metadata
 from .. algorithms.exif import get_exif, write_image_with_exif_data
 from .. algorithms.multilayer import write_multilayer_tiff_from_images
+from .layer_collection import LayerCollectionHandler
 
 
-class IOManager:
+class IOManager(LayerCollectionHandler):
     def __init__(self, layer_collection):
-        layer_collection.add_to(self)
+        super().__init__(layer_collection)
         self.current_file_path = ''
         self.exif_path = ''
         self.exif_data = None

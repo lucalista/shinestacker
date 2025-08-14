@@ -9,13 +9,13 @@ from .io_gui_handler import IOGuiHandler
 from .brush_gradient import create_brush_gradient
 from .display_manager import DisplayManager
 from .brush_tool import BrushTool
+from .layer_collection import LayerCollectionHandler
 
 
-class ImageEditor(QMainWindow):
+class ImageEditor(QMainWindow, LayerCollectionHandler):
     def __init__(self):
-        super().__init__()
-        layer_collection = LayerCollection()
-        layer_collection.add_to(self)
+        QMainWindow.__init__(self)
+        LayerCollectionHandler.__init__(self, LayerCollection())
         self.undo_manager = UndoManager()
         self.undo_action = None
         self.redo_action = None

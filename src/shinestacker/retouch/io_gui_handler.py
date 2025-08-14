@@ -6,17 +6,19 @@ from PySide6.QtCore import Qt, QObject, QTimer, Signal
 from .file_loader import FileLoader
 from .exif_data import ExifData
 from .io_manager import IOManager
+from .layer_collection import LayerCollectionHandler
 
 
-class IOGuiHandler(QObject):
+class IOGuiHandler(QObject, LayerCollectionHandler):
     status_message_requested = Signal(str)
     update_title_requested = Signal()
 
     def __init__(self, layer_collection, undo_manager, parent):
-        super().__init__(parent)
+        QObject.__init__(self, parent)
+        LayerCollectionHandler.__init__(self)
         self.io_manager = IOManager(layer_collection)
         self.undo_manager = undo_manager
-        layer_collection.add_to(self)
+        self.set_layer_collection(layer_collection)
         self.loader_thread = None
 
     def setup_ui(self, display_manager, image_viewer):
