@@ -74,7 +74,7 @@ class ProjectEditor(QMainWindow):
     def __init__(self):
         super().__init__()
         self._copy_buffer = None
-        self._project_buffer = []
+        self.project_buffer = []
         self.job_list = QListWidget()
         self.action_list = QListWidget()
         self.project = None
@@ -439,8 +439,8 @@ class ProjectEditor(QMainWindow):
     def undo(self):
         job_row = self.job_list.currentRow()
         action_row = self.action_list.currentRow()
-        if len(self._project_buffer) > 0:
-            self.set_project(self._project_buffer.pop())
+        if len(self.project_buffer) > 0:
+            self.set_project(self.project_buffer.pop())
             self.refresh_ui()
             len_jobs = len(self.project.jobs)
             if len_jobs > 0:
