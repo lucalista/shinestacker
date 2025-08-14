@@ -1,9 +1,15 @@
+# pylint: disable=C0114, C0115, C0116, R0904
 import numpy as np
 
 
 class LayerCollection:
     def __init__(self):
-        self.reset()
+        self.master_layer = None
+        self.master_layer_copy = None
+        self.layer_stack = None
+        self.layer_labels = []
+        self.current_layer_idx = 0
+        self.sorted_indices = None
 
     def reset(self):
         self.master_layer = None
@@ -11,6 +17,7 @@ class LayerCollection:
         self.layer_stack = None
         self.layer_labels = []
         self.current_layer_idx = 0
+        self.sorted_indices = None
 
     def has_master_layer(self):
         return self.master_layer is not None

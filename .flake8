@@ -1,4 +1,8 @@
 [flake8]
-exclude = */.ipynb_checkpoints/*,src/focusstack/_version.py
+exclude =
+	*/.ipynb_checkpoints/*
+	src/shinestacker/_version.py
+	.venv
+	dist/*
 max-line-length = 100
 ignore = E402, W503, W504

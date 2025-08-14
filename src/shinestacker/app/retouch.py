@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, C0116, C0413, E0611, R0903, E1121, W0201
 import os
 import sys
 import argparse
@@ -6,7 +7,6 @@ from PySide6.QtGui import QIcon, QAction
 from PySide6.QtCore import Qt, QEvent
 from shinestacker.config.config import config
 config.init(DISABLE_TQDM=True, DONT_USE_NATIVE_MENU=True)
-from shinestacker.config.config import config
 from shinestacker.config.constants import constants
 from shinestacker.retouch.image_editor_ui import ImageEditorUI
 from shinestacker.app.gui_utils import disable_macos_special_menu_items
@@ -64,7 +64,7 @@ Multiple directories can be specified separated by ';'.
     path = args['path']
     if filename and path:
         print("can't specify both arguments --filename and --path", file=sys.stderr)
-        exit(1)
+        sys.exit(1)
     app = Application(sys.argv)
     if config.DONT_USE_NATIVE_MENU:
         app.setAttribute(Qt.AA_DontUseNativeMenuBar)

@@ -1,5 +1,5 @@
 # pylint: disable=C0114, C0115, C0116, E0611, R0913, R0917, R0915, R0912
-# pylint: disable=E0606, W0718, R1702, W0102
+# pylint: disable=E0606, W0718, R1702, W0102, W0221
 import traceback
 from abc import ABC, abstractmethod
 from typing import Dict, Any
@@ -125,13 +125,13 @@ class FieldBuilder:
         return widget.layout().itemAt(0).widget()
 
     def get_working_path(self):
-        if 'working_path' in self.fields.keys():
+        if 'working_path' in self.fields:
             working_path = self.get_path_widget(self.fields['working_path']['widget']).text()
             if working_path != '':
                 return working_path
         parent = self.action.parent
         while parent is not None:
-            if 'working_path' in parent.params.keys() and parent.params['working_path'] != '':
+            if 'working_path' in parent.params and parent.params['working_path'] != '':
                 return parent.params['working_path']
             parent = parent.parent
         return ''
@@ -486,7 +486,7 @@ class DefaultActionConfigurator(NoNameActionConfigurator):
 
 
 class JobConfigurator(DefaultActionConfigurator):
-    def create_form(self, layout, action, _tag=''):
+    def create_form(self, layout, action):
         super().create_form(layout, action, "Job")
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True)
         self.builder.add_field('input_path', FIELD_REL_PATH, 'Input path', required=False,
@@ -494,7 +494,7 @@ class JobConfigurator(DefaultActionConfigurator):
 
 
 class NoiseDetectionConfigurator(DefaultActionConfigurator):
-    def create_form(self, layout, action, _tag=''):
+    def create_form(self, layout, action):
         super().create_form(layout, action)
         self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=True,
                                placeholder='inherit from job')
@@ -531,7 +531,7 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
     MAP_TYPE_OPTIONS = ['Average', 'Maximum']
     FLOAT_OPTIONS = ['float 32 bits', 'float 64 bits']
 
-    def create_form(self, layout, action, _tag=''):
+    def create_form(self, layout, action):
         super().create_form(layout, action)
         if self.expert:
             self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=False)
@@ -622,7 +622,7 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
 
 
 class FocusStackConfigurator(FocusStackBaseConfigurator):
-    def create_form(self, layout, action, _tag=''):
+    def create_form(self, layout, action):
         super().create_form(layout, action)
         if self.expert:
             self.builder.add_field('exif_path', FIELD_REL_PATH, 'Exif data path', required=False,
@@ -635,7 +635,7 @@ class FocusStackConfigurator(FocusStackBaseConfigurator):
 
 
 class FocusStackBunchConfigurator(FocusStackBaseConfigurator):
-    def create_form(self, layout, action, _tag=''):
+    def create_form(self, layout, action):
         super().create_form(layout, action)
         self.builder.add_field('frames', FIELD_INT, 'Frames', required=False,
                                default=constants.DEFAULT_FRAMES, min_val=1, max_val=100)
@@ -647,7 +647,7 @@ class FocusStackBunchConfigurator(FocusStackBaseConfigurator):
 
 
 class MultiLayerConfigurator(DefaultActionConfigurator):
-    def create_form(self, layout, action, _tag=''):
+    def create_form(self, layout, action):
         super().create_form(layout, action)
         if self.expert:
             self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=False)
@@ -667,7 +667,7 @@ class MultiLayerConfigurator(DefaultActionConfigurator):
 
 
 class CombinedActionsConfigurator(DefaultActionConfigurator):
-    def create_form(self, layout, action, _tag=''):
+    def create_form(self, layout, action):
         super().create_form(layout, action)
         if self.expert:
             self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=False)
@@ -689,7 +689,7 @@ class CombinedActionsConfigurator(DefaultActionConfigurator):
 
 
 class MaskNoiseConfigurator(DefaultActionConfigurator):
-    def create_form(self, layout, action, _tag=''):
+    def create_form(self, layout, action):
         super().create_form(layout, action)
         self.builder.add_field('noise_mask', FIELD_REL_PATH, 'Noise mask file', required=False,
                                path_type='file', must_exist=True,
@@ -703,7 +703,7 @@ class MaskNoiseConfigurator(DefaultActionConfigurator):
 
 
 class VignettingConfigurator(DefaultActionConfigurator):
-    def create_form(self, layout, action, _tag=''):
+    def create_form(self, layout, action):
         super().create_form(layout, action)
         if self.expert:
             self.builder.add_field('r_steps', FIELD_INT, 'Radial steps', required=False,
@@ -770,7 +770,7 @@ class AlignFramesConfigurator(DefaultActionConfigurator):
                 if match_method == constants.MATCHING_KNN:
                     self.matching_method_field.setCurrentText(self.MATCHING_METHOD_OPTIONS[1])
 
-    def create_form(self, layout, action, _tag=''):
+    def create_form(self, layout, action):
         super().create_form(layout, action)
         self.detector_field = None
         self.descriptor_field = None
@@ -921,7 +921,7 @@ class BalanceFramesConfigurator(DefaultActionConfigurator):
     CORRECTION_MAP_OPTIONS = ['Linear', 'Gamma', 'Match histograms']
     CHANNEL_OPTIONS = ['Luminosity', 'RGB', 'HSV', 'HLS']
 
-    def create_form(self, layout, action, _tag=''):
+    def create_form(self, layout, action):
         super().create_form(layout, action)
         if self.expert:
             self.builder.add_field('mask_size', FIELD_FLOAT, 'Mask size', required=False,

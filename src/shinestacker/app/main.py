@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, C0116, C0413, E0611, R0903, E1121, W0201
 import sys
 import os
 import logging
@@ -163,8 +164,8 @@ expert options are visible by default.
             main_app.switch_to_retouch()
         else:
             main_app.switch_to_project()
-            QTimer.singleShot(100, lambda: main_app.project_window.new_project())
-    QTimer.singleShot(100, lambda: main_app.setFocus())
+            QTimer.singleShot(100, main_app.project_window.new_project)
+    QTimer.singleShot(100, main_app.setFocus)
     sys.exit(app.exec())
 
 

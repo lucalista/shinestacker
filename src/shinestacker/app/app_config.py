@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, C0116, C0103, W0201
 class _AppConfig:
     _initialized = False
     _instance = None

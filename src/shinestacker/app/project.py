@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, C0116, C0413, E0611, R0903, E1121, W0201
 import os
 import sys
 import logging
@@ -83,7 +84,7 @@ expert options are visible by default.
     if filename:
         QTimer.singleShot(100, lambda: window.open_project(filename))
     else:
-        QTimer.singleShot(100, lambda: window.new_project())
+        QTimer.singleShot(100, window.new_project)
     sys.exit(app.exec())
 
 

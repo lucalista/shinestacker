@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, C0116, R0914
 import numpy as np
 from .image_editor import ImageEditor
 from .filter_manager import FilterManager

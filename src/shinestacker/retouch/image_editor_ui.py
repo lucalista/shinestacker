@@ -344,7 +344,7 @@ class ImageEditorUI(ImageFilters):
             self.window().showNormal()
 
     def quit(self):
-        if self._check_unsaved_changes():
+        if self.check_unsaved_changes():
             self.close()
 
     def undo(self):

@@ -261,14 +261,14 @@ class AlignFrames(SubAction):
             if self.alignment_config['transform'] == constants.ALIGN_HOMOGRAPHY else 3
         self.plot_summary = kwargs.get('plot_summary', False)
         self.plot_matches = kwargs.get('plot_matches', False)
-        for k in self.feature_config.keys():
-            if k in kwargs.keys():
+        for k in self.feature_config:
+            if k in kwargs:
                 self.feature_config[k] = kwargs[k]
-        for k in self.matching_config.keys():
-            if k in kwargs.keys():
+        for k in self.matching_config:
+            if k in kwargs:
                 self.matching_config[k] = kwargs[k]
-        for k in self.alignment_config.keys():
-            if k in kwargs.keys():
+        for k in self.alignment_config:
+            if k in kwargs:
                 self.alignment_config[k] = kwargs[k]
 
     def run_frame(self, idx, ref_idx, img_0):

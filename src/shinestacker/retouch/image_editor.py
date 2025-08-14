@@ -68,7 +68,7 @@ class ImageEditor(QMainWindow, LayerCollectionHandler):
         super().keyPressEvent(event)
     # pylint: enable=C0103
 
-    def _check_unsaved_changes(self) -> bool:
+    def check_unsaved_changes(self) -> bool:
         if self.modified:
             reply = QMessageBox.question(
                 self, "Unsaved Changes",
