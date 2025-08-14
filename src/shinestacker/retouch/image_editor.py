@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, C0116, E0611, R0902
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QAbstractItemView
 from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush
 from PySide6.QtCore import Qt, QPoint
@@ -25,6 +26,7 @@ class ImageEditor(QMainWindow, LayerCollectionHandler):
         self.brush_tool = BrushTool()
         self.modified = False
         self.installEventFilter(self)
+        self.mask_layer = None
 
     def setup_ui(self):
         self.display_manager = DisplayManager(
@@ -47,6 +49,7 @@ class ImageEditor(QMainWindow, LayerCollectionHandler):
     def show_status_message(self, message):
         self.statusBar().showMessage(message)
 
+    # pylint: disable=C0103
     def keyPressEvent(self, event):
         if self.image_viewer.empty:
             return
@@ -63,6 +66,7 @@ class ImageEditor(QMainWindow, LayerCollectionHandler):
             self.brush_tool.increase_brush_hardness()
             return
         super().keyPressEvent(event)
+    # pylint: enable=C0103
 
     def _check_unsaved_changes(self) -> bool:
         if self.modified:

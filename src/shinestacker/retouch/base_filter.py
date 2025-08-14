@@ -1,5 +1,7 @@
-import numpy as np
+# pylint: disable=C0114, C0115, C0116, E0611, W0718, R0915, R0903
+import traceback
 from abc import ABC, abstractmethod
+import numpy as np
 from PySide6.QtWidgets import QDialog, QVBoxLayout
 from PySide6.QtCore import Signal, QThread, QTimer
 
@@ -62,7 +64,7 @@ class BaseFilter(ABC):
             active_worker.start()
 
         def restore_original():
-            self.editor.copy_master_layer()
+            self.editor.restore_master_layer()
             self.editor.display_manager.display_master_layer()
             try:
                 dlg.activateWindow()
@@ -109,6 +111,7 @@ class BaseFilter(ABC):
         def run(self):
             try:
                 result = self.func(*self.args, **self.kwargs)
-            except Exception:
-                raise
+            except Exception as e:
+                traceback.print_tb(e.__traceback__)
+                raise RuntimeError("Filter preview failed") from e
             self.finished.emit(result, self.request_id)

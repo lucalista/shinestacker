@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, C0116, E0611, R0904, R0902, R0914
 import math
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
 from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QCursor, QShortcut, QKeySequence
@@ -16,7 +17,7 @@ class ImageViewer(QGraphicsView, LayerCollectionHandler):
     brush_size_change_requested = Signal(int)  # +1 or -1
 
     def __init__(self, layer_collection, parent=None):
-        QGraphicsView.__init__(self)
+        QGraphicsView.__init__(self, parent)
         LayerCollectionHandler.__init__(self)
         self.display_manager = None
         self.layer_collection = layer_collection
@@ -50,6 +51,7 @@ class ImageViewer(QGraphicsView, LayerCollectionHandler):
         self.scene.addItem(self.brush_preview)
         self.empty = True
         self.allow_cursor_preview = True
+        self.last_brush_pos = None
 
     def set_image(self, qimage):
         pixmap = QPixmap.fromImage(qimage)
@@ -81,6 +83,7 @@ class ImageViewer(QGraphicsView, LayerCollectionHandler):
         self.brush_cursor.hide()
         self.empty = True
 
+    # pylint: disable=C0103
     def keyPressEvent(self, event):
         if self.empty:
             return
@@ -210,6 +213,23 @@ class ImageViewer(QGraphicsView, LayerCollectionHandler):
                     self.zoom_factor = new_scale
         self.update_brush_cursor()
 
+    def enterEvent(self, event):
+        self.activateWindow()
+        self.setFocus()
+        if not self.empty:
+            self.setCursor(Qt.BlankCursor)
+            if self.brush_cursor:
+                self.brush_cursor.show()
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        if not self.empty:
+            self.setCursor(Qt.ArrowCursor)
+            if self.brush_cursor:
+                self.brush_cursor.hide()
+        super().leaveEvent(event)
+    # pylint: enable=C0103
+
     def setup_brush_cursor(self):
         self.setCursor(Qt.BlankCursor)
         pen = QPen(QColor(*gui_constants.BRUSH_COLORS['pen']), 1)
@@ -270,22 +290,6 @@ class ImageViewer(QGraphicsView, LayerCollectionHandler):
         self.brush_cursor.setPen(QPen(QColor(*gui_constants.BRUSH_COLORS['pen']),
                                       gui_constants.BRUSH_LINE_WIDTH / self.zoom_factor))
         self.brush_cursor.setBrush(QBrush(gradient))
-
-    def enterEvent(self, event):
-        self.activateWindow()
-        self.setFocus()
-        if not self.empty:
-            self.setCursor(Qt.BlankCursor)
-            if self.brush_cursor:
-                self.brush_cursor.show()
-        super().enterEvent(event)
-
-    def leaveEvent(self, event):
-        if not self.empty:
-            self.setCursor(Qt.ArrowCursor)
-            if self.brush_cursor:
-                self.brush_cursor.hide()
-        super().leaveEvent(event)
 
     def setup_shortcuts(self):
         prev_layer = QShortcut(QKeySequence(Qt.Key_Up), self, context=Qt.ApplicationShortcut)

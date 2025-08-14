@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, C0116, E0611
 from PySide6.QtCore import QObject, Signal
 from .. config.gui_constants import gui_constants
 
@@ -7,6 +8,12 @@ class UndoManager(QObject):
 
     def __init__(self):
         super().__init__()
+        self.x_start = None
+        self.y_start = None
+        self.x_end = None
+        self.y_end = None
+        self.undo_stack = None
+        self.redo_stack = None
         self.reset()
 
     def reset(self):

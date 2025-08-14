@@ -1,6 +1,8 @@
+# pylint: disable=C0114, C0115, C0116, E0611, W0221
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QSlider, QCheckBox, QDialogButtonBox
 from PySide6.QtCore import Qt, QTimer
-from .filter_base import BaseFilter
+from .base_filter import BaseFilter
+from .. algorithms.denoise import denoise
 
 
 class DenoiseFilter(BaseFilter):
@@ -52,5 +54,4 @@ class DenoiseFilter(BaseFilter):
         return (self.max_value * self.slider.value() / self.max_range,)
 
     def apply(self, image, strength):
-        from .. algorithms.denoise import denoise
         return denoise(image, strength)
