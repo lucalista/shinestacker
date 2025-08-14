@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, C0116, R0912, R0911, E1101, W0718
 import logging
 import traceback
 from .. config.constants import constants
@@ -64,20 +65,19 @@ class ProjectConverter:
         for j in project.jobs:
             job = self.job(j, logger_name, callbacks)
             if job is None:
-                raise Exception("Job instantiation failed.")
-            else:
-                jobs.append(job)
+                raise RuntimeError("Job instantiation failed.")
+            jobs.append(job)
         return jobs
 
-    def filter_dict_keys(self, dict, prefix):
-        dict_with = {k.replace(prefix, ''): v for (k, v) in dict.items() if k.startswith(prefix)}
-        dict_without = {k: v for (k, v) in dict.items() if not k.startswith(prefix)}
+    def filter_dict_keys(self, k_dict, prefix):
+        dict_with = {k.replace(prefix, ''): v for (k, v) in k_dict.items() if k.startswith(prefix)}
+        dict_without = {k: v for (k, v) in k_dict.items() if not k.startswith(prefix)}
         return dict_with, dict_without
 
     def action(self, action_config):
         if action_config.type_name == constants.ACTION_NOISEDETECTION:
             return NoiseDetection(**action_config.params)
-        elif action_config.type_name == constants.ACTION_COMBO:
+        if action_config.type_name == constants.ACTION_COMBO:
             sub_actions = []
             for sa in action_config.sub_actions:
                 a = self.action(sa)
@@ -85,22 +85,23 @@ class ProjectConverter:
                     sub_actions.append(a)
             a = CombinedActions(**action_config.params, actions=sub_actions)
             return a
-        elif action_config.type_name == constants.ACTION_MASKNOISE:
+        if action_config.type_name == constants.ACTION_MASKNOISE:
             params = {k: v for k, v in action_config.params.items() if k != 'name'}
             return MaskNoise(**params)
-        elif action_config.type_name == constants.ACTION_VIGNETTING:
+        if action_config.type_name == constants.ACTION_VIGNETTING:
             params = {k: v for k, v in action_config.params.items() if k != 'name'}
             return Vignetting(**params)
-        elif action_config.type_name == constants.ACTION_ALIGNFRAMES:
+        if action_config.type_name == constants.ACTION_ALIGNFRAMES:
             params = {k: v for k, v in action_config.params.items() if k != 'name'}
             return AlignFrames(**params)
-        elif action_config.type_name == constants.ACTION_BALANCEFRAMES:
+        if action_config.type_name == constants.ACTION_BALANCEFRAMES:
             params = {k: v for k, v in action_config.params.items() if k != 'name'}
             if 'intensity_interval' in params.keys():
                 i = params['intensity_interval']
                 params['intensity_interval'] = {'min': i[0], 'max': i[1]}
             return BalanceFrames(**params)
-        elif action_config.type_name == constants.ACTION_FOCUSSTACK or action_config.type_name == constants.ACTION_FOCUSSTACKBUNCH:
+        if action_config.type_name in (constants.ACTION_FOCUSSTACK,
+                                         constants.ACTION_FOCUSSTACKBUNCH):
             stacker = action_config.params.get('stacker', constants.STACK_ALGO_DEFAULT)
             if stacker == constants.STACK_ALGO_PYRAMID:
                 algo_dict, module_dict = self.filter_dict_keys(action_config.params, 'pyramid_')
@@ -115,17 +116,17 @@ class ProjectConverter:
                                          f"{constants.STACK_ALGO_DEPTH_MAP}")
             if action_config.type_name == constants.ACTION_FOCUSSTACK:
                 return FocusStack(**module_dict, stack_algo=stack_algo)
-            elif action_config.type_name == constants.ACTION_FOCUSSTACKBUNCH:
+            if action_config.type_name == constants.ACTION_FOCUSSTACKBUNCH:
                 return FocusStackBunch(**module_dict, stack_algo=stack_algo)
-            else:
-                raise InvalidOptionError("stracker", stacker, details="valid values are: Pyramid, Depth map.")
-        elif action_config.type_name == constants.ACTION_MULTILAYER:
-            input_path = list(filter(lambda p: p != '', action_config.params.get('input_path', '').split(";")))
+            raise InvalidOptionError(
+                "stracker", stacker, details="valid values are: Pyramid, Depth map.")
+        if action_config.type_name == constants.ACTION_MULTILAYER:
+            input_path = list(filter(lambda p: p != '',
+                              action_config.params.get('input_path', '').split(";")))
             params = {k: v for k, v in action_config.params.items() if k != 'imput_path'}
             params['input_path'] = [i.strip() for i in input_path]
             return MultiLayer(**params)
-        else:
-            raise Exception(f"Cannot convert action of type {action_config.type_name}.")
+        raise RuntimeError(f"Cannot convert action of type {action_config.type_name}.")
 
     def job(self, action_config: ActionConfig, logger_name=None, callbacks=None):
         try:
@@ -143,6 +144,6 @@ class ProjectConverter:
         except Exception as e:
             msg = str(e)
             logger = self.get_logger(logger_name)
-            logger.error(f"=== can't instantiate job: {name}: {msg} ===")
+            logger.error(msg=f"=== can't instantiate job: {name}: {msg} ===")
             traceback.print_tb(e.__traceback__)
             raise e

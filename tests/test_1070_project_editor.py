@@ -41,7 +41,7 @@ def mock_project():
 def test_initial_state(editor):
     assert editor.project is None
     assert editor._copy_buffer is None
-    assert editor._project_buffer == []
+    assert editor.project_buffer == []
 
 
 def test_set_project(editor, mock_project):
@@ -175,6 +175,6 @@ def test_undo_functionality(editor):
     editor.action_list.currentRow.return_value = 0
     editor.action_list.count.return_value = 0
     editor.set_project(modified_state)
-    editor._project_buffer = [initial_state]
+    editor.project_buffer = [initial_state]
     editor.undo()
     assert editor.project == initial_state

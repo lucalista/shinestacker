@@ -1,9 +1,9 @@
 # pylint: disable=C0114, C0115, C0116, E0611, R0914, R0912, R0915, W0718
 import os.path
 import os
+import traceback
 import json
 import jsonpickle
-import traceback
 from PySide6.QtWidgets import QMessageBox, QFileDialog, QDialog
 from .. core.core_utils import get_app_base_path
 from .. config.constants import constants
@@ -206,8 +206,8 @@ class ActionsWindow(ProjectEditor):
             })
             path = f"{self._current_file_wd}/{file_path}" \
                 if self._current_file_wd != '' else file_path
-            f = open(path, 'w')
-            f.write(json_obj)
+            with open(path, 'w', encoding="utf-8") as f:
+                f.write(json_obj)
             self._modified_project = False
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Cannot save file:\n{str(e)}")
@@ -222,12 +222,8 @@ class ActionsWindow(ProjectEditor):
             if reply == QMessageBox.Save:
                 self.save_project()
                 return True
-            elif reply == QMessageBox.Discard:
-                return True
-            else:
-                return False
-        else:
-            return True
+            return reply == QMessageBox.Discard
+        return True
 
     def on_job_edit(self, item):
         index = self.job_list.row(item)
@@ -281,7 +277,7 @@ class ActionsWindow(ProjectEditor):
             if self.job_list.hasFocus():
                 current_action = job
             elif self.action_list.hasFocus():
-                job_row, action_row, pos = self.get_current_action()
+                job_row, _action_row, pos = self.get_current_action()
                 if pos.actions is not None:
                     current_action = pos.action if not pos.is_sub_action else pos.sub_action
         if current_action is not None:

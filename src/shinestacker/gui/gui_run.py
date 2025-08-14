@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, C0116, E0611, R0903, R0915, R0914, R0917, R0913, R0902
 import time
 from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QProgressBar,
                                QMessageBox, QScrollArea, QSizePolicy, QFrame, QLabel, QComboBox)
@@ -50,6 +51,7 @@ class TimerProgressBar(QProgressBar):
         super().setValue(0)
         self.set_running_style()
         self._start_time = -1
+        self._current_time = -1
 
     def set_style(self, bar_color=None):
         if bar_color is None:
@@ -77,11 +79,11 @@ class TimerProgressBar(QProgressBar):
         m = (ss % 3600) // 60
         s = (ss % 3600) % 60
         x = secs - ss
-        t_str = "{:02d}".format(s) + "{:.1f}s".format(x).lstrip('0')
+        t_str = f"{s:02d}" + f"{x:.1f}s".lstrip('0')
         if m > 0:
-            t_str = "{:02d}:{}".format(m, t_str)
+            t_str = f"{m:02d}:{t_str}"
         if h > 0:
-            t_str = "{:02d}:{}".format(h, t_str)
+            t_str = f"{h:02d}:{t_str}"
         if m > 0 or h > 0:
             t_str = t_str.lstrip('0')
         elif 0 < s < 10:
@@ -114,9 +116,11 @@ class TimerProgressBar(QProgressBar):
         self.check_time(self.maximum())
         self.setValue(self.maximum())
 
+    # pylint: disable=C0103
     def setValue(self, val):
         self.check_time(val)
         super().setValue(val)
+    # pylint: enable=C0103
 
     def set_running_style(self):
         self.set_style(action_running_color)
@@ -192,7 +196,9 @@ class RunWindow(QTextEditLogger):
             self.retouch_widget.setStyleSheet(BLUE_COMBO_STYLE)
             self.retouch_widget.addItems(options)
             self.retouch_widget.setEnabled(False)
-            self.retouch_widget.currentIndexChanged.connect(lambda: self.retouch(self.retouch_paths[self.retouch_widget.currentIndex() - 1]))
+            self.retouch_widget.currentIndexChanged.connect(
+                lambda: self.retouch(
+                    self.retouch_paths[self.retouch_widget.currentIndex() - 1]))
             self.status_bar.addPermanentWidget(self.retouch_widget)
 
         self.stop_button = QPushButton("Stop")
@@ -238,40 +244,40 @@ class RunWindow(QTextEditLogger):
             self.close_window_callback(self.id_str())
 
     @Slot(int, str)
-    def handle_before_action(self, id, name):
-        if 0 <= id < len(self.color_widgets[self.row_widget_id]):
-            self.color_widgets[self.row_widget_id][id].set_color(*action_running_color.tuple())
+    def handle_before_action(self, run_id, _name):
+        if 0 <= run_id < len(self.color_widgets[self.row_widget_id]):
+            self.color_widgets[self.row_widget_id][run_id].set_color(*action_running_color.tuple())
             self.progress_bar.start(1)
-        if id == -1:
+        if run_id == -1:
             self.progress_bar.set_running_style()
 
     @Slot(int, str)
-    def handle_after_action(self, id, name):
-        if 0 <= id < len(self.color_widgets[self.row_widget_id]):
-            self.color_widgets[self.row_widget_id][id].set_color(*action_done_color.tuple())
+    def handle_after_action(self, run_id, _name):
+        if 0 <= run_id < len(self.color_widgets[self.row_widget_id]):
+            self.color_widgets[self.row_widget_id][run_id].set_color(*action_done_color.tuple())
             self.progress_bar.stop()
-        if id == -1:
+        if run_id == -1:
             self.row_widget_id += 1
             self.progress_bar.set_done_style()
 
     @Slot(int, str, str)
-    def handle_step_counts(self, id, name, steps):
+    def handle_step_counts(self, _run_id, _name, steps):
         self.progress_bar.start(steps)
 
     @Slot(int, str)
-    def handle_begin_steps(self, id, name):
+    def handle_begin_steps(self, _run_id, _name):
         self.progress_bar.start(1)
 
     @Slot(int, str)
-    def handle_end_steps(self, id, name):
+    def handle_end_steps(self, _run_id, _name):
         self.progress_bar.stop()
 
     @Slot(int, str, str)
-    def handle_after_step(self, id, name, step):
+    def handle_after_step(self, _run_id, _name, step):
         self.progress_bar.setValue(step)
 
     @Slot(int, str, str)
-    def handle_save_plot(self, id, name, path):
+    def handle_save_plot(self, _run_id, name, path):
         label = QLabel(name, self)
         label.setStyleSheet("QLabel {margin-top: 5px; font-weight: bold;}")
         self.image_layout.addWidget(label)
@@ -290,10 +296,12 @@ class RunWindow(QTextEditLogger):
         self.image_area_widget.setFixedWidth(needed_width)
         self.right_area.updateGeometry()
         self.image_area_widget.updateGeometry()
-        QTimer.singleShot(0, lambda: self.right_area.verticalScrollBar().setValue(self.right_area.verticalScrollBar().maximum()))
+        QTimer.singleShot(
+            0, lambda: self.right_area.verticalScrollBar().setValue(
+                self.right_area.verticalScrollBar().maximum()))
 
     @Slot(int, str, str, str)
-    def handle_open_app(self, id, name, app, path):
+    def handle_open_app(self, _run_id, name, app, path):
         label = QLabel(name, self)
         label.setStyleSheet("QLabel {margin-top: 5px; font-weight: bold;}")
         self.image_layout.addWidget(label)
@@ -306,7 +314,9 @@ class RunWindow(QTextEditLogger):
         self.image_area_widget.setFixedWidth(needed_width)
         self.right_area.updateGeometry()
         self.image_area_widget.updateGeometry()
-        QTimer.singleShot(0, lambda: self.right_area.verticalScrollBar().setValue(self.right_area.verticalScrollBar().maximum()))
+        QTimer.singleShot(
+            0, lambda: self.right_area.verticalScrollBar().setValue(
+                self.right_area.verticalScrollBar().maximum()))
 
 
 class RunWorker(LogWorker):
@@ -336,40 +346,41 @@ class RunWorker(LogWorker):
         }
         self.tag = ""
 
-    def before_action(self, id, name):
-        self.before_action_signal.emit(id, name)
+    def before_action(self, run_id, name):
+        self.before_action_signal.emit(run_id, name)
 
-    def after_action(self, id, name):
-        self.after_action_signal.emit(id, name)
+    def after_action(self, run_id, name):
+        self.after_action_signal.emit(run_id, name)
 
-    def step_counts(self, id, name, steps):
-        self.step_counts_signal.emit(id, name, steps)
+    def step_counts(self, run_id, name, steps):
+        self.step_counts_signal.emit(run_id, name, steps)
 
-    def begin_steps(self, id, name):
-        self.begin_steps_signal.emit(id, name)
+    def begin_steps(self, run_id, name):
+        self.begin_steps_signal.emit(run_id, name)
 
-    def end_steps(self, id, name):
-        self.end_steps_signal.emit(id, name)
+    def end_steps(self, run_id, name):
+        self.end_steps_signal.emit(run_id, name)
 
-    def after_step(self, id, name, step):
-        self.after_step_signal.emit(id, name, step)
+    def after_step(self, run_id, name, step):
+        self.after_step_signal.emit(run_id, name, step)
 
-    def save_plot(self, id, name, path):
-        self.save_plot_signal.emit(id, name, path)
+    def save_plot(self, run_id, name, path):
+        self.save_plot_signal.emit(run_id, name, path)
 
-    def open_app(self, id, name, app, path):
-        self.open_app_signal.emit(id, name, app, path)
+    def open_app(self, run_id, name, app, path):
+        self.open_app_signal.emit(run_id, name, app, path)
 
-    def check_running(self, id, name):
+    def check_running(self, _run_id, _name):
         return self.status == constants.STATUS_RUNNING
 
     def run(self):
+        # pylint: disable=line-too-long
         self.status_signal.emit(f"{self.tag} running...", constants.RUN_ONGOING, "", 0)
         self.html_signal.emit(f'''
         <div style="margin: 2px 0; font-family: {constants.LOG_FONTS_STR};">
         <span style="color: #{ColorPalette.DARK_BLUE.hex()}; font-style: italic; font-weigt: bold;">{self.tag} begins</span>
         </div>
-        ''')
+        ''') # noqa
         status, error_message = self.do_run()
         if status == constants.RUN_FAILED:
             message = f"{self.tag} failed"
@@ -380,11 +391,15 @@ class RunWorker(LogWorker):
         elif status == constants.RUN_STOPPED:
             message = f"{self.tag} stopped"
             color = "#" + ColorPalette.DARK_RED.hex()
+        else:
+            message = ''
+            color = "#000000"
         self.html_signal.emit(f'''
         <div style="margin: 2px 0; font-family: {constants.LOG_FONTS_STR};">
         <span style="color: {color}; font-style: italic; font-weight: bold;">{message}</span>
         </div>
         ''')
+        # pylint: enable=line-too-long
         self.end_signal.emit(status, self.id_str, message)
         self.status_signal.emit(message, status, error_message, 0)
 
