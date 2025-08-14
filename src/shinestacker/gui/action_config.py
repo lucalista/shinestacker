@@ -1,5 +1,6 @@
 # pylint: disable=C0114, C0115, C0116, E0611, R0913, R0917, R0915, R0912
 # pylint: disable=E0606, C0201, W0718, R1702, W0102
+import traceback
 from abc import ABC, abstractmethod
 from typing import Dict, Any
 import os.path
@@ -54,13 +55,13 @@ class FieldBuilder:
         elif field_type == FIELD_REL_PATH:
             widget = self.create_rel_path_field(tag, **kwargs)
         elif field_type == FIELD_FLOAT:
-            widget = self.create_float_field(tag)
+            widget = self.create_float_field(tag, **kwargs)
         elif field_type == FIELD_INT:
-            widget = self.create_int_field(tag)
+            widget = self.create_int_field(tag, **kwargs)
         elif field_type == FIELD_INT_TUPLE:
             widget = self.create_int_tuple_field(tag, **kwargs)
         elif field_type == FIELD_BOOL:
-            widget = self.create_bool_field(tag)
+            widget = self.create_bool_field(tag, **kwargs)
         elif field_type == FIELD_COMBO:
             widget = self.create_combo_field(tag, **kwargs)
         else:
@@ -155,7 +156,7 @@ class FieldBuilder:
                 options = field.get('options', None)
                 text = field['widget'].currentText()
                 if values is not None and options is not None:
-                    text = dict((options, values))[text]
+                    text = dict(zip(options, values))[text]
                 params[tag] = text
             if field['required'] and not params[tag]:
                 required = True
@@ -187,6 +188,7 @@ class FieldBuilder:
                                                     f"{field['label']} {p} does not exist")
                                 return False
                 except Exception as e:
+                    traceback.print_tb(e.__traceback__)
                     QMessageBox.warning(None, "Error", f"Invalid path: {str(e)}")
                     return False
         return True
@@ -268,7 +270,8 @@ class FieldBuilder:
                                         f"{label} must be a subdirectory of working path")
                                     return
                                 rel_paths.append(rel_path)
-                            except ValueError:
+                            except ValueError as e:
+                                traceback.print_tb(e.__traceback__)
                                 QMessageBox.warning(None, "Error",
                                                     "Could not compute relative path")
                                 return
@@ -288,7 +291,8 @@ class FieldBuilder:
                                                         f"{label} must be within working path")
                                     return
                                 rel_paths.append(rel_path)
-                            except ValueError:
+                            except ValueError as e:
+                                traceback.print_tb(e.__traceback__)
                                 QMessageBox.warning(None, "Error",
                                                     "Could not compute relative path")
                                 return
@@ -319,7 +323,8 @@ class FieldBuilder:
                                                 f"{label} must be a subdirectory of working path")
                             return
                         edit.setText(rel_path)
-                    except ValueError:
+                    except ValueError as e:
+                        traceback.print_tb(e.__traceback__)
                         QMessageBox.warning(None, "Error", "Could not compute relative path")
 
         button.clicked.connect(browse)
@@ -730,6 +735,7 @@ class AlignFramesConfigurator(DefaultActionConfigurator):
         self.info_label = None
         self.detector_field = None
         self.descriptor_field = None
+        self.matching_method_field = None
 
     def show_info(self, message, timeout=3000):
         self.info_label.setText(message)
@@ -744,6 +750,7 @@ class AlignFramesConfigurator(DefaultActionConfigurator):
         try:
             validate_align_config(detector, descriptor, match_method)
         except Exception as e:
+            traceback.print_tb(e.__traceback__)
             self.show_info(str(e))
             if descriptor == constants.DETECTOR_SIFT and \
                match_method == constants.MATCHING_NORM_HAMMING:
@@ -764,8 +771,9 @@ class AlignFramesConfigurator(DefaultActionConfigurator):
 
     def create_form(self, layout, action, _tag=''):
         super().create_form(layout, action)
-        self.detector_field = 0
-        self.descriptor_field = 0
+        self.detector_field = None
+        self.descriptor_field = None
+        self.matching_method_field = None
         if self.expert:
             self.add_bold_label("Feature identification:")
 
@@ -862,7 +870,7 @@ class AlignFramesConfigurator(DefaultActionConfigurator):
             change_transform()
             subsample = self.builder.add_field(
                 'subsample', FIELD_INT, 'Subsample factor', required=False,
-                default=constants.DEFAULT_ALIGN_SUBSAMPLE, min_val=0, max_val=256)
+                default=constants.DEFAULT_ALIGN_SUBSAMPLE, min_val=1, max_val=256)
             fast_subsampling = self.builder.add_field(
                 'fast_subsampling', FIELD_BOOL, 'Fast subsampling', required=False,
                 default=constants.DEFAULT_ALIGN_FAST_SUBSAMPLING)
@@ -900,9 +908,10 @@ class AlignFramesConfigurator(DefaultActionConfigurator):
                 validate_align_config(detector, descriptor, match_method)
                 return super().update_params(params)
             except Exception as e:
+                traceback.print_tb(e.__traceback__)
                 QMessageBox.warning(None, "Error", f"{str(e)}")
                 return False
-        return False
+        return super().update_params(params)
 
 class BalanceFramesConfigurator(DefaultActionConfigurator):
     CORRECTION_MAP_OPTIONS = ['Linear', 'Gamma', 'Match histograms']
