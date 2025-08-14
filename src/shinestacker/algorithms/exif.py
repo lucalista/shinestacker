@@ -1,12 +1,13 @@
+# pylint: disable=C0114, C0116, W0718, R0911, R0912, E1101
 import os
 import re
 import io
+import logging
 import cv2
 import numpy as np
 from PIL import Image
 from PIL.TiffImagePlugin import IFDRational
 from PIL.ExifTags import TAGS
-import logging
 import tifffile
 from .. config.constants import constants
 from .utils import write_img
@@ -37,27 +38,28 @@ def extract_enclosed_data_for_jpg(data, head, foot):
     size = len(foot.decode('ascii'))
     xmp_start, xmp_end = data.find(head), data.find(foot)
     if xmp_start != -1 and xmp_end != -1:
-        return re.sub(b'[^\x20-\x7E]', b'', data[xmp_start:xmp_end + size]).decode().replace('\x00', '').encode()
-    else:
-        return None
+        return re.sub(
+            b'[^\x20-\x7E]', b'',
+            data[xmp_start:xmp_end + size]
+        ).decode().replace('\x00', '').encode()
+    return None
 
 
 def get_exif(exif_filename):
     if not os.path.isfile(exif_filename):
-        raise Exception("File does not exist: " + exif_filename)
+        raise RuntimeError(f"File does not exist: {exif_filename}")
     ext = exif_filename.split(".")[-1]
     image = Image.open(exif_filename)
-    if ext == 'tif' or ext == 'tiff':
+    if ext in ('tif', 'tiff'):
         return image.tag_v2 if hasattr(image, 'tag_v2') else image.getexif()
-    elif ext == 'jpeg' or ext == 'jpg':
-        exif_dict = image.getexif()
+    if ext in ('jpeg', 'jpg'):
+        exif_data = image.getexif()
         with open(exif_filename, 'rb') as f:
             data = extract_enclosed_data_for_jpg(f.read(), b'<?xpacket', b'<?xpacket end="w"?>')
             if data is not None:
-                exif_dict[XMLPACKET] = data
-        return exif_dict
-    else:
-        return image.getexif()
+                exif_data[XMLPACKET] = data
+        return exif_data
+    return image.getexif()
 
 
 def exif_extra_tags_for_tif(exif):
@@ -78,19 +80,19 @@ def exif_extra_tags_for_tif(exif):
         tag, data = TAGS.get(tag_id, tag_id), exif.get(tag_id)
         if isinstance(data, bytes):
             try:
-                if tag_id != IMAGERESOURCES and tag_id != INTERCOLORPROFILE:
+                if tag_id not in (IMAGERESOURCES, INTERCOLORPROFILE):
                     if tag_id == XMLPACKET:
                         data = re.sub(b'[^\x20-\x7E]', b'', data)
                     data = data.decode()
             except Exception:
-                logger.warning(f"Copy: can't decode EXIF tag {tag:25} [#{tag_id}]")
+                logger.warning(msg=f"Copy: can't decode EXIF tag {tag:25} [#{tag_id}]")
                 data = '<<< decode error >>>'
         if isinstance(data, IFDRational):
             data = (data.numerator, data.denominator)
         if tag not in NO_COPY_TIFF_TAGS and tag_id not in NO_COPY_TIFF_TAGS_ID:
             extra.append((tag_id, *get_tiff_dtype_count(data), data, False))
         else:
-            logger.debug(f"Skip tag {tag:25} [#{tag_id}]")
+            logger.debug(msg=f"Skip tag {tag:25} [#{tag_id}]")
     return extra, {'resolution': resolution, 'resolutionunit': resolutionunit,
                    'software': software, 'photometric': photometric}
 
@@ -98,29 +100,28 @@ def exif_extra_tags_for_tif(exif):
 def get_tiff_dtype_count(value):
     if isinstance(value, str):
         return 2, len(value) + 1  # ASCII string, (dtype=2), length + null terminator
-    elif isinstance(value, (bytes, bytearray)):
+    if isinstance(value, (bytes, bytearray)):
         return 1, len(value)  # Binary data (dtype=1)
-    elif isinstance(value, (list, tuple, np.ndarray)):
+    if isinstance(value, (list, tuple, np.ndarray)):
         if isinstance(value, np.ndarray):
             dtype = value.dtype  # Array or sequence
         else:
             dtype = np.array(value).dtype  # Map numpy dtype to TIFF dtype
         if dtype == np.uint8:
             return 1, len(value)
-        elif dtype == np.uint16:
+        if dtype == np.uint16:
             return 3, len(value)
-        elif dtype == np.uint32:
+        if dtype == np.uint32:
             return 4, len(value)
-        elif dtype == np.float32:
+        if dtype == np.float32:
             return 11, len(value)
-        elif dtype == np.float64:
+        if dtype == np.float64:
             return 12, len(value)
-    elif isinstance(value, int):
+    if isinstance(value, int):
         if 0 <= value <= 65535:
             return 3, 1  # uint16
-        else:
-            return 4, 1  # uint32
-    elif isinstance(value, float):
+        return 4, 1  # uint32
+    if isinstance(value, float):
         return 11, 1  # float64
     return 2, len(str(value)) + 1  # Default for othre cases (ASCII string)
 
@@ -128,7 +129,7 @@ def get_tiff_dtype_count(value):
 def add_exif_data_to_jpg_file(exif, in_filenama, out_filename, verbose=False):
     logger = logging.getLogger(__name__)
     if exif is None:
-        raise Exception('No exif data provided.')
+        raise RuntimeError('No exif data provided.')
     if verbose:
         print_exif(exif)
     xmp_data = extract_enclosed_data_for_jpg(exif[XMLPACKET], b'<x:xmpmeta', b'</x:xmpmeta>')
@@ -140,7 +141,11 @@ def add_exif_data_to_jpg_file(exif, in_filenama, out_filename, verbose=False):
                 app1_marker_pos = jpeg_data.find(b'\xFF\xE1')
                 if app1_marker_pos == -1:
                     app1_marker_pos = len(jpeg_data) - 2
-                updated_data = (jpeg_data[:app1_marker_pos] + b'\xFF\xE1' + len(xmp_data).to_bytes(2, 'big') + xmp_data + jpeg_data[app1_marker_pos:])
+                updated_data = (
+                    jpeg_data[:app1_marker_pos] +
+                    b'\xFF\xE1' + len(xmp_data).to_bytes(2, 'big') +
+                    xmp_data + jpeg_data[app1_marker_pos:]
+                )
             else:
                 logger.warning("Copy: can't find XMLPacket in JPG EXIF data")
                 updated_data = jpeg_data
@@ -156,10 +161,10 @@ def write_image_with_exif_data(exif, image, out_filename, verbose=False):
     ext = out_filename.split(".")[-1]
     if verbose:
         print_exif(exif)
-    if ext == 'jpeg' or ext == 'jpg':
+    if ext in ('jpeg', 'jpg'):
         cv2.imwrite(out_filename, image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
         add_exif_data_to_jpg_file(exif, out_filename, out_filename, verbose)
-    elif ext == 'tiff' or ext == 'tif':
+    elif ext in ('tiff', 'tif'):
         metadata = {"description": f"image generated with {constants.APP_STRING} package"}
         extra_tags, exif_tags = exif_extra_tags_for_tif(exif)
         tifffile.imwrite(out_filename, image, metadata=metadata, compression='adobe_deflate',
@@ -174,16 +179,16 @@ def save_exif_data(exif, in_filename, out_filename=None, verbose=False):
     if out_filename is None:
         out_filename = in_filename
     if exif is None:
-        raise Exception('No exif data provided.')
+        raise RuntimeError('No exif data provided.')
     if verbose:
         print_exif(exif)
-    if ext == 'tiff' or ext == 'tif':
+    if ext in ('tiff', 'tif'):
         image_new = tifffile.imread(in_filename)
     else:
         image_new = Image.open(in_filename)
-    if ext == 'jpeg' or ext == 'jpg':
+    if ext in ('jpeg', 'jpg'):
         add_exif_data_to_jpg_file(exif, in_filename, out_filename, verbose)
-    elif ext == 'tiff' or ext == 'tif':
+    elif ext in ('tiff', 'tif'):
         metadata = {"description": f"image generated with {constants.APP_STRING} package"}
         extra_tags, exif_tags = exif_extra_tags_for_tif(exif)
         tifffile.imwrite(out_filename, image_new, metadata=metadata, compression='adobe_deflate',
@@ -195,9 +200,9 @@ def save_exif_data(exif, in_filename, out_filename=None, verbose=False):
 
 def copy_exif_from_file_to_file(exif_filename, in_filename, out_filename=None, verbose=False):
     if not os.path.isfile(exif_filename):
-        raise Exception("File does not exist: " + exif_filename)
+        raise RuntimeError(f"File does not exist: {exif_filename}")
     if not os.path.isfile(in_filename):
-        raise Exception("File does not exist: " + in_filename)
+        raise RuntimeError(f"File does not exist: {in_filename}")
     exif = get_exif(exif_filename)
     return save_exif_data(exif, in_filename, out_filename, verbose)
 
@@ -210,7 +215,7 @@ def exif_dict(exif, hide_xml=True):
         tag = TAGS.get(tag_id, tag_id)
         if tag_id == XMLPACKET and hide_xml:
             data = "<<< XML data >>>"
-        elif tag_id == IMAGERESOURCES or tag_id == INTERCOLORPROFILE:
+        elif tag_id in (IMAGERESOURCES, INTERCOLORPROFILE):
             data = "<<< Photoshop data >>>"
         elif tag_id == STRIPOFFSETS:
             data = "<<< Strip offsets >>>"
@@ -230,9 +235,9 @@ def exif_dict(exif, hide_xml=True):
 def print_exif(exif, hide_xml=True):
     exif_data = exif_dict(exif, hide_xml)
     if exif_data is None:
-        raise Exception('Image has no exif data.')
+        raise RuntimeError('Image has no exif data.')
     logger = logging.getLogger(__name__)
     for tag, (tag_id, data) in exif_data.items():
         if isinstance(data, IFDRational):
             data = f"{data.numerator}/{data.denominator}"
-        logger.info(f"{tag:25} [#{tag_id:5d}]: {data}")
+        logger.info(msg=f"{tag:25} [#{tag_id:5d}]: {data}")
