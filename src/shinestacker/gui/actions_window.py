@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, C0116, E0611, R0914, R0912, R0915, W0718
 import os.path
 import os
 import json
@@ -123,19 +124,21 @@ class ActionsWindow(ProjectEditor):
         if not self._check_unsaved_changes():
             return
         if file_path is False:
-            file_path, _ = QFileDialog.getOpenFileName(self, "Open Project", "", "Project Files (*.fsp);;All Files (*)")
+            file_path, _ = QFileDialog.getOpenFileName(
+                self, "Open Project", "", "Project Files (*.fsp);;All Files (*)")
         if file_path:
             try:
                 self._current_file = file_path
-                self._current_file_wd = '' if os.path.isabs(file_path) else os.path.dirname(file_path)
+                self._current_file_wd = '' if os.path.isabs(file_path) \
+                    else os.path.dirname(file_path)
                 if not os.path.isabs(self._current_file_wd):
                     self._current_file_wd = os.path.abspath(self._current_file_wd)
                     self._current_file = os.path.basename(self._current_file)
-                file = open(file_path, 'r')
+                with open(file_path, 'r', encoding="utf-8") as file:
+                    json_obj = json.load(file)
                 pp = file_path.split('/')
                 if len(pp) > 1:
                     os.chdir('/'.join(pp[:-1]))
-                json_obj = json.load(file)
                 project = Project.from_dict(json_obj['project'])
                 if project is None:
                     raise RuntimeError(f"Project from file {file_path} produced a null project.")
@@ -155,21 +158,23 @@ class ActionsWindow(ProjectEditor):
                 if 'working_path' in job.params.keys():
                     working_path = job.params['working_path']
                     if not os.path.isdir(working_path):
-                        QMessageBox.warning(self, "Working path not found",
-                                            f'''The working path specified in the project file for the job:
-                                            "{job.params['name']}"
-                                            was not found.\n
-                                            Please, select a valid working path.''')
+                        QMessageBox.warning(
+                            self, "Working path not found",
+                            f'''The working path specified in the project file for the job:
+                                "{job.params['name']}"
+                                was not found.\n
+                                Please, select a valid working path.''')
                         self.edit_action(job)
                 for action in job.sub_actions:
                     if 'working_path' in job.params.keys():
                         working_path = job.params['working_path']
                         if working_path != '' and not os.path.isdir(working_path):
-                            QMessageBox.warning(self, "Working path not found",
-                                                f'''The working path specified in the project file for the job:
-                                                "{job.params['name']}"
-                                                was not found.\n
-                                                Please, select a valid working path.''')
+                            QMessageBox.warning(
+                                self, "Working path not found",
+                                f'''The working path specified in the project file for the job:
+                                "{job.params['name']}"
+                                was not found.\n
+                                Please, select a valid working path.''')
                             self.edit_action(action)
 
     def current_file_name(self):
@@ -182,7 +187,8 @@ class ActionsWindow(ProjectEditor):
             self.save_project_as()
 
     def save_project_as(self):
-        file_path, _ = QFileDialog.getSaveFileName(self, "Save Project As", "", "Project Files (*.fsp);;All Files (*)")
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "Save Project As", "", "Project Files (*.fsp);;All Files (*)")
         if file_path:
             if not file_path.endswith('.fsp'):
                 file_path += '.fsp'
@@ -198,7 +204,8 @@ class ActionsWindow(ProjectEditor):
                 'project': self.project.to_dict(),
                 'version': 1
             })
-            path = f"{self._current_file_wd}/{file_path}" if self._current_file_wd != '' else file_path
+            path = f"{self._current_file_wd}/{file_path}" \
+                if self._current_file_wd != '' else file_path
             f = open(path, 'w')
             f.write(json_obj)
             self._modified_project = False
@@ -257,7 +264,8 @@ class ActionsWindow(ProjectEditor):
                         break
             if current_action:
                 if not is_sub_action:
-                    self.set_enabled_sub_actions_gui(current_action.type_name == constants.ACTION_COMBO)
+                    self.set_enabled_sub_actions_gui(
+                        current_action.type_name == constants.ACTION_COMBO)
                 dialog = ActionConfigDialog(current_action, self._current_file_wd, self)
                 if dialog.exec() == QDialog.Accepted:
                     self.on_job_selected(job_index)
