@@ -745,8 +745,9 @@ class AlignFramesConfigurator(DefaultActionConfigurator):
     def change_match_config(self):
         detector = self.detector_field.currentText()
         descriptor = self.descriptor_field.currentText()
-        match_method = dict(zip(self.MATCHING_METHOD_OPTIONS,
-            constants.VALID_MATCHING_METHODS))[self.matching_method_field.currentText()]
+        match_method = dict(
+            zip(self.MATCHING_METHOD_OPTIONS,
+                constants.VALID_MATCHING_METHODS))[self.matching_method_field.currentText()]
         try:
             validate_align_config(detector, descriptor, match_method)
         except Exception as e:
@@ -814,7 +815,7 @@ class AlignFramesConfigurator(DefaultActionConfigurator):
             self.builder.add_field('flann_idx_kdtree', FIELD_INT, 'Flann idx kdtree',
                                    required=False,
                                    default=constants.DEFAULT_FLANN_IDX_KDTREE,
-                                   min_val=0, max_val   =10)
+                                   min_val=0, max_val=10)
             self.builder.add_field('flann_trees', FIELD_INT, 'Flann trees', required=False,
                                    default=constants.DEFAULT_FLANN_TREES,
                                    min_val=0, max_val=10)
@@ -903,8 +904,10 @@ class AlignFramesConfigurator(DefaultActionConfigurator):
             try:
                 detector = self.detector_field.currentText()
                 descriptor = self.descriptor_field.currentText()
-                match_method = dict(zip(self.MATCHING_METHOD_OPTIONS,
-                    constants.VALID_MATCHING_METHODS))[self.matching_method_field.currentText()]
+                match_method = dict(
+                    zip(self.MATCHING_METHOD_OPTIONS,
+                        constants.VALID_MATCHING_METHODS))[
+                            self.matching_method_field.currentText()]
                 validate_align_config(detector, descriptor, match_method)
                 return super().update_params(params)
             except Exception as e:
@@ -912,6 +915,7 @@ class AlignFramesConfigurator(DefaultActionConfigurator):
                 QMessageBox.warning(None, "Error", f"{str(e)}")
                 return False
         return super().update_params(params)
+
 
 class BalanceFramesConfigurator(DefaultActionConfigurator):
     CORRECTION_MAP_OPTIONS = ['Linear', 'Gamma', 'Match histograms']

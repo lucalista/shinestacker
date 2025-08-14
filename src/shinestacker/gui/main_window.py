@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, C0116, E0611, R0902, R0915, R0904, R0914, R0912, E1101, W0201
 import os
 import subprocess
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QLabel, QMessageBox,
@@ -90,6 +91,7 @@ class TabWidgetWithPlaceholder(QWidget):
         else:
             self.stacked_widget.setCurrentIndex(0)
 
+    # pylint: disable=C0103
     def addTab(self, widget, label):
         result = self.tab_widget.addTab(widget, label)
         self.update_placeholder_visibility()
@@ -117,6 +119,7 @@ class TabWidgetWithPlaceholder(QWidget):
 
     def indexOf(self, widget):
         return self.tab_widget.indexOf(widget)
+    # pylint: enable=C0103
 
 
 class MainWindow(ActionsWindow, LogManager):
@@ -289,17 +292,44 @@ class MainWindow(ActionsWindow, LogManager):
         self.run_all_jobs_action.triggered.connect(self.run_all_jobs)
         menu.addAction(self.run_all_jobs_action)
 
+    def add_action_combined_actions(self):
+        self.add_action(constants.ACTION_COMBO)
+
+    def add_action_noise_detection(self):
+        self.add_action(constants.ACTION_NOISEDETECTION)
+
+    def add_action_focus_stack(self):
+        self.add_action(constants.ACTION_FOCUSSTACK)
+
+    def add_action_focus_stack_bunch(self):
+        self.add_action(constants.ACTION_FOCUSSTACKBUNCH)
+
+    def add_action_multilayer(self):
+        self.add_action(constants.ACTION_MULTILAYER)
+
+    def add_sub_action_make_noise(self):
+        self.add_sub_action(constants.ACTION_MASKNOISE)
+
+    def add_sub_action_vignetting(self):
+        self.add_sub_action(constants.ACTION_VIGNETTING)
+
+    def add_sub_action_align_frames(self):
+        self.add_sub_action(constants.ACTION_ALIGNFRAMES)
+
+    def add_sub_action_balance_frames(self):
+        self.add_sub_action(constants.ACTION_BALANCEFRAMES)
+
     def add_actions_menu(self, menubar):
         menu = menubar.addMenu("&Actions")
         add_action_menu = QMenu("Add Action", self)
         for action in constants.ACTION_TYPES:
             entry_action = QAction(action, self)
             entry_action.triggered.connect({
-                constants.ACTION_COMBO: self.add_action_CombinedActions,
-                constants.ACTION_NOISEDETECTION: self.add_action_NoiseDetection,
-                constants.ACTION_FOCUSSTACK: self.add_action_FocusStack,
-                constants.ACTION_FOCUSSTACKBUNCH: self.add_action_FocusStackBunch,
-                constants.ACTION_MULTILAYER: self.add_action_MultiLayer
+                constants.ACTION_COMBO: self.add_action_combined_actions,
+                constants.ACTION_NOISEDETECTION: self.add_action_noise_detection,
+                constants.ACTION_FOCUSSTACK: self.add_action_focus_stack,
+                constants.ACTION_FOCUSSTACKBUNCH: self.add_action_focus_stack_bunch,
+                constants.ACTION_MULTILAYER: self.add_action_multilayer
             }[action])
             add_action_menu.addAction(entry_action)
         menu.addMenu(add_action_menu)
@@ -308,10 +338,10 @@ class MainWindow(ActionsWindow, LogManager):
         for action in constants.SUB_ACTION_TYPES:
             entry_action = QAction(action, self)
             entry_action.triggered.connect({
-                constants.ACTION_MASKNOISE: self.add_sub_action_MakeNoise,
-                constants.ACTION_VIGNETTING: self.add_sub_action_Vignetting,
-                constants.ACTION_ALIGNFRAMES: self.add_sub_action_AlignFrames,
-                constants.ACTION_BALANCEFRAMES: self.add_sub_action_BalanceFrames
+                constants.ACTION_MASKNOISE: self.add_sub_action_make_noise,
+                constants.ACTION_VIGNETTING: self.add_sub_action_vignetting,
+                constants.ACTION_ALIGNFRAMES: self.add_sub_action_align_frames,
+                constants.ACTION_BALANCEFRAMES: self.add_sub_action_balance_frames
             }[action])
             entry_action.setEnabled(False)
             self.sub_action_menu_entries.append(entry_action)
@@ -330,7 +360,8 @@ class MainWindow(ActionsWindow, LogManager):
         self.action_selector.setEnabled(False)
         toolbar.addWidget(self.action_selector)
         self.add_action_entry_action = QAction("Add Action", self)
-        self.add_action_entry_action.setIcon(QIcon(os.path.join(self.script_dir, "img/plus-round-line-icon.png")))
+        self.add_action_entry_action.setIcon(
+            QIcon(os.path.join(self.script_dir, "img/plus-round-line-icon.png")))
         self.add_action_entry_action.setToolTip("Add action")
         self.add_action_entry_action.triggered.connect(self.add_action)
         self.add_action_entry_action.setEnabled(False)
@@ -340,7 +371,8 @@ class MainWindow(ActionsWindow, LogManager):
         self.sub_action_selector.setEnabled(False)
         toolbar.addWidget(self.sub_action_selector)
         self.add_sub_action_entry_action = QAction("Add Sub Action", self)
-        self.add_sub_action_entry_action.setIcon(QIcon(os.path.join(self.script_dir, "img/plus-round-line-icon.png")))
+        self.add_sub_action_entry_action.setIcon(
+            QIcon(os.path.join(self.script_dir, "img/plus-round-line-icon.png")))
         self.add_sub_action_entry_action.setToolTip("Add sub action")
         self.add_sub_action_entry_action.triggered.connect(self.add_sub_action)
         self.add_sub_action_entry_action.setEnabled(False)
@@ -351,6 +383,7 @@ class MainWindow(ActionsWindow, LogManager):
         toolbar.addAction(self.run_job_action)
         toolbar.addAction(self.run_all_jobs_action)
 
+    # pylint: disable=C0103
     def contextMenuEvent(self, event):
         item = self.job_list.itemAt(self.job_list.viewport().mapFrom(self, event.pos()))
         current_action = None
@@ -362,7 +395,7 @@ class MainWindow(ActionsWindow, LogManager):
         if item:
             index = self.action_list.row(item)
             self.action_list.setCurrentRow(index)
-            job_row, action_row, pos = self.get_action_at(index)
+            _job_row, _action_row, pos = self.get_action_at(index)
             current_action = pos.action if not pos.is_sub_action else pos.sub_action
         if current_action:
             menu = QMenu(self)
@@ -375,7 +408,8 @@ class MainWindow(ActionsWindow, LogManager):
             menu.addAction(edit_config_action)
             menu.addSeparator()
             self.current_action_working_path, name = get_action_working_path(current_action)
-            if self.current_action_working_path != '' and os.path.exists(self.current_action_working_path):
+            if self.current_action_working_path != '' and \
+                    os.path.exists(self.current_action_working_path):
                 action_name = "Browse Working Path" + (f" > {name}" if name != '' else '')
                 self.browse_working_path_action = QAction(action_name)
                 self.browse_working_path_action.triggered.connect(self.browse_working_path_path)
@@ -383,7 +417,8 @@ class MainWindow(ActionsWindow, LogManager):
             ip, name = get_action_input_path(current_action)
             if ip != '':
                 ips = ip.split(constants.PATH_SEPARATOR)
-                self.current_action_input_path = constants.PATH_SEPARATOR.join([f"{self.current_action_working_path}/{ip}" for ip in ips])
+                self.current_action_input_path = constants.PATH_SEPARATOR.join(
+                    [f"{self.current_action_working_path}/{ip}" for ip in ips])
                 p_exists = False
                 for p in self.current_action_input_path.split(constants.PATH_SEPARATOR):
                     if os.path.exists(p):
@@ -410,20 +445,25 @@ class MainWindow(ActionsWindow, LogManager):
                 if len(retouch_path) > 0:
                     menu.addSeparator()
                     self.job_retouch_path_action = QAction("Retouch path")
-                    self.job_retouch_path_action.triggered.connect(lambda job: self.run_retouch_path(current_action, retouch_path))
+                    self.job_retouch_path_action.triggered.connect(
+                        lambda job: self.run_retouch_path(current_action, retouch_path))
                     menu.addAction(self.job_retouch_path_action)
             menu.exec(event.globalPos())
+    # pylint: enable=C0103
 
     def get_icon(self, icon):
         return QIcon(os.path.join(self.script_dir, f"img/{icon}.png"))
 
     def get_retouch_path(self, job):
         frames_path = [get_action_output_path(action)[0]
-                       for action in job.sub_actions if action.type_name == constants.ACTION_COMBO]
+                       for action in job.sub_actions
+                       if action.type_name == constants.ACTION_COMBO]
         bunches_path = [get_action_output_path(action)[0]
-                        for action in job.sub_actions if action.type_name == constants.ACTION_FOCUSSTACKBUNCH]
+                        for action in job.sub_actions
+                        if action.type_name == constants.ACTION_FOCUSSTACKBUNCH]
         stack_path = [get_action_output_path(action)[0]
-                      for action in job.sub_actions if action.type_name == constants.ACTION_FOCUSSTACK]
+                      for action in job.sub_actions
+                      if action.type_name == constants.ACTION_FOCUSSTACK]
         if len(bunches_path) > 0:
             stack_path += [bunches_path[0]]
         elif len(frames_path) > 0:
@@ -434,7 +474,7 @@ class MainWindow(ActionsWindow, LogManager):
         stack_path = [f"{wp}/{s}" for s in stack_path]
         return stack_path
 
-    def run_retouch_path(self, job, retouch_path):
+    def run_retouch_path(self, _job, retouch_path):
         self.retouch_callback(retouch_path)
 
     def browse_path(self, path):
@@ -444,9 +484,9 @@ class MainWindow(ActionsWindow, LogManager):
                 if running_under_windows():
                     os.startfile(os.path.normpath(p))
                 elif running_under_macos():
-                    subprocess.run(['open', p])
+                    subprocess.run(['open', p], check = True)
                 else:
-                    subprocess.run(['xdg-open', p])
+                    subprocess.run(['xdg-open', p], check = True)
 
     def browse_working_path_path(self):
         self.browse_path(self.current_action_working_path)
@@ -501,13 +541,14 @@ class MainWindow(ActionsWindow, LogManager):
             w = self.tab_widget.widget(i)
             if w.id_str() == id_str:
                 return i, w
+        return None, None
 
     def get_tab_at_position(self, id_str):
-        i, w = self.get_tab_and_position(id_str)
+        _i, w = self.get_tab_and_position(id_str)
         return w
 
     def get_tab_position(self, id_str):
-        i, w = self.get_tab_and_position(id_str)
+        i, _w = self.get_tab_and_position(id_str)
         return i
 
     def do_handle_end_message(self, status, id_str, message):
@@ -581,11 +622,14 @@ class MainWindow(ActionsWindow, LogManager):
                 self.start_thread(worker)
                 self._workers.append(worker)
             else:
-                QMessageBox.warning(self, "Can't run Job", "Job " + job.params["name"] + " is disabled.")
+                QMessageBox.warning(
+                    self, "Can't run Job",
+                    "Job " + job.params["name"] + " is disabled.")
                 return
 
     def run_all_jobs(self):
-        labels = [[(self.action_text(a), a.enabled() and job.enabled()) for a in job.sub_actions] for job in self.project.jobs]
+        labels = [[(self.action_text(a), a.enabled() and
+                    job.enabled()) for a in job.sub_actions] for job in self.project.jobs]
         project_name = ".".join(self.current_file_name().split(".")[:-1])
         if project_name == '':
             project_name = '[new]'

@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, C0116, E0611, W0718, E1101, C0103
 import webbrowser
 import subprocess
 import os
@@ -75,7 +76,8 @@ class GuiImageView(QWidget):
         self.setLayout(self.layout)
         pixmap = QPixmap(file_path)
         if pixmap:
-            scaled_pixmap = pixmap.scaledToWidth(gui_constants.GUI_IMG_WIDTH, Qt.SmoothTransformation)
+            scaled_pixmap = pixmap.scaledToWidth(
+                gui_constants.GUI_IMG_WIDTH, Qt.SmoothTransformation)
             self.image_label.setPixmap(scaled_pixmap)
         else:
             raise RuntimeError(f"Can't load file: {file_path}.")
@@ -112,7 +114,8 @@ class GuiOpenApp(QWidget):
         self.setLayout(self.layout)
         pixmap = QPixmap(file_path)
         if pixmap:
-            scaled_pixmap = pixmap.scaledToWidth(gui_constants.GUI_IMG_WIDTH, Qt.SmoothTransformation)
+            scaled_pixmap = pixmap.scaledToWidth(
+                gui_constants.GUI_IMG_WIDTH, Qt.SmoothTransformation)
             self.image_label.setPixmap(scaled_pixmap)
         else:
             raise RuntimeError(f"Can't load file: {file_path}.")
@@ -134,7 +137,8 @@ class GuiOpenApp(QWidget):
                 try:
                     os.system(f"{self.app} -f {self.file_path} &")
                 except Exception as e:
-                    raise RuntimeError(f"Can't open file {self.file_path} with app: {self.app}.\n{str(e)}")
+                    raise RuntimeError(
+                        f"Can't open file {self.file_path} with app: {self.app}.\n{str(e)}") from e
             else:
                 app = None
                 stacked_widget = self.parent().window().findChild(QStackedWidget)

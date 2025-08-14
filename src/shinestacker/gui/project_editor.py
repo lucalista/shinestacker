@@ -1,6 +1,8 @@
+# pylint: disable=C0114, C0115, C0116, R0904, R1702, R0917, R0913, R0902, E0611
 import os
 from dataclasses import dataclass
-from PySide6.QtWidgets import QMainWindow, QListWidget, QMessageBox, QDialog, QListWidgetItem, QLabel
+from PySide6.QtWidgets import (QMainWindow, QListWidget, QMessageBox,
+                               QDialog, QListWidgetItem, QLabel)
 from PySide6.QtCore import Qt
 from .. config.constants import constants
 from .colors import ColorPalette
@@ -28,7 +30,9 @@ class ActionPosition:
 
     @property
     def sub_action(self):
-        return None if self.sub_actions is None or self.sub_action_index == -1 else self.sub_actions[self.sub_action_index]
+        return None if self.sub_actions is None or \
+                       self.sub_action_index == -1 \
+                       else self.sub_actions[self.sub_action_index]
 
 
 def new_row_after_delete(action_row, pos: ActionPosition):
@@ -41,6 +45,8 @@ def new_row_after_delete(action_row, pos: ActionPosition):
             new_row = action_row
         elif pos.action_index == len(pos.actions):
             new_row = action_row - len(pos.actions[pos.action_index - 1].sub_actions) - 1
+        else:
+            new_row = None
     return new_row
 
 
@@ -67,7 +73,8 @@ def new_row_after_paste(action_row, pos: ActionPosition):
 
 def new_row_after_clone(job, action_row, is_sub_action, cloned):
     return action_row + 1 if is_sub_action else \
-        sum(1 + len(action.sub_actions) for action in job.sub_actions[:job.sub_actions.index(cloned)])
+        sum(1 + len(action.sub_actions)
+            for action in job.sub_actions[:job.sub_actions.index(cloned)])
 
 
 class ProjectEditor(QMainWindow):
@@ -105,7 +112,7 @@ class ProjectEditor(QMainWindow):
             constants.ACTION_BALANCEFRAMES: '🌈'
         }
         ico = icon_map.get(action.type_name, '')
-        if is_sub_action:
+        if is_sub_action and indent:
             txt = INDENT_SPACE
             if ico == '':
                 ico = '🟣'
@@ -118,7 +125,9 @@ class ProjectEditor(QMainWindow):
             if html:
                 txt = f"<b>{txt}</b>"
         in_path, out_path = get_action_input_path(action), get_action_output_path(action)
-        return f"{txt} [{ico} {action.type_name}" + (f": 📁 <i>{in_path[0]}</i> → 📂 <i>{out_path[0]}</i>]" if long_name and not is_sub_action else "]")
+        return f"{txt} [{ico} {action.type_name}" + \
+               (f": 📁 <i>{in_path[0]}</i> → 📂 <i>{out_path[0]}</i>]"
+                if long_name and not is_sub_action else "]")
 
     def get_job_at(self, index):
         return None if index < 0 else self.project.jobs[index]
@@ -138,9 +147,11 @@ class ProjectEditor(QMainWindow):
             return (job_row, action_row, None)
         job = self.project.jobs[job_row]
         if sub_action:
-            return (job_row, action_row, ActionPosition(job.sub_actions, action.sub_actions, job.sub_actions.index(action), sub_action_index))
-        else:
-            return (job_row, action_row, ActionPosition(job.sub_actions, None, job.sub_actions.index(action)))
+            return (job_row, action_row,
+                    ActionPosition(job.sub_actions, action.sub_actions,
+                                   job.sub_actions.index(action), sub_action_index))
+        return (job_row, action_row,
+                ActionPosition(job.sub_actions, None, job.sub_actions.index(action)))
 
     def find_action_position(self, job_index, ui_index):
         if not 0 <= job_index < len(self.project.jobs):
@@ -237,9 +248,12 @@ class ProjectEditor(QMainWindow):
             if confirm:
                 reply = QMessageBox.question(
                     self, "Confirm Delete",
-                    f"Are you sure you want to delete job '{self.project.jobs[current_index].params.get('name', '')}'?",
+                    "Are you sure you want to delete job "
+                    f"'{self.project.jobs[current_index].params.get('name', '')}'?",
                     QMessageBox.Yes | QMessageBox.No
                 )
+            else:
+                reply = None
             if not confirm or reply == QMessageBox.Yes:
                 self.job_list.takeItem(current_index)
                 self.mark_as_modified()
@@ -257,9 +271,12 @@ class ProjectEditor(QMainWindow):
                 reply = QMessageBox.question(
                     self,
                     "Confirm Delete",
-                    f"Are you sure you want to delete action '{self.action_text(current_action, pos.is_sub_action, indent=False)}'?",
+                    "Are you sure you want to delete action "
+                    f"'{self.action_text(current_action, pos.is_sub_action, indent=False)}'?",
                     QMessageBox.Yes | QMessageBox.No
                 )
+            else:
+                reply = None
             if not confirm or reply == QMessageBox.Yes:
                 self.mark_as_modified()
                 if pos.is_sub_action:
@@ -327,30 +344,16 @@ class ProjectEditor(QMainWindow):
         label = QLabel(html_text)
         widget_list.setItemWidget(item, label)
 
-    def add_action_CombinedActions(self):
-        self.add_action(constants.ACTION_COMBO)
-
-    def add_action_NoiseDetection(self):
-        self.add_action(constants.ACTION_NOISEDETECTION)
-
-    def add_action_FocusStack(self):
-        self.add_action(constants.ACTION_FOCUSSTACK)
-
-    def add_action_FocusStackBunch(self):
-        self.add_action(constants.ACTION_FOCUSSTACKBUNCH)
-
-    def add_action_MultiLayer(self):
-        self.add_action(constants.ACTION_MULTILAYER)
-
     def add_sub_action(self, type_name=False):
         current_job_index = self.job_list.currentRow()
         current_action_index = self.action_list.currentRow()
-        if (current_job_index < 0 or current_action_index < 0 or current_job_index >= len(self.project.jobs)):
+        if current_job_index < 0 or current_action_index < 0 or \
+           current_job_index >= len(self.project.jobs):
             return
         job = self.project.jobs[current_job_index]
         action = None
         action_counter = -1
-        for i, act in enumerate(job.sub_actions):
+        for act in job.sub_actions:
             action_counter += 1
             if action_counter == current_action_index:
                 action = act
@@ -368,25 +371,13 @@ class ProjectEditor(QMainWindow):
             self.on_job_selected(current_job_index)
             self.action_list.setCurrentRow(current_action_index)
 
-    def add_sub_action_MakeNoise(self):
-        self.add_sub_action(constants.ACTION_MASKNOISE)
-
-    def add_sub_action_Vignetting(self):
-        self.add_sub_action(constants.ACTION_VIGNETTING)
-
-    def add_sub_action_AlignFrames(self):
-        self.add_sub_action(constants.ACTION_ALIGNFRAMES)
-
-    def add_sub_action_BalanceFrames(self):
-        self.add_sub_action(constants.ACTION_BALANCEFRAMES)
-
     def copy_job(self):
         current_index = self.job_list.currentRow()
         if 0 <= current_index < len(self.project.jobs):
             self._copy_buffer = self.project.jobs[current_index].clone()
 
     def copy_action(self):
-        job_row, action_row, pos = self.get_current_action()
+        _job_row, _action_row, pos = self.get_current_action()
         if pos.actions is not None:
             self._copy_buffer = pos.sub_action.clone() if pos.is_sub_action else pos.action.clone()
 
@@ -449,8 +440,7 @@ class ProjectEditor(QMainWindow):
                 self.job_list.setCurrentRow(job_row)
                 len_actions = self.action_list.count()
                 if len_actions > 0:
-                    if action_row >= len_actions:
-                        action_row = len_actions
+                    action_row = min(action_row, len_actions)
                     self.action_list.setCurrentRow(action_row)
 
     def set_enabled(self, enabled):
@@ -459,10 +449,12 @@ class ProjectEditor(QMainWindow):
             job_row = self.job_list.currentRow()
             if 0 <= job_row < len(self.project.jobs):
                 current_action = self.project.jobs[job_row]
-                action_row = -1
+            action_row = -1
         elif self.action_list.hasFocus():
             job_row, action_row, pos = self.get_current_action()
             current_action = pos.sub_action if pos.is_sub_action else pos.action
+        else:
+            action_row = -1
         if current_action:
             if current_action.enabled() != enabled:
                 self.mark_as_modified()
