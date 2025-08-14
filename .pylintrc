@@ -1,0 +1,6 @@
+[MASTER]
+ignore-patterns = 
+    _version\.py,
+ignore-paths = 
+    .*\.ipynb_checkpoints,
+    .*\/\.ipynb_checkpoints  

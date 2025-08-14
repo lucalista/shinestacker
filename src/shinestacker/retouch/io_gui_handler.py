@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, C0116, E0611, R0902, W0718
 import traceback
 import numpy as np
 from PySide6.QtWidgets import QFileDialog, QMessageBox, QVBoxLayout, QLabel, QDialog, QApplication
@@ -20,6 +21,13 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
         self.undo_manager = undo_manager
         self.set_layer_collection(layer_collection)
         self.loader_thread = None
+        self.display_manager = None
+        self.image_viewer = None
+        self.modified = None
+        self.blank_layer = None
+        self.loading_dialog = None
+        self.loading_timer = None
+        self.exif_dialog = None
 
     def setup_ui(self, display_manager, image_viewer):
         self.display_manager = display_manager
@@ -194,14 +202,13 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
         if path:
             self.io_manager.set_exif_data(path)
             self.status_message_requested.emit(f"EXIF data extracted from {path}.")
-        self._exif_dialog = ExifData(self.io_manager.exif_data, self.parent())
-        self._exif_dialog.exec()
+        self.exif_dialog = ExifData(self.io_manager.exif_data, self.parent())
+        self.exif_dialog.exec()
 
     def close_file(self):
-        if self.parent()._check_unsaved_changes():
+        if self.parent().check_unsaved_changes():
             self.set_master_layer(None)
             self.blank_layer = None
-            self.current_stack = None
             self.layer_collection.reset()
             self.io_manager.current_file_path = ''
             self.modified = False

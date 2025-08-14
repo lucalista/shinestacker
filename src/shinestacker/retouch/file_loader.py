@@ -1,6 +1,7 @@
+# pylint: disable=C0114, C0115, C0116, E0611, W0718, R0914, E1101, R0911, R0912
 import os
-import numpy as np
 import traceback
+import numpy as np
 import cv2
 from psdtags import PsdChannelId
 from PySide6.QtCore import QThread, Signal
@@ -88,8 +89,9 @@ class FileLoader(QThread):
                             stack = np.insert(stack, 0, master_layer, axis=0)
                         return stack, labels
                     return stack, labels
-            except ValueError as e:
-                if str(e) == "TIFF file contains no ImageSourceData tag":
+                return None, None
+            except ValueError as val_err:
+                if str(val_err) == "TIFF file contains no ImageSourceData tag":
                     try:
                         stack = np.array([cv2.cvtColor(read_img(path), cv2.COLOR_BGR2RGB)])
                         return stack, [path.split('/')[-1].split('.')[0]]
@@ -97,8 +99,8 @@ class FileLoader(QThread):
                         traceback.print_tb(e.__traceback__)
                         return None, None
                 else:
-                    traceback.print_tb(e.__traceback__)
-                    raise e
+                    traceback.print_tb(val_err.__traceback__)
+                    raise val_err
             except Exception as e:
                 traceback.print_tb(e.__traceback__)
                 return None, None

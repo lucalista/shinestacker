@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0116, E0611
 import os
 import sys
 from PySide6.QtCore import QTimer
@@ -20,13 +21,13 @@ def open_files(editor, filenames):
         ))
 
 
-def open_frames(editor, filename, path):
+def open_frames(editor, filename, path_list):
     if filename:
         filenames = filename.split(';')
         open_files(editor, filenames)
-    elif path:
+    elif path_list:
         reverse = False
-        paths = path.split(';')
+        paths = path_list.split(';')
         filenames = []
         for path in paths:
             if os.path.exists(path) and os.path.isdir(path):
@@ -37,5 +38,5 @@ def open_frames(editor, filename, path):
                 filenames += full_paths
             else:
                 print(f"path {path} is invalid", file=sys.stderr)
-                exit(1)
+                sys.exit(1)
         open_files(editor, filenames)

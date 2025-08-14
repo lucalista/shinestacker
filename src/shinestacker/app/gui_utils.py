@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0116, E0611
 import os
 import sys
 from PySide6.QtCore import QCoreApplication, QProcess

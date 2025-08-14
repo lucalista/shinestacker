@@ -1,3 +1,5 @@
+# pylint: disable=C0114, C0115, C0116, E0611, R0913, R0917, R0914, W0718
+import traceback
 import numpy as np
 from PySide6.QtWidgets import QGraphicsPixmapItem
 from PySide6.QtCore import Qt
@@ -67,10 +69,9 @@ class BrushPreviewItem(QGraphicsPixmapItem, LayerCollectionHandler):
             area = np.ascontiguousarray(area[..., :3])  # RGB
         if area.dtype == np.uint8:
             return area.astype(np.float32) / 256.0
-        elif area.dtype == np.uint16:
+        if area.dtype == np.uint16:
             return area.astype(np.float32) / 65536.0
-        else:
-            raise Exception("Bitmas is neither 8 bit nor 16, but of type " + area.dtype)
+        raise RuntimeError("Bitmas is neither 8 bit nor 16, but of type " + area.dtype)
 
     def update(self, scene_pos, size):
         try:
@@ -121,6 +122,5 @@ class BrushPreviewItem(QGraphicsPixmapItem, LayerCollectionHandler):
             self.setPos(x_start, y_start)
             self.show()
         except Exception:
-            import traceback
             traceback.print_exc()
             self.hide()

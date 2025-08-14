@@ -1,3 +1,4 @@
+# pylint: disable=C0114, C0115, C0116, E0611, R0903, R0913, R0917, E1121
 import numpy as np
 from PySide6.QtWidgets import QWidget, QListWidgetItem, QVBoxLayout, QLabel, QInputDialog
 from PySide6.QtGui import QPixmap, QImage
@@ -13,10 +14,12 @@ class ClickableLabel(QLabel):
         super().__init__(text, parent)
         self.setMouseTracking(True)
 
+    # pylint: disable=C0103
     def mouseDoubleClickEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.double_clicked.emit()
         super().mouseDoubleClickEvent(event)
+    # pylint: enable=C0103
 
 
 class DisplayManager(QObject, LayerCollectionHandler):
