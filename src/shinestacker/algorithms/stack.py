@@ -13,8 +13,8 @@ from .denoise import denoise
 
 class FocusStackBase(JobBase, FrameDirectory):
     def __init__(self, name, stack_algo, enabled=True, **kwargs):
-        JobBase.__init__(self, name, enabled)
         FrameDirectory.__init__(self, name, **kwargs)
+        JobBase.__init__(self, name, enabled)
         self.stack_algo = stack_algo
         self.exif_path = kwargs.pop('exif_path', '')
         self.prefix = kwargs.pop('prefix', constants.DEFAULT_STACK_PREFIX)

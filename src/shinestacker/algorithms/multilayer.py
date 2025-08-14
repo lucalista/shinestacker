@@ -150,7 +150,7 @@ def write_multilayer_tiff_from_images(image_dict, output_file, exif_path='', cal
                      compression=compression, metadata=None, **tiff_tags)
 
 
-class MultiLayer(FrameMultiDirectory, JobBase):
+class MultiLayer(JobBase, FrameMultiDirectory):
     def __init__(self, name, enabled=True, **kwargs):
         FrameMultiDirectory.__init__(self, name, **kwargs)
         JobBase.__init__(self, name, enabled)

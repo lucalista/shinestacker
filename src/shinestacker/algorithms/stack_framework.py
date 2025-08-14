@@ -38,14 +38,14 @@ class FramePaths:
         self.reverse_order = reverse_order
         self.scratch_output_dir = scratch_output_dir
         self.input_full_path = None
-        # self.enabled = None
+        self.enabled = None
         self.filenames = None
 
-    # def folder_filelist(self):
-    #    pass
+    def folder_filelist(self):
+        assert False, "this method should be overwritten"
 
-    # def print_message(self, msg='', level=logging.INFO, end=None, begin='', tqdm=False):
-    #    pass
+    def print_message(self, msg='', level=logging.INFO, end=None, begin='', tqdm=False):
+        assert False, "this method should be overwritten"
 
     def set_filelist(self):
         self.filenames = self.folder_filelist()
@@ -188,7 +188,7 @@ class FrameMultiDirectory(FramePaths):
         job.paths.append(self.output_path)
 
 
-class FramesRefActions(FrameDirectory, ActionList):
+class FramesRefActions(ActionList, FrameDirectory):
     def __init__(self, name, enabled=True, ref_idx=-1, step_process=False, **kwargs):
         FrameDirectory.__init__(self, name, **kwargs)
         ActionList.__init__(self, name, enabled)
