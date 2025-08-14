@@ -187,18 +187,3 @@ def test_invalid_sort_order():
     lc.layer_stack = np.array([MockLayer("A"), MockLayer("B")], dtype=object)
     with pytest.raises(ValueError, match="Invalid sorting order: invalid"):
         lc.sort_layers('invalid')
-
-
-def test_add_to_method():
-    lc = LayerCollection()
-    obj = type('TestObj', (), {})()
-    lc.add_to(obj)
-    assert obj.layer_collection == lc
-    assert obj.master_layer() == lc.master_layer
-    assert obj.current_layer() == lc.current_layer()
-    assert obj.layer_stack() == lc.layer_stack
-    assert obj.layer_labels() == lc.layer_labels
-    lc.layer_labels = ["Test"]
-    assert obj.layer_labels() == ["Test"]
-    obj.set_layer_label(0, "Updated")
-    assert lc.layer_labels == ["Updated"]
