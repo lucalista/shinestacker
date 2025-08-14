@@ -2,7 +2,7 @@
 import numpy as np
 from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush
 from PySide6.QtCore import Qt, QPoint
-from .brush_gradient import create_brush_gradient
+from .brush_gradient import create_default_brush_gradient
 from .. config.gui_constants import gui_constants
 from .. config.constants import constants
 from .brush_preview import create_brush_mask
@@ -91,13 +91,7 @@ class BrushTool:
         center_x, center_y = width // 2, height // 2
         radius = preview_size // 2
         if self.image_viewer.cursor_style == 'preview':
-            gradient = create_brush_gradient(
-                center_x, center_y, radius,
-                self.brush.hardness,
-                inner_color=QColor(*gui_constants.BRUSH_COLORS['inner']),
-                outer_color=QColor(*gui_constants.BRUSH_COLORS['gradient_end']),
-                opacity=self.brush.opacity
-            )
+            gradient = create_default_brush_gradient(center_x, center_y, radius, self.brush)
             painter.setBrush(QBrush(gradient))
             painter.setPen(
                 QPen(QColor(*gui_constants.BRUSH_COLORS['outer']),

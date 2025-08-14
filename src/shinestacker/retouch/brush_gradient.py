@@ -22,3 +22,13 @@ def create_brush_gradient(center_x, center_y, radius, hardness,
         gradient.setColorAt(0.0, inner_with_opacity)
         gradient.setColorAt(1.0, inner_with_opacity)
     return gradient
+
+
+def create_default_brush_gradient(center_x, center_y, radius, brush):
+    return create_brush_gradient(
+        center_x, center_y, radius,
+        brush.hardness,
+        inner_color=QColor(*gui_constants.BRUSH_COLORS['inner']),
+        outer_color=QColor(*gui_constants.BRUSH_COLORS['gradient_end']),
+        opacity=brush.opacity
+    )
