@@ -35,7 +35,7 @@ The GUI has two main working areas:
 
 # Resources
 
- 🌍 [Website on WordPress](https://shinestacker.wordpress.com/) • 📖 [Main documentation](https://github.com/lucalista/shinestacker/blob/main/docs/main.md) • 📝 [Changelog](https://github.com/lucalista/shinestacker/blob/main/CHANGELOG.md) 
+ 🌍 [Website on WordPress](https://shinestacker.wordpress.com) • 📖 [Main documentation](https://shinestacker.readthedocs.io) • 📝 [Changelog](https://github.com/lucalista/shinestacker/blob/main/CHANGELOG.md) 
 
 
 # Credits
