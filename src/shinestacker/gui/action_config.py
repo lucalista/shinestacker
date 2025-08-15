@@ -421,29 +421,19 @@ class ActionConfigDialog(QDialog):
 
     def get_configurator(self, action_type: str) -> ActionConfigurator:
         configurators = {
-            constants.ACTION_JOB:
-                JobConfigurator(self.expert(), self.current_wd),
-            constants.ACTION_COMBO:
-                CombinedActionsConfigurator(self.expert(), self.current_wd),
-            constants.ACTION_NOISEDETECTION:
-                NoiseDetectionConfigurator(self.expert(), self.current_wd),
-            constants.ACTION_FOCUSSTACK:
-                FocusStackConfigurator(self.expert(), self.current_wd),
-            constants.ACTION_FOCUSSTACKBUNCH:
-                FocusStackBunchConfigurator(self.expert(), self.current_wd),
-            constants.ACTION_MULTILAYER:
-                MultiLayerConfigurator(self.expert(), self.current_wd),
-            constants.ACTION_MASKNOISE:
-                MaskNoiseConfigurator(self.expert(), self.current_wd),
-            constants.ACTION_VIGNETTING:
-                VignettingConfigurator(self.expert(), self.current_wd),
-            constants.ACTION_ALIGNFRAMES:
-                AlignFramesConfigurator(self.expert(), self.current_wd),
-            constants.ACTION_BALANCEFRAMES:
-                BalanceFramesConfigurator(self.expert(), self.current_wd),
+            constants.ACTION_JOB: JobConfigurator,
+            constants.ACTION_COMBO: CombinedActionsConfigurator,
+            constants.ACTION_NOISEDETECTION: NoiseDetectionConfigurator,
+            constants.ACTION_FOCUSSTACK: FocusStackConfigurator,
+            constants.ACTION_FOCUSSTACKBUNCH: FocusStackBunchConfigurator,
+            constants.ACTION_MULTILAYER: MultiLayerConfigurator,
+            constants.ACTION_MASKNOISE: MaskNoiseConfigurator,
+            constants.ACTION_VIGNETTING: VignettingConfigurator,
+            constants.ACTION_ALIGNFRAMES: AlignFramesConfigurator,
+            constants.ACTION_BALANCEFRAMES: BalanceFramesConfigurator,
         }
-        return configurators.get(action_type,
-                                 DefaultActionConfigurator(self.expert(), self.current_wd))
+        return configurators.get(
+            action_type, DefaultActionConfigurator)(self.expert(), self.current_wd)
 
     def accept(self):
         self.parent().project_buffer.append(self.parent().project.clone())
