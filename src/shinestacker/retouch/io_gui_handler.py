@@ -59,7 +59,7 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
         self.loading_timer.stop()
         self.loading_dialog.accept()
         self.loading_dialog.deleteLater()
-        QMessageBox.critical(self, "Error", error_msg)
+        QMessageBox.critical(self.parent(), "Error", error_msg)
         self.status_message_requested.emit(f"Error loading: {self.io_manager.current_file_path}")
 
     def open_file(self, file_paths=None):

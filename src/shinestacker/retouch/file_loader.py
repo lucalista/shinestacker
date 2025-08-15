@@ -21,7 +21,7 @@ class FileLoader(QThread):
         try:
             current_stack, current_labels = self.load_stack(self.path)
             if current_stack is None or len(current_stack) == 0:
-                self.error.emit("Empty or invalid stack")
+                self.error.emit(f"The file {self.path} does not contain a valid image.")
                 return
             if current_labels:
                 master_indices = [i for i, label in enumerate(current_labels)
