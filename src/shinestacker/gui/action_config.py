@@ -732,15 +732,18 @@ class AlignFramesConfigurator(DefaultActionConfigurator):
     def __init__(self, expert, current_wd):
         super().__init__(expert, current_wd)
         self.matching_method_field = None
-        # self.info_label = None
-        # self.detector_field = None
-        # self.descriptor_field = None
-        # self.matching_method_field = None
+        self.info_label = None
+        self.detector_field = None
+        self.descriptor_field = None
+        self.matching_method_field = None
 
     def show_info(self, message, timeout=3000):
         self.info_label.setText(message)
         self.info_label.setVisible(True)
-        QTimer.singleShot(timeout, lambda: self.info_label.setVisible(False))
+        timer = QTimer(self.info_label)
+        timer.setSingleShot(True)
+        timer.timeout.connect(self.info_label.hide)
+        timer.start(timeout)
 
     def change_match_config(self):
         detector = self.detector_field.currentText()

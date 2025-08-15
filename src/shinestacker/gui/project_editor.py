@@ -88,6 +88,7 @@ class ProjectEditor(QMainWindow):
         self.job_list_model = None
         self.expert_options = False
         self.script_dir = os.path.dirname(__file__)
+        self.dialog = None
 
     def set_project(self, project):
         self.project = project
@@ -301,8 +302,8 @@ class ProjectEditor(QMainWindow):
 
     def add_job(self):
         job_action = ActionConfig("Job")
-        dialog = ActionConfigDialog(job_action, self)
-        if dialog.exec() == QDialog.Accepted:
+        self.dialog = ActionConfigDialog(job_action, self)
+        if self.dialog.exec() == QDialog.Accepted:
             self.mark_as_modified()
             self.project.jobs.append(job_action)
             self.add_list_item(self.job_list, job_action, False)
@@ -322,8 +323,8 @@ class ProjectEditor(QMainWindow):
             type_name = self.action_selector.currentText()
         action = ActionConfig(type_name)
         action.parent = self.get_current_job()
-        dialog = ActionConfigDialog(action, self)
-        if dialog.exec() == QDialog.Accepted:
+        self.dialog = ActionConfigDialog(action, self)
+        if self.dialog.exec() == QDialog.Accepted:
             self.mark_as_modified()
             self.project.jobs[current_index].add_sub_action(action)
             self.add_list_item(self.action_list, action, False)
@@ -364,8 +365,8 @@ class ProjectEditor(QMainWindow):
         if type_name is False:
             type_name = self.sub_action_selector.currentText()
         sub_action = ActionConfig(type_name)
-        dialog = ActionConfigDialog(sub_action, self)
-        if dialog.exec() == QDialog.Accepted:
+        self.dialog = ActionConfigDialog(sub_action, self)
+        if self.dialog.exec() == QDialog.Accepted:
             self.mark_as_modified()
             action.add_sub_action(sub_action)
             self.on_job_selected(current_job_index)
