@@ -1,0 +1,24 @@
+name: "Python CodeQL Configuration"
+
+paths:
+  - src/
+
+paths-ignore:
+  - '**/tests/**'
+  - '**/test/**'
+  - '**/venv/**'
+  - '**/env/**'
+  - '**/.virtualenv/**'
+  - '**/site-packages/**'
+  - '**/__pycache__/**'
+  - '**/*.pyc'
+  - '**/migrations/**'
+  - '**/fixtures/**'
+  - '**/setup.py'
+
+queries:
+  - uses: security-and-quality
+  - name: Custom Python queries
+    uses: ./.github/codeql/custom-python-queries
+
+disable-default-queries: false
