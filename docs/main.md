@@ -34,8 +34,8 @@ job.run()
 Clone the pagkage from GitHub:
 
 ```bash
-git clone https://github.com/lucalista/focusstack.git
-cd focusstack
+git clone https://github.com/lucalista/shinestacker.git
+cd shinestacker
 pip install -e .
 ```
 
@@ -43,7 +43,7 @@ pip install -e .
 Launch GUI
 
 ```bash
-focusstack
+shinestacker
 ```
 
 Follow [GUI guide](gui.md) for batch processing and retouching.
