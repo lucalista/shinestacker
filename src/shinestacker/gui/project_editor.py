@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0115, C0116, R0904, R1702, R0917, R0913, R0902, E0611
+# pylint: disable=C0114, C0115, C0116, R0904, R1702, R0917, R0913, R0902, E0611, E1131
 import os
 from dataclasses import dataclass
 from PySide6.QtWidgets import (QMainWindow, QListWidget, QMessageBox,

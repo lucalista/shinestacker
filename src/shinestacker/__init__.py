@@ -1,4 +1,4 @@
-# flake8: noqa F401 F403
+# flake8: noqa F401 F403, E0401
 # pylint: disable=C0114
 from ._version import __version__
 from . import config

@@ -1,5 +1,7 @@
 matplotlib
 matplotlib
+imagecodecs
+jsonpickle
 numpy
 opencv_python
 pillow

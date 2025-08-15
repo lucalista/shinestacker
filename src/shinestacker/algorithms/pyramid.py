@@ -152,7 +152,7 @@ class PyramidStack(PyramidBase):
         all_laplacians = []
         levels = None
         for i, img_path in enumerate(filenames):
-            self.print_message(f': validating file {img_path.split('/')[-1]}')
+            self.print_message(f": validating file {img_path.split('/')[-1]}")
 
             img, metadata, updated = self.read_image_and_update_metadata(img_path, metadata)
 
