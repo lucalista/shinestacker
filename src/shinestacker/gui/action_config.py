@@ -732,10 +732,10 @@ class AlignFramesConfigurator(DefaultActionConfigurator):
     def __init__(self, expert, current_wd):
         super().__init__(expert, current_wd)
         self.matching_method_field = None
-        self.info_label = None
-        self.detector_field = None
-        self.descriptor_field = None
-        self.matching_method_field = None
+        # self.info_label = None
+        # self.detector_field = None
+        # self.descriptor_field = None
+        # self.matching_method_field = None
 
     def show_info(self, message, timeout=3000):
         self.info_label.setText(message)
@@ -751,7 +751,6 @@ class AlignFramesConfigurator(DefaultActionConfigurator):
         try:
             validate_align_config(detector, descriptor, match_method)
         except Exception as e:
-            traceback.print_tb(e.__traceback__)
             self.show_info(str(e))
             if descriptor == constants.DETECTOR_SIFT and \
                match_method == constants.MATCHING_NORM_HAMMING:
