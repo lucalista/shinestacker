@@ -33,9 +33,9 @@ The GUI has two main working areas:
 
 <img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/img/gui-retouch.png' width="600" referrerpolicy="no-referrer">
 
-# Documentation
+# Resources
 
-📖 [Main documentation](https://github.com/lucalista/shinestacker/blob/main/docs/main.md) • 📝 [Changelog](https://github.com/lucalista/shinestacker/blob/main/CHANGELOG.md)
+ 🌍 [Website on WordPress](https://shinestacker.wordpress.com/) • 📖 [Main documentation](https://github.com/lucalista/shinestacker/blob/main/docs/main.md) • 📝 [Changelog](https://github.com/lucalista/shinestacker/blob/main/CHANGELOG.md) 
 
 
 # Credits
