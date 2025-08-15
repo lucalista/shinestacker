@@ -1,0 +1,28 @@
+name: "Python CodeQL Analysis"
+
+on:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  analyze:
+    name: Analyze Python Code
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: 'python'
+        config-file: ./.github/codeql/codeql-config.yml
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
