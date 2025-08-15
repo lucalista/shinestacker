@@ -95,7 +95,7 @@ class DepthMapStack(BaseStackAlgo):
         gray_images = []
         metadata = None
         for i, img_path in enumerate(filenames):
-            self.print_message(f': reading file (1/2) {img_path.split('/')[-1]}')
+            self.print_message(f": reading file (1/2) {img_path.split('/')[-1]}")
 
             img, metadata, _updated = self.read_image_and_update_metadata(img_path, metadata)
 
