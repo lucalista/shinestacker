@@ -7,16 +7,15 @@ import matplotlib
 import matplotlib.backends.backend_pdf
 matplotlib.use('agg')
 from PySide6.QtWidgets import QApplication, QMenu
-from PySide6.QtGui import QIcon, QAction
+from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt, QTimer, QEvent
 from shinestacker.config.config import config
 config.init(DISABLE_TQDM=True, DONT_USE_NATIVE_MENU=True)
 from shinestacker.config.constants import constants
 from shinestacker.core.logging import setup_logging
 from shinestacker.gui.main_window import MainWindow
-from shinestacker.app.gui_utils import disable_macos_special_menu_items
+from shinestacker.app.gui_utils import disable_macos_special_menu_items, fill_app_menu
 from shinestacker.app.help_menu import add_help_action
-from shinestacker.app.about_dialog import show_about_dialog
 
 
 class ProjectApp(MainWindow):
@@ -29,18 +28,7 @@ class ProjectApp(MainWindow):
 
     def create_menu(self):
         app_menu = QMenu(constants.APP_STRING)
-        about_action = QAction(f"About {constants.APP_STRING}", self)
-        about_action.triggered.connect(show_about_dialog)
-        app_menu.addAction(about_action)
-        app_menu.addSeparator()
-        if config.DONT_USE_NATIVE_MENU:
-            quit_txt, quit_short = "&Quit", "Ctrl+Q"
-        else:
-            quit_txt, quit_short = "Shut dw&wn", "Ctrl+Q"
-        exit_action = QAction(quit_txt, self)
-        exit_action.setShortcut(quit_short)
-        exit_action.triggered.connect(self.quit)
-        app_menu.addAction(exit_action)
+        fill_app_menu(self, app_menu)
         return app_menu
 
     def _retouch_callback(self, filename):

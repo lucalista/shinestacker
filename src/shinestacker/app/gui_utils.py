@@ -2,6 +2,10 @@
 import os
 import sys
 from PySide6.QtCore import QCoreApplication, QProcess
+from PySide6.QtGui import QAction
+from shinestacker.config.constants import constants
+from shinestacker.config.config import config
+from shinestacker.app.about_dialog import show_about_dialog
 
 
 def disable_macos_special_menu_items():
@@ -34,3 +38,18 @@ def disable_macos_special_menu_items():
     if user:
         QProcess.startDetached("pkill", ["-u", user, "-f", "cfprefsd"])
         QProcess.startDetached("pkill", ["-u", user, "-f", "SystemUIServer"])
+
+
+def fill_app_menu(app, app_menu):
+    about_action = QAction(f"About {constants.APP_STRING}", app)
+    about_action.triggered.connect(show_about_dialog)
+    app_menu.addAction(about_action)
+    app_menu.addSeparator()
+    if config.DONT_USE_NATIVE_MENU:
+        quit_txt, quit_short = "&Quit", "Ctrl+Q"
+    else:
+        quit_txt, quit_short = "Shut dw&wn", "Ctrl+Q"
+    exit_action = QAction(quit_txt, app)
+    exit_action.setShortcut(quit_short)
+    exit_action.triggered.connect(app.quit)
+    app_menu.addAction(exit_action)
