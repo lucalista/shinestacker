@@ -7,7 +7,7 @@ Quick start example:
 ```python
 from focus_stack import *
 
-job = StackJob("job", "E:/Focus stacking/My image directory/", input_path="tiff_images")
+job = StackJob("job", "E:/focus_stacking/project_directory/", input_path="tiff_images")
 job.add_action(CombinedActions("align", actions=[AlignFrames(), BalanceFrames()]))
 job.add_action(FocusStackBunch("batches", PyramidStack(), frames=12, overlap=2))
 job.add_action(FocusStack("stack", PyramidStack(), prefix='pyram_'))
