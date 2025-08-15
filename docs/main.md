@@ -52,21 +52,13 @@ Follow [GUI guide](gui.md) for batch processing and retouching.
 ## Advanced Processing Pipeline
 
 ```python
-from shinestacker.algorithms import *
+from shinestacker import *
 
-job = StackJob("job", "E:/Focus stacking/My image directory/", input_path="src")
-job.add_action(NoiseDetection())
-job.run()
-
-job = StackJob("job", "E:/Focus stacking/My image directory/", input_path="src")
-job.add_action(CombinedActions("align",
-			       [MaskNoise(),Vignetting(), AlignFrames(),
-                                BalanceFrames(mask_size=0.9,
-                                              intensity_interval={'min': 150, 'max': 65385})]))
-job.add_action(FocusStackBunch("bunches", PyramidStack(), frames=10, overlap=2, denoise=0.8))
-job.add_action(FocusStack("stack", PyramidStack(), prefix='pyramid_', denoise=0.8))
-job.add_action(FocusStack("stack", DepthMapStack(), input_path='batches', prefix='depthmap_', denoise=0.8))
-job.add_action(MultiLayer("multilayer", input_path=['batches', 'stack']))
+job = StackJob("job", "E:/focus_stacking/project_directory/", input_path="tiff_images")
+job.add_action(CombinedActions("align", actions=[AlignFrames(), BalanceFrames()]))
+job.add_action(FocusStackBunch("batches", PyramidStack(), frames=12, overlap=2))
+job.add_action(FocusStack("stack", PyramidStack(), prefix='pyram_'))
+job.add_action(FocusStack("stack", DepthMapStack(), prefix='dmap_'))
 job.run()
 ```
 
