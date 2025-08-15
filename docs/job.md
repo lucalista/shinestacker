@@ -5,7 +5,7 @@ Create a job, then schedule the desired actions in a job, then run the job.
 Quick start example:
 
 ```python
-from focus_stack import *
+from shinestacker import *
 
 job = StackJob("job", "E:/focus_stacking/project_directory/", input_path="tiff_images")
 job.add_action(CombinedActions("align", actions=[AlignFrames(), BalanceFrames()]))
