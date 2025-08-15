@@ -1,66 +1,29 @@
-- uses: Silleellie/pylint-github-action@v2.1
-  with:
-    
-    # Path of the package(s) or python file(s) to lint, relative to the repository root. 
-    # If more than one package (or python file) should be linted, simply specify all of them 
-    # with the multi-line notation like so:
-    # lint-path: |
-    #   src
-    #   other_src
-    #   main.py
-    #   ...
-    # 
-    # Required
-    lint-path: src
-    
-    # Version of the Python interpreter which will install all requirements of your project 
-    # and lint the package(s) or python file(s) specified with the `lint-path` argument
-    #
-    # Required
-    python-version: 3.9
+name: Pylint Check
 
-    # Path of the requirements of your project, relative to the repository root. 
-    # This can be easily changed in case you have `requirements-dev.txt`
-    #
-    # Optional, Default: requirements.txt
-    requirements-path: requirements.txt
-    
-    # Path of the README.md to update with the pylint badge, relative to the repository root.
-    #
-    # Optional, Default: README.md
-    readme-path: README.md
-    
-    # Path of the .pylintrc file containing custom lint rules to use, relative to the repository root.
-    # In case it is not specified, the standard lint rules are used 
-    #
-    # Optional, Default: ''
-    pylintrc-path: .pylintrc
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 
-    # Text to display in the badge
-    #
-    # Optional, Default: PyLint
-    badge-text: PyLint
+jobs:
+  pylint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Required for badge commits
+    steps:
+    - uses: actions/checkout@v4
 
-    # Color of the badge for pylint scores < 5.
-    # Hex, rgb, rgba, hsl, hsla and css named colors can all be used
-    #
-    # Optional, Default: red
-    color-bad-score: red
-
-    # Color of the badge for pylint scores in range [5,8).
-    # Hex, rgb, rgba, hsl, hsla and css named colors can all be used
-    #
-    # Optional, Default: orange
-    color-ok-score: orange
-
-    # Color of the badge for pylint scores in range [8,10).
-    # Hex, rgb, rgba, hsl, hsla and css named colors can all be used
-    #
-    # Optional, Default: yellow
-    color-good-score: yellow
-
-    # Color of the badge for pylint scores == 10.
-    # Hex, rgb, rgba, hsl, hsla and css named colors can all be used
-    #
-    # Optional, Default: brightgreen
-    color-perfect-score: brightgreen
+    # Add ALL required configuration under this step
+    - uses: Silleellie/pylint-github-action@v2.1
+      with:
+        lint-path: src
+        python-version: 3.9
+        requirements-path: requirements.txt
+        readme-path: README.md
+        pylintrc-path: .pylintrc
+        badge-text: PyLint
+        color-bad-score: red
+        color-ok-score: orange
+        color-good-score: yellow
+        color-perfect-score: brightgreen
