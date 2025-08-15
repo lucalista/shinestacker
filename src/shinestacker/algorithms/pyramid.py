@@ -169,7 +169,7 @@ class PyramidStack(PyramidBase):
             if self.process.callback('check_running', self.process.id, self.process.name) is False:
                 raise RunStopException(self.name)
         for img_path in filenames:
-            self.print_message(f': processing file {img_path.split('/')[-1]}')
+            self.print_message(f": processing file {img_path.split('/')[-1]}")
             img = read_img(img_path)
             all_laplacians.append(self.process_single_image(img, levels))
         stacked_image = self.collapse(self.fuse_pyramids(all_laplacians))

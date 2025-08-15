@@ -123,7 +123,7 @@ class DepthMapStack(BaseStackAlgo):
         weights = self.get_focus_map(energies)
         blended_pyramid = None
         for i, img_path in enumerate(filenames):
-            self.print_message(f': reading file (2/2) {img_path.split('/')[-1]}')
+            self.print_message(f": reading file (2/2) {img_path.split('/')[-1]}")
             img = read_img(img_path).astype(self.float_type)
             weight = weights[i]
             gp_img = [img]
