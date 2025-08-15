@@ -15,9 +15,8 @@ from shinestacker.config.constants import constants
 from shinestacker.core.logging import setup_logging
 from shinestacker.gui.main_window import MainWindow
 from shinestacker.retouch.image_editor_ui import ImageEditorUI
-from shinestacker.app.gui_utils import disable_macos_special_menu_items
+from shinestacker.app.gui_utils import disable_macos_special_menu_items, fill_app_menu
 from shinestacker.app.help_menu import add_help_action
-from shinestacker.app.about_dialog import show_about_dialog
 from shinestacker.app.open_frames import open_frames
 
 
@@ -74,18 +73,7 @@ class MainApp(QMainWindow):
         app_menu.addAction(self.switch_to_project_action)
         app_menu.addAction(self.switch_to_retouch_action)
         app_menu.addSeparator()
-        about_action = QAction(f"About {constants.APP_STRING}", self)
-        about_action.triggered.connect(show_about_dialog)
-        app_menu.addAction(about_action)
-        app_menu.addSeparator()
-        if config.DONT_USE_NATIVE_MENU:
-            quit_txt, quit_short = "&Quit", "Ctrl+Q"
-        else:
-            quit_txt, quit_short = "Shut dw&wn", "Ctrl+Q"
-        exit_action = QAction(quit_txt, self)
-        exit_action.setShortcut(quit_short)
-        exit_action.triggered.connect(self.quit)
-        app_menu.addAction(exit_action)
+        fill_app_menu(self, app_menu)
         return app_menu
 
     def quit(self):
