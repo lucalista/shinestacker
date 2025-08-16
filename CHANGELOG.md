@@ -4,6 +4,18 @@ This page reports the main releases only and the main changes therein.
 
 ---
 
+## [v0.3.4] - 2025-08-16
+**Code consolidation and fixes**
+
+### Changes
+
+* code consolidation with support of pylint code checking
+* some bug fixes
+* new project dialog shows the number of bunches, if selected
+* updated sample images, examples and documentation
+
+---
+
 ## [v0.3.3] - 2025-08-13
 **Fixed PyPI distribution**
 
@@ -12,16 +24,6 @@ This release is equivalent to v0.3.2, but resolves a problem for PyPI distributi
 ### Changes
 
 * examples and tests removed from PyPI distribution in order to fix file size limit
-
-### Changes
-
-* fixed ```from shinestacker import *```
-* restored jupyter support and updated examples
-* several bug fixes
-* several code refactoring reduces interclass dependencies
-* updated documentation
-* added new sample images and project files
-* examples removed from PyPI distribution
 
 ---
 
