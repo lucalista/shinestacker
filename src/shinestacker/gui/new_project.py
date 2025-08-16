@@ -7,6 +7,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt
 from .. config.gui_constants import gui_constants
 from .. config.constants import constants
+from .. algorithms.stack import get_bunches
 
 
 class NewProjectDialog(QDialog):
@@ -51,12 +52,14 @@ class NewProjectDialog(QDialog):
         self.layout.addRow(spacer)
         self.input_folder = QLineEdit()
         self.input_folder .setPlaceholderText('input files folder')
+        self.input_folder.textChanged.connect(self.update_bunches_label)
         button = QPushButton("Browse...")
 
         def browse():
             path = QFileDialog.getExistingDirectory(None, "Select input files folder")
             if path:
                 self.input_folder.setText(path)
+
         button.clicked.connect(browse)
         button.setAutoDefault(False)
         layout = QHBoxLayout()
@@ -75,9 +78,9 @@ class NewProjectDialog(QDialog):
         self.align_frames.setChecked(gui_constants.NEW_PROJECT_ALIGN_FRAMES)
         self.balance_frames = QCheckBox()
         self.balance_frames.setChecked(gui_constants.NEW_PROJECT_BALANCE_FRAMES)
+
         self.bunch_stack = QCheckBox()
         self.bunch_stack.setChecked(gui_constants.NEW_PROJECT_BUNCH_STACK)
-        self.bunch_stack.toggled.connect(self.update_bunch_options)
         self.bunch_frames = QSpinBox()
         bunch_frames_range = gui_constants.NEW_PROJECT_BUNCH_FRAMES
         self.bunch_frames.setRange(bunch_frames_range['min'], bunch_frames_range['max'])
@@ -86,7 +89,13 @@ class NewProjectDialog(QDialog):
         bunch_overlap_range = gui_constants.NEW_PROJECT_BUNCH_OVERLAP
         self.bunch_overlap.setRange(bunch_overlap_range['min'], bunch_overlap_range['max'])
         self.bunch_overlap.setValue(constants.DEFAULT_OVERLAP)
+        self.bunches_label = QLabel("")
+
         self.update_bunch_options(gui_constants.NEW_PROJECT_BUNCH_STACK)
+        self.bunch_stack.toggled.connect(self.update_bunch_options)
+        self.bunch_frames.valueChanged.connect(self.update_bunches_label)
+        self.bunch_overlap.valueChanged.connect(self.update_bunches_label)
+
         self.focus_stack_pyramid = QCheckBox()
         self.focus_stack_pyramid.setChecked(gui_constants.NEW_PROJECT_FOCUS_STACK_PYRAMID)
         self.focus_stack_depth_map = QCheckBox()
@@ -104,7 +113,8 @@ class NewProjectDialog(QDialog):
         self.layout.addRow("Balance layers:", self.balance_frames)
         self.layout.addRow("Bunch stack:", self.bunch_stack)
         self.layout.addRow("Bunch frames:", self.bunch_frames)
-        self.layout.addRow("Bunch frames:", self.bunch_overlap)
+        self.layout.addRow("Bunch overlap:", self.bunch_overlap)
+        self.layout.addRow("Number of bunches: ", self.bunches_label)
         if self.expert():
             self.layout.addRow("Focus stack (pyramid):", self.focus_stack_pyramid)
             self.layout.addRow("Focus stack (depth map):", self.focus_stack_depth_map)
@@ -115,6 +125,28 @@ class NewProjectDialog(QDialog):
     def update_bunch_options(self, checked):
         self.bunch_frames.setEnabled(checked)
         self.bunch_overlap.setEnabled(checked)
+        self.update_bunches_label()
+
+    def update_bunches_label(self):
+        if self.bunch_stack.isChecked():
+            def count_image_files(path):
+                if path == '' or not os.path.isdir(path):
+                    return 0
+                extensions = ['jpg', 'jpeg', 'tif', 'tiff']
+                count = 0
+                for filename in os.listdir(path):
+                    if '.' in filename:
+                        ext = filename.lower().split('.')[-1]
+                        if ext in extensions:
+                            count += 1
+                return count
+
+            bunches = get_bunches(list(range(count_image_files(self.input_folder.text()))),
+                                  self.bunch_frames.value(),
+                                  self.bunch_overlap.value())
+            self.bunches_label.setText(f"{len(bunches)}")
+        else:
+            self.bunches_label.setText(" - ")
 
     def accept(self):
         input_folder = self.input_folder.text()
