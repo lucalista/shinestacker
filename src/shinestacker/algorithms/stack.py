@@ -58,6 +58,12 @@ class FocusStackBase(JobBase, FrameDirectory):
             self.exif_path = working_path + "/" + self.exif_path
 
 
+def get_bunches(collection, n_frames, n_overlap):
+    bunches = [collection[x:x + n_frames]
+               for x in range(0, len(collection) - n_overlap, n_frames - n_overlap)]
+    return bunches
+
+
 class FocusStackBunch(ActionList, FocusStackBase):
     def __init__(self, name, stack_algo, enabled=True, **kwargs):
         ActionList.__init__(self, name, enabled)
@@ -79,8 +85,7 @@ class FocusStackBunch(ActionList, FocusStackBase):
     def begin(self):
         ActionList.begin(self)
         fnames = self.folder_filelist()
-        self._chunks = [fnames[x:x + self.frames]
-                        for x in range(0, len(fnames) - self.overlap, self.frames - self.overlap)]
+        self._chunks = get_bunches(fnames, self.frames, self.overlap)
         self.set_counts(len(self._chunks))
 
     def end(self):
