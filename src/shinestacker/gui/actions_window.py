@@ -197,6 +197,7 @@ class ActionsWindow(ProjectEditor):
             self._current_file = file_path
             self._modified_project = False
             self.update_title()
+            os.chdir(os.path.dirname(file_path))
 
     def do_save(self, file_path):
         try:
