@@ -1,0 +1,80 @@
+THIRD-PARTY LICENSES
+====================
+
+This application bundles several third-party Python packages.  
+Each package is copyrighted by its respective authors and distributed under the following licenses.  
+Full license texts are reproduced below when required.
+
+-------------------------------------------------------------------------------
+matplotlib
+License: PSF license + BSD style
+https://matplotlib.org/stable/users/project/license.html
+
+-------------------------------------------------------------------------------
+imagecodecs
+License: BSD-3-Clause
+https://pypi.org/project/imagecodecs/
+
+-------------------------------------------------------------------------------
+jsonpickle
+License: BSD-3-Clause
+https://github.com/jsonpickle/jsonpickle
+
+-------------------------------------------------------------------------------
+numpy
+License: BSD-3-Clause
+https://numpy.org/
+
+-------------------------------------------------------------------------------
+opencv-python
+License: Apache License 2.0
+https://github.com/opencv/opencv-python
+
+-------------------------------------------------------------------------------
+pillow
+License: Historical PIL Software License (similar to MIT)
+https://python-pillow.org
+
+-------------------------------------------------------------------------------
+psdtags
+License: MIT
+https://pypi.org/project/psdtags/
+
+-------------------------------------------------------------------------------
+PySide6
+License: GNU Lesser General Public License v3.0 (LGPL-3.0)  
+or commercial license from The Qt Company
+https://doc.qt.io/qtforpython/
+
+Full license text follows:
+
+--- BEGIN LGPL-3.0 LICENSE ---
+<qui incolla il testo completo della LGPL-3.0>
+--- END LGPL-3.0 LICENSE ---
+
+-------------------------------------------------------------------------------
+scipy
+License: BSD-3-Clause
+https://scipy.org/
+
+-------------------------------------------------------------------------------
+tifffile
+License: BSD-3-Clause
+https://www.lfd.uci.edu/~gohlke/
+
+-------------------------------------------------------------------------------
+tqdm
+License: Mozilla Public License 2.0 (MPL-2.0)
+https://github.com/tqdm/tqdm
+
+Full license text follows:
+
+--- BEGIN MPL-2.0 LICENSE ---
+<qui incolla il testo completo della MPL-2.0>
+--- END MPL-2.0 LICENSE ---
+
+-------------------------------------------------------------------------------
+
+NOTE:
+This file is provided for license compliance and attribution purposes.  
+Your application code is licensed separately under the GNU Lesser General Public License v3.0.
