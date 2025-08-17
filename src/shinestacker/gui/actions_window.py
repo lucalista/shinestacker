@@ -1,7 +1,7 @@
 # pylint: disable=C0114, C0115, C0116, E0611, R0914, R0912, R0915, W0718
 import os.path
 import os
-import traceback
+# import traceback
 import json
 import jsonpickle
 from PySide6.QtWidgets import QMessageBox, QFileDialog, QDialog
@@ -124,12 +124,11 @@ class ActionsWindow(ProjectEditor):
         if file_path:
             try:
                 self._current_file_wd = os.path.abspath(os.path.dirname(file_path))
+                os.chdir(self._current_file_wd)
                 self._current_file = os.path.basename(file_path)
+                file_path = os.path.join(self._current_file_wd, self._current_file)
                 with open(file_path, 'r', encoding="utf-8") as file:
                     json_obj = json.load(file)
-                pp = file_path.split('/')
-                if len(pp) > 1:
-                    os.chdir('/'.join(pp[:-1]))
                 project = Project.from_dict(json_obj['project'])
                 if project is None:
                     raise RuntimeError(f"Project from file {file_path} produced a null project.")
@@ -140,7 +139,7 @@ class ActionsWindow(ProjectEditor):
                 if self.job_list.count() > 0:
                     self.job_list.setCurrentRow(0)
             except Exception as e:
-                traceback.print_tb(e.__traceback__)
+                # traceback.print_tb(e.__traceback__)
                 QMessageBox.critical(self, "Error", f"Cannot open file {file_path}:\n{str(e)}")
             if len(self.project.jobs) > 0:
                 self.job_list.setCurrentRow(0)
@@ -183,7 +182,8 @@ class ActionsWindow(ProjectEditor):
         if file_path:
             if not file_path.endswith('.fsp'):
                 file_path += '.fsp'
-            self._current_file_wd = os.path.dirname(file_path)
+            self._current_file_wd = os.path.abspath(os.path.dirname(file_path))
+            os.chdir(self._current_file_wd)
             self._current_file = os.path.basename(file_path)
             self.do_save(file_path)
             self._modified_project = False
