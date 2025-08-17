@@ -43,7 +43,7 @@ The GUI has two main working areas:
 
 # Credits
 
-The main pyramid stack algorithm was initially inspired by the [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar that was used under permission of the author for initial versions of this package. The implementation in the latest releases was rewritten from the original code.
+The first version of the core focus stack algorithm was initially inspired by the [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar that was used under permission of the author. The implementation in the latest releases was rewritten from the original code.
 
 # Resources
 
