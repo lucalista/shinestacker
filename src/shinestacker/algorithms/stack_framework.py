@@ -243,6 +243,7 @@ class SubAction:
     def end(self):
         pass
 
+
 class CombinedActions(FramesRefActions):
     def __init__(self, name, actions=[], enabled=True, **kwargs):
         FramesRefActions.__init__(self, name, enabled, **kwargs)
@@ -260,10 +261,10 @@ class CombinedActions(FramesRefActions):
         filename = self.filenames[idx]
         img = read_img((self.output_dir
                         if self.step_process else self.input_full_path) + f"/{filename}")
-        self.dtype = img.dtype
-        self.shape = img.shape
         if img is None:
             raise RuntimeError(f"Invalid file: {self.input_full_path}/{filename}")
+        self.dtype = img.dtype
+        self.shape = img.shape
         return img
 
     def run_frame(self, idx, ref_idx):

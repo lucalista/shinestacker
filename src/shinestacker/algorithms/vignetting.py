@@ -60,8 +60,7 @@ class Vignetting(SubAction):
         try:
             res = curve_fit(Vignetting.sigmoid, r_valid, i_valid,
                             p0=[np.max(i_valid), 0.01, np.median(r_valid)],
-                            bounds=([0, 0, 0], ['inf', 'inf', 'inf'])
-                           )[0]
+                            bounds=([0, 0, 0], ['inf', 'inf', 'inf']))[0]
         except Exception:
             self.process.sub_message(
                 color_str(": could not find vignetting model", "red"),
@@ -94,8 +93,8 @@ class Vignetting(SubAction):
         self.v0 = Vignetting.sigmoid(0, *pars)
         i0_fit, k_fit, r0_fit = pars
         self.process.sub_message(
-         f": vignetting model parameters: i0={i0_fit:.4f}, k={k_fit:.4f}, r0={r0_fit:.4f}",
-        level=logging.DEBUG)
+            f": vignetting model parameters: i0={i0_fit:.4f}, k={k_fit:.4f}, r0={r0_fit:.4f}",
+            level=logging.DEBUG)
         if self.plot_correction:
             plt.figure(figsize=(10, 5))
             plt.plot(radii, intensities, label="image mean intensity")

@@ -2,7 +2,6 @@
 import os
 import numpy as np
 from .. config.constants import constants
-from .. core.colors import color_str
 from .. core.framework import JobBase
 from .. core.exceptions import InvalidOptionError
 from .utils import write_img
@@ -92,7 +91,7 @@ class FocusStackBunch(ActionList, FocusStackBase):
         ActionList.end(self)
 
     def run_step(self):
-        self.print_message_r(color_str(f"fusing bunch: {self.count}", "blue"))
+        self.print_message_r(f"fusing bunch: {self.count}")
         self.focus_stack(self._chunks[self.count - 1])
         self.callback('after_step', self.id, self.name, self.count)
 

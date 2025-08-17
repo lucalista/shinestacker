@@ -4,6 +4,17 @@ This page reports the main releases only and the main changes therein.
 
 ---
 
+## [v0.3.5] - 2025-08-17
+**Bug fixes**
+
+### Changes
+
+* fixed a bug that prevented to add sub-actoins
+* vignetting constrains model parameter in order to prevent searching for dark areas at the center of the image instead of at periphery
+* updated sample images and documentation
+
+---
+
 ## [v0.3.4] - 2025-08-16
 **Code consolidation and fixes**
 

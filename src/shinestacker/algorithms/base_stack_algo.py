@@ -1,6 +1,5 @@
 # pylint: disable=C0114, C0115, C0116, E0602, R0903
 import numpy as np
-from .. core.colors import color_str
 from .. core.exceptions import InvalidOptionError, ImageLoadError
 from .. config.constants import constants
 from .utils import read_img, get_img_metadata, validate_image
@@ -28,7 +27,7 @@ class BaseStackAlgo:
         return self._steps_per_frame
 
     def print_message(self, msg):
-        self.process.sub_message_r(color_str(msg, "light_blue"))
+        self.process.sub_message_r(msg)
 
     def read_image_and_update_metadata(self, img_path, metadata):
         img = read_img(img_path)

@@ -89,6 +89,9 @@ class ProjectEditor(QMainWindow):
         self.expert_options = False
         self.script_dir = os.path.dirname(__file__)
         self.dialog = None
+        self._current_file = None
+        self._current_file_wd = ''
+        self._modified_project = False
 
     def set_project(self, project):
         self.project = project

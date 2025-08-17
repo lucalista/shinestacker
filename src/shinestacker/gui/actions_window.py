@@ -16,9 +16,6 @@ from .project_model import Project
 class ActionsWindow(ProjectEditor):
     def __init__(self):
         super().__init__()
-        self._current_file = None
-        self._current_file_wd = ''
-        self._modified_project = False
         self.update_title()
 
     def update_title(self):
@@ -229,7 +226,7 @@ class ActionsWindow(ProjectEditor):
         index = self.job_list.row(item)
         if 0 <= index < len(self.project.jobs):
             job = self.project.jobs[index]
-            dialog = self.action_config_dialog(job_action)
+            dialog = self.action_config_dialog(job)
             if dialog.exec() == QDialog.Accepted:
                 current_row = self.job_list.currentRow()
                 if current_row >= 0:
