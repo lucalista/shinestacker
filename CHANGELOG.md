@@ -18,7 +18,7 @@ This page reports the main releases only and the main changes therein.
 
 ### Changes
 
-* fixed a bug that prevented to add sub-actoins
+* fixed a bug that prevented to add sub-actions
 * vignetting constrains model parameter in order to prevent searching for dark areas at the center of the image instead of at periphery
 * updated sample images and documentation
 
