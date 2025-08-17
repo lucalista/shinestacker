@@ -20,7 +20,6 @@
 
 ## Key Features
 - 🚀 **Batch Processing**: Align, balance, and stack hundreds of images
-- 🎨 **Hybrid Workflows**: Combine Python scripting with GUI refinement
 - 🧩 **Modular Architecture**: Mix-and-match processing modules
 - 🖌️ **Retouch Editing**: Final interactive retouch of stacked image from individual frames
 - 📊 **Jupyter Integration**: Reproducible research notebooks
