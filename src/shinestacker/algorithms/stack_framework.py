@@ -237,6 +237,11 @@ class SubAction:
     def __init__(self, enabled=True):
         self.enabled = enabled
 
+    def begin(self, process):
+        pass
+
+    def end(self):
+        pass
 
 class CombinedActions(FramesRefActions):
     def __init__(self, name, actions=[], enabled=True, **kwargs):

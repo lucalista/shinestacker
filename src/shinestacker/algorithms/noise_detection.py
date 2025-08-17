@@ -162,9 +162,6 @@ class MaskNoise(SubAction):
         else:
             raise ImageLoadError(path, "file not found.")
 
-    def end(self):
-        pass
-
     def run_frame(self, _idx, _ref_idx, image):
         self.process.sub_message_r(': mask noisy pixels')
         if len(image.shape) == 3:
