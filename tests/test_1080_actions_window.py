@@ -5,6 +5,7 @@ import pytest
 import jsonpickle
 from unittest.mock import patch
 from PySide6.QtWidgets import QMessageBox
+# from shinestacker.gui.action_config import ActionConfigDialog
 from shinestacker.gui.actions_window import ActionsWindow
 from shinestacker.gui.project_model import Project
 from shinestacker.gui.project_model import (get_action_working_path, get_action_input_path,
@@ -131,10 +132,11 @@ def test_open_project_with_missing_paths(actions_window, qtbot, mock_project_fil
 def test_edit_action(actions_window, qtbot, sample_project):
     actions_window.set_project(sample_project)
     job = sample_project.jobs[0]
-    with patch('shinestacker.gui.actions_window.ActionConfigDialog') as mock_dialog:
-        mock_dialog.return_value.exec.return_value = True
+    with patch.object(actions_window, 'action_config_dialog') as mock_dialog_method:
+        mock_dialog = mock_dialog_method.return_value
+        mock_dialog.exec.return_value = True
         actions_window.edit_action(job)
-        mock_dialog.assert_called_once()
+        mock_dialog_method.assert_called_once_with(job)
     assert actions_window._modified_project
 
 
