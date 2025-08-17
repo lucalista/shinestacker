@@ -123,12 +123,8 @@ class ActionsWindow(ProjectEditor):
                 self, "Open Project", "", "Project Files (*.fsp);;All Files (*)")
         if file_path:
             try:
-                self._current_file = file_path
-                self._current_file_wd = '' if os.path.isabs(file_path) \
-                    else os.path.dirname(file_path)
-                if not os.path.isabs(self._current_file_wd):
-                    self._current_file_wd = os.path.abspath(self._current_file_wd)
-                    self._current_file = os.path.basename(self._current_file)
+                self._current_file_wd = os.path.abspath(os.path.dirname(file_path))
+                self._current_file = os.path.basename(file_path)
                 with open(file_path, 'r', encoding="utf-8") as file:
                     json_obj = json.load(file)
                 pp = file_path.split('/')
@@ -173,11 +169,11 @@ class ActionsWindow(ProjectEditor):
                             self.edit_action(action)
 
     def current_file_name(self):
-        return os.path.basename(self._current_file) if self._current_file else ''
+        return self._current_file
 
     def save_project(self):
         if self._current_file:
-            self.do_save(self._current_file)
+            self.do_save(os.path.join(self._current_file_wd, self._current_file))
         else:
             self.save_project_as()
 
@@ -187,9 +183,9 @@ class ActionsWindow(ProjectEditor):
         if file_path:
             if not file_path.endswith('.fsp'):
                 file_path += '.fsp'
-            self._current_file_wd = ''
+            self._current_file_wd = os.path.dirname(file_path)
+            self._current_file = os.path.basename(file_path)
             self.do_save(file_path)
-            self._current_file = file_path
             self._modified_project = False
             self.update_title()
             os.chdir(os.path.dirname(file_path))
@@ -200,9 +196,7 @@ class ActionsWindow(ProjectEditor):
                 'project': self.project.to_dict(),
                 'version': 1
             })
-            path = f"{self._current_file_wd}/{file_path}" \
-                if self._current_file_wd != '' else file_path
-            with open(path, 'w', encoding="utf-8") as f:
+            with open(file_path, 'w', encoding="utf-8") as f:
                 f.write(json_obj)
             self._modified_project = False
         except Exception as e:
