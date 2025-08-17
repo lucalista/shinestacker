@@ -8,7 +8,6 @@ from PySide6.QtWidgets import QMessageBox, QFileDialog, QDialog
 from .. core.core_utils import get_app_base_path
 from .. config.constants import constants
 from .project_model import ActionConfig
-from .action_config import ActionConfigDialog
 from .project_editor import ProjectEditor
 from .new_project import NewProjectDialog
 from .project_model import Project
@@ -230,7 +229,7 @@ class ActionsWindow(ProjectEditor):
         index = self.job_list.row(item)
         if 0 <= index < len(self.project.jobs):
             job = self.project.jobs[index]
-            dialog = ActionConfigDialog(job, self._current_file_wd, self)
+            dialog = self.action_config_dialog(job_action)
             if dialog.exec() == QDialog.Accepted:
                 current_row = self.job_list.currentRow()
                 if current_row >= 0:
@@ -263,7 +262,7 @@ class ActionsWindow(ProjectEditor):
                 if not is_sub_action:
                     self.set_enabled_sub_actions_gui(
                         current_action.type_name == constants.ACTION_COMBO)
-                dialog = ActionConfigDialog(current_action, self._current_file_wd, self)
+                dialog = self.action_config_dialog(current_action)
                 if dialog.exec() == QDialog.Accepted:
                     self.on_job_selected(job_index)
                     self.refresh_ui()
@@ -285,7 +284,7 @@ class ActionsWindow(ProjectEditor):
             self.edit_action(current_action)
 
     def edit_action(self, action):
-        dialog = ActionConfigDialog(action, self._current_file_wd, self)
+        dialog = self.action_config_dialog(action)
         if dialog.exec() == QDialog.Accepted:
             self.on_job_selected(self.job_list.currentRow())
             self.mark_as_modified()

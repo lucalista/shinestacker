@@ -300,9 +300,12 @@ class ProjectEditor(QMainWindow):
             self.delete_element_action.setEnabled(True)
         return element
 
+    def action_config_dialog(self, action):
+        return ActionConfigDialog(action, self._current_file_wd, self)
+
     def add_job(self):
         job_action = ActionConfig("Job")
-        self.dialog = ActionConfigDialog(job_action, self)
+        self.dialog = self.action_config_dialog(job_action)
         if self.dialog.exec() == QDialog.Accepted:
             self.mark_as_modified()
             self.project.jobs.append(job_action)
@@ -323,7 +326,7 @@ class ProjectEditor(QMainWindow):
             type_name = self.action_selector.currentText()
         action = ActionConfig(type_name)
         action.parent = self.get_current_job()
-        self.dialog = ActionConfigDialog(action, self)
+        self.dialog = self.action_config_dialog(action)
         if self.dialog.exec() == QDialog.Accepted:
             self.mark_as_modified()
             self.project.jobs[current_index].add_sub_action(action)
@@ -365,7 +368,7 @@ class ProjectEditor(QMainWindow):
         if type_name is False:
             type_name = self.sub_action_selector.currentText()
         sub_action = ActionConfig(type_name)
-        self.dialog = ActionConfigDialog(sub_action, self)
+        self.dialog = self.action_config_dialog(sub_action)
         if self.dialog.exec() == QDialog.Accepted:
             self.mark_as_modified()
             action.add_sub_action(sub_action)
