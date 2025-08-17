@@ -12,7 +12,7 @@ class PyramidBase(BaseStackAlgo):
                  kernel_size=constants.DEFAULT_PY_KERNEL_SIZE,
                  gen_kernel=constants.DEFAULT_PY_GEN_KERNEL,
                  float_type=constants.DEFAULT_PY_FLOAT):
-        super().__init__("pyramid", 1, float_type)
+        super().__init__("pyramid", 2, float_type)
         self.min_size = min_size
         self.kernel_size = kernel_size
         self.pad_amount = (kernel_size - 1) // 2
@@ -151,11 +151,11 @@ class PyramidStack(PyramidBase):
         metadata = None
         all_laplacians = []
         levels = None
+        n = len(filenames)
         for i, img_path in enumerate(filenames):
             self.print_message(f": validating file {img_path.split('/')[-1]}")
 
             img, metadata, updated = self.read_image_and_update_metadata(img_path, metadata)
-
             if updated:
                 self.dtype = metadata[1]
                 self.num_pixel_values = constants.NUM_UINT8 \
@@ -163,14 +163,17 @@ class PyramidStack(PyramidBase):
                 self.max_pixel_value = constants.MAX_UINT8 \
                     if self.dtype == np.uint8 else constants.MAX_UINT16
                 levels = int(np.log2(min(img.shape[:2]) / self.min_size))
-
             if self.do_step_callback:
                 self.process.callback('after_step', self.process.id, self.process.name, i)
             if self.process.callback('check_running', self.process.id, self.process.name) is False:
                 raise RunStopException(self.name)
-        for img_path in filenames:
+        for i, img_path in enumerate(filenames):
             self.print_message(f": processing file {img_path.split('/')[-1]}")
             img = read_img(img_path)
             all_laplacians.append(self.process_single_image(img, levels))
+            if self.do_step_callback:
+                self.process.callback('after_step', self.process.id, self.process.name, i + n)
+            if self.process.callback('check_running', self.process.id, self.process.name) is False:
+                raise RunStopException(self.name)
         stacked_image = self.collapse(self.fuse_pyramids(all_laplacians))
         return stacked_image.astype(self.dtype)
