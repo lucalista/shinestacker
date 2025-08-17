@@ -10,6 +10,7 @@ This page reports the main releases only and the main changes therein.
 ### Changes
 
 * fixed a bug that prevented a complete clean up when "New Project" action is called
+* fixed the management of project file path while loading and saving
 
 ---
 
