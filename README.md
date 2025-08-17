@@ -22,7 +22,7 @@
 - 🚀 **Batch Processing**: Align, balance, and stack hundreds of images
 - 🧩 **Modular Architecture**: Mix-and-match processing modules
 - 🖌️ **Retouch Editing**: Final interactive retouch of stacked image from individual frames
-- 📊 **Jupyter Integration**: Reproducible research notebooks
+- 📊 **Jupyter Integration**: Image processing python notebooks
 
 ## Interactive GUI
 
