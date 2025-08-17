@@ -49,12 +49,12 @@ class ActionsWindow(ProjectEditor):
         self.update_title()
         self.job_list.clear()
         self.action_list.clear()
+        self.set_project(Project())
         dialog = NewProjectDialog(self)
         if dialog.exec() == QDialog.Accepted:
             input_folder = dialog.get_input_folder().split('/')
             working_path = '/'.join(input_folder[:-1])
             input_path = input_folder[-1]
-            project = Project()
             if dialog.get_noise_detection():
                 job_noise = ActionConfig(constants.ACTION_JOB,
                                          {'name': 'detect-noise', 'working_path': working_path,
@@ -62,7 +62,7 @@ class ActionsWindow(ProjectEditor):
                 noise_detection = ActionConfig(constants.ACTION_NOISEDETECTION,
                                                {'name': 'detect-noise'})
                 job_noise.add_sub_action(noise_detection)
-                project.jobs.append(job_noise)
+                self.project.jobs.append(job_noise)
             job = ActionConfig(constants.ACTION_JOB,
                                {'name': 'focus-stack', 'working_path': working_path,
                                 'input_path': input_path})
@@ -111,8 +111,7 @@ class ActionsWindow(ProjectEditor):
                                            {'name': 'multi-layer',
                                             'input_path': ','.join(input_path)})
                 job.add_sub_action(multi_layer)
-            project.jobs.append(job)
-            self.set_project(project)
+            self.project.jobs.append(job)
             self._modified_project = True
             self.refresh_ui(0, -1)
 

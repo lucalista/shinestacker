@@ -4,6 +4,15 @@ This page reports the main releases only and the main changes therein.
 
 ---
 
+## [v-.-.-] - 2025-08-17
+**Unreleased changes, for next release round**
+
+### Changes
+
+* fixed a bug that prevented a complete clean up when "New Project" action is called
+
+---
+
 ## [v0.3.5] - 2025-08-17
 **Bug fixes**
 
