@@ -268,7 +268,7 @@ class CombinedActions(FramesRefActions):
 
     def run_frame(self, idx, ref_idx):
         filename = self.filenames[idx]
-        self.sub_message_r(color_str(': read input image', constants.LOG_COLOR_ALERT))
+        self.sub_message_r(color_str(': read input image', constants.LOG_COLOR_LEVEL_3))
         img = read_img(f"{self.input_full_path}/{filename}")
         if self.dtype is not None and img.dtype != self.dtype:
             raise BitDepthError(self.dtype, img.dtype, )
