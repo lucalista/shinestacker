@@ -9,6 +9,7 @@ def create_layout_widget_no_margins(layout):
     container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
     return container
 
+
 def create_layout_widget_and_connect(button, edit, browse):
     button.clicked.connect(browse)
     button.setAutoDefault(False)
@@ -16,6 +17,7 @@ def create_layout_widget_and_connect(button, edit, browse):
     layout.addWidget(edit)
     layout.addWidget(button)
     return create_layout_widget_no_margins(layout)
+
 
 def create_select_file_paths_widget(value, placeholder, tag):
     edit = QLineEdit(value)

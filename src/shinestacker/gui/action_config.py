@@ -316,7 +316,6 @@ class FieldBuilder:
                         QMessageBox.warning(None, "Error", "Could not compute relative path")
         return create_layout_widget_and_connect(button, edit, browse)
 
-
     def create_float_field(self, tag, default=0.0, min_val=0.0, max_val=1.0,
                            step=0.1, decimals=2):
         spin = QDoubleSpinBox()

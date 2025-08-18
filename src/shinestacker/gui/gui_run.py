@@ -13,6 +13,10 @@ from .gui_images import GuiPdfView, GuiImageView, GuiOpenApp
 from .colors import ColorPalette
 
 
+ACTION_RUNNING_COLOR = ColorPalette.MEDIUM_BLUE
+ACTION_DONE_COLOR = ColorPalette.MEDIUM_GREEN
+
+
 class ColorButton(QPushButton):
     def __init__(self, text, enabled, parent=None):
         super().__init__(text.replace(gui_constants.DISABLED_TAG, ''), parent)
@@ -34,10 +38,6 @@ class ColorButton(QPushButton):
                 margin: 0px;
             }}
         """)
-
-
-action_running_color = ColorPalette.MEDIUM_BLUE
-action_done_color = ColorPalette.MEDIUM_GREEN
 
 
 class TimerProgressBar(QProgressBar):
@@ -123,10 +123,10 @@ class TimerProgressBar(QProgressBar):
     # pylint: enable=C0103
 
     def set_running_style(self):
-        self.set_style(action_running_color)
+        self.set_style(ACTION_RUNNING_COLOR)
 
     def set_done_style(self):
-        self.set_style(action_done_color)
+        self.set_style(ACTION_DONE_COLOR)
 
 
 class RunWindow(QTextEditLogger):
@@ -246,7 +246,7 @@ class RunWindow(QTextEditLogger):
     @Slot(int, str)
     def handle_before_action(self, run_id, _name):
         if 0 <= run_id < len(self.color_widgets[self.row_widget_id]):
-            self.color_widgets[self.row_widget_id][run_id].set_color(*action_running_color.tuple())
+            self.color_widgets[self.row_widget_id][run_id].set_color(*ACTION_RUNNING_COLOR.tuple())
             self.progress_bar.start(1)
         if run_id == -1:
             self.progress_bar.set_running_style()
@@ -254,7 +254,7 @@ class RunWindow(QTextEditLogger):
     @Slot(int, str)
     def handle_after_action(self, run_id, _name):
         if 0 <= run_id < len(self.color_widgets[self.row_widget_id]):
-            self.color_widgets[self.row_widget_id][run_id].set_color(*action_done_color.tuple())
+            self.color_widgets[self.row_widget_id][run_id].set_color(*ACTION_DONE_COLOR.tuple())
             self.progress_bar.stop()
         if run_id == -1:
             self.row_widget_id += 1
