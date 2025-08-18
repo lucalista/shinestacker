@@ -13,7 +13,7 @@ This page reports the main releases only and the main changes therein.
 * added robust path management in retouch area
 * added frame count in "New Project" dialog
 * code clanup, removed remnants of obsolete code
-* fixes
+* various fixes
 
 ---
 

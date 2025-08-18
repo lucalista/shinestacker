@@ -200,7 +200,7 @@ class ActionList(JobBase):
         self.callback('end_steps', self.id, self.name)
 
     def __iter__(self):
-        self.count = 1
+        self.count = 0
         return self
 
     def run_step(self):

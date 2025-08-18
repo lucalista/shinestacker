@@ -615,7 +615,7 @@ class MainWindow(ActionsWindow, LogManager):
                 labels = [[(self.action_text(a), a.enabled()) for a in job.sub_actions]]
                 r = self.get_retouch_path(job)
                 retouch_paths = [] if len(r) == 0 else [(job_name, r)]
-                new_window, id_str = self.create_new_window("Job: " + job_name,
+                new_window, id_str = self.create_new_window(f"{job_name} [⚙️ Job]",
                                                             labels, retouch_paths)
                 worker = JobLogWorker(job, id_str)
                 self.connect_signals(worker, new_window)
@@ -638,7 +638,7 @@ class MainWindow(ActionsWindow, LogManager):
             r = self.get_retouch_path(job)
             if len(r) > 0:
                 retouch_paths.append((job.params["name"], r))
-        new_window, id_str = self.create_new_window("Project: " + project_name,
+        new_window, id_str = self.create_new_window(f"{project_name} [Project 📚]",
                                                     labels, retouch_paths)
         worker = ProjectLogWorker(self.project, id_str)
         self.connect_signals(worker, new_window)

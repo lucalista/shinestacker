@@ -213,7 +213,7 @@ class FramesRefActions(ActionList, FrameDirectory):
         pass
 
     def run_step(self):
-        if self.count == 1:
+        if self.count == 0:
             self._idx = self.ref_idx if self.step_process else 0
             self._ref_idx = self.ref_idx
             self._idx_step = +1
