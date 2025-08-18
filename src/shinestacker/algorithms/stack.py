@@ -46,7 +46,7 @@ class FocusStackBase(JobBase, FrameDirectory):
             idx_str = f"{self.frame_count:04d}" if self.frame_count >= 0 else ''
             name = f"{self.name}: {self.stack_algo.name()}"
             if idx_str != '':
-                name += f"\nbunch: {idx_str}"
+                name += f"\nbunch: {idx_str + 1}"
             self.callback('save_plot', self.id, name, out_filename)
         if self.frame_count >= 0:
             self.frame_count += 1
