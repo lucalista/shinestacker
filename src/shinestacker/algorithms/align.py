@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import cv2
 from .. config.constants import constants
 from .. core.exceptions import AlignmentError, InvalidOptionError
+from .. core.colors import color_str
 from .utils import img_8bit, img_bw_8bit, save_plot
 from .utils import get_img_metadata, validate_image
 from .stack_framework import SubAction
@@ -33,7 +34,8 @@ _DEFAULT_ALIGNMENT_CONFIG = {
     'border_value': constants.DEFAULT_BORDER_VALUE,
     'border_blur': constants.DEFAULT_BORDER_BLUR,
     'subsample': constants.DEFAULT_ALIGN_SUBSAMPLE,
-    'fast_subsampling': constants.DEFAULT_ALIGN_FAST_SUBSAMPLING
+    'fast_subsampling': constants.DEFAULT_ALIGN_FAST_SUBSAMPLING,
+    'min_good_matches': constants.DEFAULT_ALIGN_MIN_GOOD_MATCHES
 }
 
 
@@ -164,21 +166,31 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
     if callbacks and 'message' in callbacks:
         callbacks['message']()
     subsample = alignment_config['subsample']
-    if subsample > 1:
-        if alignment_config['fast_subsampling']:
-            img_0_sub, img_1_sub = img_0[::subsample, ::subsample], img_1[::subsample, ::subsample]
+    min_good_matches = alignment_config['min_good_matches']
+    while True:
+        if subsample > 1:
+            if alignment_config['fast_subsampling']:
+                img_0_sub, img_1_sub = \
+                    img_0[::subsample, ::subsample], img_1[::subsample, ::subsample]
+            else:
+                img_0_sub = cv2.resize(img_0, (0, 0),
+                                       fx=1 / subsample, fy=1 / subsample,
+                                       interpolation=cv2.INTER_AREA)
+                img_1_sub = cv2.resize(img_1, (0, 0),
+                                       fx=1 / subsample, fy=1 / subsample,
+                                       interpolation=cv2.INTER_AREA)
         else:
-            img_0_sub = cv2.resize(img_0, (0, 0),
-                                   fx=1 / subsample, fy=1 / subsample,
-                                   interpolation=cv2.INTER_AREA)
-            img_1_sub = cv2.resize(img_1, (0, 0),
-                                   fx=1 / subsample, fy=1 / subsample,
-                                   interpolation=cv2.INTER_AREA)
-    else:
-        img_0_sub, img_1_sub = img_0, img_1
-    kp_0, kp_1, good_matches = detect_and_compute(img_0_sub, img_1_sub,
-                                                  feature_config, matching_config)
-    n_good_matches = len(good_matches)
+            img_0_sub, img_1_sub = img_0, img_1
+        kp_0, kp_1, good_matches = detect_and_compute(img_0_sub, img_1_sub,
+                                                      feature_config, matching_config)
+        n_good_matches = len(good_matches)
+        if n_good_matches > min_good_matches or subsample == 1:
+            break
+        subsample = 1
+        if callbacks and 'warning' in callbacks:
+            callbacks['warning'](
+                f"only {n_good_matches} < {min_good_matches} matches found, "
+                "retrying without subsampling")
     if callbacks and 'matches_message' in callbacks:
         callbacks['matches_message'](n_good_matches)
     img_warp = None
@@ -281,10 +293,11 @@ class AlignFrames(SubAction):
         idx_str = f"{idx:04d}"
         callbacks = {
             'message': lambda: self.process.sub_message_r(': find matches'),
-            'matches_message': lambda n: self.process.sub_message_r(f": matches: {n}"),
+            'matches_message': lambda n: self.process.sub_message_r(f": good matches: {n}"),
             'align_message': lambda: self.process.sub_message_r(': align images'),
             'ecc_message': lambda: self.process.sub_message_r(": ecc refinement"),
             'blur_message': lambda: self.process.sub_message_r(': blur borders'),
+            'warning': lambda msg: self.process.sub_message_r(color_str(f': {msg}', 'red')),
             'save_plot': lambda plot_path: self.process.callback(
                 'save_plot', self.process.id,
                 f"{self.process.name}: matches\nframe {idx_str}", plot_path)

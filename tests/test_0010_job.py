@@ -30,7 +30,7 @@ class MyActionList(ActionList):
         self.set_counts(10)
 
     def run_step(self):
-        self.print_message_r(color_str("action: {}".format(self.count), "blue"))
+        self.print_message_r(color_str("action: {}".format(self.count + 1), "blue"))
         time.sleep(0.1)
 
 

@@ -10,6 +10,7 @@ This page reports the main releases only and the main changes therein.
 ### Changes
 
 * implemented touchpad image navigation (pan, zoom with pinch)
+* alignment robustness: retry without subsampling if number of bood matches is below a threshold parameter
 * added robust path management in retouch area
 * added frame count in "New Project" dialog
 * code clanup, removed remnants of obsolete code

@@ -207,7 +207,7 @@ class ActionList(JobBase):
         pass
 
     def __next__(self):
-        if self.count <= self.counts:
+        if self.count < self.counts:
             self.run_step()
             x = self.count
             self.count += 1
