@@ -10,8 +10,10 @@ from PySide6.QtWidgets import (QWidget, QPushButton, QHBoxLayout, QFileDialog, Q
                                QAbstractItemView, QListView)
 from PySide6.QtCore import Qt, QTimer
 from .. config.constants import constants
-from .project_model import ActionConfig
 from .. algorithms.align import validate_align_config
+from .project_model import ActionConfig
+from .select_path_widget import (create_select_file_paths_widget, create_layout_widget_no_margins,
+                                 create_layout_widget_and_connect)
 
 FIELD_TEXT = 'text'
 FIELD_ABS_PATH = 'abs_path'
@@ -200,25 +202,11 @@ class FieldBuilder:
         return edit
 
     def create_abs_path_field(self, tag, **kwargs):
-        value = self.action.params.get(tag, '')
-        edit = QLineEdit(value)
-        edit.setPlaceholderText(kwargs.get('placeholder', ''))
-        button = QPushButton("Browse...")
-
-        def browse():
-            path = QFileDialog.getExistingDirectory(None, f"Select {tag.replace('_', ' ')}")
-            if path:
-                edit.setText(path)
-        button.clicked.connect(browse)
-        button.setAutoDefault(False)
-        layout = QHBoxLayout()
-        layout.addWidget(edit)
-        layout.addWidget(button)
-        layout.setContentsMargins(0, 0, 0, 0)
-        container = QWidget()
-        container.setLayout(layout)
-        container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        return container
+        return create_select_file_paths_widget(
+            self.action.params.get(tag, ''),
+            kwargs.get('placeholder', ''),
+            tag.replace('_', ' ')
+        )
 
     def create_rel_path_field(self, tag, **kwargs):
         value = self.action.params.get(tag, kwargs.get('default', ''))
@@ -326,17 +314,8 @@ class FieldBuilder:
                     except ValueError as e:
                         traceback.print_tb(e.__traceback__)
                         QMessageBox.warning(None, "Error", "Could not compute relative path")
+        return create_layout_widget_and_connect(button, edit, browse)
 
-        button.clicked.connect(browse)
-        button.setAutoDefault(False)
-        layout = QHBoxLayout()
-        layout.addWidget(edit)
-        layout.addWidget(button)
-        layout.setContentsMargins(0, 0, 0, 0)
-        container = QWidget()
-        container.setLayout(layout)
-        container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        return container
 
     def create_float_field(self, tag, default=0.0, min_val=0.0, max_val=1.0,
                            step=0.1, decimals=2):
@@ -369,11 +348,7 @@ class FieldBuilder:
             layout.addWidget(label)
             layout.addWidget(spin)
             layout.setStretch(layout.count() - 1, 1)
-        layout.setContentsMargins(0, 0, 0, 0)
-        container = QWidget()
-        container.setLayout(layout)
-        container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        return container
+        return create_layout_widget_no_margins(layout)
 
     def create_combo_field(self, tag, options=None, default=None, **kwargs):
         options = options or []

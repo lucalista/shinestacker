@@ -1,13 +1,13 @@
 # pylint: disable=C0114, C0115, C0116, E0611, R0915, R0902
 import os
-from PySide6.QtWidgets import (QWidget, QLineEdit, QFormLayout, QHBoxLayout, QPushButton,
-                               QDialog, QSizePolicy, QFileDialog, QLabel, QCheckBox,
-                               QSpinBox, QMessageBox)
+from PySide6.QtWidgets import (QFormLayout, QHBoxLayout, QPushButton,
+                               QDialog, QLabel, QCheckBox, QSpinBox, QMessageBox)
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt
 from .. config.gui_constants import gui_constants
 from .. config.constants import constants
 from .. algorithms.stack import get_bunches
+from .select_path_widget import create_select_file_paths_widget
 
 
 class NewProjectDialog(QDialog):
@@ -50,25 +50,8 @@ class NewProjectDialog(QDialog):
         spacer = QLabel("")
         spacer.setFixedHeight(10)
         self.layout.addRow(spacer)
-        self.input_folder = QLineEdit()
-        self.input_folder .setPlaceholderText('input files folder')
-        self.input_folder.textChanged.connect(self.update_bunches_label)
-        button = QPushButton("Browse...")
 
-        def browse():
-            path = QFileDialog.getExistingDirectory(None, "Select input files folder")
-            if path:
-                self.input_folder.setText(path)
-
-        button.clicked.connect(browse)
-        button.setAutoDefault(False)
-        layout = QHBoxLayout()
-        layout.addWidget(self.input_folder)
-        layout.addWidget(button)
-        layout.setContentsMargins(0, 0, 0, 0)
-        container = QWidget()
-        container.setLayout(layout)
-        container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        container = create_select_file_paths_widget('', 'input files folder', 'input files folder')
 
         self.noise_detection = QCheckBox()
         self.noise_detection.setChecked(gui_constants.NEW_PROJECT_NOISE_DETECTION)

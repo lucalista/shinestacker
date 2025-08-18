@@ -1,9 +1,8 @@
 # pylint: disable=C0114, C0115, C0116, E0611
-import os
 from PySide6.QtWidgets import (QFormLayout, QHBoxLayout, QPushButton, QDialog,
                                QLabel, QVBoxLayout, QWidget)
-from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt
+from .icon_container import icon_container
 
 
 class ShortcutsHelp(QDialog):
@@ -44,17 +43,7 @@ class ShortcutsHelp(QDialog):
         layout.addRow(label)
 
     def create_form(self, left_layout, right_layout):
-        icon_path = f"{os.path.dirname(__file__)}/../gui/ico/shinestacker.png"
-        app_icon = QIcon(icon_path)
-        icon_pixmap = app_icon.pixmap(128, 128)
-        icon_label = QLabel()
-        icon_label.setPixmap(icon_pixmap)
-        icon_label.setAlignment(Qt.AlignCenter)
-        icon_container = QWidget()
-        icon_container_layout = QHBoxLayout(icon_container)
-        icon_container_layout.addWidget(icon_label)
-        icon_container_layout.setAlignment(Qt.AlignCenter)
-        self.layout.insertWidget(0, icon_container)
+        self.layout.insertWidget(0, icon_container())
 
         shortcuts = {
             "M": "show master layer",

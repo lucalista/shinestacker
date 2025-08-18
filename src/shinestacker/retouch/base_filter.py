@@ -2,7 +2,7 @@
 import traceback
 from abc import ABC, abstractmethod
 import numpy as np
-from PySide6.QtWidgets import QDialog, QVBoxLayout
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QCheckBox, QDialogButtonBox
 from PySide6.QtCore import Signal, QThread, QTimer
 
 
@@ -97,6 +97,17 @@ class BaseFilter(ABC):
             self.editor.mark_as_modified()
         else:
             restore_original()
+
+    def create_base_widgets(self, layout, buttons, preview_latency):
+        preview_check = QCheckBox("Preview")
+        preview_check.setChecked(True)
+        layout.addWidget(preview_check)
+        button_box = QDialogButtonBox(buttons)
+        layout.addWidget(button_box)
+        preview_timer = QTimer()
+        preview_timer.setSingleShot(True)
+        preview_timer.setInterval(preview_latency)
+        return preview_check, preview_timer, button_box
 
     class PreviewWorker(QThread):
         finished = Signal(np.ndarray, int)

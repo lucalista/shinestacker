@@ -1,6 +1,6 @@
 # pylint: disable=C0114, C0115, C0116, E0611, W0221
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QSlider, QCheckBox, QDialogButtonBox
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QSlider, QDialogButtonBox
+from PySide6.QtCore import Qt
 from .base_filter import BaseFilter
 from .. algorithms.denoise import denoise
 
@@ -24,14 +24,8 @@ class DenoiseFilter(BaseFilter):
         value_label = QLabel(f"{self.max_value:.2f}")
         slider_layout.addWidget(value_label)
         layout.addLayout(slider_layout)
-        preview_check = QCheckBox("Preview")
-        preview_check.setChecked(True)
-        layout.addWidget(preview_check)
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        layout.addWidget(button_box)
-        preview_timer = QTimer()
-        preview_timer.setSingleShot(True)
-        preview_timer.setInterval(200)
+        preview_check, preview_timer, button_box = self.create_base_widgets(
+            layout, QDialogButtonBox.Ok | QDialogButtonBox.Cancel, 200)
 
         def do_preview_delayed():
             preview_timer.start()

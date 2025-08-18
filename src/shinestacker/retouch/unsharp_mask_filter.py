@@ -1,5 +1,5 @@
 # pylint: disable=C0114, C0115, C0116, E0611, W0221, R0902, R0914
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QSlider, QCheckBox, QDialogButtonBox
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QSlider, QDialogButtonBox
 from PySide6.QtCore import Qt, QTimer
 from .. algorithms.sharpen import unsharp_mask
 from .base_filter import BaseFilter
@@ -46,15 +46,8 @@ class UnsharpMaskFilter(BaseFilter):
             elif name == "Threshold":
                 self.threshold_slider = slider
             value_labels[name] = value_label
-
-        preview_check = QCheckBox("Preview")
-        preview_check.setChecked(True)
-        layout.addWidget(preview_check)
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        layout.addWidget(button_box)
-        preview_timer = QTimer()
-        preview_timer.setSingleShot(True)
-        preview_timer.setInterval(200)
+        preview_check, preview_timer, button_box = self.create_base_widgets(
+            layout, QDialogButtonBox.Ok | QDialogButtonBox.Cancel, 200)
 
         def update_value(name, value, max_val, fmt):
             float_value = max_val * value / self.max_range

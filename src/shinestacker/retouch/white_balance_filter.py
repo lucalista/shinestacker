@@ -1,6 +1,6 @@
 # pylint: disable=C0114, C0115, C0116, E0611, W0221, R0913, R0914, R0917
 from PySide6.QtWidgets import (QHBoxLayout, QPushButton, QFrame, QVBoxLayout, QLabel, QDialog,
-                               QApplication, QSlider, QCheckBox, QDialogButtonBox)
+                               QApplication, QSlider, QDialogButtonBox)
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QCursor
 from .. algorithms.white_balance import white_balance_from_rgb
@@ -47,18 +47,10 @@ class WhiteBalanceFilter(BaseFilter):
         layout.addLayout(row_layout)
         pick_button = QPushButton("Pick Color")
         layout.addWidget(pick_button)
-        preview_check = QCheckBox("Preview")
-        preview_check.setChecked(True)
-        layout.addWidget(preview_check)
-        button_box = QDialogButtonBox(
-            QDialogButtonBox.Ok |
-            QDialogButtonBox.Reset |
-            QDialogButtonBox.Cancel
-        )
-        layout.addWidget(button_box)
-        self.preview_timer = QTimer()
-        self.preview_timer.setSingleShot(True)
-        self.preview_timer.setInterval(200)
+        preview_check, self.preview_timer, button_box = self.create_base_widgets(
+            layout,
+            QDialogButtonBox.Ok | QDialogButtonBox.Reset | QDialogButtonBox.Cancel,
+            200)
         for slider in self.sliders.values():
             slider.valueChanged.connect(self.on_slider_change)
         self.preview_timer.timeout.connect(do_preview)

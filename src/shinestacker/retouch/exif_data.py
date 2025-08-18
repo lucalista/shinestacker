@@ -1,10 +1,9 @@
 # pylint: disable=C0114, C0115, C0116, E0611
-import os
 from PIL.TiffImagePlugin import IFDRational
 from PySide6.QtWidgets import QFormLayout, QHBoxLayout, QPushButton, QDialog, QLabel
-from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt
 from .. algorithms.exif import exif_dict
+from .icon_container import icon_container
 
 
 class ExifData(QDialog):
@@ -32,13 +31,8 @@ class ExifData(QDialog):
         self.layout.addRow(label)
 
     def create_form(self):
-        icon_path = f"{os.path.dirname(__file__)}/../gui/ico/shinestacker.png"
-        app_icon = QIcon(icon_path)
-        icon_pixmap = app_icon.pixmap(128, 128)
-        icon_label = QLabel()
-        icon_label.setPixmap(icon_pixmap)
-        icon_label.setAlignment(Qt.AlignCenter)
-        self.layout.addRow(icon_label)
+        self.layout.addRow(icon_container())
+
         spacer = QLabel("")
         spacer.setFixedHeight(10)
         self.layout.addRow(spacer)

@@ -517,6 +517,27 @@ class ProjectEditor(QMainWindow):
                         self.add_list_item(self.action_list, sub_action, True)
             self.update_delete_action_state()
 
+    def get_current_action_at(self, job, action_index):
+        action_counter = -1
+        current_action = None
+        is_sub_action = False
+        for action in job.sub_actions:
+            action_counter += 1
+            if action_counter == action_index:
+                current_action = action
+                break
+            if len(action.sub_actions) > 0:
+                for sub_action in action.sub_actions:
+                    action_counter += 1
+                    if action_counter == action_index:
+                        current_action = sub_action
+                        is_sub_action = True
+                        break
+                if current_action:
+                    break
+
+        return current_action, is_sub_action
+
     def update_delete_action_state(self):
         has_job_selected = len(self.job_list.selectedItems()) > 0
         has_action_selected = len(self.action_list.selectedItems()) > 0
@@ -528,23 +549,7 @@ class ProjectEditor(QMainWindow):
             action_index = self.action_list.currentRow()
             if job_index >= 0:
                 job = self.project.jobs[job_index]
-                action_counter = -1
-                current_action = None
-                is_sub_action = False
-                for action in job.sub_actions:
-                    action_counter += 1
-                    if action_counter == action_index:
-                        current_action = action
-                        break
-                    if len(action.sub_actions) > 0:
-                        for sub_action in action.sub_actions:
-                            action_counter += 1
-                            if action_counter == action_index:
-                                current_action = sub_action
-                                is_sub_action = True
-                                break
-                        if current_action:
-                            break
+                current_action, is_sub_action = self.get_current_action_at(job, action_index)
                 enable_sub_actions = current_action is not None and \
                     not is_sub_action and current_action.type_name == constants.ACTION_COMBO
                 self.set_enabled_sub_actions_gui(enable_sub_actions)

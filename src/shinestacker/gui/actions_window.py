@@ -225,23 +225,7 @@ class ActionsWindow(ProjectEditor):
         if 0 <= job_index < len(self.project.jobs):
             job = self.project.jobs[job_index]
             action_index = self.action_list.row(item)
-            action_counter = -1
-            current_action = None
-            is_sub_action = False
-            for action in job.sub_actions:
-                action_counter += 1
-                if action_counter == action_index:
-                    current_action = action
-                    break
-                if len(action.type_name) > 0:
-                    for sub_action in action.sub_actions:
-                        action_counter += 1
-                        if action_counter == action_index:
-                            current_action = sub_action
-                            is_sub_action = True
-                            break
-                    if current_action:
-                        break
+            current_action, is_sub_action = self.get_current_action_at(job, action_index)
             if current_action:
                 if not is_sub_action:
                     self.set_enabled_sub_actions_gui(
