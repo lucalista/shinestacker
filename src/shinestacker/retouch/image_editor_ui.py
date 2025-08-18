@@ -135,7 +135,8 @@ class ImageEditorUI(ImageFilters):
         self.master_thumbnail_label.setAlignment(Qt.AlignCenter)
         self.master_thumbnail_label.setFixedSize(
             gui_constants.THUMB_WIDTH, gui_constants.THUMB_HEIGHT)
-        self.master_thumbnail_label.mousePressEvent = lambda e: self.set_view_master()
+        self.master_thumbnail_label.mousePressEvent = \
+            lambda e: self.display_manager.set_view_master()
         master_thumbnail_layout.addWidget(self.master_thumbnail_label)
         side_layout.addWidget(self.master_thumbnail_frame)
         side_layout.addSpacing(10)
