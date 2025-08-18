@@ -73,7 +73,17 @@ def compare_alignment(color_test=False):
     try:
         n_matches, M_recovered, aligned = align_images(
             transformed_bgr, original_bgr,
-            alignment_config={'transform': constants.ALIGN_RIGID}
+            feature_config={
+                'detector': constants.SIFT_DETECTOR,
+                'descriptor': constants.SIFT_DESCRIPTOR
+            },
+            matching_config={
+                'match_method': constants.MATCHING_KNN
+            },
+            alignment_config={
+                'transform': constants.ALIGN_RIGID,
+                'subsample': 1
+            }
         )
     except Exception as e:
         print(f"Alignment failed: {e}")
