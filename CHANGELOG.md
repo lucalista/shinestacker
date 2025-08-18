@@ -4,8 +4,8 @@ This page reports the main releases only and the main changes therein.
 
 ---
 
-## [v-.-.-] - 2025-08-17
-**Unreleased changes, for next release round**
+## [v0.3.6] - 2025-08-18
+**Bug fixes**
 
 ### Changes
 
