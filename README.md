@@ -52,7 +52,7 @@ Pyramid methods in image processing
 
 # License
 
-The software is provided as is under the [GNU Lesser General Public License v3.0](https://choosealicense.com/licenses/lgpl-3.0/). See [LICENSE](https://github.com/lucalista/shinestacker/blob/main/LICENSE) for details.
+The software is provided as is under the [GNU Lesser General Public License v3.0](https://www.gnu.org/licenses/lgpl-3.0.en.html). See [LICENSE](https://github.com/lucalista/shinestacker/blob/main/LICENSE) for details.
 
 # Attribution request
 📸 If you publish images created with Shine Stacker, please consider adding a note such as:
