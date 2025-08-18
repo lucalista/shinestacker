@@ -112,7 +112,6 @@ class ProjectConverter:
             else:
                 raise InvalidOptionError('stacker', stacker, f"valid options are: "
                                          f"{constants.STACK_ALGO_PYRAMID}, "
-                                         f"{constants.STACK_ALGO_PYRAMID_BLOCK}, "
                                          f"{constants.STACK_ALGO_DEPTH_MAP}")
             if action_config.type_name == constants.ACTION_FOCUSSTACK:
                 return FocusStack(**module_dict, stack_algo=stack_algo)
