@@ -122,10 +122,10 @@ class JobBase:
         if msg != '':
             self.base_message += (': ' + msg)
         self.set_terminator(tqdm, end)
+        col_str = color_str(self.base_message, constants.LOG_COLOR_LEVEL_1, "bold")
         self.get_logger(tqdm).log(
             level=level,
-            msg=f"{begin}{color_str(self.base_message, constants.LOG_COLOR_LEVEL_1,
-                                    'bold')}{TRAILING_SPACES}"
+            msg=f"{begin}{col_str}{TRAILING_SPACES}"
         )
         self.set_terminator(tqdm)
 
