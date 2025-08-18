@@ -12,7 +12,8 @@ This page reports the main releases only and the main changes therein.
 * implemented touchpad image navigation (pan, zoom with pinch)
 * added robust path management in retouch area
 * added frame count in "New Project" dialog
-* code clanup, remove remnants of obsolete code, fixes
+* code clanup, removed remnants of obsolete code
+* fixes
 
 ---
 
