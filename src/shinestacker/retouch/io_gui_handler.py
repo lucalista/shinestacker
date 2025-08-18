@@ -44,7 +44,7 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
         else:
             self.set_layer_labels(labels)
         self.set_master_layer(master_layer)
-        self.modified = False
+        self.parent().modified = False
         self.undo_manager.reset()
         self.blank_layer = np.zeros(master_layer.shape[:2])
         self.display_manager.update_thumbnails()
@@ -162,7 +162,7 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
     def save_multilayer_to_path(self, path):
         try:
             self.io_manager.save_multilayer(path)
-            self.current_file_path = os.path.abasabspath(path)
+            self.current_file_path = os.path.abspath(path)
             self.parent().modified = False
             self.update_title_requested.emit()
             self.status_message_requested.emit(f"Saved multilayer to: {path}")
