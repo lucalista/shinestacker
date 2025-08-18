@@ -10,7 +10,7 @@ This page reports the main releases only and the main changes therein.
 ### Changes
 
 * added robust path management in retouch area
-* code clanup
+* code clanup, remove remnants of obsolete code
 
 ---
 
