@@ -178,8 +178,8 @@ class ActionsWindow(ProjectEditor):
         if file_path:
             if not file_path.endswith('.fsp'):
                 file_path += '.fsp'
-            self.set_current_file_path(file_path)
             self.do_save(file_path)
+            self.set_current_file_path(file_path)
             self._modified_project = False
             self.update_title()
             os.chdir(os.path.dirname(file_path))

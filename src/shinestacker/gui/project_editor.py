@@ -96,15 +96,20 @@ class ProjectEditor(QMainWindow):
         return self._current_file_path
 
     def current_file_directory(self):
+        if os.path.isdir(self._current_file_path):
+            return self._current_file_path
         return os.path.dirname(self._current_file_path)
 
     def current_file_name(self):
-        return os.path.basename(self._current_file_path)
+        if os.path.isfile(self._current_file_path):
+            return os.path.basename(self._current_file_path)
+        return ''
 
     def set_current_file_path(self, path):
+        if path and not os.path.exists(path):
+            raise RuntimeError(f"Path: {path} does not exist.")
         self._current_file_path = os.path.abspath(path)
-        if path:
-            os.chdir(self.current_file_directory())
+        os.chdir(self.current_file_directory())
 
     def set_project(self, project):
         self.project = project

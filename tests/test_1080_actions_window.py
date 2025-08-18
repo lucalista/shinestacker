@@ -52,20 +52,26 @@ def mock_project_file():
         return f.name
 
 
-def test_close_project(actions_window, qtbot):
+def test_close_project(actions_window, qtbot, tmp_path):
     actions_window._modified_project = True
-    actions_window._current_file = "test.fsp"
+    file_name = "test.fsp"
+    file_path = os.path.join(tmp_path, file_name)
+    open(file_path, 'a').close()
+    actions_window.set_current_file_path(file_path)
     actions_window.close_project()
-    assert actions_window._current_file is None
+    assert actions_window.current_file_name() == ''
     assert actions_window._modified_project is False
     assert actions_window.job_list.count() == 0
     assert isinstance(actions_window.project, Project)
 
 
-def test_current_file_name(actions_window):
+def test_current_file_name(actions_window, tmp_path):
+    file_name = "test.fsp"
+    file_path = os.path.join(tmp_path, file_name)
+    open(file_path, 'a').close()
     assert actions_window.current_file_name() == ''
-    actions_window._current_file = "/path/to/test.fsp"
-    assert actions_window.current_file_name() == "test.fsp"
+    actions_window.set_current_file_path(file_path)
+    assert actions_window.current_file_name() == file_name
 
 
 def test_check_unsaved_changes(actions_window, qtbot):
@@ -82,8 +88,9 @@ def test_check_unsaved_changes(actions_window, qtbot):
 
 def test_save_project(actions_window, qtbot, sample_project, tmp_path):
     save_path = os.path.join(tmp_path, "test_save.fsp")
+    open(save_path, 'a').close()
     actions_window.set_project(sample_project)
-    actions_window._current_file = save_path
+    actions_window.set_current_file_path(save_path)
     actions_window.save_project()
     assert os.path.exists(save_path)
     assert not actions_window._modified_project
@@ -100,7 +107,7 @@ def test_save_project_as(actions_window, qtbot, sample_project, tmp_path):
                return_value=(save_path, "*.fsp")):
         actions_window.save_project_as()
     assert os.path.exists(save_path)
-    assert actions_window._current_file == save_path
+    actions_window.set_current_file_path(save_path)
     assert not actions_window._modified_project
 
 
@@ -109,7 +116,7 @@ def test_open_mock_project_file(actions_window, qtbot, mock_project_file):
         with patch.object(actions_window, '_check_unsaved_changes', return_value=True):
             actions_window.open_project(mock_project_file)
             mock_critical.assert_not_called()
-    assert actions_window._current_file == os.path.basename(mock_project_file)
+    actions_window.set_current_file_path(os.path.basename(mock_project_file))
     assert not actions_window._modified_project
     assert actions_window.job_list.count() == 0
     os.unlink(mock_project_file)

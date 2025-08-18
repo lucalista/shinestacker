@@ -1,7 +1,6 @@
 import unittest
 from unittest.mock import patch
-from shinestacker.core.core_utils import get_app_base_path
-from shinestacker.algorithms.core_utils import check_path_exists, make_tqdm_bar
+from shinestacker.core.core_utils import get_app_base_path, check_path_exists, make_tqdm_bar
 
 
 class TestCoreUtils(unittest.TestCase):
@@ -21,13 +20,13 @@ class TestCoreUtils(unittest.TestCase):
             check_path_exists('/fake/invalid/path')
         self.assertIn('Path does not exist', str(context.exception))
 
-    @patch('shinestacker.algorithms.core_utils.config')
+    @patch('shinestacker.core.core_utils.config')
     def test_make_tqdm_bar_disabled(self, mock_config):
         mock_config.DISABLE_TQDM = True
         self.assertIsNone(make_tqdm_bar('Test', 100))
 
-    @patch('shinestacker.algorithms.core_utils.tqdm')
-    @patch('shinestacker.algorithms.core_utils.config')
+    @patch('shinestacker.core.core_utils.tqdm')
+    @patch('shinestacker.core.core_utils.config')
     def test_make_tqdm_bar_terminal(self, mock_config, mock_tqdm):
         mock_config.DISABLE_TQDM = False
         mock_config.JUPYTER_NOTEBOOK = False
@@ -38,8 +37,8 @@ class TestCoreUtils(unittest.TestCase):
             ncols=120
         )
 
-    @patch('shinestacker.algorithms.core_utils.tqdm_notebook')
-    @patch('shinestacker.algorithms.core_utils.config')
+    @patch('shinestacker.core.core_utils.tqdm_notebook')
+    @patch('shinestacker.core.core_utils.config')
     def test_make_tqdm_bar_notebook(self, mock_config, mock_tqdm_notebook):
         mock_config.DISABLE_TQDM = False
         mock_config.JUPYTER_NOTEBOOK = True
