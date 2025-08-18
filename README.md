@@ -52,6 +52,7 @@ Pyramid methods in image processing
 
 # License
 
+<img src="https://www.gnu.org/graphics/lgplv3-147x51.png" alt="LGPL 3 logo">
 The software is provided as is under the [GNU Lesser General Public License v3.0](https://www.gnu.org/licenses/lgpl-3.0.en.html). See [LICENSE](https://github.com/lucalista/shinestacker/blob/main/LICENSE) for details.
 
 # Attribution request
