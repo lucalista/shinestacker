@@ -806,6 +806,9 @@ class AlignFramesConfigurator(DefaultActionConfigurator):
             rans_threshold = self.builder.add_field(
                 'rans_threshold', FIELD_FLOAT, 'RANSAC threshold (px)', required=False,
                 default=constants.DEFAULT_RANS_THRESHOLD, min_val=0, max_val=20, step=0.1)
+            self.builder.add_field(
+                'min_good_matches', FIELD_INT, "Min. good matches", required=False,
+                default=constants.DEFAULT_ALIGN_MIN_GOOD_MATCHES, min_val=0, max_val=500)
 
             def change_method():
                 text = method.currentText()
