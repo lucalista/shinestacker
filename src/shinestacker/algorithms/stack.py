@@ -3,6 +3,7 @@ import os
 import numpy as np
 from .. config.constants import constants
 from .. core.framework import JobBase
+from .. core.colors import color_str
 from .. core.exceptions import InvalidOptionError
 from .utils import write_img
 from .stack_framework import FrameDirectory, ActionList
@@ -23,7 +24,7 @@ class FocusStackBase(JobBase, FrameDirectory):
         self.frame_count = -1
 
     def focus_stack(self, filenames):
-        self.sub_message_r(': reading input files')
+        self.sub_message_r(color_str(': reading input files', constants.LOG_COLOR_LEVEL_3))
         img_files = sorted([os.path.join(self.input_full_path, name) for name in filenames])
         stacked_img = self.stack_algo.focus_stack(img_files)
         in_filename = filenames[0].split(".")
@@ -91,7 +92,8 @@ class FocusStackBunch(ActionList, FocusStackBase):
         ActionList.end(self)
 
     def run_step(self):
-        self.print_message_r(f"fusing bunch: {self.count + 1}/{self.counts}")
+        self.print_message_r(color_str(f"fusing bunch: {self.count + 1}/{self.counts}",
+                                       constants.LOG_COLOR_LEVEL_2))
         self.focus_stack(self._chunks[self.count - 1])
 
 

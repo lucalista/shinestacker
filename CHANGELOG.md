@@ -13,6 +13,7 @@ This page reports the main releases only and the main changes therein.
 * alignment robustness: retry without subsampling if number of bood matches is below a threshold parameter
 * added robust path management in retouch area
 * added frame count in "New Project" dialog
+* more unifrom color code in gui run log
 * code clanup, removed remnants of obsolete code
 * various fixes
 

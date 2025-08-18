@@ -52,8 +52,7 @@ class FramePaths:
         self.filenames = self.folder_filelist()
         file_list = self.input_full_path.replace(self.working_path, '').lstrip('/')
         self.print_message(color_str(f": {len(self.filenames)} files in folder: {file_list}",
-                                     'blue'))
-        self.print_message(color_str("focus stacking", 'blue'))
+                                     constants.LOG_COLOR_LEVEL_2))
 
     def init(self, job):
         if self.working_path == '':
@@ -220,7 +219,7 @@ class FramesRefActions(ActionList, FrameDirectory):
         ll = len(self.filenames)
         self.print_message_r(
             color_str(f"step {self.count + 1}/{ll}: process file: {self.filenames[self._idx]}, "
-                      f"reference: {self.filenames[self._ref_idx]}", "blue"))
+                      f"reference: {self.filenames[self._ref_idx]}", constants.LOG_COLOR_LEVEL_2))
         self.run_frame(self._idx, self._ref_idx)
         if self._idx < ll:
             if self.step_process:
@@ -269,7 +268,7 @@ class CombinedActions(FramesRefActions):
 
     def run_frame(self, idx, ref_idx):
         filename = self.filenames[idx]
-        self.sub_message_r(': read input image')
+        self.sub_message_r(color_str(': read input image', constants.LOG_COLOR_ALERT))
         img = read_img(f"{self.input_full_path}/{filename}")
         if self.dtype is not None and img.dtype != self.dtype:
             raise BitDepthError(self.dtype, img.dtype, )
@@ -278,7 +277,8 @@ class CombinedActions(FramesRefActions):
         if img is None:
             raise RuntimeError(f"Invalid file: {self.input_full_path}/{filename}")
         if len(self._actions) == 0:
-            self.sub_message(color_str(": no actions specified.", "red"), level=logging.WARNING)
+            self.sub_message(color_str(": no actions specified.", constants.LOG_COLOR_ALERT),
+                             level=logging.WARNING)
         for a in self._actions:
             if not a.enabled:
                 self.get_logger().warning(color_str(f"{self.base_message}: sub-action disabled",
@@ -287,12 +287,14 @@ class CombinedActions(FramesRefActions):
                 if self.callback('check_running', self.id, self.name) is False:
                     raise RunStopException(self.name)
                 img = a.run_frame(idx, ref_idx, img)
-        self.sub_message_r(': write output image')
+        self.sub_message_r(color_str(': write output image', constants.LOG_COLOR_LEVEL_3))
         if img is not None:
             write_img(self.output_dir + "/" + filename, img)
         else:
-            self.print_message("No output file resulted from processing input file: "
-                               f"{self.input_full_path}/{filename}", level=logging.WARNING)
+            self.print_message(color_str(
+                "No output file resulted from processing input file: "
+                f"{self.input_full_path}/{filename}",
+                constants.LOG_COLOR_ALERT), level=logging.WARNING)
 
     def end(self):
         for a in self._actions:

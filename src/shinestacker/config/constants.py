@@ -41,6 +41,12 @@ class _Constants:
 
     PATH_SEPARATOR = ';'
 
+    LOG_COLOR_ALERT = 'red'
+    LOG_COLOR_LEVEL_JOB = 'green'
+    LOG_COLOR_LEVEL_1 = 'blue'
+    LOG_COLOR_LEVEL_2 = 'magenta'
+    LOG_COLOR_LEVEL_3 = 'cyan'
+
     DEFAULT_FILE_REVERSE_ORDER = False
     DEFAULT_MULTILAYER_FILE_REVERSE_ORDER = True
 

@@ -6,6 +6,7 @@ from scipy.optimize import bisect
 from scipy.interpolate import interp1d
 from .. config.constants import constants
 from .. core.exceptions import InvalidOptionError
+from .. core.colors import color_str
 from .utils import read_img, save_plot
 from .stack_framework import SubAction
 
@@ -408,6 +409,6 @@ class BalanceFrames(SubAction):
 
     def run_frame(self, idx, _ref_idx, image):
         if idx != self.process.ref_idx:
-            self.process.sub_message_r(': balance image')
+            self.process.sub_message_r(color_str(': balance image', constants.LOG_COLOR_LEVEL_3))
             image = self.correction.apply_correction(idx, image)
         return image

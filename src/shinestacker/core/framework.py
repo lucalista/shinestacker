@@ -1,6 +1,7 @@
 # pylint: disable=C0114, C0115, C0116, R0917, R0913, R0902
 import time
 import logging
+from .. config.constants import constants
 from .. config.config import config
 from .colors import color_str
 from .logging import setup_logging
@@ -89,13 +90,15 @@ class JobBase:
     def run(self):
         self._t0 = time.time()
         if not self.enabled:
-            self.get_logger().warning(color_str(self.name + ": entire job disabled", 'red'))
+            self.get_logger().warning(color_str(self.name + ": entire job disabled",
+                                                constants.LOG_COLOR_ALERT))
         self.callback('before_action', self.id, self.name)
         self.run_core()
         self.callback('after_action', self.id, self.name)
-        msg_name = color_str(self.name + ":", "green", "bold")
-        msg_time = color_str(f"elapsed time: {elapsed_time_str(self._t0)}", "green")
-        msg_completed = color_str("completed", "green")
+        msg_name = color_str(self.name + ":", constants.LOG_COLOR_LEVEL_JOB, "bold")
+        msg_time = color_str(f"elapsed time: {elapsed_time_str(self._t0)}",
+                             constants.LOG_COLOR_LEVEL_JOB)
+        msg_completed = color_str("completed", constants.LOG_COLOR_LEVEL_JOB)
         self.get_logger().info(msg=f"{msg_name} {msg_time}{TRAILING_SPACES}")
         self.get_logger().info(msg=f"{msg_name} {msg_completed}{TRAILING_SPACES}")
 
@@ -115,13 +118,14 @@ class JobBase:
     def print_message(self, msg='', level=logging.INFO, end=None, begin='', tqdm=False):
         if config.DISABLE_TQDM:
             tqdm = False
-        self.base_message = color_str(self.name, "blue", "bold")
+        self.base_message = color_str(self.name, constants.LOG_COLOR_LEVEL_1, "bold")
         if msg != '':
             self.base_message += (': ' + msg)
         self.set_terminator(tqdm, end)
         self.get_logger(tqdm).log(
             level=level,
-            msg=f"{begin}{color_str(self.base_message, 'blue', 'bold')}{TRAILING_SPACES}"
+            msg=f"{begin}{color_str(self.base_message, constants.LOG_COLOR_LEVEL_1,
+                                    'bold')}{TRAILING_SPACES}"
         )
         self.set_terminator(tqdm)
 
@@ -176,7 +180,8 @@ class Job(JobBase):
                 if not self.enabled:
                     z.append("job")
                 msg = " and ".join(z)
-                self.get_logger().warning(color_str(a.name + f": {msg} disabled", 'red'))
+                self.get_logger().warning(color_str(a.name + f": {msg} disabled",
+                                                    constants.LOG_COLOR_ALERT))
             else:
                 if self.callback('check_running', self.id, self.name) is False:
                     raise RunStopException(self.name)
@@ -215,7 +220,7 @@ class ActionList(JobBase):
         raise StopIteration
 
     def run_core(self):
-        self.print_message('begin run', end='\n')
+        self.print_message(color_str('begin run', constants.LOG_COLOR_LEVEL_2), end='\n')
         self.begin()
         for _ in iter(self):
             self.callback('after_step', self.id, self.name, self.count)

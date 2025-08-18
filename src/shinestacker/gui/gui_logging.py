@@ -17,6 +17,7 @@ class SimpleHtmlFormatter(logging.Formatter):
     FF = '80'
     OO = '00'
     MM = '40'
+    GG = 'FF'
     ANSI_COLORS = {
         # Reset
         '\x1b[0m': '</span>',
@@ -32,13 +33,13 @@ class SimpleHtmlFormatter(logging.Formatter):
         '\x1b[37m': f'<span style="color:#{FF}{FF}{FF}">',  # white
         # Brilliant colors (90-97)
         '\x1b[90m': f'<span style="color:#{MM}{MM}{MM}">',
-        '\x1b[91m': f'<span style="color:#{FF}{MM}{MM}">',
-        '\x1b[92m': f'<span style="color:#{MM}{FF}{MM}">',
-        '\x1b[93m': f'<span style="color:#{FF}{FF}{MM}">',
-        '\x1b[94m': f'<span style="color:#{MM}{MM}{FF}">',
-        '\x1b[95m': f'<span style="color:#{FF}{MM}{FF}">',
-        '\x1b[96m': f'<span style="color:#{MM}{FF}{FF}">',
-        '\x1b[97m': f'<span style="color:#{FF}{FF}{FF}">',
+        '\x1b[91m': f'<span style="color:#{GG}{MM}{MM}">',
+        '\x1b[92m': f'<span style="color:#{MM}{GG}{MM}">',
+        '\x1b[93m': f'<span style="color:#{GG}{GG}{MM}">',
+        '\x1b[94m': f'<span style="color:#{MM}{MM}{GG}">',
+        '\x1b[95m': f'<span style="color:#{GG}{MM}{GG}">',
+        '\x1b[96m': f'<span style="color:#{MM}{GG}{GG}">',
+        '\x1b[97m': f'<span style="color:#{GG}{GG}{GG}">',
         # Background (40-47)
         '\x1b[40m': f'<span style="background-color:#{OO}{OO}{OO}">',
         '\x1b[41m': f'<span style="background-color:#{FF}{OO}{OO}">',

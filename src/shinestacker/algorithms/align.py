@@ -289,15 +289,19 @@ class AlignFrames(SubAction):
         img_ref = self.process.img_ref(ref_idx)
         return self.align_images(idx, img_ref, img_0)
 
+    def sub_msg(self, msg, color=constants.LOG_COLOR_LEVEL_3):
+        self.process.sub_message_r(color_str(msg, color))
+
     def align_images(self, idx, img_1, img_0):
         idx_str = f"{idx:04d}"
         callbacks = {
-            'message': lambda: self.process.sub_message_r(': find matches'),
-            'matches_message': lambda n: self.process.sub_message_r(f": good matches: {n}"),
-            'align_message': lambda: self.process.sub_message_r(': align images'),
-            'ecc_message': lambda: self.process.sub_message_r(": ecc refinement"),
-            'blur_message': lambda: self.process.sub_message_r(': blur borders'),
-            'warning': lambda msg: self.process.sub_message_r(color_str(f': {msg}', 'red')),
+            'message': lambda: self.sub_msg(': find matches'),
+            'matches_message': lambda n: self.sub_msg(f": good matches: {n}"),
+            'align_message': lambda: self.sub_msg(': align images'),
+            'ecc_message': lambda: self.sub_msg(": ecc refinement"),
+            'blur_message': lambda: self.sub_msg(': blur borders'),
+            'warning': lambda msg: self.sub_msg(
+                f': {msg}', constants.LOG_COLOR_ALERT),
             'save_plot': lambda plot_path: self.process.callback(
                 'save_plot', self.process.id,
                 f"{self.process.name}: matches\nframe {idx_str}", plot_path)

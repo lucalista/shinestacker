@@ -73,7 +73,8 @@ class NoiseDetection(JobBase, FrameMultiDirectory):
 
     def run_core(self):
         self.print_message(color_str(
-            f"map noisy pixels from frames in {self.folder_list_str()}", "blue"
+            f"map noisy pixels from frames in {self.folder_list_str()}",
+            constants.LOG_COLOR_LEVEL_2
         ))
         files = self.folder_filelist()
         in_paths = [self.working_path + "/" + f for f in files]
@@ -89,7 +90,7 @@ class NoiseDetection(JobBase, FrameMultiDirectory):
         mean_img = mean_image(
             file_paths=in_paths, max_frames=self.max_frames,
             message_callback=lambda path: self.print_message_r(
-                color_str(f"reading frame: {path.split('/')[-1]}", "blue")
+                color_str(f"reading frame: {path.split('/')[-1]}", constants.LOG_COLOR_LEVEL_2)
             ),
             progress_callback=progress_callback)
         if not config.DISABLE_TQDM:
@@ -103,13 +104,16 @@ class NoiseDetection(JobBase, FrameMultiDirectory):
         hot_rgb = cv2.bitwise_or(hot_px[0], cv2.bitwise_or(hot_px[1], hot_px[2]))
         msg = []
         for ch, hot in zip(['rgb', *constants.RGB_LABELS], [hot_rgb] + hot_px):
-            msg.append(f"{ch}: {np.count_nonzero(hot > 0)}")
-        self.print_message("hot pixels: " + ", ".join(msg))
+            hpx = color_str(f"{ch}: {np.count_nonzero(hot > 0)}",
+                            {'rgb': 'black', 'r': 'red', 'g': 'green', 'b': 'blue'}[ch])
+            msg.append(hpx)
+        self.print_message(color_str("hot pixels: " + ", ".join(msg), constants.LOG_COLOR_LEVEL_2))
         path = "/".join(self.file_name.split("/")[:-1])
         if not os.path.exists(f"{self.working_path}/{path}"):
             self.print_message(f"create directory: {path}")
             os.mkdir(f"{self.working_path}/{path}")
-        self.print_message(f"writing hot pixels map file: {self.file_name}")
+        self.print_message(color_str(f"writing hot pixels map file: {self.file_name}",
+                                     constants.LOG_COLOR_LEVEL_2))
         cv2.imwrite(f"{self.working_path}/{self.file_name}", hot_rgb)
         plot_range = self.plot_range
         min_th, max_th = min(self.channel_thresholds), max(self.channel_thresholds)
@@ -155,7 +159,9 @@ class MaskNoise(SubAction):
         self.process = process
         path = f"{process.working_path}/{self.noise_mask}"
         if os.path.exists(path):
-            self.process.sub_message_r(f': reading noisy pixel mask file: {self.noise_mask}')
+            self.process.sub_message_r(color_str(
+                f': reading noisy pixel mask file: {self.noise_mask}',
+                constants.LOG_COLOR_LEVEL_3))
             self.noise_mask_img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
             if self.noise_mask_img is None:
                 raise ImageLoadError(path, f"failed to load image file {self.noise_mask}.")
@@ -163,7 +169,7 @@ class MaskNoise(SubAction):
             raise ImageLoadError(path, "file not found.")
 
     def run_frame(self, _idx, _ref_idx, image):
-        self.process.sub_message_r(': mask noisy pixels')
+        self.process.sub_message_r(color_str(': mask noisy pixels', constants.LOG_COLOR_LEVEL_3))
         if len(image.shape) == 3:
             corrected = image.copy()
             for c in range(3):
