@@ -29,4 +29,4 @@ def create_select_file_paths_widget(value, placeholder, tag):
         if path:
             edit.setText(path)
 
-    return create_layout_widget_and_connect(button, edit, browse)
+    return edit, create_layout_widget_and_connect(button, edit, browse)

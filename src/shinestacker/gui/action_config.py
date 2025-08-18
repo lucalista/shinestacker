@@ -206,7 +206,7 @@ class FieldBuilder:
             self.action.params.get(tag, ''),
             kwargs.get('placeholder', ''),
             tag.replace('_', ' ')
-        )
+        )[1]
 
     def create_rel_path_field(self, tag, **kwargs):
         value = self.action.params.get(tag, kwargs.get('default', ''))

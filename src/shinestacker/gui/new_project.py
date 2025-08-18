@@ -9,6 +9,8 @@ from .. config.constants import constants
 from .. algorithms.stack import get_bunches
 from .select_path_widget import create_select_file_paths_widget
 
+DEFAULT_NO_COUNT_LABEL = " - "
+
 
 class NewProjectDialog(QDialog):
     def __init__(self, parent=None):
@@ -51,8 +53,9 @@ class NewProjectDialog(QDialog):
         spacer.setFixedHeight(10)
         self.layout.addRow(spacer)
 
-        container = create_select_file_paths_widget('', 'input files folder', 'input files folder')
-
+        self.input_folder, container = create_select_file_paths_widget(
+            '', 'input files folder', 'input files folder')
+        self.input_folder.textChanged.connect(self.update_bunches_label)
         self.noise_detection = QCheckBox()
         self.noise_detection.setChecked(gui_constants.NEW_PROJECT_NOISE_DETECTION)
         self.vignetting_correction = QCheckBox()
@@ -72,7 +75,8 @@ class NewProjectDialog(QDialog):
         bunch_overlap_range = gui_constants.NEW_PROJECT_BUNCH_OVERLAP
         self.bunch_overlap.setRange(bunch_overlap_range['min'], bunch_overlap_range['max'])
         self.bunch_overlap.setValue(constants.DEFAULT_OVERLAP)
-        self.bunches_label = QLabel("")
+        self.bunches_label = QLabel(DEFAULT_NO_COUNT_LABEL)
+        self.frames_label = QLabel(DEFAULT_NO_COUNT_LABEL)
 
         self.update_bunch_options(gui_constants.NEW_PROJECT_BUNCH_STACK)
         self.bunch_stack.toggled.connect(self.update_bunch_options)
@@ -88,6 +92,7 @@ class NewProjectDialog(QDialog):
 
         self.add_bold_label("Select input:")
         self.layout.addRow("Input folder:", container)
+        self.layout.addRow("Number of frames: ", self.frames_label)
         self.add_bold_label("Select actions:")
         if self.expert():
             self.layout.addRow("Automatic noise detection:", self.noise_detection)
@@ -111,25 +116,34 @@ class NewProjectDialog(QDialog):
         self.update_bunches_label()
 
     def update_bunches_label(self):
-        if self.bunch_stack.isChecked():
-            def count_image_files(path):
-                if path == '' or not os.path.isdir(path):
-                    return 0
-                extensions = ['jpg', 'jpeg', 'tif', 'tiff']
-                count = 0
-                for filename in os.listdir(path):
-                    if '.' in filename:
-                        ext = filename.lower().split('.')[-1]
-                        if ext in extensions:
-                            count += 1
-                return count
+        if not self.input_folder.text():
+            return
 
-            bunches = get_bunches(list(range(count_image_files(self.input_folder.text()))),
+        def count_image_files(path):
+            if path == '' or not os.path.isdir(path):
+                return 0
+            extensions = ['jpg', 'jpeg', 'tif', 'tiff']
+            count = 0
+            for filename in os.listdir(path):
+                if '.' in filename:
+                    ext = filename.lower().split('.')[-1]
+                    if ext in extensions:
+                        count += 1
+            return count
+
+        n_image_files = count_image_files(self.input_folder.text())
+        if n_image_files == 0:
+            self.bunches_label.setText(DEFAULT_NO_COUNT_LABEL)
+            self.frames_label.setText(DEFAULT_NO_COUNT_LABEL)
+            return
+        self.frames_label.setText(f"{n_image_files}")
+        if self.bunch_stack.isChecked():
+            bunches = get_bunches(list(range(n_image_files)),
                                   self.bunch_frames.value(),
                                   self.bunch_overlap.value())
             self.bunches_label.setText(f"{len(bunches)}")
         else:
-            self.bunches_label.setText(" - ")
+            self.bunches_label.setText(DEFAULT_NO_COUNT_LABEL)
 
     def accept(self):
         input_folder = self.input_folder.text()
