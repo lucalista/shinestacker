@@ -1,4 +1,5 @@
 # pylint: disable=C0114, C0115, C0116, E0611, R0902, W0718
+import os
 import traceback
 import numpy as np
 from PySide6.QtWidgets import QFileDialog, QMessageBox, QVBoxLayout, QLabel, QDialog, QApplication
@@ -23,11 +24,11 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
         self.loader_thread = None
         self.display_manager = None
         self.image_viewer = None
-        self.modified = None
         self.blank_layer = None
         self.loading_dialog = None
         self.loading_timer = None
         self.exif_dialog = None
+        self.current_file_path = ''
 
     def setup_ui(self, display_manager, image_viewer):
         self.display_manager = display_manager
@@ -50,7 +51,7 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
         self.image_viewer.setup_brush_cursor()
         self.parent().change_layer(0)
         self.image_viewer.reset_zoom()
-        self.status_message_requested.emit(f"Loaded: {self.io_manager.current_file_path}")
+        self.status_message_requested.emit(f"Loaded: {self.current_file_path}")
         self.parent().thumbnail_list.setFocus()
         self.update_title_requested.emit()
 
@@ -60,7 +61,7 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
         self.loading_dialog.accept()
         self.loading_dialog.deleteLater()
         QMessageBox.critical(self.parent(), "Error", error_msg)
-        self.status_message_requested.emit(f"Error loading: {self.io_manager.current_file_path}")
+        self.status_message_requested.emit(f"Error loading: {self.current_file_path}")
 
     def open_file(self, file_paths=None):
         if file_paths is None:
@@ -76,7 +77,7 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
             self.import_frames_from_files(file_paths)
             return
         path = file_paths[0] if isinstance(file_paths, list) else file_paths
-        self.io_manager.current_file_path = path
+        self.current_file_path = os.path.abspath(path)
         QGuiApplication.setOverrideCursor(QCursor(Qt.BusyCursor))
         self.loading_dialog = QDialog(self.parent())
         self.loading_dialog.setWindowTitle("Loading")
@@ -142,10 +143,10 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
     def save_multilayer(self):
         if self.layer_stack() is None:
             return
-        if self.io_manager.current_file_path != '':
-            extension = self.io_manager.current_file_path.split('.')[-1]
+        if self.current_file_path != '':
+            extension = self.current_file_path.split('.')[-1]
             if extension in ['tif', 'tiff']:
-                self.save_multilayer_to_path(self.io_manager.current_file_path)
+                self.save_multilayer_to_path(self.current_file_path)
                 return
 
     def save_multilayer_as(self):
@@ -161,8 +162,8 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
     def save_multilayer_to_path(self, path):
         try:
             self.io_manager.save_multilayer(path)
-            self.io_manager.current_file_path = path
-            self.modified = False
+            self.current_file_path = os.path.abasabspath(path)
+            self.parent().modified = False
             self.update_title_requested.emit()
             self.status_message_requested.emit(f"Saved multilayer to: {path}")
         except Exception as e:
@@ -172,8 +173,8 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
     def save_master(self):
         if self.master_layer() is None:
             return
-        if self.io_manager.current_file_path != '':
-            self.save_master_to_path(self.io_manager.current_file_path)
+        if self.current_file_path != '':
+            self.save_master_to_path(self.current_file_path)
             return
         self.save_master_as()
 
@@ -189,8 +190,8 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
     def save_master_to_path(self, path):
         try:
             self.io_manager.save_master(path)
-            self.io_manager.current_file_path = path
-            self.modified = False
+            self.current_file_path = os.path.abspath(path)
+            self.parent().modified = False
             self.update_title_requested.emit()
             self.status_message_requested.emit(f"Saved master layer to: {path}")
         except Exception as e:
@@ -210,8 +211,8 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
             self.set_master_layer(None)
             self.blank_layer = None
             self.layer_collection.reset()
-            self.io_manager.current_file_path = ''
-            self.modified = False
+            self.current_file_path = ''
+            self.parent().modified = False
             self.undo_manager.reset()
             self.image_viewer.clear_image()
             self.display_manager.thumbnail_list.clear()

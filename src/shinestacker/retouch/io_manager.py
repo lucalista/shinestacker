@@ -9,7 +9,6 @@ from .layer_collection import LayerCollectionHandler
 class IOManager(LayerCollectionHandler):
     def __init__(self, layer_collection):
         super().__init__(layer_collection)
-        self.current_file_path = ''
         self.exif_path = ''
         self.exif_data = None
 
