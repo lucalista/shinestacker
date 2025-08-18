@@ -93,7 +93,6 @@ class FocusStackBunch(ActionList, FocusStackBase):
     def run_step(self):
         self.print_message_r(f"fusing bunch: {self.count}")
         self.focus_stack(self._chunks[self.count - 1])
-        # self.callback('after_step', self.id, self.name, self.count)
 
 
 class FocusStack(FocusStackBase):
