@@ -80,7 +80,8 @@ class LayerCollection:
         master_label = None
         master_layer = None
         for i, label in enumerate(self.layer_labels):
-            if label.lower() == "master":
+            label_lower = label.lower()
+            if "master" in label_lower or "stack" in label_lower:
                 master_index = i
                 master_label = self.layer_labels.pop(i)
                 master_layer = self.layer_stack[i]
