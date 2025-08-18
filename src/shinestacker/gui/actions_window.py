@@ -20,8 +20,9 @@ class ActionsWindow(ProjectEditor):
 
     def update_title(self):
         title = constants.APP_TITLE
-        if self._current_file:
-            title += f" - {os.path.basename(self._current_file)}"
+        file_name = self.current_file_name()
+        if file_name:
+            title += f" - {file_name}"
             if self._modified_project:
                 title += " *"
         self.window().setWindowTitle(title)
@@ -34,7 +35,7 @@ class ActionsWindow(ProjectEditor):
     def close_project(self):
         if self._check_unsaved_changes():
             self.set_project(Project())
-            self._current_file = None
+            self.set_current_file_path('')
             self.update_title()
             self.job_list.clear()
             self.action_list.clear()
@@ -44,7 +45,7 @@ class ActionsWindow(ProjectEditor):
         if not self._check_unsaved_changes():
             return
         os.chdir(get_app_base_path())
-        self._current_file = None
+        self.set_current_file_path('')
         self._modified_project = False
         self.update_title()
         self.job_list.clear()
@@ -123,11 +124,8 @@ class ActionsWindow(ProjectEditor):
                 self, "Open Project", "", "Project Files (*.fsp);;All Files (*)")
         if file_path:
             try:
-                self._current_file_wd = os.path.abspath(os.path.dirname(file_path))
-                os.chdir(self._current_file_wd)
-                self._current_file = os.path.basename(file_path)
-                file_path = os.path.join(self._current_file_wd, self._current_file)
-                with open(file_path, 'r', encoding="utf-8") as file:
+                self.set_current_file_path(file_path)
+                with open(self.current_file_path(), 'r', encoding="utf-8") as file:
                     json_obj = json.load(file)
                 project = Project.from_dict(json_obj['project'])
                 if project is None:
@@ -167,12 +165,10 @@ class ActionsWindow(ProjectEditor):
                                 Please, select a valid working path.''')
                             self.edit_action(action)
 
-    def current_file_name(self):
-        return self._current_file
-
     def save_project(self):
-        if self._current_file:
-            self.do_save(os.path.join(self._current_file_wd, self._current_file))
+        path = self.current_file_path()
+        if path:
+            self.do_save(path)
         else:
             self.save_project_as()
 
@@ -182,9 +178,7 @@ class ActionsWindow(ProjectEditor):
         if file_path:
             if not file_path.endswith('.fsp'):
                 file_path += '.fsp'
-            self._current_file_wd = os.path.abspath(os.path.dirname(file_path))
-            os.chdir(self._current_file_wd)
-            self._current_file = os.path.basename(file_path)
+            self.set_current_file_path(file_path)
             self.do_save(file_path)
             self._modified_project = False
             self.update_title()

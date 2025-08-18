@@ -89,9 +89,22 @@ class ProjectEditor(QMainWindow):
         self.expert_options = False
         self.script_dir = os.path.dirname(__file__)
         self.dialog = None
-        self._current_file = None
-        self._current_file_wd = ''
+        self._current_file_path = ''
         self._modified_project = False
+
+    def current_file_path(self):
+        return self._current_file_path
+
+    def current_file_directory(self):
+        return os.path.dirname(self._current_file_path)
+
+    def current_file_name(self):
+        return os.path.basename(self._current_file_path)
+
+    def set_current_file_path(self, path):
+        self._current_file_path = os.path.abspath(path)
+        if path:
+            os.chdir(self.current_file_directory())
 
     def set_project(self, project):
         self.project = project
@@ -304,7 +317,7 @@ class ProjectEditor(QMainWindow):
         return element
 
     def action_config_dialog(self, action):
-        return ActionConfigDialog(action, self._current_file_wd, self)
+        return ActionConfigDialog(action, self.current_file_directory(), self)
 
     def add_job(self):
         job_action = ActionConfig("Job")
