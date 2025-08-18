@@ -89,7 +89,7 @@ class MainApp(QMainWindow):
         if isinstance(filename, list):
             open_frames(self.retouch_window, None, ";".join(filename))
         else:
-            self.retouch_window.open_file(filename)
+            self.retouch_window.io_gui_handler.open_file(filename)
 
 
 class Application(QApplication):

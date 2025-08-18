@@ -24,6 +24,7 @@ class _ConfigBase:
             raise AttributeError("Can't change config after initialization")
         super().__setattr__(name, value)
 
+
 class _Config(_ConfigBase):
 
     def __new__(cls):

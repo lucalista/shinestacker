@@ -1,6 +1,6 @@
-# pylint: disable=C0114, C0115, C0116, E0611, R0904, R0902, R0914
+# pylint: disable=C0114, C0115, C0116, E0611, R0904, R0902, R0914, R0912
 import math
-from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QPanGesture
+from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
 from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QCursor, QShortcut, QKeySequence
 from PySide6.QtCore import Qt, QRectF, QTime, QPoint, QPointF, Signal, QEvent
 from .. config.gui_constants import gui_constants
@@ -54,9 +54,11 @@ class ImageViewer(QGraphicsView, LayerCollectionHandler):
         self.last_brush_pos = None
         self.grabGesture(Qt.PanGesture)
         self.grabGesture(Qt.PinchGesture)
-        self.last_pinch_scale = 1.0
+        self.pinch_start_scale = 1.0
         self.last_scroll_pos = QPointF()
         self.gesture_active = False
+        self.pinch_center_view = None
+        self.pinch_center_scene = None
 
     def set_image(self, qimage):
         pixmap = QPixmap.fromImage(qimage)
@@ -200,8 +202,6 @@ class ImageViewer(QGraphicsView, LayerCollectionHandler):
     def wheelEvent(self, event):
         if self.empty or self.gesture_active:
             return
-
-        # Distinguish between input sources
         if event.source() == Qt.MouseEventNotSynthesized:  # Physical mouse
             if self.control_pressed:
                 self.brush_size_change_requested.emit(1 if event.angleDelta().y() > 0 else -1)
@@ -233,8 +233,10 @@ class ImageViewer(QGraphicsView, LayerCollectionHandler):
                     )
             else:  # Control + touchpad scroll for zoom
                 zoom_in = event.angleDelta().y() > 0
-                self.zoom_in() if zoom_in else self.zoom_out()
-        
+                if zoom_in:
+                    self.zoom_in()
+                else:
+                    self.zoom_out()
         event.accept()
 
     def enterEvent(self, event):
@@ -258,7 +260,7 @@ class ImageViewer(QGraphicsView, LayerCollectionHandler):
         if event.type() == QEvent.Gesture:
             return self.handle_gesture_event(event)
         return super().event(event)
-    
+
     def handle_gesture_event(self, event):
         handled = False
         pan_gesture = event.gesture(Qt.PanGesture)
@@ -273,7 +275,7 @@ class ImageViewer(QGraphicsView, LayerCollectionHandler):
             event.accept()
             return True
         return False
-    
+
     def handle_pan_gesture(self, pan_gesture):
         if pan_gesture.state() == Qt.GestureStarted:
             self.last_scroll_pos = pan_gesture.delta()
@@ -291,7 +293,7 @@ class ImageViewer(QGraphicsView, LayerCollectionHandler):
             )
         elif pan_gesture.state() == Qt.GestureFinished:
             self.gesture_active = False
-    
+
     def handle_pinch_gesture(self, pinch):
         if pinch.state() == Qt.GestureStarted:
             self.pinch_start_scale = self.get_current_scale()
@@ -302,7 +304,6 @@ class ImageViewer(QGraphicsView, LayerCollectionHandler):
             new_scale = self.pinch_start_scale * pinch.totalScaleFactor()
             new_scale = max(self.min_scale, min(new_scale, self.max_scale))
             if abs(new_scale - self.get_current_scale()) > 0.01:
-                view_center = self.mapToScene(self.viewport().rect().center())
                 self.resetTransform()
                 self.scale(new_scale, new_scale)
                 self.zoom_factor = new_scale

@@ -592,7 +592,8 @@ class FocusStackConfigurator(FocusStackBaseConfigurator):
             self.builder.add_field('exif_path', FIELD_REL_PATH, 'Exif data path', required=False,
                                    placeholder='relative to working path')
             self.builder.add_field('prefix', FIELD_TEXT, 'Ouptut filename prefix', required=False,
-                                   default=constants.DEFAULT_STACK_PREFIX, placeholder="_stack")
+                                   default=constants.DEFAULT_STACK_PREFIX,
+                                   placeholder=constants.DEFAULT_STACK_PREFIX)
         self.builder.add_field('plot_stack', FIELD_BOOL, 'Plot stack', required=False,
                                default=constants.DEFAULT_PLOT_STACK)
         super().common_fields(layout)
@@ -615,10 +616,11 @@ class MultiLayerConfigurator(DefaultActionConfigurator):
         super().create_form(layout, action)
         if self.expert:
             self.builder.add_field('working_path', FIELD_ABS_PATH, 'Working path', required=False)
-            self.builder.add_field('input_path', FIELD_REL_PATH,
-                                   f'Input path (separate by {constants.PATH_SEPARATOR})',
-                                   required=False, multiple_entries=True,
-                                   placeholder='relative to working path')
+        self.builder.add_field('input_path', FIELD_REL_PATH,
+                               f'Input path (separate by {constants.PATH_SEPARATOR})',
+                               required=False, multiple_entries=True,
+                               placeholder='relative to working path')
+        if self.expert:
             self.builder.add_field('output_path', FIELD_REL_PATH, 'Output path', required=False,
                                    placeholder='relative to working path')
             self.builder.add_field('exif_path', FIELD_REL_PATH, 'Exif data path', required=False,
