@@ -1,8 +1,8 @@
 # pylint: disable=C0114, C0115, C0116, E0611, R0904, R0902, R0914
 import math
-from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
+from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QPanGesture
 from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QCursor, QShortcut, QKeySequence
-from PySide6.QtCore import Qt, QRectF, QTime, QPoint, QPointF, Signal
+from PySide6.QtCore import Qt, QRectF, QTime, QPoint, QPointF, Signal, QEvent
 from .. config.gui_constants import gui_constants
 from .brush_preview import BrushPreviewItem
 from .brush_gradient import create_default_brush_gradient
@@ -52,6 +52,11 @@ class ImageViewer(QGraphicsView, LayerCollectionHandler):
         self.empty = True
         self.allow_cursor_preview = True
         self.last_brush_pos = None
+        self.grabGesture(Qt.PanGesture)
+        self.grabGesture(Qt.PinchGesture)
+        self.last_pinch_scale = 1.0
+        self.last_scroll_pos = QPointF()
+        self.gesture_active = False
 
     def set_image(self, qimage):
         pixmap = QPixmap.fromImage(qimage)
@@ -193,25 +198,44 @@ class ImageViewer(QGraphicsView, LayerCollectionHandler):
         super().mouseReleaseEvent(event)
 
     def wheelEvent(self, event):
-        if self.empty:
+        if self.empty or self.gesture_active:
             return
-        if self.control_pressed:
-            self.brush_size_change_requested.emit(1 if event.angleDelta().y() > 0 else -1)
-        else:
-            zoom_in_factor = 1.10
-            zoom_out_factor = 1 / zoom_in_factor
-            current_scale = self.get_current_scale()
-            if event.angleDelta().y() > 0:  # Zoom in
-                new_scale = current_scale * zoom_in_factor
-                if new_scale <= self.max_scale:
-                    self.scale(zoom_in_factor, zoom_in_factor)
-                    self.zoom_factor = new_scale
-            else:  # Zoom out
-                new_scale = current_scale * zoom_out_factor
-                if new_scale >= self.min_scale:
-                    self.scale(zoom_out_factor, zoom_out_factor)
-                    self.zoom_factor = new_scale
-        self.update_brush_cursor()
+
+        # Distinguish between input sources
+        if event.source() == Qt.MouseEventNotSynthesized:  # Physical mouse
+            if self.control_pressed:
+                self.brush_size_change_requested.emit(1 if event.angleDelta().y() > 0 else -1)
+            else:
+                zoom_in_factor = 1.10
+                zoom_out_factor = 1 / zoom_in_factor
+                current_scale = self.get_current_scale()
+                if event.angleDelta().y() > 0:  # Zoom in
+                    new_scale = current_scale * zoom_in_factor
+                    if new_scale <= self.max_scale:
+                        self.scale(zoom_in_factor, zoom_in_factor)
+                        self.zoom_factor = new_scale
+                else:  # Zoom out
+                    new_scale = current_scale * zoom_out_factor
+                    if new_scale >= self.min_scale:
+                        self.scale(zoom_out_factor, zoom_out_factor)
+                        self.zoom_factor = new_scale
+            self.update_brush_cursor()
+        else:  # Touchpad event - fallback for systems without gesture recognition
+            # Handle touchpad panning (two-finger scroll)
+            if not self.control_pressed:
+                delta = event.pixelDelta() or event.angleDelta() / 8
+                if delta:
+                    self.horizontalScrollBar().setValue(
+                        self.horizontalScrollBar().value() - delta.x()
+                    )
+                    self.verticalScrollBar().setValue(
+                        self.verticalScrollBar().value() - delta.y()
+                    )
+            else:  # Control + touchpad scroll for zoom
+                zoom_in = event.angleDelta().y() > 0
+                self.zoom_in() if zoom_in else self.zoom_out()
+        
+        event.accept()
 
     def enterEvent(self, event):
         self.activateWindow()
@@ -229,6 +253,65 @@ class ImageViewer(QGraphicsView, LayerCollectionHandler):
                 self.brush_cursor.hide()
         super().leaveEvent(event)
     # pylint: enable=C0103
+
+    def event(self, event):
+        if event.type() == QEvent.Gesture:
+            return self.handle_gesture_event(event)
+        return super().event(event)
+    
+    def handle_gesture_event(self, event):
+        handled = False
+        pan_gesture = event.gesture(Qt.PanGesture)
+        if pan_gesture:
+            self.handle_pan_gesture(pan_gesture)
+            handled = True
+        pinch_gesture = event.gesture(Qt.PinchGesture)
+        if pinch_gesture:
+            self.handle_pinch_gesture(pinch_gesture)
+            handled = True
+        if handled:
+            event.accept()
+            return True
+        return False
+    
+    def handle_pan_gesture(self, pan_gesture):
+        if pan_gesture.state() == Qt.GestureStarted:
+            self.last_scroll_pos = pan_gesture.delta()
+            self.gesture_active = True
+        elif pan_gesture.state() == Qt.GestureUpdated:
+            delta = pan_gesture.delta() - self.last_scroll_pos
+            self.last_scroll_pos = pan_gesture.delta()
+            zoom_factor = self.get_current_scale()
+            scaled_delta = delta * (1.0 / zoom_factor)
+            self.horizontalScrollBar().setValue(
+                self.horizontalScrollBar().value() - int(scaled_delta.x())
+            )
+            self.verticalScrollBar().setValue(
+                self.verticalScrollBar().value() - int(scaled_delta.y())
+            )
+        elif pan_gesture.state() == Qt.GestureFinished:
+            self.gesture_active = False
+    
+    def handle_pinch_gesture(self, pinch):
+        if pinch.state() == Qt.GestureStarted:
+            self.pinch_start_scale = self.get_current_scale()
+            self.pinch_center_view = pinch.centerPoint()
+            self.pinch_center_scene = self.mapToScene(self.pinch_center_view.toPoint())
+            self.gesture_active = True
+        elif pinch.state() == Qt.GestureUpdated:
+            new_scale = self.pinch_start_scale * pinch.totalScaleFactor()
+            new_scale = max(self.min_scale, min(new_scale, self.max_scale))
+            if abs(new_scale - self.get_current_scale()) > 0.01:
+                view_center = self.mapToScene(self.viewport().rect().center())
+                self.resetTransform()
+                self.scale(new_scale, new_scale)
+                self.zoom_factor = new_scale
+                new_center = self.mapToScene(self.pinch_center_view.toPoint())
+                delta = self.pinch_center_scene - new_center
+                self.translate(delta.x(), delta.y())
+                self.update_brush_cursor()
+        elif pinch.state() in (Qt.GestureFinished, Qt.GestureCanceled):
+            self.gesture_active = False
 
     def setup_brush_cursor(self):
         self.setCursor(Qt.BlankCursor)
