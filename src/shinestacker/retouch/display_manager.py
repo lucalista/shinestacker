@@ -105,6 +105,7 @@ class DisplayManager(QObject, LayerCollectionHandler):
 
     def add_thumbnail_item(self, thumbnail, label, i, is_current):
         container = QWidget()
+        container.setFixedSize(gui_constants.IMG_WIDTH + 4, gui_constants.IMG_HEIGHT + 4)
         container.setObjectName("thumbnailContainer")
         container_layout = QVBoxLayout(container)
         container_layout.setContentsMargins(2, 2, 2, 2)
