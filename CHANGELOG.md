@@ -2,6 +2,15 @@
 
 This page reports the main releases only and the main changes therein.
 
+## [vx.x.x] - 2025-08-19
+**Unreleased changes**
+
+### Changes
+
+* layer selection highlightted with a blue border
+* improved font rendering in brush preview
+* fixed thumbnail spacing 
+
 ---
 
 ## [v0.4.0] - 2025-08-19
