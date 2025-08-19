@@ -1,6 +1,7 @@
 # pylint: disable=C0114, C0115, C0116, E0611, R0902, R0913, R0917, R0914
 import numpy as np
-from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush
+from PySide6.QtWidgets import QApplication, QLabel
+from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QFont
 from PySide6.QtCore import Qt, QPoint
 from .brush_gradient import create_default_brush_gradient
 from .. config.gui_constants import gui_constants
@@ -18,11 +19,16 @@ class BrushTool:
         self.opacity_slider = None
         self.flow_slider = None
         self._brush_mask_cache = {}
+        self.brush_text = None
 
     def setup_ui(self, brush, brush_preview, image_viewer, size_slider, hardness_slider,
                  opacity_slider, flow_slider):
         self.brush = brush
         self.brush_preview = brush_preview
+        self.brush_text = QLabel(brush_preview.parent())
+        self.brush_text.setStyleSheet("color: navy; background: transparent;")
+        self.brush_text.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        self.brush_text.raise_()
         self.image_viewer = image_viewer
         self.size_slider = size_slider
         self.hardness_slider = hardness_slider
@@ -86,7 +92,7 @@ class BrushTool:
         pixmap = QPixmap(width, height)
         pixmap.fill(Qt.transparent)
         painter = QPainter(pixmap)
-        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.TextAntialiasing, True)
         preview_size = min(self.brush.size, width + 30, height + 30)
         center_x, center_y = width // 2, height // 2
         radius = preview_size // 2
@@ -109,10 +115,21 @@ class BrushTool:
         painter.drawEllipse(QPoint(center_x, center_y), radius, radius)
         if self.image_viewer.cursor_style == 'preview':
             painter.setPen(QPen(QColor(0, 0, 160)))
-            painter.drawText(0, 10, f"Size: {int(self.brush.size)}px")
-            painter.drawText(0, 25, f"Hardness: {self.brush.hardness}%")
-            painter.drawText(0, 40, f"Opacity: {self.brush.opacity}%")
-            painter.drawText(0, 55, f"Flow: {self.brush.flow}%")
+            font = QApplication.font()
+            painter.setFont(font)
+            font.setHintingPreference(QFont.PreferFullHinting)
+            painter.setFont(font)
+            self.brush_text.setText(
+                f"Size: {int(self.brush.size)}px\n"
+                f"Hardness: {self.brush.hardness}%\n"
+                f"Opacity: {self.brush.opacity}%\n"
+                f"Flow: {self.brush.flow}%"
+            )
+            self.brush_text.adjustSize()
+            self.brush_text.move(10, self.brush_preview.height() // 2 + 125)
+            self.brush_text.show()
+        else:
+            self.brush_text.hide()
         painter.end()
         self.brush_preview.setPixmap(pixmap)
         self.image_viewer.update_brush_cursor()

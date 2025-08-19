@@ -1,6 +1,7 @@
 # pylint: disable=C0114, C0115, C0116, E0611, R0903, R0913, R0917, E1121
 import numpy as np
-from PySide6.QtWidgets import QWidget, QListWidgetItem, QVBoxLayout, QLabel, QInputDialog
+from PySide6.QtWidgets import (QWidget, QListWidgetItem, QVBoxLayout, QLabel, QInputDialog,
+                               QAbstractItemView)
 from PySide6.QtGui import QPixmap, QImage
 from PySide6.QtCore import Qt, QObject, QTimer, QSize, Signal
 from .. config.gui_constants import gui_constants
@@ -103,16 +104,19 @@ class DisplayManager(QObject, LayerCollectionHandler):
         self.master_thumbnail_label.setPixmap(pixmap)
 
     def add_thumbnail_item(self, thumbnail, label, i, is_current):
-        item_widget = QWidget()
-        layout = QVBoxLayout(item_widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-
+        container = QWidget()
+        container.setObjectName("thumbnailContainer")
+        container_layout = QVBoxLayout(container)
+        container_layout.setContentsMargins(2, 2, 2, 2)
+        container_layout.setSpacing(0)
+        content_widget = QWidget()
+        content_layout = QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(0)
         thumbnail_label = QLabel()
         thumbnail_label.setPixmap(thumbnail)
         thumbnail_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(thumbnail_label)
-
+        content_layout.addWidget(thumbnail_label)
         label_widget = ClickableLabel(label)
         label_widget.setAlignment(Qt.AlignCenter)
 
@@ -124,14 +128,33 @@ class DisplayManager(QObject, LayerCollectionHandler):
                 self.set_layer_labels(i, new_label)
 
         label_widget.double_clicked.connect(lambda: rename_label(label_widget, label, i))
-        layout.addWidget(label_widget)
+        content_layout.addWidget(label_widget)
+        container_layout.addWidget(content_widget)
+        if is_current:
+            container.setStyleSheet("#thumbnailContainer{ border: 2px solid blue; }")
+        else:
+            container.setStyleSheet("#thumbnailContainer{ border: 2px solid transparent; }")
         item = QListWidgetItem()
-        item.setSizeHint(QSize(gui_constants.IMG_WIDTH, gui_constants.IMG_HEIGHT))
+        item.setSizeHint(QSize(gui_constants.IMG_WIDTH + 4, gui_constants.IMG_HEIGHT + 4))
         self.thumbnail_list.addItem(item)
-        self.thumbnail_list.setItemWidget(item, item_widget)
-
+        self.thumbnail_list.setItemWidget(item, container)
         if is_current:
             self.thumbnail_list.setCurrentItem(item)
+
+    def highlight_thumbnail(self, index):
+        for i in range(self.thumbnail_list.count()):
+            item = self.thumbnail_list.item(i)
+            widget = self.thumbnail_list.itemWidget(item)
+            if widget:
+                widget.setStyleSheet("#thumbnailContainer{ border: 2px solid transparent; }")
+        current_item = self.thumbnail_list.item(index)
+        if current_item:
+            widget = self.thumbnail_list.itemWidget(current_item)
+            if widget:
+                widget.setStyleSheet("#thumbnailContainer{ border: 2px solid blue; }")
+        self.thumbnail_list.setCurrentRow(index)
+        self.thumbnail_list.scrollToItem(
+            self.thumbnail_list.item(index), QAbstractItemView.PositionAtCenter)
 
     def set_view_master(self):
         if self.has_no_master_layer():

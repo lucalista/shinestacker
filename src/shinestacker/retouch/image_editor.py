@@ -1,5 +1,5 @@
 # pylint: disable=C0114, C0115, C0116, E0611, R0902
-from PySide6.QtWidgets import QMainWindow, QMessageBox, QAbstractItemView
+from PySide6.QtWidgets import QMainWindow, QMessageBox
 from .. config.constants import constants
 from .undo_manager import UndoManager
 from .layer_collection import LayerCollection
@@ -114,19 +114,14 @@ class ImageEditor(QMainWindow, LayerCollectionHandler):
             new_idx = max(0, self.current_layer_idx() - 1)
             if new_idx != self.current_layer_idx():
                 self.change_layer(new_idx)
-                self.highlight_thumbnail(new_idx)
+                self.display_manager.highlight_thumbnail(new_idx)
 
     def next_layer(self):
         if self.layer_stack() is not None:
             new_idx = min(self.number_of_layers() - 1, self.current_layer_idx() + 1)
             if new_idx != self.current_layer_idx():
                 self.change_layer(new_idx)
-                self.highlight_thumbnail(new_idx)
-
-    def highlight_thumbnail(self, index):
-        self.thumbnail_list.setCurrentRow(index)
-        self.thumbnail_list.scrollToItem(
-            self.thumbnail_list.item(index), QAbstractItemView.PositionAtCenter)
+                self.display_manager.highlight_thumbnail(new_idx)
 
     def copy_layer_to_master(self):
         if self.layer_stack() is None or self.master_layer() is None:
