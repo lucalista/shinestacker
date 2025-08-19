@@ -36,9 +36,6 @@ class _GuiConstants:
 
     THUMB_WIDTH = 120  # px
     THUMB_HEIGHT = 80  # px
-    IMG_WIDTH = 100  # px
-    IMG_HEIGHT = 80  # px
-    LABEL_HEIGHT = 20  # px
 
     MAX_UNDO_STEPS = 50
 
@@ -46,8 +43,9 @@ class _GuiConstants:
 
     UI_SIZES = {
         'brush_preview': (100, 80),
-        'thumbnail': (IMG_WIDTH, IMG_HEIGHT),
-        'master_thumb': (THUMB_WIDTH, THUMB_HEIGHT)
+        'thumbnail_width': 100,
+        'master_thumb': (THUMB_WIDTH, THUMB_HEIGHT),
+        'label_height': 20
     }
 
     DEFAULT_BRUSH_HARDNESS = 50

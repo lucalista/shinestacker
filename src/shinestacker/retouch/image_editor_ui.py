@@ -125,16 +125,19 @@ class ImageEditorUI(ImageFilters):
             }
         """)
         master_label.setAlignment(Qt.AlignCenter)
-        master_label.setFixedHeight(gui_constants.LABEL_HEIGHT)
+        master_label.setFixedHeight(gui_constants.UI_SIZES['label_height'])
         side_layout.addWidget(master_label)
         self.master_thumbnail_frame = QFrame()
+        self.master_thumbnail_frame.setObjectName("thumbnailContainer")
+        self.master_thumbnail_frame.setStyleSheet(
+            "#thumbnailContainer{ border: 2px solid #A0A0FF; }")
         self.master_thumbnail_frame.setFrameShape(QFrame.StyledPanel)
         master_thumbnail_layout = QVBoxLayout(self.master_thumbnail_frame)
         master_thumbnail_layout.setContentsMargins(2, 2, 2, 2)
         self.master_thumbnail_label = QLabel()
         self.master_thumbnail_label.setAlignment(Qt.AlignCenter)
-        self.master_thumbnail_label.setFixedSize(
-            gui_constants.THUMB_WIDTH, gui_constants.THUMB_HEIGHT)
+        self.master_thumbnail_label.setFixedWidth(
+            gui_constants.UI_SIZES['thumbnail_width'])
         self.master_thumbnail_label.mousePressEvent = \
             lambda e: self.display_manager.set_view_master()
         master_thumbnail_layout.addWidget(self.master_thumbnail_label)
@@ -152,7 +155,7 @@ class ImageEditorUI(ImageFilters):
             }
         """)
         layers_label.setAlignment(Qt.AlignCenter)
-        layers_label.setFixedHeight(gui_constants.LABEL_HEIGHT)
+        layers_label.setFixedHeight(gui_constants.UI_SIZES['label_height'])
         side_layout.addWidget(layers_label)
         self.thumbnail_list = QListWidget()
         self.thumbnail_list.setFocusPolicy(Qt.StrongFocus)

@@ -65,15 +65,15 @@ class DisplayManager(QObject, LayerCollectionHandler):
             self.display_master_layer()
 
     def create_thumbnail(self, layer):
-        if layer.dtype == np.uint16:
-            layer = (layer // 256).astype(np.uint8)
-        height, width = layer.shape[:2]
-        if layer.ndim == 3 and layer.shape[-1] == 3:
-            qimg = QImage(layer.data, width, height, 3 * width, QImage.Format_RGB888)
+        source_layer = (layer // 256).astype(np.uint8) if layer.dtype == np.uint16 else layer
+        height, width = source_layer.shape[:2]
+        if layer.ndim == 3 and source_layer.shape[-1] == 3:
+            qimg = QImage(source_layer.data, width, height, 3 * width, QImage.Format_RGB888)
         else:
-            qimg = QImage(layer.data, width, height, width, QImage.Format_Grayscale8)
+            qimg = QImage(source_layer.data, width, height, width, QImage.Format_Grayscale8)
         return QPixmap.fromImage(
-            qimg.scaled(*gui_constants.UI_SIZES['thumbnail'], Qt.KeepAspectRatio))
+            qimg.scaledToWidth(
+                gui_constants.UI_SIZES['thumbnail_width'], Qt.SmoothTransformation))
 
     def update_thumbnails(self):
         self.update_master_thumbnail()
@@ -105,7 +105,7 @@ class DisplayManager(QObject, LayerCollectionHandler):
 
     def add_thumbnail_item(self, thumbnail, label, i, is_current):
         container = QWidget()
-        container.setFixedSize(gui_constants.IMG_WIDTH + 4, gui_constants.IMG_HEIGHT + 4)
+        container.setFixedWidth(gui_constants.UI_SIZES['thumbnail_width'] + 4)
         container.setObjectName("thumbnailContainer")
         container_layout = QVBoxLayout(container)
         container_layout.setContentsMargins(2, 2, 2, 2)
@@ -119,6 +119,7 @@ class DisplayManager(QObject, LayerCollectionHandler):
         thumbnail_label.setAlignment(Qt.AlignCenter)
         content_layout.addWidget(thumbnail_label)
         label_widget = ClickableLabel(label)
+        label_widget.setFixedHeight(gui_constants.UI_SIZES['label_height'])
         label_widget.setAlignment(Qt.AlignCenter)
 
         def rename_label(label_widget, old_label, i):
@@ -136,7 +137,8 @@ class DisplayManager(QObject, LayerCollectionHandler):
         else:
             container.setStyleSheet("#thumbnailContainer{ border: 2px solid transparent; }")
         item = QListWidgetItem()
-        item.setSizeHint(QSize(gui_constants.IMG_WIDTH + 4, gui_constants.IMG_HEIGHT + 4))
+        item.setSizeHint(QSize(gui_constants.UI_SIZES['thumbnail_width'] + 4,
+                               thumbnail.height() + label_widget.height() + 4))
         self.thumbnail_list.addItem(item)
         self.thumbnail_list.setItemWidget(item, container)
         if is_current:
