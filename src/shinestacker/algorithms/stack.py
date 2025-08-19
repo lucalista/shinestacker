@@ -43,10 +43,10 @@ class FocusStackBase(JobBase, FrameDirectory):
             copy_exif_from_file_to_file(exif_filename, out_filename)
             self.sub_message_r(' ' * 60)
         if self.plot_stack:
-            idx_str = f"{self.frame_count:04d}" if self.frame_count >= 0 else ''
+            idx_str = f"{self.frame_count + 1:04d}" if self.frame_count >= 0 else ''
             name = f"{self.name}: {self.stack_algo.name()}"
             if idx_str != '':
-                name += f"\nbunch: {idx_str + 1}"
+                name += f"\nbunch: {idx_str}"
             self.callback('save_plot', self.id, name, out_filename)
         if self.frame_count >= 0:
             self.frame_count += 1
