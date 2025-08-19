@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0115, C0116, E0611, R0903, R0913, R0917, E1121
+# pylint: disable=C0114, C0115, C0116, E0611, R0903, R0913, R0917, E1121, R0902
 import numpy as np
 from PySide6.QtWidgets import (QWidget, QListWidgetItem, QVBoxLayout, QLabel, QInputDialog,
                                QAbstractItemView)
@@ -40,6 +40,7 @@ class DisplayManager(QObject, LayerCollectionHandler):
         self.update_timer = QTimer()
         self.update_timer.setInterval(gui_constants.PAINT_REFRESH_TIMER)
         self.update_timer.timeout.connect(self.process_pending_updates)
+        self.thumbnail_highlight = gui_constants.THUMB_LO_COLOR
 
     def process_pending_updates(self):
         if self.needs_update:
@@ -133,7 +134,8 @@ class DisplayManager(QObject, LayerCollectionHandler):
         content_layout.addWidget(label_widget)
         container_layout.addWidget(content_widget)
         if is_current:
-            container.setStyleSheet("#thumbnailContainer{ border: 2px solid blue; }")
+            container.setStyleSheet(
+                f"#thumbnailContainer{{ border: 2px solid #{self.thumbnail_highlight}; }}")
         else:
             container.setStyleSheet("#thumbnailContainer{ border: 2px solid transparent; }")
         item = QListWidgetItem()
@@ -154,7 +156,8 @@ class DisplayManager(QObject, LayerCollectionHandler):
         if current_item:
             widget = self.thumbnail_list.itemWidget(current_item)
             if widget:
-                widget.setStyleSheet("#thumbnailContainer{ border: 2px solid blue; }")
+                widget.setStyleSheet(
+                    f"#thumbnailContainer{{ border: 2px solid #{self.thumbnail_highlight}; }}")
         self.thumbnail_list.setCurrentRow(index)
         self.thumbnail_list.scrollToItem(
             self.thumbnail_list.item(index), QAbstractItemView.PositionAtCenter)
@@ -165,6 +168,8 @@ class DisplayManager(QObject, LayerCollectionHandler):
         self.view_mode = 'master'
         self.temp_view_individual = False
         self.display_master_layer()
+        self.thumbnail_highlight = gui_constants.THUMB_LO_COLOR
+        self.highlight_thumbnail(self.current_layer_idx())
         self.status_message_requested.emit("View mode: Master")
         self.cursor_preview_state_changed.emit(True)  # True = allow preview
 
@@ -174,6 +179,8 @@ class DisplayManager(QObject, LayerCollectionHandler):
         self.view_mode = 'individual'
         self.temp_view_individual = False
         self.display_current_layer()
+        self.thumbnail_highlight = gui_constants.THUMB_HI_COLOR
+        self.highlight_thumbnail(self.current_layer_idx())
         self.status_message_requested.emit("View mode: Individual layers")
         self.cursor_preview_state_changed.emit(False)  # False = no preview
 
@@ -181,6 +188,8 @@ class DisplayManager(QObject, LayerCollectionHandler):
         if not self.temp_view_individual and self.view_mode == 'master':
             self.temp_view_individual = True
             self.image_viewer.update_brush_cursor()
+            self.thumbnail_highlight = gui_constants.THUMB_HI_COLOR
+            self.highlight_thumbnail(self.current_layer_idx())
             self.display_current_layer()
             self.status_message_requested.emit("Temporary view: Individual layer (hold X)")
 
@@ -188,6 +197,8 @@ class DisplayManager(QObject, LayerCollectionHandler):
         if self.temp_view_individual:
             self.temp_view_individual = False
             self.image_viewer.update_brush_cursor()
+            self.thumbnail_highlight = gui_constants.THUMB_LO_COLOR
+            self.highlight_thumbnail(self.current_layer_idx())
             self.display_master_layer()
             self.status_message_requested.emit("View mode: Master")
             self.cursor_preview_state_changed.emit(True)  # Restore preview

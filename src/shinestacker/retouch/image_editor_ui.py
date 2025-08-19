@@ -23,6 +23,7 @@ def brush_size_to_slider(size):
 
 class ImageEditorUI(ImageFilters):
     def __init__(self):
+        self.thumbnail_highlight = gui_constants.THUMB_HI_COLOR
         super().__init__()
         self.brush = Brush()
         self.setup_ui()
@@ -130,10 +131,10 @@ class ImageEditorUI(ImageFilters):
         self.master_thumbnail_frame = QFrame()
         self.master_thumbnail_frame.setObjectName("thumbnailContainer")
         self.master_thumbnail_frame.setStyleSheet(
-            "#thumbnailContainer{ border: 2px solid #A0A0FF; }")
+            f"#thumbnailContainer{{ border: 2px solid #{self.thumbnail_highlight}; }}")
         self.master_thumbnail_frame.setFrameShape(QFrame.StyledPanel)
         master_thumbnail_layout = QVBoxLayout(self.master_thumbnail_frame)
-        master_thumbnail_layout.setContentsMargins(2, 2, 2, 2)
+        master_thumbnail_layout.setContentsMargins(8, 8, 8, 8)
         self.master_thumbnail_label = QLabel()
         self.master_thumbnail_label.setAlignment(Qt.AlignCenter)
         self.master_thumbnail_label.setFixedWidth(
@@ -207,6 +208,10 @@ class ImageEditorUI(ImageFilters):
         layout.setSpacing(2)
         super().setup_ui()
 
+    def highlight_master_thumbnail(self):
+        self.master_thumbnail_frame.setStyleSheet(
+            f"#thumbnailContainer{{ border: 2px solid #{self.thumbnail_highlight}; }}")
+
     def setup_menu(self):
         menubar = self.menuBar()
         file_menu = menubar.addMenu("&File")
@@ -274,12 +279,12 @@ class ImageEditorUI(ImageFilters):
 
         view_master_action = QAction("View Master", self)
         view_master_action.setShortcut("M")
-        view_master_action.triggered.connect(self.display_manager.set_view_master)
+        view_master_action.triggered.connect(self.set_view_master)
         view_menu.addAction(view_master_action)
 
         view_individual_action = QAction("View Individual", self)
         view_individual_action.setShortcut("L")
-        view_individual_action.triggered.connect(self.display_manager.set_view_individual)
+        view_individual_action.triggered.connect(self.set_view_individual)
         view_menu.addAction(view_individual_action)
         view_menu.addSeparator()
 
@@ -337,6 +342,16 @@ class ImageEditorUI(ImageFilters):
         shortcuts_help_action.triggered.connect(self.shortcuts_help)
         help_menu.addAction(shortcuts_help_action)
 
+    def set_view_master(self):
+        self.display_manager.set_view_master()
+        self.thumbnail_highlight = gui_constants.THUMB_HI_COLOR
+        self.highlight_master_thumbnail()
+
+    def set_view_individual(self):
+        self.display_manager.set_view_individual()
+        self.thumbnail_highlight = gui_constants.THUMB_LO_COLOR
+        self.highlight_master_thumbnail()
+
     def shortcuts_help(self):
         self._dialog = ShortcutsHelp(self)
         self._dialog.exec()
@@ -368,8 +383,12 @@ class ImageEditorUI(ImageFilters):
     def handle_temp_view(self, start):
         if start:
             self.display_manager.start_temp_view()
+            self.thumbnail_highlight = gui_constants.THUMB_LO_COLOR
+            self.highlight_master_thumbnail()
         else:
             self.display_manager.end_temp_view()
+            self.thumbnail_highlight = gui_constants.THUMB_HI_COLOR
+            self.highlight_master_thumbnail()
 
     def handle_brush_size_change(self, delta):
         if delta > 0:
