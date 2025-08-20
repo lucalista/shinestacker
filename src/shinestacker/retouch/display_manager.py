@@ -135,7 +135,7 @@ class DisplayManager(QObject, LayerCollectionHandler):
         container_layout.addWidget(content_widget)
         if is_current:
             container.setStyleSheet(
-                f"#thumbnailContainer{{ border: 2px solid #{self.thumbnail_highlight}; }}")
+                f"#thumbnailContainer{{ border: 2px solid {self.thumbnail_highlight}; }}")
         else:
             container.setStyleSheet("#thumbnailContainer{ border: 2px solid transparent; }")
         item = QListWidgetItem()
@@ -157,7 +157,7 @@ class DisplayManager(QObject, LayerCollectionHandler):
             widget = self.thumbnail_list.itemWidget(current_item)
             if widget:
                 widget.setStyleSheet(
-                    f"#thumbnailContainer{{ border: 2px solid #{self.thumbnail_highlight}; }}")
+                    f"#thumbnailContainer{{ border: 2px solid {self.thumbnail_highlight}; }}")
         self.thumbnail_list.setCurrentRow(index)
         self.thumbnail_list.scrollToItem(
             self.thumbnail_list.item(index), QAbstractItemView.PositionAtCenter)

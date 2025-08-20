@@ -36,8 +36,10 @@ class _GuiConstants:
 
     THUMB_WIDTH = 120  # px
     THUMB_HEIGHT = 80  # px
-    THUMB_HI_COLOR = '0000FF'
-    THUMB_LO_COLOR = '8080FF'
+    THUMB_HI_COLOR = '#0000FF'
+    THUMB_LO_COLOR = '#0000FF'
+    THUMB_MASTER_HI_COLOR = '#0000FF'
+    THUMB_MASTER_LO_COLOR = 'transparent'
 
     MAX_UNDO_STEPS = 50
 

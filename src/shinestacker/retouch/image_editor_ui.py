@@ -23,7 +23,7 @@ def brush_size_to_slider(size):
 
 class ImageEditorUI(ImageFilters):
     def __init__(self):
-        self.thumbnail_highlight = gui_constants.THUMB_HI_COLOR
+        self.thumbnail_highlight = gui_constants.THUMB_MASTER_HI_COLOR
         super().__init__()
         self.brush = Brush()
         self.setup_ui()
@@ -131,7 +131,7 @@ class ImageEditorUI(ImageFilters):
         self.master_thumbnail_frame = QFrame()
         self.master_thumbnail_frame.setObjectName("thumbnailContainer")
         self.master_thumbnail_frame.setStyleSheet(
-            f"#thumbnailContainer{{ border: 2px solid #{self.thumbnail_highlight}; }}")
+            f"#thumbnailContainer{{ border: 2px solid {self.thumbnail_highlight}; }}")
         self.master_thumbnail_frame.setFrameShape(QFrame.StyledPanel)
         master_thumbnail_layout = QVBoxLayout(self.master_thumbnail_frame)
         master_thumbnail_layout.setContentsMargins(8, 8, 8, 8)
@@ -210,7 +210,7 @@ class ImageEditorUI(ImageFilters):
 
     def highlight_master_thumbnail(self):
         self.master_thumbnail_frame.setStyleSheet(
-            f"#thumbnailContainer{{ border: 2px solid #{self.thumbnail_highlight}; }}")
+            f"#thumbnailContainer{{ border: 2px solid {self.thumbnail_highlight}; }}")
 
     def setup_menu(self):
         menubar = self.menuBar()
@@ -344,12 +344,12 @@ class ImageEditorUI(ImageFilters):
 
     def set_view_master(self):
         self.display_manager.set_view_master()
-        self.thumbnail_highlight = gui_constants.THUMB_HI_COLOR
+        self.thumbnail_highlight = gui_constants.THUMB_MASTER_HI_COLOR
         self.highlight_master_thumbnail()
 
     def set_view_individual(self):
         self.display_manager.set_view_individual()
-        self.thumbnail_highlight = gui_constants.THUMB_LO_COLOR
+        self.thumbnail_highlight = gui_constants.THUMB_MASTER_LO_COLOR
         self.highlight_master_thumbnail()
 
     def shortcuts_help(self):
@@ -383,11 +383,11 @@ class ImageEditorUI(ImageFilters):
     def handle_temp_view(self, start):
         if start:
             self.display_manager.start_temp_view()
-            self.thumbnail_highlight = gui_constants.THUMB_LO_COLOR
+            self.thumbnail_highlight = gui_constants.THUMB_MASTER_LO_COLOR
             self.highlight_master_thumbnail()
         else:
             self.display_manager.end_temp_view()
-            self.thumbnail_highlight = gui_constants.THUMB_HI_COLOR
+            self.thumbnail_highlight = gui_constants.THUMB_MASTER_HI_COLOR
             self.highlight_master_thumbnail()
 
     def handle_brush_size_change(self, delta):
