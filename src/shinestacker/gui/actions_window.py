@@ -146,6 +146,7 @@ class ActionsWindow(ProjectEditor):
             if len(self.project.jobs) > 0:
                 self.job_list.setCurrentRow(0)
                 self.activateWindow()
+                self.save_actions_set_enabled(True)
             for job in self.project.jobs:
                 if 'working_path' in job.params.keys():
                     working_path = job.params['working_path']
