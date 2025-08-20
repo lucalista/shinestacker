@@ -87,7 +87,7 @@ class ImageEditor(QMainWindow, LayerCollectionHandler):
     def update_title(self):
         title = constants.APP_TITLE
         if self.io_gui_handler is not None:
-            path = self.io_gui_handler.current_file_path
+            path = self.io_gui_handler.current_file_path()
             if path != '':
                 title += f" - {path.split('/')[-1]}"
                 if self.modified:
