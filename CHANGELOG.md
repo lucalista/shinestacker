@@ -11,6 +11,7 @@ This page reports the main releases only and the main changes therein.
 * improved font rendering in brush preview
 * fixed thumbnail spacing
 * fixed and improved save strategy for retouched images
+* added checks for updated version in about dialog
 
 ---
 
