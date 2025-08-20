@@ -1,9 +1,31 @@
-# pylint: disable=E1101, C0114, C0115, C0116
+# pylint: disable=E1101, C0114, C0115, C0116, E0611, W0718, R0903
+import traceback
 import cv2
+from PySide6.QtCore import QThread, Signal
 from .. algorithms.utils import read_img, validate_image, get_img_metadata
 from .. algorithms.exif import get_exif, write_image_with_exif_data
 from .. algorithms.multilayer import write_multilayer_tiff_from_images
 from .layer_collection import LayerCollectionHandler
+
+
+class FileMultilayerSaver(QThread):
+    finished = Signal()
+    error = Signal(str)
+
+    def __init__(self, images_dict, path, exif_path=None):
+        super().__init__()
+        self.images_dict = images_dict
+        self.path = path
+        self.exif_path = exif_path
+
+    def run(self):
+        try:
+            write_multilayer_tiff_from_images(
+                self.images_dict, self.path, exif_path=self.exif_path)
+            self.finished.emit()
+        except Exception as e:
+            traceback.print_tb(e.__traceback__)
+            self.error.emit(str(e))
 
 
 class IOManager(LayerCollectionHandler):
@@ -37,12 +59,6 @@ class IOManager(LayerCollectionHandler):
             except Exception as e:
                 raise RuntimeError(f"Error loading file: {path}.\n{str(e)}") from e
         return stack, labels, master
-
-    def save_multilayer(self, path):
-        master_layer = {'Master': self.master_layer()}
-        individual_layers = dict(zip(self.layer_labels(), self.layer_stack()))
-        write_multilayer_tiff_from_images({**master_layer, **individual_layers},
-                                          path, exif_path=self.exif_path)
 
     def save_master(self, path):
         img = cv2.cvtColor(self.master_layer(), cv2.COLOR_RGB2BGR)

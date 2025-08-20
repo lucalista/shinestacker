@@ -10,7 +10,7 @@ This page reports the main releases only and the main changes therein.
 * layer selection highlightted with a blue border
 * improved font rendering in brush preview
 * fixed thumbnail spacing
-* fixed save strategy for retouched images
+* fixed and improved save strategy for retouched images
 
 ---
 

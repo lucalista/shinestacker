@@ -7,7 +7,7 @@ from PySide6.QtGui import QGuiApplication, QCursor
 from PySide6.QtCore import Qt, QObject, QTimer, Signal
 from .file_loader import FileLoader
 from .exif_data import ExifData
-from .io_manager import IOManager
+from .io_manager import IOManager, FileMultilayerSaver
 from .layer_collection import LayerCollectionHandler
 
 
@@ -28,6 +28,9 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
         self.loading_dialog = None
         self.loading_timer = None
         self.exif_dialog = None
+        self.saver_thread = None
+        self.saving_dialog = None
+        self.saving_timer = None
         self.current_file_path_master = ''
         self.current_file_path_multi = ''
 
@@ -69,6 +72,22 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
         self.loading_dialog.deleteLater()
         QMessageBox.critical(self.parent(), "Error", error_msg)
         self.status_message_requested.emit(f"Error loading: {self.current_file_path()}")
+
+    def on_multilayer_save_success(self):
+        QApplication.restoreOverrideCursor()
+        self.saving_timer.stop()
+        self.saving_dialog.hide()
+        self.saving_dialog.deleteLater()
+        self.parent().modified = False
+        self.update_title_requested.emit()
+        self.status_message_requested.emit(f"Saved multilayer to: {self.current_file_path_multi}")
+
+    def on_multilayer_save_error(self, error_msg):
+        QApplication.restoreOverrideCursor()
+        self.saving_timer.stop()
+        self.saving_dialog.hide()
+        self.saving_dialog.deleteLater()
+        QMessageBox.critical(self.parent(), "Save Error", f"Could not save file: {error_msg}")
 
     def open_file(self, file_paths=None):
         if file_paths is None:
@@ -171,11 +190,30 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
 
     def save_multilayer_to_path(self, path):
         try:
-            self.io_manager.save_multilayer(path)
-            self.current_file_path_multi = os.path.abspath(path)
-            self.parent().modified = False
-            self.update_title_requested.emit()
-            self.status_message_requested.emit(f"Saved multilayer to: {path}")
+            master_layer = {'Master': self.master_layer().copy()}
+            individual_layers = dict(zip(
+                self.layer_labels(),
+                [layer.copy() for layer in self.layer_stack()]
+            ))
+            images_dict = {**master_layer, **individual_layers}
+            self.saver_thread = FileMultilayerSaver(
+                images_dict, path, exif_path=self.io_manager.exif_path)
+            self.saver_thread.finished.connect(self.on_multilayer_save_success)
+            self.saver_thread.error.connect(self.on_multilayer_save_error)
+            QGuiApplication.setOverrideCursor(QCursor(Qt.BusyCursor))
+            self.saving_dialog = QDialog(self.parent())
+            self.saving_dialog.setWindowTitle("Saving")
+            self.saving_dialog.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
+            self.saving_dialog.setModal(True)
+            layout = QVBoxLayout()
+            layout.addWidget(QLabel("Saving file..."))
+            self.saving_dialog.setLayout(layout)
+            self.saving_timer = QTimer()
+            self.saving_timer.setSingleShot(True)
+            self.saving_timer.timeout.connect(self.saving_dialog.show)
+            self.saving_timer.start(100)
+            self.saver_thread.start()
+
         except Exception as e:
             traceback.print_tb(e.__traceback__)
             QMessageBox.critical(self.parent(), "Save Error", f"Could not save file: {str(e)}")
