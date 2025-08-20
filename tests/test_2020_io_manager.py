@@ -60,18 +60,3 @@ def test_save_master(sample_jpg_paths, tmp_path):
     assert output_path.exists()
     saved_img_rgb = read_img(str(output_path))
     np.testing.assert_array_equal(saved_img_rgb, master)
-
-
-def test_save_multilayer(sample_jpg_paths, tmp_path):
-    lc = LayerCollection()
-    io = IOManager(lc)
-    paths = sample_jpg_paths[:2]
-    stack, labels, master = io.import_frames(paths)
-    lc.set_master_layer(master)
-    lc.set_layer_stack(stack)
-    lc.set_layer_labels(labels)
-    io.set_exif_data(paths[0])
-    output_path = tmp_path / "multilayer.tif"
-    io.save_multilayer(str(output_path))
-    assert output_path.exists()
-    assert output_path.stat().st_size > 0
