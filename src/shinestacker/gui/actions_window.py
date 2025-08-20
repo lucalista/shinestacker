@@ -30,6 +30,7 @@ class ActionsWindow(ProjectEditor):
     def mark_as_modified(self):
         self._modified_project = True
         self.project_buffer.append(self.project.clone())
+        self.save_actions_set_enabled(True)
         self.update_title()
 
     def close_project(self):
@@ -40,6 +41,7 @@ class ActionsWindow(ProjectEditor):
             self.job_list.clear()
             self.action_list.clear()
             self._modified_project = False
+            self.save_actions_set_enabled(False)
 
     def new_project(self):
         if not self._check_unsaved_changes():
@@ -51,8 +53,10 @@ class ActionsWindow(ProjectEditor):
         self.job_list.clear()
         self.action_list.clear()
         self.set_project(Project())
+        self.save_actions_set_enabled(False)
         dialog = NewProjectDialog(self)
         if dialog.exec() == QDialog.Accepted:
+            self.save_actions_set_enabled(True)
             input_folder = dialog.get_input_folder().split('/')
             working_path = '/'.join(input_folder[:-1])
             input_path = input_folder[-1]
@@ -256,3 +260,6 @@ class ActionsWindow(ProjectEditor):
         if dialog.exec() == QDialog.Accepted:
             self.on_job_selected(self.job_list.currentRow())
             self.mark_as_modified()
+
+    def save_actions_set_enabled(self, enabled):
+        pass

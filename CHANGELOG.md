@@ -12,6 +12,7 @@ This page reports the main releases only and the main changes therein.
 * fixed thumbnail spacing
 * fixed and improved save strategy for retouched images
 * added checks for updated version in about dialog
+* disable "Save" and "Save As..." menus if do not apply to current status
 
 ---
 

@@ -96,6 +96,7 @@ class ImageEditor(QMainWindow, LayerCollectionHandler):
 
     def mark_as_modified(self):
         self.modified = True
+        self.save_actions_set_enabled(True)
         self.update_title()
 
     def change_layer(self, layer_idx):

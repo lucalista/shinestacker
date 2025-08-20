@@ -216,14 +216,21 @@ class ImageEditorUI(ImageFilters):
         menubar = self.menuBar()
         file_menu = menubar.addMenu("&File")
         file_menu.addAction("&Open...", self.io_gui_handler.open_file, "Ctrl+O")
-        file_menu.addAction("&Save", self.io_gui_handler.save_file, "Ctrl+S")
-        file_menu.addAction("Save &As...", self.io_gui_handler.save_file_as, "Ctrl+Shift+S")
+        self.save_action = QAction("&Save", self)
+        self.save_action.setShortcut("Ctrl+S")
+        self.save_action.triggered.connect(self.io_gui_handler.save_file)
+        file_menu.addAction(self.save_action)
+        self.save_as_action = QAction("Save &As...", self)
+        self.save_as_action.setShortcut("Ctrl+Shift+S")
+        self.save_as_action.triggered.connect(self.io_gui_handler.save_file_as)
+        file_menu.addAction(self.save_as_action)
         self.io_gui_handler.save_master_only = QAction("Save Master &Only", self)
         self.io_gui_handler.save_master_only.setCheckable(True)
         self.io_gui_handler.save_master_only.setChecked(True)
         file_menu.addAction(self.io_gui_handler.save_master_only)
+        self.save_actions_set_enabled(False)
 
-        file_menu.addAction("&Close", self.io_gui_handler.close_file, "Ctrl+W")
+        file_menu.addAction("&Close", self.close_file, "Ctrl+W")
         file_menu.addSeparator()
         file_menu.addAction("&Import frames", self.io_gui_handler.import_frames)
         file_menu.addAction("Import &EXIF data", self.io_gui_handler.select_exif_path)
@@ -341,6 +348,15 @@ class ImageEditorUI(ImageFilters):
         shortcuts_help_action = QAction("Shortcuts and mouse", self)
         shortcuts_help_action.triggered.connect(self.shortcuts_help)
         help_menu.addAction(shortcuts_help_action)
+
+    def save_actions_set_enabled(self, enabled):
+        self.save_action.setEnabled(enabled)
+        self.save_as_action.setEnabled(enabled)
+        self.io_gui_handler.save_master_only.setEnabled(enabled)
+
+    def close_file(self):
+        self.io_gui_handler.close_file()
+        self.save_actions_set_enabled(False)
 
     def set_view_master(self):
         self.display_manager.set_view_master()

@@ -52,18 +52,18 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
         else:
             self.set_layer_labels(labels)
         self.set_master_layer(master_layer)
-        self.parent().modified = False
         self.undo_manager.reset()
         self.blank_layer = np.zeros(master_layer.shape[:2])
         self.display_manager.update_thumbnails()
         self.image_viewer.setup_brush_cursor()
-        self.parent().change_layer(0)
         self.image_viewer.reset_zoom()
         self.status_message_requested.emit(f"Loaded: {self.current_file_path()}")
-        self.parent().thumbnail_list.setFocus()
         self.update_title_requested.emit()
         self.current_file_path_master = ''
         self.current_file_path_multi = ''
+        self.parent().mark_as_modified()
+        self.parent().change_layer(0)
+        self.parent().thumbnail_list.setFocus()
 
     def on_file_error(self, error_msg):
         QApplication.restoreOverrideCursor()
