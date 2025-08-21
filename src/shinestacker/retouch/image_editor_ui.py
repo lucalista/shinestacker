@@ -33,235 +33,16 @@ class ImageEditorUI(QMainWindow, LayerCollectionHandler):
         self.undo_manager.stack_changed.connect(self.update_undo_redo_actions)
         self.io_gui_handler = None
         self.display_manager = None
+        self.brush = Brush()
         self.brush_tool = BrushTool()
         self.modified = False
-        self.installEventFilter(self)
         self.mask_layer = None
-
         self.filter_manager = FilterManager(self)
         self.filter_manager.register_filter("denoise", DenoiseFilter)
         self.filter_manager.register_filter("unsharp_mask", UnsharpMaskFilter)
         self.filter_manager.register_filter("white_balance", WhiteBalanceFilter)
-        self.brush = Brush()
-        self.setup_ui()
-        self.setup_menu()
-        self.setup_shortcuts()
-        self._dialog = None
+        self.shortcuts_help_dialog = None
 
-    def show_status_message(self, message):
-        self.statusBar().showMessage(message)
-
-    # pylint: disable=C0103
-    def keyPressEvent(self, event):
-        if self.image_viewer.empty:
-            return
-        if event.text() == '[':
-            self.brush_tool.decrease_brush_size()
-            return
-        if event.text() == ']':
-            self.brush_tool.increase_brush_size()
-            return
-        if event.text() == '{':
-            self.brush_tool.decrease_brush_hardness()
-            return
-        if event.text() == '}':
-            self.brush_tool.increase_brush_hardness()
-            return
-        super().keyPressEvent(event)
-    # pylint: enable=C0103
-
-    def check_unsaved_changes(self) -> bool:
-        if self.modified:
-            reply = QMessageBox.question(
-                self, "Unsaved Changes",
-                "The image stack has unsaved changes. Do you want to continue?",
-                QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel
-            )
-            if reply == QMessageBox.Save:
-                self.save_file()
-                return True
-            if reply == QMessageBox.Discard:
-                return True
-            return False
-        return True
-
-    def sort_layers(self, order):
-        self.sort_layers(order)
-        self.display_manager.update_thumbnails()
-        self.change_layer(self.current_layer())
-
-    def update_title(self):
-        title = constants.APP_TITLE
-        if self.io_gui_handler is not None:
-            path = self.io_gui_handler.current_file_path()
-            if path != '':
-                title += f" - {path.split('/')[-1]}"
-                if self.modified:
-                    title += " *"
-        self.window().setWindowTitle(title)
-
-    def mark_as_modified(self):
-        self.modified = True
-        self.save_actions_set_enabled(True)
-        self.update_title()
-
-    def change_layer(self, layer_idx):
-        if 0 <= layer_idx < self.number_of_layers():
-            view_state = self.image_viewer.get_view_state()
-            self.set_current_layer_idx(layer_idx)
-            self.display_manager.display_current_view()
-            self.image_viewer.set_view_state(view_state)
-            self.thumbnail_list.setCurrentRow(layer_idx)
-            self.thumbnail_list.setFocus()
-            self.image_viewer.update_brush_cursor()
-            self.image_viewer.setFocus()
-
-    def prev_layer(self):
-        if self.layer_stack() is not None:
-            new_idx = max(0, self.current_layer_idx() - 1)
-            if new_idx != self.current_layer_idx():
-                self.change_layer(new_idx)
-                self.display_manager.highlight_thumbnail(new_idx)
-
-    def next_layer(self):
-        if self.layer_stack() is not None:
-            new_idx = min(self.number_of_layers() - 1, self.current_layer_idx() + 1)
-            if new_idx != self.current_layer_idx():
-                self.change_layer(new_idx)
-                self.display_manager.highlight_thumbnail(new_idx)
-
-    def copy_layer_to_master(self):
-        if self.layer_stack() is None or self.master_layer() is None:
-            return
-        reply = QMessageBox.question(
-            self,
-            "Confirm Copy",
-            "Warning: the current master layer will be erased\n\nDo you want to continue?",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No
-        )
-        if reply == QMessageBox.Yes:
-            self.set_master_layer(self.current_layer().copy())
-            self.master_layer().setflags(write=True)
-            self.display_manager.display_current_view()
-            self.display_manager.update_thumbnails()
-            self.mark_as_modified()
-            self.statusBar().showMessage(f"Copied layer {self.current_layer_idx() + 1} to master")
-
-    def copy_brush_area_to_master(self, view_pos):
-        if self.layer_stack() is None or self.number_of_layers() == 0 \
-           or not self.display_manager.allow_cursor_preview():
-            return
-        area = self.brush_tool.apply_brush_operation(
-            self.master_layer_copy(),
-            self.current_layer(),
-            self.master_layer(), self.mask_layer,
-            view_pos)
-        self.undo_manager.extend_undo_area(*area)
-
-    def begin_copy_brush_area(self, pos):
-        if self.display_manager.allow_cursor_preview():
-            self.mask_layer = self.io_gui_handler.blank_layer.copy()
-            self.copy_master_layer()
-            self.undo_manager.reset_undo_area()
-            self.copy_brush_area_to_master(pos)
-            self.display_manager.needs_update = True
-            if not self.display_manager.update_timer.isActive():
-                self.display_manager.update_timer.start()
-            self.mark_as_modified()
-
-    def continue_copy_brush_area(self, pos):
-        if self.display_manager.allow_cursor_preview():
-            self.copy_brush_area_to_master(pos)
-            self.display_manager.needs_update = True
-            if not self.display_manager.update_timer.isActive():
-                self.display_manager.update_timer.start()
-            self.mark_as_modified()
-
-    def end_copy_brush_area(self):
-        if self.display_manager.update_timer.isActive():
-            self.display_manager.display_master_layer()
-            self.display_manager.update_master_thumbnail()
-            self.undo_manager.save_undo_state(self.master_layer_copy(), 'Brush Stroke')
-            self.display_manager.update_timer.stop()
-            self.mark_as_modified()
-
-    def update_undo_redo_actions(self, has_undo, undo_desc, has_redo, redo_desc):
-        if self.undo_action:
-            if has_undo:
-                self.undo_action.setText(f"Undo {undo_desc}")
-                self.undo_action.setEnabled(True)
-            else:
-                self.undo_action.setText("Undo")
-                self.undo_action.setEnabled(False)
-        if self.redo_action:
-            if has_redo:
-                self.redo_action.setText(f"Redo {redo_desc}")
-                self.redo_action.setEnabled(True)
-            else:
-                self.redo_action.setText("Redo")
-                self.redo_action.setEnabled(False)
-
-    def denoise_filter(self):
-        self.filter_manager.apply("denoise")
-
-    def unsharp_mask(self):
-        self.filter_manager.apply("unsharp_mask")
-
-    def white_balance(self, init_val=None):
-        self.filter_manager.apply("white_balance", init_val=init_val or (128, 128, 128))
-
-    def connect_preview_toggle(self, preview_check, do_preview, restore_original):
-        def on_toggled(checked):
-            if checked:
-                do_preview()
-            else:
-                restore_original()
-        preview_check.toggled.connect(on_toggled)
-
-    def get_pixel_color_at(self, pos, radius=None):
-        item_pos = self.image_viewer.position_on_image(pos)
-        x = int(item_pos.x())
-        y = int(item_pos.y())
-        master_layer = self.master_layer()
-        if (0 <= x < self.master_layer().shape[1]) and \
-           (0 <= y < self.master_layer().shape[0]):
-            if radius is None:
-                radius = int(self.brush.size)
-            if radius > 0:
-                y_indices, x_indices = np.ogrid[-radius:radius + 1, -radius:radius + 1]
-                mask = x_indices**2 + y_indices**2 <= radius**2
-                x0 = max(0, x - radius)
-                x1 = min(master_layer.shape[1], x + radius + 1)
-                y0 = max(0, y - radius)
-                y1 = min(master_layer.shape[0], y + radius + 1)
-                mask = mask[radius - (y - y0): radius + (y1 - y),
-                            radius - (x - x0): radius + (x1 - x)]
-                region = master_layer[y0:y1, x0:x1]
-                if region.size == 0:
-                    pixel = master_layer[y, x]
-                else:
-                    if region.ndim == 3:
-                        pixel = [region[:, :, c][mask].mean() for c in range(region.shape[2])]
-                    else:
-                        pixel = region[mask].mean()
-            else:
-                pixel = self.master_layer()[y, x]
-            if np.isscalar(pixel):
-                pixel = [pixel, pixel, pixel]
-            pixel = [np.float32(x) for x in pixel]
-            if master_layer.dtype == np.uint16:
-                pixel = [x / 256.0 for x in pixel]
-            return tuple(int(v) for v in pixel)
-        return (0, 0, 0)
-
-    def setup_shortcuts(self):
-        prev_layer = QShortcut(QKeySequence(Qt.Key_Up), self, context=Qt.ApplicationShortcut)
-        prev_layer.activated.connect(self.prev_layer)
-        next_layer = QShortcut(QKeySequence(Qt.Key_Down), self, context=Qt.ApplicationShortcut)
-        next_layer.activated.connect(self.next_layer)
-
-    def setup_ui(self):
         self.update_title()
         self.resize(1400, 900)
         center = QGuiApplication.primaryScreen().geometry().center()
@@ -457,11 +238,6 @@ class ImageEditorUI(QMainWindow, LayerCollectionHandler):
         self.io_gui_handler.setup_ui(self.display_manager, self.image_viewer)
         self.image_viewer.display_manager = self.display_manager
 
-    def highlight_master_thumbnail(self):
-        self.master_thumbnail_frame.setStyleSheet(
-            f"#thumbnailContainer{{ border: 2px solid {self.thumbnail_highlight}; }}")
-
-    def setup_menu(self):
         menubar = self.menuBar()
         file_menu = menubar.addMenu("&File")
         file_menu.addAction("&Open...", self.io_gui_handler.open_file, "Ctrl+O")
@@ -476,6 +252,7 @@ class ImageEditorUI(QMainWindow, LayerCollectionHandler):
         self.io_gui_handler.save_master_only = QAction("Save Master &Only", self)
         self.io_gui_handler.save_master_only.setCheckable(True)
         self.io_gui_handler.save_master_only.setChecked(True)
+        self.io_gui_handler.save_master_only.triggered.connect(self.save_master_only)
         file_menu.addAction(self.io_gui_handler.save_master_only)
         self.save_actions_set_enabled(False)
 
@@ -595,8 +372,234 @@ class ImageEditorUI(QMainWindow, LayerCollectionHandler):
         help_menu = menubar.addMenu("&Help")
         help_menu.setObjectName("Help")
         shortcuts_help_action = QAction("Shortcuts and mouse", self)
-        shortcuts_help_action.triggered.connect(self.shortcuts_help)
+
+        def shortcuts_help():
+            self.shortcuts_help_dialog = ShortcutsHelp(self)
+            self.shortcuts_help_dialog.exec()
+
+        shortcuts_help_action.triggered.connect(shortcuts_help)
         help_menu.addAction(shortcuts_help_action)
+
+        prev_layer = QShortcut(QKeySequence(Qt.Key_Up), self, context=Qt.ApplicationShortcut)
+        prev_layer.activated.connect(self.prev_layer)
+        next_layer = QShortcut(QKeySequence(Qt.Key_Down), self, context=Qt.ApplicationShortcut)
+        next_layer.activated.connect(self.next_layer)
+        self.installEventFilter(self)
+
+    def update_title(self):
+        title = constants.APP_TITLE
+        if self.io_gui_handler is not None:
+            path = self.io_gui_handler.current_file_path()
+            print("file path: ", path)
+            if path != '':
+                title += f" - {path.split('/')[-1]}"
+                if self.modified:
+                    title += " *"
+        self.window().setWindowTitle(title)
+
+    def show_status_message(self, message):
+        self.statusBar().showMessage(message)
+
+    def mark_as_modified(self):
+        self.modified = True
+        self.save_actions_set_enabled(True)
+        self.update_title()
+
+    def check_unsaved_changes(self) -> bool:
+        if self.modified:
+            reply = QMessageBox.question(
+                self, "Unsaved Changes",
+                "The image stack has unsaved changes. Do you want to continue?",
+                QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel
+            )
+            if reply == QMessageBox.Save:
+                self.save_file()
+                return True
+            if reply == QMessageBox.Discard:
+                return True
+            return False
+        return True
+
+    # pylint: disable=C0103
+    def keyPressEvent(self, event):
+        if self.image_viewer.empty:
+            return
+        if event.text() == '[':
+            self.brush_tool.decrease_brush_size()
+            return
+        if event.text() == ']':
+            self.brush_tool.increase_brush_size()
+            return
+        if event.text() == '{':
+            self.brush_tool.decrease_brush_hardness()
+            return
+        if event.text() == '}':
+            self.brush_tool.increase_brush_hardness()
+            return
+        super().keyPressEvent(event)
+    # pylint: enable=C0103
+
+    def save_master_only(self, checked):
+        self.update_title()
+
+    def sort_layers(self, order):
+        self.sort_layers(order)
+        self.display_manager.update_thumbnails()
+        self.change_layer(self.current_layer())
+
+    def change_layer(self, layer_idx):
+        if 0 <= layer_idx < self.number_of_layers():
+            view_state = self.image_viewer.get_view_state()
+            self.set_current_layer_idx(layer_idx)
+            self.display_manager.display_current_view()
+            self.image_viewer.set_view_state(view_state)
+            self.thumbnail_list.setCurrentRow(layer_idx)
+            self.thumbnail_list.setFocus()
+            self.image_viewer.update_brush_cursor()
+            self.image_viewer.setFocus()
+
+    def prev_layer(self):
+        if self.layer_stack() is not None:
+            new_idx = max(0, self.current_layer_idx() - 1)
+            if new_idx != self.current_layer_idx():
+                self.change_layer(new_idx)
+                self.display_manager.highlight_thumbnail(new_idx)
+
+    def next_layer(self):
+        if self.layer_stack() is not None:
+            new_idx = min(self.number_of_layers() - 1, self.current_layer_idx() + 1)
+            if new_idx != self.current_layer_idx():
+                self.change_layer(new_idx)
+                self.display_manager.highlight_thumbnail(new_idx)
+
+    def copy_layer_to_master(self):
+        if self.layer_stack() is None or self.master_layer() is None:
+            return
+        reply = QMessageBox.question(
+            self,
+            "Confirm Copy",
+            "Warning: the current master layer will be erased.\n\nDo you want to continue?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        if reply == QMessageBox.Yes:
+            self.set_master_layer(self.current_layer().copy())
+            self.master_layer().setflags(write=True)
+            self.display_manager.display_current_view()
+            self.display_manager.update_thumbnails()
+            self.mark_as_modified()
+            self.statusBar().showMessage(f"Copied layer {self.current_layer_idx() + 1} to master")
+
+    def copy_brush_area_to_master(self, view_pos):
+        if self.layer_stack() is None or self.number_of_layers() == 0 \
+           or not self.display_manager.allow_cursor_preview():
+            return
+        area = self.brush_tool.apply_brush_operation(
+            self.master_layer_copy(),
+            self.current_layer(),
+            self.master_layer(), self.mask_layer,
+            view_pos)
+        self.undo_manager.extend_undo_area(*area)
+
+    def begin_copy_brush_area(self, pos):
+        if self.display_manager.allow_cursor_preview():
+            self.mask_layer = self.io_gui_handler.blank_layer.copy()
+            self.copy_master_layer()
+            self.undo_manager.reset_undo_area()
+            self.copy_brush_area_to_master(pos)
+            self.display_manager.needs_update = True
+            if not self.display_manager.update_timer.isActive():
+                self.display_manager.update_timer.start()
+            self.mark_as_modified()
+
+    def continue_copy_brush_area(self, pos):
+        if self.display_manager.allow_cursor_preview():
+            self.copy_brush_area_to_master(pos)
+            self.display_manager.needs_update = True
+            if not self.display_manager.update_timer.isActive():
+                self.display_manager.update_timer.start()
+            self.mark_as_modified()
+
+    def end_copy_brush_area(self):
+        if self.display_manager.update_timer.isActive():
+            self.display_manager.display_master_layer()
+            self.display_manager.update_master_thumbnail()
+            self.undo_manager.save_undo_state(self.master_layer_copy(), 'Brush Stroke')
+            self.display_manager.update_timer.stop()
+            self.mark_as_modified()
+
+    def update_undo_redo_actions(self, has_undo, undo_desc, has_redo, redo_desc):
+        if self.undo_action:
+            if has_undo:
+                self.undo_action.setText(f"Undo {undo_desc}")
+                self.undo_action.setEnabled(True)
+            else:
+                self.undo_action.setText("Undo")
+                self.undo_action.setEnabled(False)
+        if self.redo_action:
+            if has_redo:
+                self.redo_action.setText(f"Redo {redo_desc}")
+                self.redo_action.setEnabled(True)
+            else:
+                self.redo_action.setText("Redo")
+                self.redo_action.setEnabled(False)
+
+    def denoise_filter(self):
+        self.filter_manager.apply("denoise")
+
+    def unsharp_mask(self):
+        self.filter_manager.apply("unsharp_mask")
+
+    def white_balance(self, init_val=None):
+        self.filter_manager.apply("white_balance", init_val=init_val or (128, 128, 128))
+
+    def connect_preview_toggle(self, preview_check, do_preview, restore_original):
+        def on_toggled(checked):
+            if checked:
+                do_preview()
+            else:
+                restore_original()
+        preview_check.toggled.connect(on_toggled)
+
+    def get_pixel_color_at(self, pos, radius=None):
+        item_pos = self.image_viewer.position_on_image(pos)
+        x = int(item_pos.x())
+        y = int(item_pos.y())
+        master_layer = self.master_layer()
+        if (0 <= x < self.master_layer().shape[1]) and \
+           (0 <= y < self.master_layer().shape[0]):
+            if radius is None:
+                radius = int(self.brush.size)
+            if radius > 0:
+                y_indices, x_indices = np.ogrid[-radius:radius + 1, -radius:radius + 1]
+                mask = x_indices**2 + y_indices**2 <= radius**2
+                x0 = max(0, x - radius)
+                x1 = min(master_layer.shape[1], x + radius + 1)
+                y0 = max(0, y - radius)
+                y1 = min(master_layer.shape[0], y + radius + 1)
+                mask = mask[radius - (y - y0): radius + (y1 - y),
+                            radius - (x - x0): radius + (x1 - x)]
+                region = master_layer[y0:y1, x0:x1]
+                if region.size == 0:
+                    pixel = master_layer[y, x]
+                else:
+                    if region.ndim == 3:
+                        pixel = [region[:, :, c][mask].mean() for c in range(region.shape[2])]
+                    else:
+                        pixel = region[mask].mean()
+            else:
+                pixel = self.master_layer()[y, x]
+            if np.isscalar(pixel):
+                pixel = [pixel, pixel, pixel]
+            pixel = [np.float32(x) for x in pixel]
+            if master_layer.dtype == np.uint16:
+                pixel = [x / 256.0 for x in pixel]
+            return tuple(int(v) for v in pixel)
+        return (0, 0, 0)
+
+    def highlight_master_thumbnail(self):
+        self.master_thumbnail_frame.setStyleSheet(
+            f"#thumbnailContainer{{ border: 2px solid {self.thumbnail_highlight}; }}")
 
     def save_actions_set_enabled(self, enabled):
         self.save_action.setEnabled(enabled)
@@ -616,10 +619,6 @@ class ImageEditorUI(QMainWindow, LayerCollectionHandler):
         self.display_manager.set_view_individual()
         self.thumbnail_highlight = gui_constants.THUMB_MASTER_LO_COLOR
         self.highlight_master_thumbnail()
-
-    def shortcuts_help(self):
-        self._dialog = ShortcutsHelp(self)
-        self._dialog.exec()
 
     def toggle_fullscreen(self, checked):
         if checked:

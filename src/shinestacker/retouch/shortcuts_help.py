@@ -32,6 +32,7 @@ class ShortcutsHelp(QDialog):
         self.create_form(left_layout, right_layout)
         button_box = QHBoxLayout()
         ok_button = QPushButton("OK")
+        ok_button.setFixedWidth(100)
         ok_button.setFocus()
         button_box.addWidget(ok_button)
         self.layout.addLayout(button_box)
