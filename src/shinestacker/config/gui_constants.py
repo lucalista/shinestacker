@@ -6,8 +6,8 @@ class _GuiConstants:
     GUI_IMG_WIDTH = 250  # px
     DISABLED_TAG = ""  # " <disabled>"
 
-    MIN_ZOOMED_IMG_WIDTH = 400
-    MAX_ZOOMED_IMG_PX_SIZE = 50
+    MIN_ZOOMED_IMG_WIDTH = 600
+    MAX_ZOOMED_IMG_PX_SIZE = 40
     MAX_UNDO_SIZE = 65535
 
     NEW_PROJECT_NOISE_DETECTION = False

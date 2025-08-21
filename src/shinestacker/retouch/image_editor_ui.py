@@ -231,6 +231,7 @@ class ImageEditorUI(QMainWindow, LayerCollectionHandler):
         self.io_gui_handler.status_message_requested.connect(self.show_status_message)
         self.io_gui_handler.update_title_requested.connect(self.update_title)
         self.io_gui_handler.mark_as_modified_requested.connect(self.mark_as_modified)
+        self.io_gui_handler.change_layer_and_focus_requested.connect(self.change_layer)
         self.brush_tool.setup_ui(self.brush, self.brush_preview, self.image_viewer,
                                  self.brush_size_slider, self.hardness_slider, self.opacity_slider,
                                  self.flow_slider)
@@ -391,7 +392,6 @@ class ImageEditorUI(QMainWindow, LayerCollectionHandler):
         title = constants.APP_TITLE
         if self.io_gui_handler is not None:
             path = self.io_gui_handler.current_file_path()
-            print("file path: ", path)
             if path != '':
                 title += f" - {path.split('/')[-1]}"
                 if self.modified:

@@ -221,7 +221,6 @@ class ImageViewer(QGraphicsView, LayerCollectionHandler):
                         self.zoom_factor = new_scale
             self.update_brush_cursor()
         else:  # Touchpad event - fallback for systems without gesture recognition
-            # Handle touchpad panning (two-finger scroll)
             if not self.control_pressed:
                 delta = event.pixelDelta() or event.angleDelta() / 8
                 if delta:
@@ -398,6 +397,11 @@ class ImageViewer(QGraphicsView, LayerCollectionHandler):
     def reset_zoom(self):
         if self.empty:
             return
+        self.pinch_start_scale = 1.0
+        self.last_scroll_pos = QPointF()
+        self.gesture_active = False
+        self.pinch_center_view = None
+        self.pinch_center_scene = None
         self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
         self.zoom_factor = self.get_current_scale()
         self.zoom_factor = max(self.min_scale, min(self.max_scale, self.zoom_factor))

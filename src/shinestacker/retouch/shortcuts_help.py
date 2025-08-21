@@ -81,3 +81,13 @@ class ShortcutsHelp(QDialog):
         self.add_bold_label(right_layout, "Mouse Controls")
         for k, v in mouse_controls.items():
             right_layout.addRow(f"<b>{k}</b>", QLabel(v))
+
+        touchpad_controls = {
+            "Two fingers": "pan",
+            "Pinch": "zoom in/out",
+            "Ctrl + two fingers": "zoom in/out",
+        }
+        self.add_bold_label(right_layout, " ")
+        self.add_bold_label(right_layout, "Touchpad Controls")
+        for k, v in touchpad_controls.items():
+            right_layout.addRow(f"<b>{k}</b>", QLabel(v))
