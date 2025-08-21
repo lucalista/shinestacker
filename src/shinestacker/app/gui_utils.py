@@ -42,7 +42,7 @@ def disable_macos_special_menu_items():
 
 def fill_app_menu(app, app_menu):
     about_action = QAction(f"About {constants.APP_STRING}", app)
-    about_action.triggered.connect(show_about_dialog)
+    about_action.triggered.connect(lambda: show_about_dialog(app))
     app_menu.addAction(about_action)
     app_menu.addSeparator()
     if config.DONT_USE_NATIVE_MENU:

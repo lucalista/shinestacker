@@ -1,11 +1,39 @@
-# pylint: disable=C0114, C0116, E0611, W0718
+# pylint: disable=C0114, C0115, C0116, E0611, W0718, R0903
 import json
 from urllib.request import urlopen, Request
 from urllib.error import URLError
-from PySide6.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel
 from PySide6.QtCore import Qt
 from .. import __version__
+from .. retouch.icon_container import icon_container
 from .. config.constants import constants
+
+
+class AboutDialog(QDialog):
+    def __init__(self, parent=None, about_text=""):
+        super().__init__(parent)
+        self.setWindowTitle("About")
+        self.resize(400, 300)
+        layout = QVBoxLayout(self)
+        layout.setAlignment(Qt.AlignTop)
+        icon_widget = icon_container()
+        icon_layout = QHBoxLayout()
+        icon_layout.addStretch()
+        icon_layout.addWidget(icon_widget)
+        icon_layout.addStretch()
+        layout.addLayout(icon_layout)
+        about_label = QLabel(about_text)
+        about_label.setWordWrap(True)
+        about_label.setAlignment(Qt.AlignLeft)
+        layout.addWidget(about_label)
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+        button = QPushButton("OK")
+        button.setFixedWidth(100)
+        button.clicked.connect(self.accept)
+        button_layout.addWidget(button)
+        button_layout.addStretch()
+        layout.addLayout(button_layout)
 
 
 def compare_versions(current, latest):
@@ -49,7 +77,7 @@ def get_latest_version():
         return None
 
 
-def show_about_dialog():
+def show_about_dialog(parent):
     version_clean = __version__.split("+", maxsplit=1)[0]
     latest_version = None
     try:
@@ -57,7 +85,6 @@ def show_about_dialog():
     except Exception:
         pass
     update_text = ""
-    # pyling: disable=XXX
     if latest_version:
         latest_clean = latest_version.lstrip('v')
         if compare_versions(version_clean, latest_clean) < 0:
@@ -68,9 +95,9 @@ def show_about_dialog():
             </p>
             """ # noqa E501
         else:
-            update_text = f"""
+            update_text = """
             <p style="color: green; font-weight: bold;">
-                You are using the lastet version: {latest_version}.
+                You are using the lastet version.
             </p>
             """
     about_text = f"""
@@ -86,11 +113,5 @@ def show_about_dialog():
     <li><a href="https://github.com/lucalista/shinestacker">GitHub project repository</a></li>
     </ul>
     """
-    # pyling: enable=XXX
-    msg = QMessageBox()
-    msg.setWindowTitle(f"About {constants.APP_STRING}")
-    msg.setIcon(QMessageBox.Icon.Information)
-    msg.setTextFormat(Qt.TextFormat.RichText)
-    msg.setText(about_text)
-    msg.setIcon(QMessageBox.Icon.NoIcon)
-    msg.exec_()
+    dialog = AboutDialog(parent, about_text)
+    dialog.exec()
