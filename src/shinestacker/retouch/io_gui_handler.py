@@ -14,6 +14,7 @@ from .layer_collection import LayerCollectionHandler
 class IOGuiHandler(QObject, LayerCollectionHandler):
     status_message_requested = Signal(str)
     update_title_requested = Signal()
+    mark_as_modified_requested = Signal(bool)
 
     def __init__(self, layer_collection, undo_manager, parent):
         QObject.__init__(self, parent)
@@ -56,7 +57,7 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
         self.blank_layer = np.zeros(master_layer.shape[:2])
         self.display_manager.update_thumbnails()
         self.update_title_requested.emit()
-        self.parent().mark_as_modified()
+        self.mark_as_modified_requested.emit(True)
         self.parent().change_layer(0)
         self.parent().thumbnail_list.setFocus()
         self.image_viewer.setup_brush_cursor()
@@ -79,7 +80,7 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
         self.saving_timer.stop()
         self.saving_dialog.hide()
         self.saving_dialog.deleteLater()
-        self.parent().modified = False
+        self.mark_as_modified_requested.emit(False)
         self.update_title_requested.emit()
         self.status_message_requested.emit(f"Saved multilayer to: {self.current_file_path_multi}")
 
@@ -150,10 +151,10 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
             for img, label in zip(stack, labels):
                 self.add_layer_label(label)
                 self.add_layer(img)
-        self.parent().mark_as_modified()
+        self.mark_as_modified_requested.emit(True)
         self.parent().change_layer(0)
-        self.image_viewer.reset_zoom()
         self.parent().thumbnail_list.setFocus()
+        self.image_viewer.reset_zoom()
         self.display_manager.update_thumbnails()
 
     def save_file(self):
@@ -240,7 +241,7 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
         try:
             self.io_manager.save_master(path)
             self.current_file_path_master = os.path.abspath(path)
-            self.parent().modified = False
+            self.mark_as_modified_requested.emit(False)
             self.update_title_requested.emit()
             self.status_message_requested.emit(f"Saved master layer to: {path}")
         except Exception as e:
@@ -256,16 +257,14 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
         self.exif_dialog.exec()
 
     def close_file(self):
-        if self.parent().check_unsaved_changes():
-            self.set_master_layer(None)
-            self.blank_layer = None
-            self.layer_collection.reset()
-            self.current_file_path_master = ''
-            self.current_file_path_multi = ''
-            self.parent().modified = False
-            self.undo_manager.reset()
-            self.image_viewer.clear_image()
-            self.display_manager.thumbnail_list.clear()
-            self.display_manager.update_thumbnails()
-            self.update_title_requested.emit()
-            self.status_message_requested.emit("File closed")
+        self.mark_as_modified_requested.emit(False)
+        self.blank_layer = None
+        self.layer_collection.reset()
+        self.current_file_path_master = ''
+        self.current_file_path_multi = ''
+        self.undo_manager.reset()
+        self.image_viewer.clear_image()
+        self.display_manager.thumbnail_list.clear()
+        self.display_manager.update_thumbnails()
+        self.update_title_requested.emit()
+        self.status_message_requested.emit("File closed")
