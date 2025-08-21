@@ -15,7 +15,7 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
     status_message_requested = Signal(str)
     update_title_requested = Signal()
     mark_as_modified_requested = Signal(bool)
-    change_layer_and_focus_requested = Signal(int)
+    change_layer_requested = Signal(int)
 
     def __init__(self, layer_collection, undo_manager, parent):
         QObject.__init__(self, parent)
@@ -58,7 +58,7 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
         self.blank_layer = np.zeros(master_layer.shape[:2])
         self.display_manager.update_thumbnails()
         self.mark_as_modified_requested.emit(True)
-        self.change_layer_and_focus_requested.emit(0)
+        self.change_layer_requested.emit(0)
         self.image_viewer.setup_brush_cursor()
         self.image_viewer.reset_zoom()
         self.status_message_requested.emit(f"Loaded: {self.current_file_path()}")
@@ -152,7 +152,7 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
                 self.add_layer(img)
         self.display_manager.update_thumbnails()
         self.mark_as_modified_requested.emit(True)
-        self.change_layer_and_focus_requested.emit(0)
+        self.change_layer_requested.emit(0)
         self.image_viewer.reset_zoom()
         self.status_message_requested.emit("Selected frames imported")
         self.update_title_requested.emit()

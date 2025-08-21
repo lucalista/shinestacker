@@ -231,7 +231,7 @@ class ImageEditorUI(QMainWindow, LayerCollectionHandler):
         self.io_gui_handler.status_message_requested.connect(self.show_status_message)
         self.io_gui_handler.update_title_requested.connect(self.update_title)
         self.io_gui_handler.mark_as_modified_requested.connect(self.mark_as_modified)
-        self.io_gui_handler.change_layer_and_focus_requested.connect(self.change_layer)
+        self.io_gui_handler.change_layer_requested.connect(self.change_layer)
         self.brush_tool.setup_ui(self.brush, self.brush_preview, self.image_viewer,
                                  self.brush_size_slider, self.hardness_slider, self.opacity_slider,
                                  self.flow_slider)
@@ -402,12 +402,9 @@ class ImageEditorUI(QMainWindow, LayerCollectionHandler):
         self.statusBar().showMessage(message)
 
     def mark_as_modified(self, value=True):
-        if value:
-            self.modified = True
-            self.save_actions_set_enabled(True)
-            self.update_title()
-        else:
-            self.modified = False
+        self.modified = value
+        self.save_actions_set_enabled(value)
+        self.update_title()
 
     def check_unsaved_changes(self) -> bool:
         if self.modified:
@@ -443,7 +440,7 @@ class ImageEditorUI(QMainWindow, LayerCollectionHandler):
         super().keyPressEvent(event)
     # pylint: enable=C0103
 
-    def save_master_only(self, checked):
+    def save_master_only(self, _checked):
         self.update_title()
 
     def sort_layers(self, order):
@@ -613,9 +610,8 @@ class ImageEditorUI(QMainWindow, LayerCollectionHandler):
     def close_file(self):
         if self.check_unsaved_changes():
             self.io_gui_handler.close_file()
-            self.save_actions_set_enabled(False)
             self.set_master_layer(None)
-            self.modified = False
+            self.mark_as_modified(False)
 
     def set_view_master(self):
         self.display_manager.set_view_master()

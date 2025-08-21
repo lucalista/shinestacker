@@ -1,6 +1,7 @@
 # pylint: disable=C0114, C0115, C0116, E0611, R0904, R0902, R0914, R0912
 import math
-from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
+from PySide6.QtWidgets import (QGraphicsView, QGraphicsScene, QGraphicsPixmapItem,
+                               QGraphicsEllipseItem)
 from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QCursor, QShortcut, QKeySequence
 from PySide6.QtCore import Qt, QRectF, QTime, QPoint, QPointF, Signal, QEvent
 from .. config.gui_constants import gui_constants
@@ -64,8 +65,9 @@ class ImageViewer(QGraphicsView, LayerCollectionHandler):
         pixmap = QPixmap.fromImage(qimage)
         self.pixmap_item.setPixmap(pixmap)
         self.setSceneRect(QRectF(pixmap.rect()))
-        img_width = pixmap.width()
-        self.min_scale = gui_constants.MIN_ZOOMED_IMG_WIDTH / img_width
+        img_width, img_height = pixmap.width(), pixmap.height()
+        self.min_scale = min(gui_constants.MIN_ZOOMED_IMG_WIDTH / img_width,
+                             gui_constants.MIN_ZOOMED_IMG_HEIGHT / img_height)
         self.max_scale = gui_constants.MAX_ZOOMED_IMG_PX_SIZE
         if self.zoom_factor == 1.0:
             self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
@@ -317,6 +319,9 @@ class ImageViewer(QGraphicsView, LayerCollectionHandler):
         self.setCursor(Qt.BlankCursor)
         pen = QPen(QColor(*gui_constants.BRUSH_COLORS['pen']), 1)
         brush = QBrush(QColor(*gui_constants.BRUSH_COLORS['cursor_inner']))
+        for item in self.scene.items():
+            if isinstance(item, QGraphicsEllipseItem):
+                self.scene.removeItem(item)
         self.brush_cursor = self.scene.addEllipse(
             0, 0, self.brush.size, self.brush.size, pen, brush)
         self.brush_cursor.setZValue(1000)
