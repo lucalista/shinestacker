@@ -150,7 +150,7 @@ class ImageEditor(QMainWindow, LayerCollectionHandler):
             self.master_layer_copy(),
             self.current_layer(),
             self.master_layer(), self.mask_layer,
-            view_pos, self.image_viewer)
+            view_pos)
         self.undo_manager.extend_undo_area(*area)
 
     def begin_copy_brush_area(self, pos):

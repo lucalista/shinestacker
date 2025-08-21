@@ -135,12 +135,12 @@ class BrushTool:
         self.image_viewer.update_brush_cursor()
 
     def apply_brush_operation(self, master_layer, source_layer, dest_layer, mask_layer,
-                              view_pos, image_viewer):
+                              view_pos):
         if master_layer is None or source_layer is None:
             return False
         if dest_layer is None:
             dest_layer = master_layer
-        scene_pos = image_viewer.mapToScene(view_pos)
+        scene_pos = self.image_viewer.mapToScene(view_pos)
         x_center = int(round(scene_pos.x()))
         y_center = int(round(scene_pos.y()))
         radius = int(round(self.brush.size // 2))
