@@ -41,6 +41,10 @@ class NewProjectDialog(QDialog):
         label.setStyleSheet("font-weight: bold")
         self.layout.addRow(label)
 
+    def add_label(self, label):
+        label = QLabel(label)
+        self.layout.addRow(label)
+
     def create_form(self):
         icon_path = f"{os.path.dirname(__file__)}/ico/shinestacker.png"
         app_icon = QIcon(icon_path)
@@ -90,10 +94,11 @@ class NewProjectDialog(QDialog):
         self.multi_layer = QCheckBox()
         self.multi_layer.setChecked(gui_constants.NEW_PROJECT_MULTI_LAYER)
 
-        self.add_bold_label("Select input:")
+        self.add_bold_label("1️⃣ Select input folder, all images therein will be merged. ")
         self.layout.addRow("Input folder:", container)
         self.layout.addRow("Number of frames: ", self.frames_label)
-        self.add_bold_label("Select actions:")
+        self.add_label("")
+        self.add_bold_label("2️⃣ Select basic options.")
         if self.expert():
             self.layout.addRow("Automatic noise detection:", self.noise_detection)
             self.layout.addRow("Vignetting correction:", self.vignetting_correction)
@@ -109,6 +114,12 @@ class NewProjectDialog(QDialog):
         else:
             self.layout.addRow("Focus stack:", self.focus_stack_pyramid)
             self.layout.addRow("Save multi layer TIFF:", self.multi_layer)
+        self.add_label("")
+        self.add_bold_label("3️⃣ Push 🆗 for further options, then ▶️ run.")
+        self.add_label("")
+        self.add_label("4️⃣ "
+                       "Select: <b>View</b> > <b>Expert options</b> "
+                       "to unlock advanced configuration.")
 
     def update_bunch_options(self, checked):
         self.bunch_frames.setEnabled(checked)

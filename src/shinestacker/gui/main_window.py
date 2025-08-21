@@ -417,7 +417,7 @@ class MainWindow(ActionsWindow, LogManager):
                     os.path.exists(self.current_action_working_path):
                 action_name = "Browse Working Path" + (f" > {name}" if name != '' else '')
                 self.browse_working_path_action = QAction(action_name)
-                self.browse_working_path_action.triggered.connect(self.browse_working_path_path)
+                self.browse_working_path_action.triggered.connect(self.browse_working_path)
                 menu.addAction(self.browse_working_path_action)
             ip, name = get_action_input_path(current_action)
             if ip != '':
@@ -431,16 +431,24 @@ class MainWindow(ActionsWindow, LogManager):
                         break
                 if p_exists:
                     action_name = "Browse Input Path" + (f" > {name}" if name != '' else '')
+                    n_files = [f"{len(next(os.walk(p))[2])}"
+                               for p in
+                               self.current_action_input_path.split(constants.PATH_SEPARATOR)]
+                    s = "" if len(n_files) == 1 and n_files[0] == 1 else "s"
+                    action_name += " (" + ", ".join(n_files) + f" file{s})"
                     self.browse_input_path_action = QAction(action_name)
-                    self.browse_input_path_action.triggered.connect(self.browse_input_path_path)
+                    self.browse_input_path_action.triggered.connect(self.browse_input_path)
                     menu.addAction(self.browse_input_path_action)
             op, name = get_action_output_path(current_action)
             if op != '':
                 self.current_action_output_path = f"{self.current_action_working_path}/{op}"
                 if os.path.exists(self.current_action_output_path):
                     action_name = "Browse Output Path" + (f" > {name}" if name != '' else '')
+                    n_files = len(next(os.walk(op))[2])
+                    s = "" if n_files == 1 else "s"
+                    action_name += f" ({n_files} file{s})"
                     self.browse_output_path_action = QAction(action_name)
-                    self.browse_output_path_action.triggered.connect(self.browse_output_path_path)
+                    self.browse_output_path_action.triggered.connect(self.browse_output_path)
                     menu.addAction(self.browse_output_path_action)
             menu.addSeparator()
             menu.addAction(self.run_job_action)
@@ -493,13 +501,13 @@ class MainWindow(ActionsWindow, LogManager):
                 else:
                     subprocess.run(['xdg-open', p], check=True)
 
-    def browse_working_path_path(self):
+    def browse_working_path(self):
         self.browse_path(self.current_action_working_path)
 
-    def browse_input_path_path(self):
+    def browse_input_path(self):
         self.browse_path(self.current_action_input_path)
 
-    def browse_output_path_path(self):
+    def browse_output_path(self):
         self.browse_path(self.current_action_output_path)
 
     def refresh_ui(self, job_row=-1, action_row=-1):
