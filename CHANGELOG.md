@@ -2,6 +2,17 @@
 
 This page reports the main releases only and the main changes therein.
 
+## [v-.-..] - 2025-08-21
+**Unreleased changes**
+
+### Changes
+
+* code cleanup and refactoring
+* minor interface improvements
+* minor fixes
+
+---
+
 ## [v0.5.0] - 2025-08-20
 **GUI and robustness improvements**
 

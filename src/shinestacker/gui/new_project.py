@@ -115,7 +115,7 @@ class NewProjectDialog(QDialog):
             self.layout.addRow("Focus stack:", self.focus_stack_pyramid)
             self.layout.addRow("Save multi layer TIFF:", self.multi_layer)
         self.add_label("")
-        self.add_bold_label("3️⃣ Push 🆗 for further options, then ▶️ run.")
+        self.add_bold_label("3️⃣ Push 🆗 for further options, then press ▶️ to run.")
         self.add_label("")
         self.add_label("4️⃣ "
                        "Select: <b>View</b> > <b>Expert options</b> "
