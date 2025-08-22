@@ -107,14 +107,14 @@ Adjust in the top toolbar:
 
 | Action              | Shortcut                  |
 |---------------------|---------------------------|
-| Zoom in/out         | `Ctrl` + `+`/`-, mouse wheel or pinch on touchpad |
+| Zoom in/out         | `Ctrl` + `+`/`- or mouse wheel or pinch on touchpad |
 | Reset view          | `Ctrl` + `0`              |
 | Pan                 | `Space` + mouse drag or two fingers on touchpad   |
 | Prev./next layer    | `Up`/`Down` arrows        |
 | View master layer   | `M`                       |
 | View source layer   | `L`                       |
-| Toggle master/layer | `T`                       |
-| Toggle master ↔ source | `X`                    |
+| Toggle master ↔ layer | `T`                       |
+| Temp. toggle master ↔ source | `X`                    |
 
 See help menu for complete list of shortcuts.
 
