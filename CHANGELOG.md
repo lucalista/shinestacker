@@ -2,13 +2,13 @@
 
 This page reports the main releases only and the main changes therein.
 
-## [v-.-..] - 2025-08-21
+## [v-.-..] - 2025-08-22
 **Unreleased changes**
 
 ### Changes
 
 * code cleanup and refactoring
-* minor interface improvements
+* interface improvements: implemented master/layer toggle
 * minor fixes
 
 ---

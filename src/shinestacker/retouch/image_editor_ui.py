@@ -156,6 +156,13 @@ class ImageEditorUI(QMainWindow, LayerCollectionHandler):
             gui_constants.UI_SIZES['thumbnail_width'])
         self.master_thumbnail_label.mousePressEvent = \
             lambda e: self.display_manager.set_view_master()
+        self.master_thumbnail_label.setMouseTracking(True)
+
+        def label_clicked(event):
+            if event.button() == Qt.LeftButton:
+                self.toggle_view_master_individual()
+
+        self.master_thumbnail_label.mousePressEvent = label_clicked
         master_thumbnail_layout.addWidget(self.master_thumbnail_label)
         side_layout.addWidget(self.master_thumbnail_frame)
         side_layout.addSpacing(10)
@@ -321,6 +328,12 @@ class ImageEditorUI(QMainWindow, LayerCollectionHandler):
         view_individual_action.setShortcut("L")
         view_individual_action.triggered.connect(self.set_view_individual)
         view_menu.addAction(view_individual_action)
+        view_menu.addSeparator()
+
+        toggle_view_master_individual_action = QAction("View Individual", self)
+        toggle_view_master_individual_action.setShortcut("T")
+        toggle_view_master_individual_action.triggered.connect(self.toggle_view_master_individual)
+        view_menu.addAction(toggle_view_master_individual_action)
         view_menu.addSeparator()
 
         sort_asc_action = QAction("Sort Layers A-Z", self)
@@ -622,6 +635,12 @@ class ImageEditorUI(QMainWindow, LayerCollectionHandler):
         self.display_manager.set_view_individual()
         self.thumbnail_highlight = gui_constants.THUMB_MASTER_LO_COLOR
         self.highlight_master_thumbnail()
+
+    def toggle_view_master_individual(self):
+        if self.display_manager.view_mode == 'master':
+            self.set_view_individual()
+        else:
+            self.set_view_master()
 
     def toggle_fullscreen(self, checked):
         if checked:

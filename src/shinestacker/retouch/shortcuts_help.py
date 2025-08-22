@@ -49,6 +49,7 @@ class ShortcutsHelp(QDialog):
         shortcuts = {
             "M": "show master layer",
             "L": "show selected layer",
+            "T": "toggle master/selected layer",
             "X": "temp. toggle between master and source layer",
             "↑": "select one layer up",
             "↓": "selcet one layer down",
