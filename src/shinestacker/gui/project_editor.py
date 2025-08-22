@@ -87,8 +87,8 @@ class ProjectUndoManager:
     def pop(self):
         return self._undo_buffer.pop()
 
-    def empty(self):
-        return len(self._undo_buffer) == 0
+    def filled(self):
+        return len(self._undo_buffer) != 0
 
 
 class ProjectEditor(QObject):
@@ -115,8 +115,8 @@ class ProjectEditor(QObject):
     def pop_undo(self):
         return self._undo_manager.pop()
 
-    def empty_undo(self):
-        return self._undo_manager.empty()
+    def filled_undo(self):
+        return self._undo_manager.filled()
 
     def mark_as_modified(self, modified=True):
         self._modified = modified
@@ -558,7 +558,7 @@ class ProjectEditor(QObject):
     def undo(self):
         job_row = self.current_job_index()
         action_row = self.current_action_index()
-        if not self.project_editor.empty_undo():
+        if self.project_editor.filled_undo():
             self.set_project(self.project_editor.pop_undo())
             self.refresh_ui_signal.emit(-1, -1)
             len_jobs = self.num_project_jobs()

@@ -142,8 +142,8 @@ class MainWindow(ActionsWindow, LogManager):
         self.addToolBar(Qt.TopToolBarArea, toolbar)
         self.fill_toolbar(toolbar)
         self.resize(1200, 800)
-        center = QGuiApplication.primaryScreen().geometry().center()
-        self.move(center - self.rect().center())
+        self.move(QGuiApplication.primaryScreen().geometry().center() -
+                  self.rect().center())
         self.set_project(Project())
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -175,15 +175,16 @@ class MainWindow(ActionsWindow, LogManager):
         h_layout.addLayout(vbox_right)
         layout.addWidget(h_splitter)
         self.central_widget.setLayout(layout)
-        self.project_editor.modified_signal.connect(self.handle_modified)
+
+        def handle_modified(modified):
+            self.save_actions_set_enabled(modified)
+            self.update_title()
+
+        self.project_editor.modified_signal.connect(handle_modified)
         self.project_editor.select_signal.connect(self.update_delete_action_state)
         self.project_editor.refresh_ui_signal.connect(self.refresh_ui)
         self.project_editor.enable_delete_action_signal.connect(
             self.delete_element_action.setEnabled)
-
-    def handle_modified(self, modified):
-        self.save_actions_set_enabled(modified)
-        self.update_title()
 
     def set_retouch_callback(self, callback):
         self.retouch_callback = callback

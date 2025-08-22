@@ -288,8 +288,7 @@ class ActionsWindow(QMainWindow):
     def do_save(self, file_path):
         try:
             json_obj = jsonpickle.encode({
-                'project': self.project().to_dict(),
-                'version': 1
+                'project': self.project().to_dict(), 'version': 1
             })
             with open(file_path, 'w', encoding="utf-8") as f:
                 f.write(json_obj)
