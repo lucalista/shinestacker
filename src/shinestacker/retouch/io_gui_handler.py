@@ -56,13 +56,8 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
         self.set_master_layer(master_layer)
         self.undo_manager.reset()
         self.blank_layer = np.zeros(master_layer.shape[:2])
-        self.display_manager.update_thumbnails()
-        self.mark_as_modified_requested.emit(True)
-        self.change_layer_requested.emit(0)
-        self.image_viewer.setup_brush_cursor()
-        self.image_viewer.reset_zoom()
-        self.status_message_requested.emit(f"Loaded: {self.current_file_path()}")
-        self.update_title_requested.emit()
+        self.finish_loading_setup(stack, self.layer_labels(), master_layer,
+                                  f"Loaded: {self.current_file_path()}")
 
     def on_file_error(self, error_msg):
         QApplication.restoreOverrideCursor()
@@ -141,6 +136,9 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
             msg.setText(str(e))
             msg.exec()
             return
+        self.finish_loading_setup(stack, labels, master, "Selected frames imported")
+
+    def finish_loading_setup(self, stack, labels, master, message):
         if self.layer_stack() is None and len(stack) > 0:
             self.set_layer_stack(np.array(stack))
             self.set_layer_labels(labels)
@@ -155,7 +153,7 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
         self.change_layer_requested.emit(0)
         self.image_viewer.reset_zoom()
         self.image_viewer.setup_brush_cursor()
-        self.status_message_requested.emit("Selected frames imported")
+        self.status_message_requested.emit(message)
         self.update_title_requested.emit()
 
     def save_file(self):

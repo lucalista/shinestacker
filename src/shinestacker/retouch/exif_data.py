@@ -25,8 +25,6 @@ class ExifData(QDialog):
         ok_button.setFixedWidth(100)
         ok_button.setFocus()
         button_layout.addWidget(ok_button)
-        
-        # Add the container widget as a spanning row
         self.layout.addRow(button_container)
         ok_button.clicked.connect(self.accept)
 
