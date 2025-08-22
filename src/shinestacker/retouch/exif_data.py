@@ -1,6 +1,6 @@
 # pylint: disable=C0114, C0115, C0116, E0611
 from PIL.TiffImagePlugin import IFDRational
-from PySide6.QtWidgets import QFormLayout, QHBoxLayout, QPushButton, QDialog, QLabel
+from PySide6.QtWidgets import QWidget, QFormLayout, QHBoxLayout, QPushButton, QDialog, QLabel
 from PySide6.QtCore import Qt
 from .. algorithms.exif import exif_dict
 from .icon_container import icon_container
@@ -18,11 +18,16 @@ class ExifData(QDialog):
         self.layout.setFormAlignment(Qt.AlignLeft | Qt.AlignTop)
         self.layout.setLabelAlignment(Qt.AlignLeft)
         self.create_form()
-        button_box = QHBoxLayout()
+        button_container = QWidget()
+        button_layout = QHBoxLayout(button_container)
+        button_layout.setAlignment(Qt.AlignCenter)
         ok_button = QPushButton("OK")
+        ok_button.setFixedWidth(100)
         ok_button.setFocus()
-        button_box.addWidget(ok_button)
-        self.layout.addRow(button_box)
+        button_layout.addWidget(ok_button)
+        
+        # Add the container widget as a spanning row
+        self.layout.addRow(button_container)
         ok_button.clicked.connect(self.accept)
 
     def add_bold_label(self, label):
