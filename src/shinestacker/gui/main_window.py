@@ -505,10 +505,9 @@ class MainWindow(ActionsWindow, LogManager):
             if os.path.exists(p):
                 if running_under_windows():
                     os.startfile(os.path.normpath(p))
-                elif running_under_macos():
-                    subprocess.run(['open', p], check=True)
                 else:
-                    subprocess.run(['xdg-open', p], check=True)
+                    cmd = 'open' if running_under_macos() else 'xdg-open'
+                    subprocess.run([cmd, p], check=True)
 
     def browse_working_path(self):
         self.browse_path(self.current_action_working_path)
@@ -586,8 +585,7 @@ class MainWindow(ActionsWindow, LogManager):
         new_window = RunWindow(labels,
                                lambda id_str: self.stop_worker(self.get_tab_position(id_str)),
                                lambda id_str: self.close_window(self.get_tab_position(id_str)),
-                               retouch_paths,
-                               self)
+                               retouch_paths, self)
         self.tab_widget.addTab(new_window, title)
         self.tab_widget.setCurrentIndex(self.tab_widget.count() - 1)
         if title is not None:
@@ -625,10 +623,8 @@ class MainWindow(ActionsWindow, LogManager):
     def run_job(self):
         current_index = self.current_job_index()
         if current_index < 0:
-            if self.num_project_jobs() > 0:
-                QMessageBox.warning(self, "No Job Selected", "Please select a job first.")
-            else:
-                QMessageBox.warning(self, "No Job Added", "Please add a job first.")
+            msg = "No Job Selected" if self.num_project_jobs() > 0 else "No Job Added"
+            QMessageBox.warning(self, msg, "Please select a job first.")
             return
         if current_index >= 0:
             job = self.project_job(current_index)
@@ -644,9 +640,8 @@ class MainWindow(ActionsWindow, LogManager):
                 self.start_thread(worker)
                 self._workers.append(worker)
             else:
-                QMessageBox.warning(
-                    self, "Can't run Job",
-                    "Job " + job.params["name"] + " is disabled.")
+                QMessageBox.warning(self, "Can't run Job",
+                                    "Job " + job.params["name"] + " is disabled.")
                 return
 
     def run_all_jobs(self):
@@ -677,9 +672,7 @@ class MainWindow(ActionsWindow, LogManager):
         has_action_selected = self.num_selected_actions() > 0
         self.delete_element_action.setEnabled(has_job_selected or has_action_selected)
         if has_action_selected and has_job_selected:
-            job_index = self.current_job_index()
-            if job_index >= self.num_project_jobs():
-                job_index = self.num_project_jobs() - 1
+            job_index = min(self.current_job_index(), self.num_project_jobs() - 1)
             action_index = self.current_action_index()
             if job_index >= 0:
                 job = self.project_job(job_index)
