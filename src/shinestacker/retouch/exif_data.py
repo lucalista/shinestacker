@@ -1,22 +1,16 @@
 # pylint: disable=C0114, C0115, C0116, E0611
 from PIL.TiffImagePlugin import IFDRational
-from PySide6.QtWidgets import QWidget, QFormLayout, QHBoxLayout, QPushButton, QDialog, QLabel
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QPushButton, QLabel
 from PySide6.QtCore import Qt
 from .. algorithms.exif import exif_dict
 from .icon_container import icon_container
+from .. gui.base_form_dialog import BaseFormDialog
 
 
-class ExifData(QDialog):
+class ExifData(BaseFormDialog):
     def __init__(self, exif, parent=None):
-        super().__init__(parent)
+        super().__init__("EXIF data", parent)
         self.exif = exif
-        self.setWindowTitle("EXIF data")
-        self.resize(500, self.height())
-        self.layout = QFormLayout(self)
-        self.layout.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
-        self.layout.setRowWrapPolicy(QFormLayout.DontWrapRows)
-        self.layout.setFormAlignment(Qt.AlignLeft | Qt.AlignTop)
-        self.layout.setLabelAlignment(Qt.AlignLeft)
         self.create_form()
         button_container = QWidget()
         button_layout = QHBoxLayout(button_container)
