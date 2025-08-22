@@ -6,8 +6,8 @@ from PySide6.QtWidgets import (QListWidget, QMessageBox,
 from PySide6.QtCore import Qt, QObject, Signal
 from .. config.constants import constants
 from .colors import ColorPalette
-from .action_config import ActionConfig, ActionConfigDialog
-from .project_model import get_action_input_path, get_action_output_path
+from .action_config_dialog import ActionConfigDialog
+from .project_model import ActionConfig, get_action_input_path, get_action_output_path
 
 INDENT_SPACE = "&nbsp;&nbsp;&nbsp;↪&nbsp;&nbsp;&nbsp;"
 CLONE_POSTFIX = " (clone)"
