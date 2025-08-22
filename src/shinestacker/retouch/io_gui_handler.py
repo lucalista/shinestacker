@@ -154,6 +154,7 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
         self.mark_as_modified_requested.emit(True)
         self.change_layer_requested.emit(0)
         self.image_viewer.reset_zoom()
+        self.image_viewer.setup_brush_cursor()
         self.status_message_requested.emit("Selected frames imported")
         self.update_title_requested.emit()
 
