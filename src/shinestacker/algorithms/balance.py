@@ -305,9 +305,6 @@ class Ch2Correction(Correction):
     def preprocess(self, image):
         assert False, 'abstract method'
 
-    def get_labels(self):
-        assert False, 'abstract method'
-
     def get_hist(self, image, idx):
         hist = [self.calc_hist_1ch(chan) for chan in cv2.split(image)]
         if self.plot_histograms:

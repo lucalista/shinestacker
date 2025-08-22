@@ -107,7 +107,6 @@ class ProjectEditor(QObject):
         self._job_list = QListWidget()
         self._action_list = QListWidget()
         self.dialog = None
-        self.sub_action_type_to_add = ''
 
     def add_undo(self, item):
         self._undo_manager.add(item)

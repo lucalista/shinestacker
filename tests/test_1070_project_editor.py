@@ -84,7 +84,7 @@ def test_new_row_after_delete():
 def test_mark_as_modified(project_editor):
     project_editor.mark_as_modified(True)
     assert project_editor.modified()
-    assert not project_editor.empty_undo()
+    assert project_editor.filled_undo()
 
 
 def test_shift_job(project_editor, mock_job):

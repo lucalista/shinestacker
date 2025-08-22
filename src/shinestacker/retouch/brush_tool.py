@@ -185,6 +185,3 @@ class BrushTool:
             dest_area[:] = np.clip(
                 master_area * (1 - effective_mask) + source_area * effective_mask, 0,
                 max_px_value).astype(dtype)
-
-    def clear_cache(self):
-        self._brush_mask_cache.clear()

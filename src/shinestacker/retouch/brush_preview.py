@@ -7,16 +7,6 @@ from PySide6.QtGui import QPixmap, QPainter, QImage
 from .layer_collection import LayerCollectionHandler
 
 
-def brush_profile_lower_limited(r, hardness):
-    if hardness >= 1.0:
-        result = np.where(r < 1.0, 1.0, 0.0)
-    else:
-        r_lim = np.where(r < 1.0, r, 1.0)
-        k = 1.0 / (1.0 - hardness)
-        result = 0.5 * (np.cos(np.pi * np.power(r_lim, k)) + 1.0)
-    return result
-
-
 def brush_profile(r, hardness):
     h = 2.0 * hardness - 1.0
     if h >= 1.0:

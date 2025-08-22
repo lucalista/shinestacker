@@ -60,11 +60,6 @@ class Project:
     def __init__(self):
         self.jobs: list[ActionConfig] = []
 
-    def run_all(self):
-        for job in self.jobs:
-            stack_job = job.to_stack_job()
-            stack_job.run()
-
     def clone(self):
         c = Project()
         c.jobs = [j.clone() for j in self.jobs]

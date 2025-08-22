@@ -42,8 +42,6 @@ class _GuiConstants:
     THUMB_MASTER_HI_COLOR = '#0000FF'
     THUMB_MASTER_LO_COLOR = 'transparent'
 
-    MAX_UNDO_STEPS = 50
-
     BRUSH_SIZE_SLIDER_MAX = 1000
 
     UI_SIZES = {

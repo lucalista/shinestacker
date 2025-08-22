@@ -2,7 +2,7 @@
 import math
 from PySide6.QtWidgets import (QGraphicsView, QGraphicsScene, QGraphicsPixmapItem,
                                QGraphicsEllipseItem)
-from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QCursor, QShortcut, QKeySequence
+from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush, QCursor
 from PySide6.QtCore import Qt, QRectF, QTime, QPoint, QPointF, Signal, QEvent
 from .. config.gui_constants import gui_constants
 from .brush_preview import BrushPreviewItem
@@ -372,12 +372,6 @@ class ImageViewer(QGraphicsView, LayerCollectionHandler):
         self.brush_cursor.setPen(QPen(QColor(*gui_constants.BRUSH_COLORS['pen']),
                                       gui_constants.BRUSH_LINE_WIDTH / self.zoom_factor))
         self.brush_cursor.setBrush(QBrush(gradient))
-
-    def setup_shortcuts(self):
-        prev_layer = QShortcut(QKeySequence(Qt.Key_Up), self, context=Qt.ApplicationShortcut)
-        prev_layer.activated.connect(self.prev_layer)
-        next_layer = QShortcut(QKeySequence(Qt.Key_Down), self, context=Qt.ApplicationShortcut)
-        next_layer.activated.connect(self.next_layer)
 
     def zoom_in(self):
         if self.empty:

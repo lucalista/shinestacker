@@ -61,36 +61,6 @@ class DepthMapStack(BaseStackAlgo):
         raise InvalidOptionError("map_type", self.map_type, details=f" valid values are "
                                  f"{constants.DM_MAP_AVERAGE} and {constants.DM_MAP_MAX}.")
 
-    def pyramid_blend(self, images, weights):
-        blended = None
-        for i in range(images.shape[0]):
-            img = images[i].astype(self.float_type)
-            weight = weights[i]
-            gp_img = [img]
-            gp_weight = [weight]
-            for _ in range(self.levels - 1):
-                gp_img.append(cv2.pyrDown(gp_img[-1]))
-                gp_weight.append(cv2.pyrDown(gp_weight[-1]))
-            lp_img = [gp_img[-1]]
-            for j in range(self.levels - 1, 0, -1):
-                size = (gp_img[j - 1].shape[1], gp_img[j - 1].shape[0])
-                expanded = cv2.pyrUp(gp_img[j], dstsize=size)
-                lp_img.append(gp_img[j - 1] - expanded)
-            current_blend = []
-            for j in range(self.levels):
-                w = gp_weight[self.levels - 1 - j][..., np.newaxis]
-                current_blend.append(lp_img[j] * w)
-            if blended is None:
-                blended = current_blend
-            else:
-                for j in range(self.levels):
-                    blended[j] += current_blend[j]
-        result = blended[0]
-        for j in range(1, self.levels):
-            size = (blended[j].shape[1], blended[j].shape[0])
-            result = cv2.pyrUp(result, dstsize=size) + blended[j]
-        return result
-
     def focus_stack(self, filenames):
         gray_images = []
         metadata = None

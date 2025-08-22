@@ -57,7 +57,6 @@ class SimpleHtmlFormatter(logging.Formatter):
 
     def __init__(self, fmt=None, datefmt=None, style='%'):
         super().__init__()
-        self._fmt = fmt or "[%(levelname).3s] %(message)s"
         self.datefmt = datefmt or "%H:%M:%S"
 
     def format(self, record):

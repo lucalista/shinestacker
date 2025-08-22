@@ -20,10 +20,6 @@ class TestColorEntry:
         color = ColorEntry(10, 20, 30)
         assert color.tuple() == (10, 20, 30)
         assert color.hex() == "0a141e"
-        qcolor = color.q_color()
-        assert qcolor.red() == 10
-        assert qcolor.green() == 20
-        assert qcolor.blue() == 30
 
 
 class TestColorPalette:

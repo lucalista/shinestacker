@@ -1,7 +1,4 @@
 # pylint: disable=C0114, C0115, C0116, R0903, E0611
-from PySide6.QtGui import QColor
-
-
 class ColorEntry:
     def __init__(self, r, g, b):
         self.r = r
@@ -13,9 +10,6 @@ class ColorEntry:
 
     def hex(self):
         return f"{self.r:02x}{self.g:02x}{self.b:02x}"
-
-    def q_color(self):
-        return QColor(self.r, self.g, self.b)
 
 
 class ColorPalette:
