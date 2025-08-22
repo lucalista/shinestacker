@@ -126,11 +126,13 @@ class MainWindow(ActionsWindow, LogManager):
     def __init__(self):
         ActionsWindow.__init__(self)
         LogManager.__init__(self)
+        self.script_dir = os.path.dirname(__file__)
         self._windows = []
         self._workers = []
         self.retouch_callback = None
-        self.job_list.setStyleSheet(LIST_STYLE_SHEET)
-        self.action_list.setStyleSheet(LIST_STYLE_SHEET)
+        self.expert_options = False
+        self.job_list().setStyleSheet(LIST_STYLE_SHEET)
+        self.action_list().setStyleSheet(LIST_STYLE_SHEET)
         menubar = self.menuBar()
         self.add_file_menu(menubar)
         self.add_edit_menu(menubar)
@@ -158,23 +160,30 @@ class MainWindow(ActionsWindow, LogManager):
         self.tab_widget = TabWidgetWithPlaceholder()
         self.tab_widget.resize(1000, 500)
         h_splitter.addWidget(self.tab_widget)
-        self.job_list.currentRowChanged.connect(self.on_job_selected)
-        self.job_list.itemDoubleClicked.connect(self.on_job_edit)
-        self.action_list.itemDoubleClicked.connect(self.on_action_edit)
+        self.job_list().currentRowChanged.connect(self.project_editor.on_job_selected)
+        self.job_list().itemDoubleClicked.connect(self.on_job_edit)
+        self.action_list().itemDoubleClicked.connect(self.on_action_edit)
         vbox_left = QVBoxLayout()
         vbox_left.setSpacing(4)
         vbox_left.addWidget(QLabel("Job"))
-        vbox_left.addWidget(self.job_list)
+        vbox_left.addWidget(self.job_list())
         vbox_right = QVBoxLayout()
         vbox_right.setSpacing(4)
         vbox_right.addWidget(QLabel("Action"))
-        vbox_right.addWidget(self.action_list)
-        self.job_list.itemSelectionChanged.connect(self.update_delete_action_state)
-        self.action_list.itemSelectionChanged.connect(self.update_delete_action_state)
+        vbox_right.addWidget(self.action_list())
+        self.job_list().itemSelectionChanged.connect(self.update_delete_action_state)
+        self.action_list().itemSelectionChanged.connect(self.update_delete_action_state)
         h_layout.addLayout(vbox_left)
         h_layout.addLayout(vbox_right)
         layout.addWidget(h_splitter)
         self.central_widget.setLayout(layout)
+        self.project_editor.modified_signal.connect(self.handle_modified)
+        self.project_editor.select_signal.connect(self.update_delete_action_state)
+        self.project_editor.refresh_ui_signal.connect(self.refresh_ui)
+
+    def handle_modified(self, modified):
+        self.save_actions_set_enabled(modified)
+        self.update_title()
 
     def set_retouch_callback(self, callback):
         self.retouch_callback = callback
@@ -211,24 +220,24 @@ class MainWindow(ActionsWindow, LogManager):
         menu = menubar.addMenu("&Edit")
         undo_action = QAction("&Undo", self)
         undo_action.setShortcut("Ctrl+Z")
-        undo_action.triggered.connect(self.undo)
+        undo_action.triggered.connect(self.project_editor.undo)
         menu.addAction(undo_action)
         menu.addSeparator()
         cut_action = QAction("&Cut", self)
         cut_action.setShortcut("Ctrl+X")
-        cut_action.triggered.connect(self.cut_element)
+        cut_action.triggered.connect(self.project_editor.cut_element)
         menu.addAction(cut_action)
         copy_action = QAction("Cop&y", self)
         copy_action.setShortcut("Ctrl+C")
-        copy_action.triggered.connect(self.copy_element)
+        copy_action.triggered.connect(self.project_editor.copy_element)
         menu.addAction(copy_action)
         paste_action = QAction("&Paste", self)
         paste_action.setShortcut("Ctrl+V")
-        paste_action.triggered.connect(self.paste_element)
+        paste_action.triggered.connect(self.project_editor.paste_element)
         menu.addAction(paste_action)
         clone_action = QAction("Duplicate", self)
         clone_action.setShortcut("Ctrl+D")
-        clone_action.triggered.connect(self.clone_element)
+        clone_action.triggered.connect(self.project_editor.clone_element)
         menu.addAction(clone_action)
         self.delete_element_action = QAction("Delete", self)
         self.delete_element_action.setShortcut("Del")  # Qt.Key_Backspace
@@ -240,28 +249,28 @@ class MainWindow(ActionsWindow, LogManager):
         menu.addSeparator()
         up_action = QAction("Move &Up", self)
         up_action.setShortcut("Ctrl+Up")
-        up_action.triggered.connect(self.move_element_up)
+        up_action.triggered.connect(self.project_editor.move_element_up)
         menu.addAction(up_action)
         down_action = QAction("Move &Down", self)
         down_action.setShortcut("Ctrl+Down")
-        down_action.triggered.connect(self.move_element_down)
+        down_action.triggered.connect(self.project_editor.move_element_down)
         menu.addAction(down_action)
         menu.addSeparator()
         self.enable_action = QAction("E&nable", self)
         self.enable_action.setShortcut("Ctrl+E")
-        self.enable_action.triggered.connect(self.enable)
+        self.enable_action.triggered.connect(self.project_editor.enable)
         menu.addAction(self.enable_action)
         self.disable_action = QAction("Di&sable", self)
         self.disable_action.setShortcut("Ctrl+B")
-        self.disable_action.triggered.connect(self.disable)
+        self.disable_action.triggered.connect(self.project_editor.disable)
         menu.addAction(self.disable_action)
         enable_all_action = QAction("Enable All", self)
         enable_all_action.setShortcut("Ctrl+Shift+E")
-        enable_all_action.triggered.connect(self.enable_all)
+        enable_all_action.triggered.connect(self.project_editor.enable_all)
         menu.addAction(enable_all_action)
         disable_all_action = QAction("Disable All", self)
         disable_all_action.setShortcut("Ctrl+Shift+B")
-        disable_all_action.triggered.connect(self.disable_all)
+        disable_all_action.triggered.connect(self.project_editor.disable_all)
         menu.addAction(disable_all_action)
 
     def add_view_menu(self, menubar):
@@ -279,7 +288,7 @@ class MainWindow(ActionsWindow, LogManager):
         self.add_job_action.setShortcut("Ctrl+P")
         self.add_job_action.setIcon(self.get_icon("plus-round-line-icon"))
         self.add_job_action.setToolTip("Add job")
-        self.add_job_action.triggered.connect(self.add_job)
+        self.add_job_action.triggered.connect(self.project_editor.add_job)
         menu.addAction(self.add_job_action)
         menu.addSeparator()
         self.run_job_action = QAction("Run Job", self)
@@ -368,7 +377,7 @@ class MainWindow(ActionsWindow, LogManager):
         self.add_action_entry_action.setIcon(
             QIcon(os.path.join(self.script_dir, "img/plus-round-line-icon.png")))
         self.add_action_entry_action.setToolTip("Add action")
-        self.add_action_entry_action.triggered.connect(self.add_action)
+        self.add_action_entry_action.triggered.connect(self.project_editor.add_action)
         self.add_action_entry_action.setEnabled(False)
         toolbar.addAction(self.add_action_entry_action)
         self.sub_action_selector = QComboBox()
@@ -379,7 +388,7 @@ class MainWindow(ActionsWindow, LogManager):
         self.add_sub_action_entry_action.setIcon(
             QIcon(os.path.join(self.script_dir, "img/plus-round-line-icon.png")))
         self.add_sub_action_entry_action.setToolTip("Add sub action")
-        self.add_sub_action_entry_action.triggered.connect(self.add_sub_action)
+        self.add_sub_action_entry_action.triggered.connect(self.project_editor.add_sub_action)
         self.add_sub_action_entry_action.setEnabled(False)
         toolbar.addAction(self.add_sub_action_entry_action)
         toolbar.addSeparator()
@@ -390,16 +399,16 @@ class MainWindow(ActionsWindow, LogManager):
 
     # pylint: disable=C0103
     def contextMenuEvent(self, event):
-        item = self.job_list.itemAt(self.job_list.viewport().mapFrom(self, event.pos()))
+        item = self.job_list().itemAt(self.job_list().viewport().mapFrom(self, event.pos()))
         current_action = None
         if item:
-            index = self.job_list.row(item)
+            index = self.job_list().row(item)
             current_action = self.get_job_at(index)
-            self.job_list.setCurrentRow(index)
-        item = self.action_list.itemAt(self.action_list.viewport().mapFrom(self, event.pos()))
+            self.set_current_job(index)
+        item = self.action_list().itemAt(self.action_list().viewport().mapFrom(self, event.pos()))
         if item:
-            index = self.action_list.row(item)
-            self.action_list.setCurrentRow(index)
+            index = self.action_list().row(item)
+            self.set_current_action(index)
             _job_row, _action_row, pos = self.get_action_at(index)
             current_action = pos.action if not pos.is_sub_action else pos.sub_action
         if current_action:
@@ -511,16 +520,16 @@ class MainWindow(ActionsWindow, LogManager):
         self.browse_path(self.current_action_output_path)
 
     def refresh_ui(self, job_row=-1, action_row=-1):
-        self.job_list.clear()
-        for job in self.project.jobs:
-            self.add_list_item(self.job_list, job, False)
-        if self.project.jobs:
-            self.job_list.setCurrentRow(0)
+        self.clear_job_list()
+        for job in self.project_jobs():
+            self.project_editor.add_list_item(self.job_list(), job, False)
+        if self.project_jobs():
+            self.set_current_job(0)
         if job_row >= 0:
-            self.job_list.setCurrentRow(job_row)
+            self.set_current_job(job_row)
         if action_row >= 0:
-            self.action_list.setCurrentRow(action_row)
-        if self.job_list.count() == 0:
+            self.set_current_action(action_row)
+        if self.job_list_count() == 0:
             self.add_action_entry_action.setEnabled(False)
             self.action_selector.setEnabled(False)
             self.run_job_action.setEnabled(False)
@@ -614,15 +623,15 @@ class MainWindow(ActionsWindow, LogManager):
             a.setEnabled(enabled)
 
     def run_job(self):
-        current_index = self.job_list.currentRow()
+        current_index = self.current_job_index()
         if current_index < 0:
-            if len(self.project.jobs) > 0:
+            if self.num_project_jobs() > 0:
                 QMessageBox.warning(self, "No Job Selected", "Please select a job first.")
             else:
                 QMessageBox.warning(self, "No Job Added", "Please add a job first.")
             return
         if current_index >= 0:
-            job = self.project.jobs[current_index]
+            job = self.project_job(current_index)
             if job.enabled():
                 job_name = job.params["name"]
                 labels = [[(self.action_text(a), a.enabled()) for a in job.sub_actions]]
@@ -642,12 +651,12 @@ class MainWindow(ActionsWindow, LogManager):
 
     def run_all_jobs(self):
         labels = [[(self.action_text(a), a.enabled() and
-                    job.enabled()) for a in job.sub_actions] for job in self.project.jobs]
+                    job.enabled()) for a in job.sub_actions] for job in self.project_jobs()]
         project_name = ".".join(self.current_file_name().split(".")[:-1])
         if project_name == '':
             project_name = '[new]'
         retouch_paths = []
-        for job in self.project.jobs:
+        for job in self.project_jobs():
             r = self.get_retouch_path(job)
             if len(r) > 0:
                 retouch_paths.append((job.params["name"], r))
@@ -657,3 +666,27 @@ class MainWindow(ActionsWindow, LogManager):
         self.connect_signals(worker, new_window)
         self.start_thread(worker)
         self._workers.append(worker)
+
+    def delete_element(self):
+        self.project_editor.delete_element()
+        if self.job_list_count() > 0:
+            self.delete_element_action.setEnabled(True)
+
+    def update_delete_action_state(self):
+        has_job_selected = self.num_selected_jobs() > 0
+        has_action_selected = self.num_selected_actions() > 0
+        self.delete_element_action.setEnabled(has_job_selected or has_action_selected)
+        if has_action_selected and has_job_selected:
+            job_index = self.current_job_index()
+            if job_index >= self.num_project_jobs():
+                job_index = self.num_project_jobs() - 1
+            action_index = self.current_action_index()
+            if job_index >= 0:
+                job = self.project_job(job_index)
+                current_action, is_sub_action = \
+                    self.get_current_action_at(job, action_index)
+                enable_sub_actions = current_action is not None and \
+                    not is_sub_action and current_action.type_name == constants.ACTION_COMBO
+                self.set_enabled_sub_actions_gui(enable_sub_actions)
+        else:
+            self.set_enabled_sub_actions_gui(False)

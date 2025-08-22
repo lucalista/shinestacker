@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any
 import os.path
 from PySide6.QtWidgets import (QWidget, QPushButton, QHBoxLayout, QFileDialog, QLabel, QComboBox,
-                               QMessageBox, QSizePolicy, QStackedWidget, QDialog, QFormLayout,
+                               QMessageBox, QSizePolicy, QStackedWidget, QFormLayout,
                                QLineEdit, QSpinBox, QDoubleSpinBox, QCheckBox, QTreeView,
                                QAbstractItemView, QListView)
 from PySide6.QtCore import Qt, QTimer
@@ -14,6 +14,7 @@ from .. algorithms.align import validate_align_config
 from .project_model import ActionConfig
 from .select_path_widget import (create_select_file_paths_widget, create_layout_widget_no_margins,
                                  create_layout_widget_and_connect)
+from .base_form_dialog import BaseFormDialog
 
 FIELD_TEXT = 'text'
 FIELD_ABS_PATH = 'abs_path'
@@ -366,19 +367,12 @@ class FieldBuilder:
         return checkbox
 
 
-class ActionConfigDialog(QDialog):
+class ActionConfigDialog(BaseFormDialog):
     def __init__(self, action: ActionConfig, current_wd, parent=None):
-        super().__init__(parent)
+        super().__init__(f"Configure {action.type_name}", parent)
         self.current_wd = current_wd
         self.action = action
-        self.setWindowTitle(f"Configure {action.type_name}")
-        self.resize(500, self.height())
         self.configurator = self.get_configurator(action.type_name)
-        self.layout = QFormLayout(self)
-        self.layout.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
-        self.layout.setRowWrapPolicy(QFormLayout.DontWrapRows)
-        self.layout.setFormAlignment(Qt.AlignLeft | Qt.AlignTop)
-        self.layout.setLabelAlignment(Qt.AlignLeft)
         self.configurator.create_form(self.layout, action)
         button_box = QHBoxLayout()
         ok_button = QPushButton("OK")
@@ -410,12 +404,12 @@ class ActionConfigDialog(QDialog):
             action_type, DefaultActionConfigurator)(self.expert(), self.current_wd)
 
     def accept(self):
-        self.parent().project_buffer.append(self.parent().project.clone())
+        self.parent().project_editor.add_undo(self.parent().project.clone())
         if self.configurator.update_params(self.action.params):
             self.parent().mark_as_modified()
             super().accept()
         else:
-            self.parent().project_buffer.pop()
+            self.parent().project_editor.pop_undo()
 
     def reset_to_defaults(self):
         builder = self.configurator.get_builder()

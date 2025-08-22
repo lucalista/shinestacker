@@ -1,27 +1,21 @@
 # pylint: disable=C0114, C0115, C0116, E0611, R0915, R0902
 import os
-from PySide6.QtWidgets import (QFormLayout, QHBoxLayout, QPushButton,
-                               QDialog, QLabel, QCheckBox, QSpinBox, QMessageBox)
+from PySide6.QtWidgets import (QHBoxLayout, QPushButton, QLabel, QCheckBox, QSpinBox,
+                               QMessageBox)
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt
 from .. config.gui_constants import gui_constants
 from .. config.constants import constants
 from .. algorithms.stack import get_bunches
 from .select_path_widget import create_select_file_paths_widget
+from .base_form_dialog import BaseFormDialog
 
 DEFAULT_NO_COUNT_LABEL = " - "
 
 
-class NewProjectDialog(QDialog):
+class NewProjectDialog(BaseFormDialog):
     def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("New Project")
-        self.resize(500, self.height())
-        self.layout = QFormLayout(self)
-        self.layout.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
-        self.layout.setRowWrapPolicy(QFormLayout.DontWrapRows)
-        self.layout.setFormAlignment(Qt.AlignLeft | Qt.AlignTop)
-        self.layout.setLabelAlignment(Qt.AlignLeft)
+        super().__init__("New Project", parent)
         self.create_form()
         button_box = QHBoxLayout()
         ok_button = QPushButton("OK")

@@ -42,7 +42,7 @@ class FileLoader(QThread):
                 current_labels = [f"Layer {i + 1}" for i in range(len(current_stack))]
             self.finished.emit(current_stack, current_labels, master_layer)
         except Exception as e:
-            traceback.print_tb(e.__traceback__)
+            # traceback.print_tb(e.__traceback__)
             self.error.emit(f"Error loading file:\n{str(e)}")
 
     def load_stack(self, path):

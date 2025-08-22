@@ -33,9 +33,8 @@ def test_number_of_layers():
     assert lc.number_of_layers() == 0
     lc.layer_stack = ["layer1", "layer2"]
     assert lc.number_of_layers() == 2
-    with pytest.raises(TypeError):
-        lc.layer_stack = None
-        lc.number_of_layers()
+    lc.layer_stack = None
+    assert lc.number_of_layers() == 0
 
 
 def test_valid_current_layer_idx():

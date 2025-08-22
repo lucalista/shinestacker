@@ -1,10 +1,10 @@
-# pylint: disable=C0114, C0115, C0116, E0611, R0914, R0912, R0915, W0718
+# pylint: disable=C0114, C0115, C0116, E0611, R0914, R0912, R0915, W0718, R0913, R0917, R0904
 import os.path
 import os
-# import traceback
+import traceback
 import json
 import jsonpickle
-from PySide6.QtWidgets import QMessageBox, QFileDialog, QDialog
+from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QDialog
 from .. core.core_utils import get_app_base_path
 from .. config.constants import constants
 from .project_model import ActionConfig
@@ -13,45 +13,144 @@ from .new_project import NewProjectDialog
 from .project_model import Project
 
 
-class ActionsWindow(ProjectEditor):
+class ActionsWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.project_editor = ProjectEditor(self)
         self.update_title()
+
+    def mark_as_modified(self, modified=True):
+        self.project_editor.mark_as_modified(modified)
+
+    def modified(self):
+        return self.project_editor.modified()
+
+    def set_project(self, project):
+        self.project_editor.set_project(project)
+
+    def project(self):
+        return self.project_editor.project()
+
+    def project_jobs(self):
+        return self.project_editor.project_jobs()
+
+    def project_job(self, i):
+        return self.project_editor.project_job(i)
+
+    def add_job_to_project(self, job):
+        self.project_editor.add_job_to_project(job)
+
+    def num_project_jobs(self):
+        return self.project_editor.num_project_jobs()
+
+    def save_actions_set_enabled(self, enabled):
+        pass
+
+    def current_file_path(self):
+        return self.project_editor.current_file_path()
+
+    def current_file_directory(self):
+        return self.project_editor.current_file_directory()
+
+    def current_file_name(self):
+        return self.project_editor.current_file_name()
+
+    def set_current_file_path(self, path):
+        self.project_editor.set_current_file_path(path)
+
+    def job_list(self):
+        return self.project_editor.job_list()
+
+    def action_list(self):
+        return self.project_editor.action_list()
+
+    def current_job_index(self):
+        return self.project_editor.current_job_index()
+
+    def current_action_index(self):
+        return self.project_editor.current_action_index()
+
+    def set_current_job(self, index):
+        return self.project_editor.set_current_job(index)
+
+    def set_current_action(self, index):
+        return self.project_editor.set_current_action(index)
+
+    def job_list_count(self):
+        return self.project_editor.job_list_count()
+
+    def action_list_count(self):
+        return self.project_editor.action_list_count()
+
+    def job_list_item(self, index):
+        return self.project_editor.job_list_item(index)
+
+    def action_list_item(self, index):
+        return self.project_editor.action_list_item(index)
+
+    def job_list_has_focus(self):
+        return self.project_editor.job_list_has_focus()
+
+    def action_list_has_focus(self):
+        return self.project_editor.action_list_has_focus()
+
+    def clear_job_list(self):
+        self.project_editor.clear_job_list()
+
+    def clear_action_list(self):
+        self.project_editor.clear_action_list()
+
+    def num_selected_jobs(self):
+        return self.project_editor.num_selected_jobs()
+
+    def num_selected_actions(self):
+        return self.project_editor.num_selected_actions()
+
+    def get_current_action_at(self, job, action_index):
+        return self.project_editor.get_current_action_at(job, action_index)
+
+    def action_config_dialog(self, action):
+        return self.project_editor.action_config_dialog(action)
+
+    def action_text(self, action, is_sub_action=False, indent=True, long_name=False, html=False):
+        return self.project_editor.action_text(action, is_sub_action, indent, long_name, html)
+
+    def job_text(self, job, long_name=False, html=False):
+        return self.project_editor.job_text(job, long_name, html)
+
+    def on_job_selected(self, index):
+        return self.project_editor.on_job_selected(index)
+
+    def get_action_at(self, action_row):
+        return self.project_editor.get_action_at(action_row)
 
     def update_title(self):
         title = constants.APP_TITLE
         file_name = self.current_file_name()
         if file_name:
             title += f" - {file_name}"
-            if self._modified_project:
+            if self.modified():
                 title += " *"
         self.window().setWindowTitle(title)
-
-    def mark_as_modified(self):
-        self._modified_project = True
-        self.project_buffer.append(self.project.clone())
-        self.save_actions_set_enabled(True)
-        self.update_title()
 
     def close_project(self):
         if self._check_unsaved_changes():
             self.set_project(Project())
             self.set_current_file_path('')
             self.update_title()
-            self.job_list.clear()
-            self.action_list.clear()
-            self._modified_project = False
-            self.save_actions_set_enabled(False)
+            self.clear_job_list()
+            self.clear_action_list()
+            self.mark_as_modified(False)
 
     def new_project(self):
         if not self._check_unsaved_changes():
             return
         os.chdir(get_app_base_path())
         self.set_current_file_path('')
-        self._modified_project = False
+        self.mark_as_modified(False)
         self.update_title()
-        self.job_list.clear()
-        self.action_list.clear()
+        self.clear_job_list()
+        self.clear_action_list()
         self.set_project(Project())
         self.save_actions_set_enabled(False)
         dialog = NewProjectDialog(self)
@@ -67,7 +166,7 @@ class ActionsWindow(ProjectEditor):
                 noise_detection = ActionConfig(constants.ACTION_NOISEDETECTION,
                                                {'name': 'detect-noise'})
                 job_noise.add_sub_action(noise_detection)
-                self.project.jobs.append(job_noise)
+                self.add_job_to_project(job_noise)
             job = ActionConfig(constants.ACTION_JOB,
                                {'name': 'focus-stack', 'working_path': working_path,
                                 'input_path': input_path})
@@ -116,8 +215,8 @@ class ActionsWindow(ProjectEditor):
                                            {'name': 'multi-layer',
                                             'input_path': ','.join(input_path)})
                 job.add_sub_action(multi_layer)
-            self.project.jobs.append(job)
-            self._modified_project = True
+            self.add_job_to_project(job)
+            self.mark_as_modified(True)
             self.refresh_ui(0, -1)
 
     def open_project(self, file_path=False):
@@ -135,19 +234,18 @@ class ActionsWindow(ProjectEditor):
                 if project is None:
                     raise RuntimeError(f"Project from file {file_path} produced a null project.")
                 self.set_project(project)
-                self._modified_project = False
-                self.update_title()
+                self.mark_as_modified(False)
                 self.refresh_ui(0, -1)
-                if self.job_list.count() > 0:
-                    self.job_list.setCurrentRow(0)
+                if self.job_list_count() > 0:
+                    self.set_current_job(0)
             except Exception as e:
-                # traceback.print_tb(e.__traceback__)
+                traceback.print_tb(e.__traceback__)
                 QMessageBox.critical(self, "Error", f"Cannot open file {file_path}:\n{str(e)}")
-            if len(self.project.jobs) > 0:
-                self.job_list.setCurrentRow(0)
+            if self.num_project_jobs() > 0:
+                self.set_current_job(0)
                 self.activateWindow()
                 self.save_actions_set_enabled(True)
-            for job in self.project.jobs:
+            for job in self.project_jobs():
                 if 'working_path' in job.params.keys():
                     working_path = job.params['working_path']
                     if not os.path.isdir(working_path):
@@ -185,24 +283,22 @@ class ActionsWindow(ProjectEditor):
                 file_path += '.fsp'
             self.do_save(file_path)
             self.set_current_file_path(file_path)
-            self._modified_project = False
-            self.update_title()
             os.chdir(os.path.dirname(file_path))
 
     def do_save(self, file_path):
         try:
             json_obj = jsonpickle.encode({
-                'project': self.project.to_dict(),
+                'project': self.project().to_dict(),
                 'version': 1
             })
             with open(file_path, 'w', encoding="utf-8") as f:
                 f.write(json_obj)
-            self._modified_project = False
+            self.mark_as_modified(False)
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Cannot save file:\n{str(e)}")
 
     def _check_unsaved_changes(self) -> bool:
-        if self._modified_project:
+        if self.modified():
             reply = QMessageBox.question(
                 self, "Unsaved Changes",
                 "The project has unsaved changes. Do you want to continue?",
@@ -215,21 +311,21 @@ class ActionsWindow(ProjectEditor):
         return True
 
     def on_job_edit(self, item):
-        index = self.job_list.row(item)
-        if 0 <= index < len(self.project.jobs):
-            job = self.project.jobs[index]
+        index = self.job_list().row(item)
+        if 0 <= index < self.num_project_jobs():
+            job = self.project_job(index)
             dialog = self.action_config_dialog(job)
             if dialog.exec() == QDialog.Accepted:
-                current_row = self.job_list.currentRow()
+                current_row = self.current_job_index()
                 if current_row >= 0:
-                    self.job_list.item(current_row).setText(job.params['name'])
+                    self.job_list_item(current_row).setText(job.params['name'])
                 self.refresh_ui()
 
     def on_action_edit(self, item):
-        job_index = self.job_list.currentRow()
-        if 0 <= job_index < len(self.project.jobs):
-            job = self.project.jobs[job_index]
-            action_index = self.action_list.row(item)
+        job_index = self.current_job_index()
+        if 0 <= job_index < self.num_project_jobs():
+            job = self.project_job(job_index)
+            action_index = self.action_list().row(item)
             current_action, is_sub_action = self.get_current_action_at(job, action_index)
             if current_action:
                 if not is_sub_action:
@@ -239,17 +335,17 @@ class ActionsWindow(ProjectEditor):
                 if dialog.exec() == QDialog.Accepted:
                     self.on_job_selected(job_index)
                     self.refresh_ui()
-                    self.job_list.setCurrentRow(job_index)
-                    self.action_list.setCurrentRow(action_index)
+                    self.set_current_job(job_index)
+                    self.set_current_action(action_index)
 
     def edit_current_action(self):
         current_action = None
-        job_row = self.job_list.currentRow()
-        if 0 <= job_row < len(self.project.jobs):
-            job = self.project.jobs[job_row]
-            if self.job_list.hasFocus():
+        job_row = self.current_job_index()
+        if 0 <= job_row < self.num_project_jobs():
+            job = self.project_job(job_row)
+            if self.job_list_has_focus():
                 current_action = job
-            elif self.action_list.hasFocus():
+            elif self.action_list_has_focus():
                 job_row, _action_row, pos = self.get_current_action()
                 if pos.actions is not None:
                     current_action = pos.action if not pos.is_sub_action else pos.sub_action
@@ -259,8 +355,5 @@ class ActionsWindow(ProjectEditor):
     def edit_action(self, action):
         dialog = self.action_config_dialog(action)
         if dialog.exec() == QDialog.Accepted:
-            self.on_job_selected(self.job_list.currentRow())
+            self.on_job_selected(self.current_job_index())
             self.mark_as_modified()
-
-    def save_actions_set_enabled(self, enabled):
-        pass
