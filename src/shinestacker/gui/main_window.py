@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0115, C0116, E0611, R0902, R0915, R0904, R0914, R0912, E1101, W0201
+# pylint: disable=C0114, C0115, C0116, E0611, R0902, R0915, R0904, R0914, R0912, E1101, W0201, E1121
 import os
 import subprocess
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QLabel, QMessageBox,
@@ -180,6 +180,8 @@ class MainWindow(ActionsWindow, LogManager):
         self.project_editor.modified_signal.connect(self.handle_modified)
         self.project_editor.select_signal.connect(self.update_delete_action_state)
         self.project_editor.refresh_ui_signal.connect(self.refresh_ui)
+        self.project_editor.enable_delete_action_signal.connect(
+            self.delete_element_action.setEnabled)
 
     def handle_modified(self, modified):
         self.save_actions_set_enabled(modified)
@@ -377,7 +379,7 @@ class MainWindow(ActionsWindow, LogManager):
         self.add_action_entry_action.setIcon(
             QIcon(os.path.join(self.script_dir, "img/plus-round-line-icon.png")))
         self.add_action_entry_action.setToolTip("Add action")
-        self.add_action_entry_action.triggered.connect(self.project_editor.add_action)
+        self.add_action_entry_action.triggered.connect(self.add_action)
         self.add_action_entry_action.setEnabled(False)
         toolbar.addAction(self.add_action_entry_action)
         self.sub_action_selector = QComboBox()
@@ -388,7 +390,7 @@ class MainWindow(ActionsWindow, LogManager):
         self.add_sub_action_entry_action.setIcon(
             QIcon(os.path.join(self.script_dir, "img/plus-round-line-icon.png")))
         self.add_sub_action_entry_action.setToolTip("Add sub action")
-        self.add_sub_action_entry_action.triggered.connect(self.project_editor.add_sub_action)
+        self.add_sub_action_entry_action.triggered.connect(self.add_sub_action)
         self.add_sub_action_entry_action.setEnabled(False)
         toolbar.addAction(self.add_sub_action_entry_action)
         toolbar.addSeparator()
@@ -552,6 +554,12 @@ class MainWindow(ActionsWindow, LogManager):
     def set_expert_options(self):
         self.expert_options_action.setChecked(True)
         self.expert_options = True
+
+    def add_action(self):
+        self.project_editor.add_action(self.action_selector.currentText())
+
+    def add_sub_action(self):
+        self.project_editor.add_sub_action(self.sub_action_selector.currentText())
 
     def before_thread_begins(self):
         self.run_job_action.setEnabled(False)

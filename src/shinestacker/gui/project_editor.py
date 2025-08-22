@@ -95,6 +95,7 @@ class ProjectEditor(QObject):
     modified_signal = Signal(int)
     select_signal = Signal()
     refresh_ui_signal = Signal(int, int)
+    enable_delete_action_signal = Signal(bool)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -106,6 +107,7 @@ class ProjectEditor(QObject):
         self._job_list = QListWidget()
         self._action_list = QListWidget()
         self.dialog = None
+        self.sub_action_type_to_add = ''
 
     def add_undo(self, item):
         self._undo_manager.add(item)
@@ -438,7 +440,7 @@ class ProjectEditor(QObject):
             self.job_list_item(self.job_list_count() - 1).setSelected(True)
             self.refresh_ui_signal.emit(-1, -1)
 
-    def add_action(self, type_name=False):
+    def add_action(self, type_name):
         current_index = self.current_job_index()
         if current_index < 0:
             if self.num_project_jobs() > 0:
@@ -448,8 +450,6 @@ class ProjectEditor(QObject):
                 QMessageBox.warning(self.parent(),
                                     "No Job Added", "Please add a job first.")
             return
-        if type_name is False:
-            type_name = self.action_selector.currentText()
         action = ActionConfig(type_name)
         action.parent = self.get_current_job()
         self.dialog = self.action_config_dialog(action)
@@ -457,7 +457,7 @@ class ProjectEditor(QObject):
             self.mark_as_modified()
             self.project_job(current_index).add_sub_action(action)
             self.add_list_item(self.action_list(), action, False)
-            self.delete_element_action.setEnabled(False)
+            self.enable_delete_action_signal.emit(False)
 
     def add_list_item(self, widget_list, action, is_sub_action):
         if action.type_name == constants.ACTION_JOB:
@@ -474,7 +474,7 @@ class ProjectEditor(QObject):
         label = QLabel(html_text)
         widget_list.setItemWidget(item, label)
 
-    def add_sub_action(self, type_name=False):
+    def add_sub_action(self, type_name):
         current_job_index = self.current_job_index()
         current_action_index = self.current_action_index()
         if current_job_index < 0 or current_action_index < 0 or \
@@ -491,8 +491,6 @@ class ProjectEditor(QObject):
             action_counter += len(act.sub_actions)
         if not action or action.type_name != constants.ACTION_COMBO:
             return
-        if type_name is False:
-            type_name = self.sub_action_selector.currentText()
         sub_action = ActionConfig(type_name)
         self.dialog = self.action_config_dialog(sub_action)
         if self.dialog.exec() == QDialog.Accepted:
