@@ -56,7 +56,7 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
         self.set_master_layer(master_layer)
         self.undo_manager.reset()
         self.blank_layer = np.zeros(master_layer.shape[:2])
-        self.finish_loading_setup(stack, self.layer_labels(), master_layer,
+        self.finish_loading_setup(stack, None, master_layer,
                                   f"Loaded: {self.current_file_path()}")
 
     def on_file_error(self, error_msg):
@@ -141,18 +141,23 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
     def finish_loading_setup(self, stack, labels, master, message):
         if self.layer_stack() is None and len(stack) > 0:
             self.set_layer_stack(np.array(stack))
-            self.set_layer_labels(labels)
+            if labels is None:
+                labels = self.layer_labels()
+            else:
+                self.set_layer_labels(labels)
             self.set_master_layer(master)
             self.blank_layer = np.zeros(master.shape[:2])
         else:
+            if labels is None:
+                labels = self.layer_labels()
             for img, label in zip(stack, labels):
                 self.add_layer_label(label)
                 self.add_layer(img)
         self.display_manager.update_thumbnails()
         self.mark_as_modified_requested.emit(True)
         self.change_layer_requested.emit(0)
-        self.image_viewer.reset_zoom()
         self.image_viewer.setup_brush_cursor()
+        self.image_viewer.reset_zoom()
         self.status_message_requested.emit(message)
         self.update_title_requested.emit()
 

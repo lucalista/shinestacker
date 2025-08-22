@@ -32,6 +32,8 @@ class LayerCollection:
         return self.master_layer_copy is None
 
     def number_of_layers(self):
+        if self.layer_stack is None:
+            return 0
         return len(self.layer_stack)
 
     def layer_label(self, i):
