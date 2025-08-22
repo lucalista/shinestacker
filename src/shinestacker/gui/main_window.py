@@ -38,15 +38,7 @@ class ProjectLogWorker(RunWorker):
         return converter.run_project(self.project, self.id_str, self.callbacks)
 
 
-LIST_STYLE_SHEET = f"""
-    QListWidget::item:selected {{
-        background-color: #{ColorPalette.LIGHT_BLUE.hex()};;
-    }}
-"""
-
-
 class TabWidgetWithPlaceholder(QWidget):
-    # Segnali aggiuntivi per mantenere la compatibilità
     currentChanged = Signal(int)
     tabCloseRequested = Signal(int)
 
@@ -66,7 +58,6 @@ class TabWidgetWithPlaceholder(QWidget):
             icon_path = f'{get_app_base_path()}/../{rel_path}'
         if os.path.exists(icon_path):
             pixmap = QPixmap(icon_path)
-            # Ridimensiona mantenendo le proporzioni (es. max 400x400)
             pixmap = pixmap.scaled(250, 250, Qt.AspectRatioMode.KeepAspectRatio,
                                    Qt.TransformationMode.SmoothTransformation)
             self.placeholder.setPixmap(pixmap)
@@ -120,6 +111,13 @@ class TabWidgetWithPlaceholder(QWidget):
     def indexOf(self, widget):
         return self.tab_widget.indexOf(widget)
     # pylint: enable=C0103
+
+
+LIST_STYLE_SHEET = f"""
+    QListWidget::item:selected {{
+        background-color: #{ColorPalette.LIGHT_BLUE.hex()};;
+    }}
+"""
 
 
 class MainWindow(ActionsWindow, LogManager):
@@ -612,7 +610,7 @@ class MainWindow(ActionsWindow, LogManager):
         worker = self._workers[tab_position]
         worker.stop()
 
-    def connect_signals(self, worker, window):
+    def connect_worker_signals(self, worker, window):
         worker.before_action_signal.connect(window.handle_before_action)
         worker.after_action_signal.connect(window.handle_after_action)
         worker.step_counts_signal.connect(window.handle_step_counts)
@@ -644,7 +642,7 @@ class MainWindow(ActionsWindow, LogManager):
                 new_window, id_str = self.create_new_window(f"{job_name} [⚙️ Job]",
                                                             labels, retouch_paths)
                 worker = JobLogWorker(job, id_str)
-                self.connect_signals(worker, new_window)
+                self.connect_worker_signals(worker, new_window)
                 self.start_thread(worker)
                 self._workers.append(worker)
             else:
@@ -666,7 +664,7 @@ class MainWindow(ActionsWindow, LogManager):
         new_window, id_str = self.create_new_window(f"{project_name} [Project 📚]",
                                                     labels, retouch_paths)
         worker = ProjectLogWorker(self.project, id_str)
-        self.connect_signals(worker, new_window)
+        self.connect_worker_signals(worker, new_window)
         self.start_thread(worker)
         self._workers.append(worker)
 
