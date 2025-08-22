@@ -4,7 +4,7 @@ from .. config.constants import constants
 
 
 class ActionConfig:
-    def __init__(self, type_name: str, params: dict=None, parent=None): # noqa
+    def __init__(self, type_name: str, params=None, parent=None):
         self.type_name = type_name
         self.params = params or {}
         self.parent = parent
@@ -58,7 +58,7 @@ class ActionConfig:
 
 class Project:
     def __init__(self):
-        self.jobs: list[ActionConfig] = []
+        self.jobs = []
 
     def clone(self):
         c = Project()

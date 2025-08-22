@@ -9,14 +9,11 @@ from .colors import ColorPalette
 from .action_config_dialog import ActionConfigDialog
 from .project_model import ActionConfig, get_action_input_path, get_action_output_path
 
-INDENT_SPACE = "&nbsp;&nbsp;&nbsp;↪&nbsp;&nbsp;&nbsp;"
-CLONE_POSTFIX = " (clone)"
-
 
 @dataclass
 class ActionPosition:
     actions: list
-    sub_actions: list | None
+    sub_actions: list
     action_index: int
     sub_action_index: int = -1
 
@@ -92,6 +89,9 @@ class ProjectUndoManager:
 
 
 class ProjectEditor(QObject):
+    INDENT_SPACE = "&nbsp;&nbsp;&nbsp;↪&nbsp;&nbsp;&nbsp;"
+    CLONE_POSTFIX = " (clone)"
+
     modified_signal = Signal(int)
     select_signal = Signal()
     refresh_ui_signal = Signal(int, int)
@@ -244,7 +244,7 @@ class ProjectEditor(QObject):
         }
         ico = icon_map.get(action.type_name, '')
         if is_sub_action and indent:
-            txt = INDENT_SPACE
+            txt = self.INDENT_SPACE
             if ico == '':
                 ico = '🟣'
         else:
@@ -341,7 +341,7 @@ class ProjectEditor(QObject):
     def clone_job(self):
         job_index = self.current_job_index()
         if 0 <= job_index < self.num_project_jobs():
-            job_clone = self.project_job(job_index).clone(CLONE_POSTFIX)
+            job_clone = self.project_job(job_index).clone(self.CLONE_POSTFIX)
             new_job_index = job_index + 1
             self.mark_as_modified()
             self.project_jobs().insert(new_job_index, job_clone)
@@ -356,10 +356,10 @@ class ProjectEditor(QObject):
         self.mark_as_modified()
         job = self.project_job(job_row)
         if pos.is_sub_action:
-            cloned = pos.sub_action.clone(CLONE_POSTFIX)
+            cloned = pos.sub_action.clone(self.CLONE_POSTFIX)
             pos.sub_actions.insert(pos.sub_action_index + 1, cloned)
         else:
-            cloned = pos.action.clone(CLONE_POSTFIX)
+            cloned = pos.action.clone(self.CLONE_POSTFIX)
             job.sub_actions.insert(pos.action_index + 1, cloned)
         new_row = new_row_after_clone(job, action_row, pos.is_sub_action, cloned)
         self.refresh_ui_signal.emit(job_row, new_row)

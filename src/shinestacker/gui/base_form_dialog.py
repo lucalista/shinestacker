@@ -13,3 +13,6 @@ class BaseFormDialog(QDialog):
         self.layout.setRowWrapPolicy(QFormLayout.DontWrapRows)
         self.layout.setFormAlignment(Qt.AlignLeft | Qt.AlignTop)
         self.layout.setLabelAlignment(Qt.AlignLeft)
+
+    def add_row_to_layout(self, item):
+        self.layout.addRow(item)

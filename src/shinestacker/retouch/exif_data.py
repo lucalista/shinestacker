@@ -19,7 +19,7 @@ class ExifData(BaseFormDialog):
         ok_button.setFixedWidth(100)
         ok_button.setFocus()
         button_layout.addWidget(ok_button)
-        self.layout.addRow(button_container)
+        self.add_row_to_layout(button_container)
         ok_button.clicked.connect(self.accept)
 
     def add_bold_label(self, label):

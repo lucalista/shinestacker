@@ -5,12 +5,12 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any
 import os.path
 from PySide6.QtWidgets import (QPushButton, QHBoxLayout, QFileDialog, QLabel, QComboBox,
-                               QMessageBox, QSizePolicy, QFormLayout, QLineEdit, QSpinBox,
+                               QMessageBox, QSizePolicy, QLineEdit, QSpinBox,
                                QDoubleSpinBox, QCheckBox, QTreeView, QAbstractItemView, QListView)
 from .. config.constants import constants
-from .project_model import ActionConfig
 from .select_path_widget import (create_select_file_paths_widget, create_layout_widget_no_margins,
                                  create_layout_widget_and_connect)
+from .project_model import ActionConfig
 
 FIELD_TEXT = 'text'
 FIELD_ABS_PATH = 'abs_path'
@@ -30,7 +30,7 @@ class ActionConfigurator(ABC):
         self.current_wd = current_wd
 
     @abstractmethod
-    def create_form(self, layout: QFormLayout, action: ActionConfig, tag: str = "Action"):
+    def create_form(self, layout, action: ActionConfig, tag="Action"):
         pass
 
     @abstractmethod

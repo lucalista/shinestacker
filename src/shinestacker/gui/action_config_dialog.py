@@ -32,7 +32,7 @@ class ActionConfigDialog(BaseFormDialog):
         button_box.addWidget(cancel_button)
         button_box.addWidget(reset_button)
         reset_button.clicked.connect(self.reset_to_defaults)
-        self.layout.addRow(button_box)
+        self.add_row_to_layout(button_box)
         ok_button.clicked.connect(self.accept)
         cancel_button.clicked.connect(self.reject)
 

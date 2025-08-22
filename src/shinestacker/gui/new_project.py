@@ -23,7 +23,7 @@ class NewProjectDialog(BaseFormDialog):
         cancel_button = QPushButton("Cancel")
         button_box.addWidget(ok_button)
         button_box.addWidget(cancel_button)
-        self.layout.addRow(button_box)
+        self.add_row_to_layout(button_box)
         ok_button.clicked.connect(self.accept)
         cancel_button.clicked.connect(self.reject)
 
