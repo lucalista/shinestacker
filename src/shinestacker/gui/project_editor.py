@@ -563,8 +563,7 @@ class ProjectEditor(QObject):
             self.refresh_ui_signal.emit(-1, -1)
             len_jobs = self.num_project_jobs()
             if len_jobs > 0:
-                if job_row >= len_jobs:
-                    job_row = len_jobs - 1
+                job_row = min(job_row, len_jobs - 1)
                 self.set_current_job(job_row)
                 len_actions = self.action_list_count()
                 if len_actions > 0:
