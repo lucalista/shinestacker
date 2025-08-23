@@ -5,7 +5,7 @@ class FilterManager:
         self.filters = {}
 
     def register_filter(self, name, filter_class):
-        self.filters[name] = filter_class(self.editor)
+        self.filters[name] = filter_class(name, self.editor)
 
     def apply(self, name, **kwargs):
         if name in self.filters:

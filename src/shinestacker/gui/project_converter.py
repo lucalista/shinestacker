@@ -36,10 +36,10 @@ class ProjectConverter:
             logger.error(f"=== job: {job.name} failed: {msg} ===")
             return constants.RUN_FAILED, msg
 
-    def run_project(self, project: Project, logger_name=None, callbacks=None):
+    def run_project(self, proj: Project, logger_name=None, callbacks=None):
         logger = self.get_logger(logger_name)
         try:
-            jobs = self.project(project, logger_name, callbacks)
+            jobs = self.project(proj, logger_name, callbacks)
         except Exception as e:
             traceback.print_tb(e.__traceback__)
             return constants.RUN_FAILED, str(e)
@@ -60,9 +60,9 @@ class ProjectConverter:
         status = self.run(job, logger)
         return status
 
-    def project(self, project: Project, logger_name=None, callbacks=None):
+    def project(self, proj: Project, logger_name=None, callbacks=None):
         jobs = []
-        for j in project.jobs:
+        for j in proj.jobs:
             job = self.job(j, logger_name, callbacks)
             if job is None:
                 raise RuntimeError("Job instantiation failed.")

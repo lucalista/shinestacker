@@ -20,6 +20,7 @@ from .filter_manager import FilterManager
 from .denoise_filter import DenoiseFilter
 from .unsharp_mask_filter import UnsharpMaskFilter
 from .white_balance_filter import WhiteBalanceFilter
+from .vignetting_filter import VignettingFilter
 
 
 class ImageEditorUI(QMainWindow, LayerCollectionHandler):
@@ -38,9 +39,10 @@ class ImageEditorUI(QMainWindow, LayerCollectionHandler):
         self.modified = False
         self.mask_layer = None
         self.filter_manager = FilterManager(self)
-        self.filter_manager.register_filter("denoise", DenoiseFilter)
-        self.filter_manager.register_filter("unsharp_mask", UnsharpMaskFilter)
-        self.filter_manager.register_filter("white_balance", WhiteBalanceFilter)
+        self.filter_manager.register_filter("Denoise", DenoiseFilter)
+        self.filter_manager.register_filter("Unsharp Mask", UnsharpMaskFilter)
+        self.filter_manager.register_filter("White Balance", WhiteBalanceFilter)
+        self.filter_manager.register_filter("Vignetting Correction", VignettingFilter)
         self.shortcuts_help_dialog = None
 
         self.update_title()
@@ -383,6 +385,9 @@ class ImageEditorUI(QMainWindow, LayerCollectionHandler):
         white_balance_action = QAction("White Balance", self)
         white_balance_action.triggered.connect(self.white_balance)
         filter_menu.addAction(white_balance_action)
+        vignetting_action = QAction("Vignetting correction", self)
+        vignetting_action.triggered.connect(self.vignetting_correction)
+        filter_menu.addAction(vignetting_action)
 
         help_menu = menubar.addMenu("&Help")
         help_menu.setObjectName("Help")
@@ -559,13 +564,16 @@ class ImageEditorUI(QMainWindow, LayerCollectionHandler):
                 self.redo_action.setEnabled(False)
 
     def denoise_filter(self):
-        self.filter_manager.apply("denoise")
+        self.filter_manager.apply("Denoise")
 
     def unsharp_mask(self):
-        self.filter_manager.apply("unsharp_mask")
+        self.filter_manager.apply("Unsharp Mask")
 
     def white_balance(self, init_val=None):
-        self.filter_manager.apply("white_balance", init_val=init_val or (128, 128, 128))
+        self.filter_manager.apply("White Balance", init_val=init_val or (128, 128, 128))
+
+    def vignetting_correction(self):
+        self.filter_manager.apply("Vignetting Correction")
 
     def connect_preview_toggle(self, preview_check, do_preview, restore_original):
         def on_toggled(checked):

@@ -3,7 +3,9 @@ import numpy as np
 import cv2
 import os
 from unittest.mock import MagicMock
-from shinestacker.algorithms.vignetting import Vignetting
+from shinestacker.algorithms.vignetting import (
+    Vignetting, radial_mean_intensity, fit_sigmoid, correct_vignetting,
+    sigmoid_model)
 
 n_images = 4
 
@@ -38,7 +40,7 @@ def vignetting_instance():
     )
     vignetting.process = process_mock
     vignetting.corrections = [np.full(n_images, None, dtype=float) for _ in vignetting.percentiles]
-    vignetting.r_max = np.sqrt((2000 / 2)**2 + (1333 / 2)**2)  # Based on image dimensions
+    vignetting.r_max = np.sqrt((2000 / 2)**2 + (1333 / 2)**2)
     vignetting.w_2 = 2000 / 2
     vignetting.h_2 = 1333 / 2
     return vignetting
@@ -47,7 +49,7 @@ def vignetting_instance():
 def test_radial_mean_intensity(vignetting_instance, vignetted_images):
     _, images = vignetted_images
     img_gray = cv2.cvtColor(images[0], cv2.COLOR_BGR2GRAY)
-    radii, intensities = vignetting_instance.radial_mean_intensity(img_gray)
+    radii, intensities = radial_mean_intensity(img_gray, vignetting_instance.r_steps)
     assert len(radii) == vignetting_instance.r_steps
     assert len(intensities) == vignetting_instance.r_steps
     assert radii[0] > 0
@@ -59,8 +61,8 @@ def test_radial_mean_intensity(vignetting_instance, vignetted_images):
 def test_sigmoid_fit(vignetting_instance, vignetted_images):
     _, images = vignetted_images
     img_gray = cv2.cvtColor(images[0], cv2.COLOR_BGR2GRAY)
-    radii, intensities = vignetting_instance.radial_mean_intensity(img_gray)
-    params = vignetting_instance.fit_sigmoid(radii, intensities)
+    radii, intensities = radial_mean_intensity(img_gray, vignetting_instance.r_steps)
+    params = fit_sigmoid(radii, intensities)
     assert params is not None
     i0, k, r0 = params
     assert i0 > 0
@@ -71,10 +73,10 @@ def test_correct_vignetting(vignetting_instance, vignetted_images):
     _, images = vignetted_images
     img = images[0]
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    radii, intensities = vignetting_instance.radial_mean_intensity(img_gray)
-    params = vignetting_instance.fit_sigmoid(radii, intensities)
-    vignetting_instance.v0 = Vignetting.sigmoid(0, *params)
-    corrected = vignetting_instance.correct_vignetting(img, params)
+    radii, intensities = radial_mean_intensity(img_gray, vignetting_instance.r_steps)
+    params = fit_sigmoid(radii, intensities)
+    v0 = sigmoid_model(0, *params)
+    corrected = correct_vignetting(img, params=params, v0=v0)
     assert corrected.shape == img.shape
     assert corrected.dtype == img.dtype
     h, w = img.shape[:2]

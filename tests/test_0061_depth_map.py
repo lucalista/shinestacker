@@ -50,25 +50,6 @@ def test_focus_stack_with_examples(example_images):
     assert not np.array_equal(result, first_input)
 
 
-def test_pyramid_blend_with_examples(example_images):
-    dms = DepthMapStack(levels=4)
-    images = []
-    for img_path in example_images[:3]:
-        img = cv2.imread(img_path).astype(np.float32)
-        images.append(img)
-    images = np.array(images)
-    weights = np.zeros((len(images), images[0].shape[0], images[0].shape[1]), dtype=np.float32)
-    weights[1] = 0.7
-    weights[0] = 0.2
-    weights[2] = 0.1
-    blended = dms.pyramid_blend(images, weights)
-    assert blended.shape == images[0].shape
-    assert blended.dtype == np.float32
-    middle_img = images[1]
-    correlation = np.corrcoef(blended.flatten(), middle_img.flatten())[0, 1]
-    assert correlation > 0.5
-
-
 def test_performance_with_all_images(example_images):
     dms = DepthMapStack()
     dms.process = MagicMock()

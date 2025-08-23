@@ -1,15 +1,16 @@
-# pylint: disable=C0114, C0115, C0116, E0611, W0718, R0915, R0903
+# pylint: disable=C0114, C0115, C0116, E0611, W0718, R0915, R0903, R0913, R0917
 import traceback
 from abc import ABC, abstractmethod
 import numpy as np
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QCheckBox, QDialogButtonBox
-from PySide6.QtCore import Signal, QThread, QTimer
+from PySide6.QtWidgets import (
+    QHBoxLayout, QLabel, QSlider, QDialog, QVBoxLayout, QCheckBox, QDialogButtonBox)
+from PySide6.QtCore import Qt, Signal, QThread, QTimer
 
 
 class BaseFilter(ABC):
-    def __init__(self, editor):
+    def __init__(self, name, editor):
         self.editor = editor
-        self.undo_label = self.__class__.__name__
+        self.name = name
 
     @abstractmethod
     def setup_ui(self, dlg, layout, do_preview, restore_original, **kwargs):
@@ -85,7 +86,7 @@ class BaseFilter(ABC):
                     self.editor.undo_manager.extend_undo_area(0, 0, w, h)
                     self.editor.undo_manager.save_undo_state(
                         self.editor.layer_collection.master_layer_copy,
-                        self.undo_label
+                        self.name
                     )
                 except Exception:
                     pass
@@ -126,3 +127,50 @@ class BaseFilter(ABC):
                 traceback.print_tb(e.__traceback__)
                 raise RuntimeError("Filter preview failed") from e
             self.finished.emit(result, self.request_id)
+
+
+class OneSliderBaseFilter(BaseFilter):
+    def __init__(self, name, editor, max_value, initial_value, title):
+        super().__init__(name, editor)
+        self.max_range = 500.0
+        self.max_value = max_value
+        self.initial_value = initial_value
+        self.slider = None
+        self.title = title
+
+    def setup_ui(self, dlg, layout, do_preview, restore_original, **kwargs):
+        dlg.setWindowTitle(self.title)
+        dlg.setMinimumWidth(600)
+        slider_layout = QHBoxLayout()
+        slider_local = QSlider(Qt.Horizontal)
+        slider_local.setRange(0, self.max_range)
+        slider_local.setValue(int(self.initial_value / self.max_value * self.max_range))
+        slider_layout.addWidget(slider_local)
+        value_label = QLabel(f"{self.max_value:.2f}")
+        slider_layout.addWidget(value_label)
+        layout.addLayout(slider_layout)
+        preview_check, preview_timer, button_box = self.create_base_widgets(
+            layout, QDialogButtonBox.Ok | QDialogButtonBox.Cancel, 200)
+
+        def do_preview_delayed():
+            preview_timer.start()
+
+        preview_timer.timeout.connect(do_preview)
+
+        def slider_changed(val):
+            float_val = self.max_value * float(val) / self.max_range
+            value_label.setText(f"{float_val:.2f}")
+            if preview_check.isChecked():
+                do_preview_delayed()
+
+        slider_local.valueChanged.connect(slider_changed)
+        self.editor.connect_preview_toggle(preview_check, do_preview_delayed, restore_original)
+        button_box.accepted.connect(dlg.accept)
+        button_box.rejected.connect(dlg.reject)
+        self.slider = slider_local
+
+    def get_params(self):
+        return (self.max_value * self.slider.value() / self.max_range,)
+
+    def apply(self, image, *params):
+        assert False

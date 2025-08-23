@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0115, C0116, R0902, E1101, W0718, W0640
+# pylint: disable=C0114, C0115, C0116, R0902, E1101, W0718, W0640, R0913, R0917, R0914
 import logging
 import numpy as np
 import matplotlib.pyplot as plt
@@ -38,29 +38,31 @@ def radial_mean_intensity(image, r_steps):
     return (radii[1:] + radii[:-1]) / 2, mean_intensities
 
 
-def fit_sigmoid(self, radii, intensities):
+def fit_sigmoid(radii, intensities):
     valid_mask = ~np.isnan(intensities)
     i_valid, r_valid = intensities[valid_mask], radii[valid_mask]
     res = curve_fit(sigmoid_model, r_valid, i_valid,
                     p0=[np.max(i_valid), 0.01, np.median(r_valid)],
                     bounds=([0, 0, 0], ['inf', 'inf', 'inf']))[0]
+    return res
 
 
 def correct_vignetting(
-    image, max_correction=constants.DEFAULT_MAX_CORRECTION,
-    black_threshold=constants.DEFAULT_BLACK_THRESHOLD,
-    r_steps=constants.DEFAULT_R_STEPS, params=None, v0=None):
-    if v0 is None:
-        v0 = sigmoid_model(0, *params)
+        image, max_correction=constants.DEFAULT_MAX_CORRECTION,
+        black_threshold=constants.DEFAULT_BLACK_THRESHOLD,
+        r_steps=constants.DEFAULT_R_STEPS, params=None, v0=None):
     if params is None:
         if r_steps is None:
             raise RuntimeError("Either r_steps or pars must not be None")
-        radii, intensities = radial_mean_intensity(image, r_steps)
+        image_bw = cv2.cvtColor(img_8bit(image), cv2.COLOR_BGR2GRAY)
+        radii, intensities = radial_mean_intensity(image_bw, r_steps)
         params = fit_sigmoid(radii, intensities)
+    if v0 is None:
+        v0 = sigmoid_model(0, *params)
     h, w = image.shape[:2]
     y, x = np.ogrid[:h, :w]
     r = np.sqrt((x - w / 2)**2 + (y - h / 2)**2)
-    vignette = np.clip(Vignetting.sigmoid(r, *params) / v0, 1e-6, 1)
+    vignette = np.clip(sigmoid_model(r, *params) / v0, 1e-6, 1)
     if max_correction < 1:
         vignette = (1.0 - max_correction) + vignette * max_correction
     if len(image.shape) == 3:
@@ -100,11 +102,11 @@ class Vignetting(SubAction):
             params = fit_sigmoid(radii, intensities)
         except Exception:
             self.process.sub_message(
-            color_str(": could not find vignetting model", "red"), level=logging.WARNING)
+                color_str(": could not find vignetting model", "red"), level=logging.WARNING)
             params = None
         if params is None:
             return img_0
-        self.v0 = Vignetting.sigmoid(0, *params)
+        self.v0 = sigmoid_model(0, *params)
         i0_fit, k_fit, r0_fit = params
         self.process.sub_message(
             f": vignetting model parameters: i0={i0_fit:.4f}, k={k_fit:.4f}, r0={r0_fit:.4f}",
@@ -112,7 +114,7 @@ class Vignetting(SubAction):
         if self.plot_correction:
             plt.figure(figsize=(10, 5))
             plt.plot(radii, intensities, label="image mean intensity")
-            plt.plot(radii, Vignetting.sigmoid(radii, *params), label="sigmoid fit")
+            plt.plot(radii, sigmoid_model(radii, *params), label="sigmoid fit")
             plt.xlabel('radius (pixels)')
             plt.ylabel('mean intensity')
             plt.legend()
@@ -128,7 +130,7 @@ class Vignetting(SubAction):
                 'save_plot', self.process.id,
                 f"{self.process.name}: intensity\nframe {idx_str}", plot_path)
         for i, p in enumerate(self.percentiles):
-            self.corrections[i][idx] = fsolve(lambda x: Vignetting.sigmoid(x, *params) /
+            self.corrections[i][idx] = fsolve(lambda x: sigmoid_model(x, *params) /
                                               self.v0 - p, r0_fit)[0]
         if self.apply_correction:
             self.process.sub_message_r(": correct vignetting")

@@ -8,8 +8,8 @@ from .base_filter import BaseFilter
 
 
 class WhiteBalanceFilter(BaseFilter):
-    def __init__(self, editor):
-        super().__init__(editor)
+    def __init__(self, name, editor):
+        super().__init__(name, editor)
         self.max_range = 255
         self.initial_val = (128, 128, 128)
         self.sliders = {}
@@ -94,7 +94,7 @@ class WhiteBalanceFilter(BaseFilter):
             self.editor.image_viewer.mousePressEvent = self.original_mouse_press
             self.editor.image_viewer.brush_cursor.show()
             self.editor.brush_preview.show()
-            new_filter = WhiteBalanceFilter(self.editor)
+            new_filter = WhiteBalanceFilter(self.name, self.editor)
             new_filter.run_with_preview(init_val=rgb)
 
     def reset_rgb(self):

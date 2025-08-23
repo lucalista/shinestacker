@@ -664,7 +664,7 @@ class MainWindow(ActionsWindow, LogManager):
                 retouch_paths.append((job.params["name"], r))
         new_window, id_str = self.create_new_window(f"{project_name} [Project 📚]",
                                                     labels, retouch_paths)
-        worker = ProjectLogWorker(self.project, id_str)
+        worker = ProjectLogWorker(self.project(), id_str)
         self.connect_worker_signals(worker, new_window)
         self.start_thread(worker)
         self._workers.append(worker)

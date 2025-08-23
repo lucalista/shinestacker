@@ -7,9 +7,10 @@ This page reports the main releases only and the main changes therein.
 
 ### Changes
 
-* code cleanup and refactoring
+* implemented vignetting correction filter
 * interface improvements: implemented master/layer toggle
-* minor fixes
+* code refactoring and various cleanup 
+* bug fixes
 
 ---
 

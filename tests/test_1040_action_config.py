@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
 from PySide6.QtWidgets import QApplication, QFormLayout
-from shinestacker.gui.action_config import (
+from shinestacker.gui.action_config_dialog import (
     FieldBuilder, ActionConfigDialog, DefaultActionConfigurator,
     FIELD_TEXT, FIELD_ABS_PATH, FIELD_REL_PATH, FIELD_FLOAT,
     FIELD_INT, FIELD_INT_TUPLE, FIELD_BOOL, FIELD_COMBO)
