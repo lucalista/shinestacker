@@ -9,7 +9,7 @@ from .base_filter import BaseFilter
 
 class WhiteBalanceFilter(BaseFilter):
     def __init__(self, name, editor):
-        super().__init__(name, editor)
+        super().__init__(name, editor, preview_at_startup=True)
         self.max_range = 255
         self.initial_val = (128, 128, 128)
         self.sliders = {}
@@ -47,18 +47,18 @@ class WhiteBalanceFilter(BaseFilter):
         layout.addLayout(row_layout)
         pick_button = QPushButton("Pick Color")
         layout.addWidget(pick_button)
-        preview_check, self.preview_timer, button_box = self.create_base_widgets(
+        self.create_base_widgets(
             layout,
             QDialogButtonBox.Ok | QDialogButtonBox.Reset | QDialogButtonBox.Cancel,
-            200)
+            200, dlg)
         for slider in self.sliders.values():
             slider.valueChanged.connect(self.on_slider_change)
         self.preview_timer.timeout.connect(do_preview)
-        self.editor.connect_preview_toggle(preview_check, do_preview, restore_original)
+        self.editor.connect_preview_toggle(self.preview_check, do_preview, restore_original)
         pick_button.clicked.connect(self.start_color_pick)
-        button_box.accepted.connect(dlg.accept)
-        button_box.rejected.connect(dlg.reject)
-        button_box.button(QDialogButtonBox.Reset).clicked.connect(self.reset_rgb)
+        self.button_box.accepted.connect(dlg.accept)
+        self.button_box.rejected.connect(dlg.reject)
+        self.button_box.button(QDialogButtonBox.Reset).clicked.connect(self.reset_rgb)
         QTimer.singleShot(0, do_preview)
 
     def on_slider_change(self):

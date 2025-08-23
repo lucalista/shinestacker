@@ -432,7 +432,7 @@ class ImageEditorUI(QMainWindow, LayerCollectionHandler):
                 QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel
             )
             if reply == QMessageBox.Save:
-                self.save_file()
+                self.io_gui_handler.save_file()
                 return True
             if reply == QMessageBox.Discard:
                 return True

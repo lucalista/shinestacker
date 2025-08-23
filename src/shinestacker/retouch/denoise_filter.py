@@ -5,7 +5,8 @@ from .. algorithms.denoise import denoise
 
 class DenoiseFilter(OneSliderBaseFilter):
     def __init__(self, name, editor):
-        super().__init__(name, editor, 10.0, 2.5, "Denoise")
+        super().__init__(name, editor, 10.0, 2.5, "Denoise",
+                         allow_partial_preview=True, preview_at_startup=False)
 
     def apply(self, image, strength):
         return denoise(image, strength)

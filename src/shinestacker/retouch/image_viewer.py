@@ -443,3 +443,23 @@ class ImageViewer(QGraphicsView, LayerCollectionHandler):
         scene_pos = self.mapToScene(pos)
         item_pos = self.pixmap_item.mapFromScene(scene_pos)
         return item_pos
+
+    def get_visible_image_region(self):
+        if self.empty:
+            return None
+        view_rect = self.viewport().rect()
+        scene_rect = self.mapToScene(view_rect).boundingRect()
+        image_rect = self.pixmap_item.mapFromScene(scene_rect).boundingRect()
+        image_rect = image_rect.intersected(self.pixmap_item.boundingRect().toRect())
+        return image_rect
+
+    def get_visible_image_portion(self):
+        if self.has_no_master_layer():
+            return None
+        visible_rect = self.get_visible_image_region()
+        if not visible_rect:
+            return self.master_layer()
+        x, y = int(visible_rect.x()), int(visible_rect.y())
+        w, h = int(visible_rect.width()), int(visible_rect.height())
+        master_img = self.master_layer()
+        return master_img[y:y + h, x:x + w], (x, y, w, h)

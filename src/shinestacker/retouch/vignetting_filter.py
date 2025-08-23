@@ -5,7 +5,8 @@ from .. algorithms.vignetting import correct_vignetting
 
 class VignettingFilter(OneSliderBaseFilter):
     def __init__(self, name, editor):
-        super().__init__(name, editor, 1.0, 0.95, "Vignetting correction")
+        super().__init__(name, editor, 1.0, 0.90, "Vignetting correction",
+                         allow_partial_preview=False, preview_at_startup=False)
 
     def apply(self, image, strength):
         return correct_vignetting(image, max_correction=strength)

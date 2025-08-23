@@ -7,7 +7,7 @@ from .base_filter import BaseFilter
 
 class UnsharpMaskFilter(BaseFilter):
     def __init__(self, name, editor):
-        super().__init__(name, editor)
+        super().__init__(name, editor, preview_at_startup=True)
         self.max_range = 500.0
         self.max_radius = 4.0
         self.max_amount = 3.0
@@ -46,14 +46,14 @@ class UnsharpMaskFilter(BaseFilter):
             elif name == "Threshold":
                 self.threshold_slider = slider
             value_labels[name] = value_label
-        preview_check, preview_timer, button_box = self.create_base_widgets(
-            layout, QDialogButtonBox.Ok | QDialogButtonBox.Cancel, 200)
+        self.create_base_widgets(
+            layout, QDialogButtonBox.Ok | QDialogButtonBox.Cancel, 200, dlg)
 
         def update_value(name, value, max_val, fmt):
             float_value = max_val * value / self.max_range
             value_labels[name].setText(fmt.format(float_value))
-            if preview_check.isChecked():
-                preview_timer.start()
+            if self.preview_check.isChecked():
+                self.preview_timer.start()
 
         self.radius_slider.valueChanged.connect(
             lambda v: update_value("Radius", v, self.max_radius, params["Radius"][2]))
@@ -61,10 +61,10 @@ class UnsharpMaskFilter(BaseFilter):
             lambda v: update_value("Amount", v, self.max_amount, params["Amount"][2]))
         self.threshold_slider.valueChanged.connect(
             lambda v: update_value("Threshold", v, self.max_threshold, params["Threshold"][2]))
-        preview_timer.timeout.connect(do_preview)
-        self.editor.connect_preview_toggle(preview_check, do_preview, restore_original)
-        button_box.accepted.connect(dlg.accept)
-        button_box.rejected.connect(dlg.reject)
+        self.preview_timer.timeout.connect(do_preview)
+        self.editor.connect_preview_toggle(self.preview_check, do_preview, restore_original)
+        self.button_box.accepted.connect(dlg.accept)
+        self.button_box.rejected.connect(dlg.reject)
         QTimer.singleShot(0, do_preview)
 
     def get_params(self):
