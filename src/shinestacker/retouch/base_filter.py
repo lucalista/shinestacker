@@ -25,10 +25,10 @@ class BaseFilter(ABC):
         pass
 
     def run_with_preview(self, **kwargs):
-        if self.editor.layer_collection.master_layer is None:
+        if self.editor.has_no_master_layer():
             return
 
-        self.editor.layer_collection.copy_master_layer()
+        self.editor.copy_master_layer()
         dlg = QDialog(self.editor)
         layout = QVBoxLayout(dlg)
         active_worker = None
@@ -37,7 +37,7 @@ class BaseFilter(ABC):
         def set_preview(img, request_id, expected_id):
             if request_id != expected_id:
                 return
-            self.editor.layer_collection.master_layer = img
+            self.editor.set_master_layer(img)
             self.editor.display_manager.display_master_layer()
             try:
                 dlg.activateWindow()
@@ -57,7 +57,7 @@ class BaseFilter(ABC):
             params = tuple(self.get_params() or ())
             worker = self.PreviewWorker(
                 self.apply,
-                args=(self.editor.layer_collection.master_layer_copy, *params),
+                args=(self.editor.master_layer_copy(), *params),
                 request_id=current_id
             )
             active_worker = worker
@@ -78,21 +78,21 @@ class BaseFilter(ABC):
         if accepted:
             params = tuple(self.get_params() or ())
             try:
-                h, w = self.editor.layer_collection.master_layer.shape[:2]
+                h, w = self.editor.master_layer().shape[:2]
             except Exception:
-                h, w = self.editor.layer_collection.master_layer_copy.shape[:2]
+                h, w = self.editor.master_layer_copy().shape[:2]
             if hasattr(self.editor, "undo_manager"):
                 try:
                     self.editor.undo_manager.extend_undo_area(0, 0, w, h)
                     self.editor.undo_manager.save_undo_state(
-                        self.editor.layer_collection.master_layer_copy,
+                        self.editor.master_layer_copy(),
                         self.name
                     )
                 except Exception:
                     pass
-            final_img = self.apply(self.editor.layer_collection.master_layer_copy, *params)
-            self.editor.layer_collection.master_layer = final_img
-            self.editor.layer_collection.copy_master_layer()
+            final_img = self.apply(self.editor.master_layer_copy(), *params)
+            self.editor.set_master_layer(final_img)
+            self.editor.copy_master_layer()
             self.editor.display_manager.display_master_layer()
             self.editor.display_manager.update_master_thumbnail()
             self.editor.mark_as_modified()
