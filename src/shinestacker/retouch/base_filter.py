@@ -241,6 +241,10 @@ class OneSliderBaseFilter(BaseFilter):
         self.button_box.rejected.connect(dlg.reject)
         self.slider = slider_local
 
+    def param_changed(self, _val):
+        if self.preview_check.isChecked():
+            self.do_preview_delayed()
+
     def config_changed(self, val):
         float_val = self.max_value * float(val) / self.max_range
         self.value_label.setText(f"{float_val:.2f}")
