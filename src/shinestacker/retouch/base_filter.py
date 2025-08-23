@@ -210,38 +210,45 @@ class OneSliderBaseFilter(BaseFilter):
         self.max_value = max_value
         self.initial_value = initial_value
         self.slider = None
+        self.value_label = None
         self.title = title
+
+    def add_widgets(self, layout, dlg):
+        pass
 
     def setup_ui(self, dlg, layout, do_preview, restore_original, **kwargs):
         dlg.setWindowTitle(self.title)
         dlg.setMinimumWidth(600)
         slider_layout = QHBoxLayout()
+        slider_layout.addWidget(QLabel("Amount:"))
         slider_local = QSlider(Qt.Horizontal)
         slider_local.setRange(0, self.max_range)
         slider_local.setValue(int(self.initial_value / self.max_value * self.max_range))
         slider_layout.addWidget(slider_local)
-        value_label = QLabel(f"{self.max_value:.2f}")
-        slider_layout.addWidget(value_label)
+        self.value_label = QLabel(f"{self.max_value:.2f}")
+        slider_layout.addWidget(self.value_label)
         layout.addLayout(slider_layout)
+        self.add_widgets(layout, dlg)
         self.create_base_widgets(
             layout, QDialogButtonBox.Ok | QDialogButtonBox.Cancel, 200, dlg)
 
-        def do_preview_delayed():
-            self.preview_timer.start()
-
         self.preview_timer.timeout.connect(do_preview)
 
-        def slider_changed(val):
-            float_val = self.max_value * float(val) / self.max_range
-            value_label.setText(f"{float_val:.2f}")
-            if self.preview_check.isChecked():
-                do_preview_delayed()
-
-        slider_local.valueChanged.connect(slider_changed)
-        self.editor.connect_preview_toggle(self.preview_check, do_preview_delayed, restore_original)
+        slider_local.valueChanged.connect(self.config_changed)
+        self.editor.connect_preview_toggle(
+            self.preview_check, self.do_preview_delayed, restore_original)
         self.button_box.accepted.connect(dlg.accept)
         self.button_box.rejected.connect(dlg.reject)
         self.slider = slider_local
+
+    def config_changed(self, val):
+        float_val = self.max_value * float(val) / self.max_range
+        self.value_label.setText(f"{float_val:.2f}")
+        if self.preview_check.isChecked():
+            self.do_preview_delayed()
+
+    def do_preview_delayed(self):
+        self.preview_timer.start()
 
     def get_params(self):
         return (self.max_value * self.slider.value() / self.max_range,)

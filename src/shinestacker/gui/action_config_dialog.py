@@ -320,6 +320,10 @@ class VignettingConfigurator(DefaultActionConfigurator):
             self.builder.add_field('black_threshold', FIELD_INT, 'Black intensity threshold',
                                    required=False, default=constants.DEFAULT_BLACK_THRESHOLD,
                                    min_val=0, max_val=1000)
+            self.builder.add_field('subsample', FIELD_INT, 'Subsample factor', required=False,
+                                   default=constants.DEFAULT_VIGN_SUBSAMPLE, min_val=1, max_val=256)
+            self.builder.add_field('fast_subsampling', FIELD_BOOL, 'Fast subsampling',
+                                   required=False, default=constants.DEFAULT_VIGN_FAST_SUBSAMPLING)
         self.builder.add_field('max_correction', FIELD_FLOAT, 'Max. correction', required=False,
                                default=constants.DEFAULT_MAX_CORRECTION,
                                min_val=0, max_val=1, step=0.05)
@@ -548,6 +552,9 @@ class BalanceFramesConfigurator(DefaultActionConfigurator):
             self.builder.add_field('subsample', FIELD_INT, 'Subsample factor', required=False,
                                    default=constants.DEFAULT_BALANCE_SUBSAMPLE,
                                    min_val=1, max_val=256)
+            self.builder.add_field('fast_subsampling', FIELD_BOOL, 'Fast subsampling',
+                                   required=False,
+                                   default=constants.DEFAULT_BALANCE_FAST_SUBSAMPLING)
         self.builder.add_field('corr_map', FIELD_COMBO, 'Correction map', required=False,
                                options=self.CORRECTION_MAP_OPTIONS, values=constants.VALID_BALANCE,
                                default='Linear')

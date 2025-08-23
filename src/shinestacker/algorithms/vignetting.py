@@ -1,4 +1,5 @@
 # pylint: disable=C0114, C0115, C0116, R0902, E1101, W0718, W0640, R0913, R0917, R0914
+import traceback
 import logging
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,7 +7,7 @@ from scipy.optimize import curve_fit, fsolve
 import cv2
 from .. core.colors import color_str
 from .. config.constants import constants
-from .utils import img_8bit, save_plot
+from .utils import img_8bit, save_plot, img_subsample
 from .stack_framework import SubAction
 
 CLIP_EXP = 10
@@ -47,16 +48,36 @@ def fit_sigmoid(radii, intensities):
     return res
 
 
+def img_subsampled(image, subsample=constants.DEFAULT_VIGN_SUBSAMPLE,
+                   fast_subsampling=constants.DEFAULT_VIGN_FAST_SUBSAMPLING):
+    image_bw = cv2.cvtColor(img_8bit(image), cv2.COLOR_BGR2GRAY)
+    return image_bw if subsample == 1 else img_subsample(image_bw, subsample, fast_subsampling)
+
+
+def compute_fit_parameters(
+        image, r_steps, radii=None, intensities=None,
+        subsample=constants.DEFAULT_VIGN_SUBSAMPLE,
+        fast_subsampling=constants.DEFAULT_VIGN_FAST_SUBSAMPLING):
+    image_sub = img_subsampled(image, subsample, fast_subsampling)
+    if radii is None and intensities is None:
+        radii, intensities = radial_mean_intensity(image_sub, r_steps)
+    params = fit_sigmoid(radii, intensities)
+    params[1] /= subsample  # k
+    params[2] *= subsample  # r0
+    return params
+
+
 def correct_vignetting(
         image, max_correction=constants.DEFAULT_MAX_CORRECTION,
         black_threshold=constants.DEFAULT_BLACK_THRESHOLD,
-        r_steps=constants.DEFAULT_R_STEPS, params=None, v0=None):
+        r_steps=constants.DEFAULT_R_STEPS, params=None, v0=None,
+        subsample=constants.DEFAULT_VIGN_SUBSAMPLE,
+        fast_subsampling=constants.DEFAULT_VIGN_FAST_SUBSAMPLING):
     if params is None:
         if r_steps is None:
             raise RuntimeError("Either r_steps or pars must not be None")
-        image_bw = cv2.cvtColor(img_8bit(image), cv2.COLOR_BGR2GRAY)
-        radii, intensities = radial_mean_intensity(image_bw, r_steps)
-        params = fit_sigmoid(radii, intensities)
+        params = compute_fit_parameters(
+            image, r_steps, subsample=subsample, fast_subsampling=fast_subsampling)
     if v0 is None:
         v0 = sigmoid_model(0, *params)
     h, w = image.shape[:2]
@@ -84,6 +105,9 @@ class Vignetting(SubAction):
         self.plot_summary = kwargs.get('plot_summary', False)
         self.max_correction = kwargs.get('max_correction', constants.DEFAULT_MAX_CORRECTION)
         self.percentiles = np.sort(percentiles)
+        self.subsample = kwargs.get('subsample', constants.DEFAULT_VIGN_SUBSAMPLE)
+        self.fast_subsampling = kwargs.get(
+            'fast_subsampling', constants.DEFAULT_VIGN_FAST_SUBSAMPLING)
         self.w_2 = None
         self.h_2 = None
         self.v0 = None
@@ -92,15 +116,17 @@ class Vignetting(SubAction):
         self.corrections = None
 
     def run_frame(self, idx, _ref_idx, img_0):
-        self.process.sub_message_r(": compute vignetting")
-        img = cv2.cvtColor(img_8bit(img_0), cv2.COLOR_BGR2GRAY)
-        h, w = img.shape
+        self.process.sub_message_r(color_str(": compute vignetting", "cyan"))
+        h, w = img_0.shape[:2]
         self.w_2, self.h_2 = w / 2, h / 2
         self.r_max = np.sqrt((w / 2)**2 + (h / 2)**2)
-        radii, intensities = radial_mean_intensity(img, self.r_steps)
+        image_sub = img_subsampled(img_0, self.subsample, self.fast_subsampling)
+        radii, intensities = radial_mean_intensity(image_sub, self.r_steps)
         try:
-            params = fit_sigmoid(radii, intensities)
-        except Exception:
+            params = compute_fit_parameters(
+                img_0, self.r_steps, radii, intensities, self.subsample, self.fast_subsampling)
+        except Exception as e:
+            traceback.print_tb(e.__traceback__)
             self.process.sub_message(
                 color_str(": could not find vignetting model", "red"), level=logging.WARNING)
             params = None
@@ -108,13 +134,14 @@ class Vignetting(SubAction):
             return img_0
         self.v0 = sigmoid_model(0, *params)
         i0_fit, k_fit, r0_fit = params
-        self.process.sub_message(
-            f": vignetting model parameters: i0={i0_fit:.4f}, k={k_fit:.4f}, r0={r0_fit:.4f}",
-            level=logging.DEBUG)
+        self.process.sub_message(color_str(": vignetting model parameters: ", "cyan") +
+                                 color_str(f"i0={i0_fit:.4f}, k={k_fit:.4f}, r0={r0_fit:.4f}",
+                                           "light_blue"),
+                                 level=logging.DEBUG)
         if self.plot_correction:
             plt.figure(figsize=(10, 5))
             plt.plot(radii, intensities, label="image mean intensity")
-            plt.plot(radii, sigmoid_model(radii, *params), label="sigmoid fit")
+            plt.plot(radii, sigmoid_model(radii * self.subsample, *params), label="sigmoid fit")
             plt.xlabel('radius (pixels)')
             plt.ylabel('mean intensity')
             plt.legend()
@@ -133,9 +160,10 @@ class Vignetting(SubAction):
             self.corrections[i][idx] = fsolve(lambda x: sigmoid_model(x, *params) /
                                               self.v0 - p, r0_fit)[0]
         if self.apply_correction:
-            self.process.sub_message_r(": correct vignetting")
+            self.process.sub_message_r(color_str(": correct vignetting", "cyan"))
             return correct_vignetting(
-                img_0, self.max_correction, self.black_threshold, None, params, self.v0)
+                img_0, self.max_correction, self.black_threshold, None, params, self.v0,
+                self.subsample, self.fast_subsampling)
         return img_0
 
     def begin(self, process):

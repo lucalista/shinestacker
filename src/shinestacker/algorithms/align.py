@@ -6,8 +6,7 @@ import cv2
 from .. config.constants import constants
 from .. core.exceptions import AlignmentError, InvalidOptionError
 from .. core.colors import color_str
-from .utils import img_8bit, img_bw_8bit, save_plot
-from .utils import get_img_metadata, validate_image
+from .utils import img_8bit, img_bw_8bit, save_plot, get_img_metadata, validate_image, img_subsample
 from .stack_framework import SubAction
 
 _DEFAULT_FEATURE_CONFIG = {
@@ -166,19 +165,12 @@ def align_images(img_1, img_0, feature_config=None, matching_config=None, alignm
     if callbacks and 'message' in callbacks:
         callbacks['message']()
     subsample = alignment_config['subsample']
+    fast_subsampling = alignment_config['fast_subsampling']
     min_good_matches = alignment_config['min_good_matches']
     while True:
         if subsample > 1:
-            if alignment_config['fast_subsampling']:
-                img_0_sub, img_1_sub = \
-                    img_0[::subsample, ::subsample], img_1[::subsample, ::subsample]
-            else:
-                img_0_sub = cv2.resize(img_0, (0, 0),
-                                       fx=1 / subsample, fy=1 / subsample,
-                                       interpolation=cv2.INTER_AREA)
-                img_1_sub = cv2.resize(img_1, (0, 0),
-                                       fx=1 / subsample, fy=1 / subsample,
-                                       interpolation=cv2.INTER_AREA)
+            img_0_sub = img_subsample(img_0, subsample, fast_subsampling)
+            img_1_sub = img_subsample(img_1, subsample, fast_subsampling)
         else:
             img_0_sub, img_1_sub = img_0, img_1
         kp_0, kp_1, good_matches = detect_and_compute(img_0_sub, img_1_sub,

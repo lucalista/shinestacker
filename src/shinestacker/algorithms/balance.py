@@ -7,7 +7,7 @@ from scipy.interpolate import interp1d
 from .. config.constants import constants
 from .. core.exceptions import InvalidOptionError
 from .. core.colors import color_str
-from .utils import read_img, save_plot
+from .utils import read_img, save_plot, img_subsample
 from .stack_framework import SubAction
 
 
@@ -122,13 +122,15 @@ class LinearMap(CorrectionMap):
 
 class Correction:
     def __init__(self, channels, mask_size=0, intensity_interval=None,
-                 subsample=-1, corr_map=constants.DEFAULT_CORR_MAP,
+                 subsample=-1, fast_subsampling=constants.DEFAULT_BALANCE_FAST_SUBSAMPLING,
+                 corr_map=constants.DEFAULT_CORR_MAP,
                  plot_histograms=False, plot_summary=False):
         self.mask_size = mask_size
         self.intensity_interval = intensity_interval
         self.plot_histograms = plot_histograms
         self.plot_summary = plot_summary
         self.subsample = constants.DEFAULT_BALANCE_SUBSAMPLE if subsample == -1 else subsample
+        self.fast_subsampling = fast_subsampling
         self.corr_map = corr_map
         self.channels = channels
         self.dtype = None
@@ -154,17 +156,18 @@ class Correction:
         self.corrections = np.ones((size, self.channels))
 
     def calc_hist_1ch(self, image):
-        img_subsample = image if self.subsample == 1 else image[::self.subsample, ::self.subsample]
+        img_sub = image if self.subsample == 1 \
+            else img_subsample(image, self.subsample, self.fast_subsampling)
         if self.mask_size == 0:
-            image_sel = img_subsample
+            image_sel = img_sub
         else:
-            height, width = img_subsample.shape[:2]
+            height, width = img_sub.shape[:2]
             xv, yv = np.meshgrid(
                 np.linspace(0, width - 1, width),
                 np.linspace(0, height - 1, height)
             )
             mask_radius = min(width, height) * self.mask_size / 2
-            image_sel = img_subsample[
+            image_sel = img_sub[
                 (xv - width / 2) ** 2 + (yv - height / 2) ** 2 <= mask_radius ** 2
             ]
         hist, _bins = np.histogram(
@@ -367,6 +370,8 @@ class BalanceFrames(SubAction):
         self.shape = None
         corr_map = kwargs.get('corr_map', constants.DEFAULT_CORR_MAP)
         subsample = kwargs.get('subsample', constants.DEFAULT_BALANCE_SUBSAMPLE)
+        self.fast_subsampling = kwargs.get(
+            'fast_subsampling', constants.DEFAULT_BALANCE_FAST_SUBSAMPLING)
         channel = kwargs.pop('channel', constants.DEFAULT_CHANNEL)
         kwargs['subsample'] = (
             1 if corr_map == constants.BALANCE_MATCH_HIST

@@ -74,3 +74,13 @@ def save_plot(filename):
     if config.JUPYTER_NOTEBOOK:
         plt.show()
     plt.close('all')
+
+
+def img_subsample(img, subsample, fast=True):
+    if fast:
+        img_sub = img[::subsample, ::subsample]
+    else:
+        img_sub = cv2.resize(img, (0, 0),
+                             fx=1 / subsample, fy=1 / subsample,
+                             interpolation=cv2.INTER_AREA)
+    return img_sub

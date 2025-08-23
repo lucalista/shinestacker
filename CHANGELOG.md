@@ -2,12 +2,14 @@
 
 This page reports the main releases only and the main changes therein.
 
-## [v-.-..] - 2025-08-22
+## [v-.-..] - 2025-08-23
 **Unreleased changes**
 
 ### Changes
 
 * implemented vignetting correction filter
+* improved vignetting performance using subsampling
+* implemented fast subsample option in balance algorithms
 * interface improvements: implemented master/layer toggle
 * code refactoring and various cleanup 
 * bug fixes
