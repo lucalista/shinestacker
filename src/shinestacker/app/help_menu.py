@@ -14,4 +14,4 @@ def add_help_action(app):
 
 
 def browse_website():
-    webbrowser.open("https://github.com/lucalista/shinestacker/blob/main/docs/gui.md")
+    webbrowser.open("https://shinestacker.readthedocs.io/en/latest/")
