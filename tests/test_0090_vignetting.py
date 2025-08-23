@@ -1,7 +1,15 @@
 import matplotlib
 matplotlib.use('Agg')
 from shinestacker.algorithms.stack_framework import StackJob, CombinedActions
-from shinestacker.algorithms.vignetting import Vignetting
+from shinestacker.algorithms.vignetting import Vignetting, correct_vignetting
+
+
+def test_vignetting_function():
+    img = read_img(f"examples/input/img-vignetted/vig-0001.jpg")
+    try:
+        correct_vignetting(img)
+    except Exception:
+        assert False
 
 
 def test_vignetting():
