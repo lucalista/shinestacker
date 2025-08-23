@@ -104,8 +104,8 @@ def show_about_dialog(parent):
     <h3>{constants.APP_TITLE}</h3>
     <h4>version: v{version_clean}</h4>
     {update_text}
-    <p style='font-weight: normal;'>App and framework to combine multiple images
-    into a single focused image.</p>
+    <p style='font-weight: normal;'>Focus stackign applications and framework.<br>
+    Combine multiple frames into a single focused image.</p>
     <p>Author: Luca Lista<br/>
     Email: <a href="mailto:luka.lista@gmail.com">luka.lista@gmail.com</a></p>
     <ul>
