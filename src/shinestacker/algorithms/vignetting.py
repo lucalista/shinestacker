@@ -42,8 +42,9 @@ def radial_mean_intensity(image, r_steps):
 def fit_sigmoid(radii, intensities):
     valid_mask = ~np.isnan(intensities)
     i_valid, r_valid = intensities[valid_mask], radii[valid_mask]
+    r_max = radii.max()
     res = curve_fit(sigmoid_model, r_valid, i_valid,
-                    p0=[np.max(i_valid), 0.01, np.median(r_valid)],
+                    p0=[2 * np.max(i_valid), 10 / r_max, 0.8 * r_max],
                     bounds=([0, 0, 0], ['inf', 'inf', 'inf']))[0]
     return res
 
@@ -86,9 +87,10 @@ def correct_vignetting(
     vignette = np.clip(sigmoid_model(r, *params) / v0, 1e-6, 1)
     if max_correction < 1:
         vignette = (1.0 - max_correction) + vignette * max_correction
+    threshold = black_threshold if image.dtype == np.uint8 else black_threshold * 256
     if len(image.shape) == 3:
         vignette = vignette[:, :, np.newaxis]
-        vignette[np.min(image, axis=2) < black_threshold, :] = 1
+        vignette[np.min(image, axis=2) < threshold, :] = 1
     else:
         vignette[image < black_threshold] = 1
     return np.clip(image / vignette, 0, 255
@@ -100,7 +102,6 @@ class Vignetting(SubAction):
         super().__init__(enabled)
         self.r_steps = kwargs.get('r_steps', constants.DEFAULT_R_STEPS)
         self.black_threshold = kwargs.get('black_threshold', constants.DEFAULT_BLACK_THRESHOLD)
-        self.apply_correction = kwargs.get('apply_correction', True)
         self.plot_correction = kwargs.get('plot_correction', False)
         self.plot_summary = kwargs.get('plot_summary', False)
         self.max_correction = kwargs.get('max_correction', constants.DEFAULT_MAX_CORRECTION)
@@ -135,7 +136,9 @@ class Vignetting(SubAction):
         self.v0 = sigmoid_model(0, *params)
         i0_fit, k_fit, r0_fit = params
         self.process.sub_message(color_str(": vignetting model parameters: ", "cyan") +
-                                 color_str(f"i0={i0_fit:.4f}, k={k_fit:.4f}, r0={r0_fit:.4f}",
+                                 color_str(f"i0={i0_fit / 2:.4f}, "
+                                           f"k={k_fit * self.r_max:.4f}, "
+                                           f"r0={r0_fit / self.r_max:.4f}",
                                            "light_blue"),
                                  level=logging.DEBUG)
         if self.plot_correction:
@@ -159,12 +162,10 @@ class Vignetting(SubAction):
         for i, p in enumerate(self.percentiles):
             self.corrections[i][idx] = fsolve(lambda x: sigmoid_model(x, *params) /
                                               self.v0 - p, r0_fit)[0]
-        if self.apply_correction:
-            self.process.sub_message_r(color_str(": correct vignetting", "cyan"))
-            return correct_vignetting(
-                img_0, self.max_correction, self.black_threshold, None, params, self.v0,
-                self.subsample, self.fast_subsampling)
-        return img_0
+        self.process.sub_message_r(color_str(": correct vignetting", "cyan"))
+        return correct_vignetting(
+            img_0, self.max_correction, self.black_threshold, None, params, self.v0,
+            self.subsample, self.fast_subsampling)
 
     def begin(self, process):
         self.process = process

@@ -31,7 +31,6 @@ def vignetting_instance():
     process_mock.id = 123
     vignetting = Vignetting(
         enabled=True,
-        apply_correction=True,
         plot_correction=False,
         plot_summary=False,
         r_steps=20,
@@ -111,8 +110,7 @@ def test_run_frame(vignetting_instance, vignetted_images):
     result = vignetting_instance.run_frame(0, 0, images[0])
     assert result.shape == images[0].shape
     assert result.dtype == images[0].dtype
-    if vignetting_instance.apply_correction:
-        assert not np.array_equal(result, images[0])
+    assert not np.array_equal(result, images[0])
     assert vignetting_instance.process.sub_message_r.call_count > 0
     assert vignetting_instance.process.sub_message.call_count > 0
     assert vignetting_instance.corrections[0][0] is not None

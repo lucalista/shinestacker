@@ -206,12 +206,13 @@ class OneSliderBaseFilter(BaseFilter):
                  preview_at_startup=True):
         super().__init__(name, editor, allow_partial_preview,
                          partial_preview_threshold, preview_at_startup)
-        self.max_range = 500.0
+        self.max_range = 500
         self.max_value = max_value
         self.initial_value = initial_value
         self.slider = None
         self.value_label = None
         self.title = title
+        self.format = "{:.2f}"
 
     def add_widgets(self, layout, dlg):
         pass
@@ -225,7 +226,7 @@ class OneSliderBaseFilter(BaseFilter):
         slider_local.setRange(0, self.max_range)
         slider_local.setValue(int(self.initial_value / self.max_value * self.max_range))
         slider_layout.addWidget(slider_local)
-        self.value_label = QLabel(f"{self.max_value:.2f}")
+        self.value_label = QLabel(self.format.format(self.initial_value))
         slider_layout.addWidget(self.value_label)
         layout.addLayout(slider_layout)
         self.add_widgets(layout, dlg)
@@ -247,9 +248,8 @@ class OneSliderBaseFilter(BaseFilter):
 
     def config_changed(self, val):
         float_val = self.max_value * float(val) / self.max_range
-        self.value_label.setText(f"{float_val:.2f}")
-        if self.preview_check.isChecked():
-            self.do_preview_delayed()
+        self.value_label.setText(self.format.format(float_val))
+        self.param_changed(val)
 
     def do_preview_delayed(self):
         self.preview_timer.start()

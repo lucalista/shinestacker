@@ -332,8 +332,6 @@ class VignettingConfigurator(DefaultActionConfigurator):
                                default=False)
         self.builder.add_field('plot_summary', FIELD_BOOL, 'Plot summary', required=False,
                                default=False)
-        self.builder.add_field('apply_correction', FIELD_BOOL, 'Apply correction', required=False,
-                               default=True)
 
 
 class AlignFramesConfigurator(DefaultActionConfigurator):
