@@ -10,6 +10,7 @@ This page reports the main releases only and the main changes therein.
 * implemented vignetting correction filter
 * improved vignetting performance using subsampling
 * implemented fast subsample option in balance algorithms
+* implemented hex color line editin white balance filter
 * interface improvements: implemented master/layer toggle
 * code refactoring and various cleanup 
 * bug fixes

@@ -1,6 +1,6 @@
-# pylint: disable=C0114, C0115, C0116, E0611, W0221, R0913, R0914, R0917
+# pylint: disable=C0114, C0115, C0116, E0611, W0221, R0913, R0914, R0917, R0902
 from PySide6.QtWidgets import (QHBoxLayout, QPushButton, QFrame, QVBoxLayout, QLabel, QDialog,
-                               QApplication, QSlider, QDialogButtonBox)
+                               QApplication, QSlider, QDialogButtonBox, QLineEdit)
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QCursor
 from .. algorithms.white_balance import white_balance_from_rgb
@@ -14,6 +14,7 @@ class WhiteBalanceFilter(BaseFilter):
         self.initial_val = (128, 128, 128)
         self.sliders = {}
         self.value_labels = {}
+        self.rgb_hex = None
         self.color_preview = None
         self.preview_timer = None
         self.original_mouse_press = None
@@ -45,6 +46,16 @@ class WhiteBalanceFilter(BaseFilter):
             self.value_labels[name] = val_label
         row_layout.addLayout(sliders_layout)
         layout.addLayout(row_layout)
+
+        rbg_layout = QHBoxLayout()
+        rbg_layout.addWidget(QLabel("RBG hex:"))
+        self.rgb_hex = QLineEdit(self.hex_color(self.initial_val))
+        self.rgb_hex.setFixedWidth(60)
+        self.rgb_hex.textChanged.connect(self.on_rgb_change)
+        rbg_layout.addWidget(self.rgb_hex)
+        rbg_layout.addStretch(1)
+        layout.addLayout(rbg_layout)
+
         pick_button = QPushButton("Pick Color")
         layout.addWidget(pick_button)
         self.create_base_widgets(
@@ -61,13 +72,30 @@ class WhiteBalanceFilter(BaseFilter):
         self.button_box.button(QDialogButtonBox.Reset).clicked.connect(self.reset_rgb)
         QTimer.singleShot(0, do_preview)
 
+    def hex_color(self, val):
+        return "".join([f"{int(c):0>2X}" for c in val])
+
+    def apply_preview(self, rgb):
+        self.color_preview.setStyleSheet(f"background-color: rgb{tuple(rgb)};")
+        if self.preview_timer:
+            self.preview_timer.start()
+
     def on_slider_change(self):
         for name in ("R", "G", "B"):
             self.value_labels[name].setText(str(self.sliders[name].value()))
         rgb = tuple(self.sliders[n].value() for n in ("R", "G", "B"))
-        self.color_preview.setStyleSheet(f"background-color: rgb{rgb};")
-        if self.preview_timer:
-            self.preview_timer.start()
+        self.rgb_hex.setText(self.hex_color(rgb))
+        self.apply_preview(rgb)
+
+    def on_rgb_change(self):
+        txt = self.rgb_hex.text()
+        if len(txt) != 6:
+            return
+        rgb = [int(txt[i:i + 2], 16) for i in range(0, 6, 2)]
+        for name, c in zip(("R", "G", "B"), rgb):
+            self.value_labels[name].setText(str(c))
+            self.sliders[name].setValue(c)
+        self.apply_preview(rgb)
 
     def start_color_pick(self):
         for widget in QApplication.topLevelWidgets():
