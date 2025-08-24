@@ -1,20 +1,21 @@
-# pylint: disable=C0114, C0115, C0116, E0611, R0902, R0915, R0904, R0914, R0912, E1101, W0201, E1121
+# pylint: disable=C0114, C0115, C0116, E0611, R0902, R0915, R0904, R0914, R0912, E1101, W0201, E1121, R0913, R0917
 import os
 import subprocess
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QLabel, QMessageBox,
-                               QSplitter, QToolBar, QMenu, QStackedWidget)
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QGuiApplication, QAction, QIcon, QPixmap
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QGuiApplication, QAction, QIcon
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QMessageBox,
+                               QSplitter, QToolBar, QMenu, QMainWindow)
 from .. config.constants import constants
-from .. core.core_utils import running_under_windows, running_under_macos, get_app_base_path
+from .. core.core_utils import running_under_windows, running_under_macos
 from .colors import ColorPalette
 from .project_model import Project
-from .actions_window import ActionsWindow
 from .gui_logging import LogManager
 from .gui_run import RunWindow, RunWorker
 from .project_converter import ProjectConverter
 from .project_model import get_action_working_path, get_action_input_path, get_action_output_path
 from .menu_manager import MenuManager
+from .project_controller import ProjectController
+from .tab_widget import TabWidgetWithPlaceholder
 
 
 class JobLogWorker(RunWorker):
@@ -39,81 +40,6 @@ class ProjectLogWorker(RunWorker):
         return converter.run_project(self.project, self.id_str, self.callbacks)
 
 
-class TabWidgetWithPlaceholder(QWidget):
-    currentChanged = Signal(int)
-    tabCloseRequested = Signal(int)
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.stacked_widget = QStackedWidget()
-        self.layout.addWidget(self.stacked_widget)
-        self.tab_widget = QTabWidget()
-        self.stacked_widget.addWidget(self.tab_widget)
-        self.placeholder = QLabel()
-        self.placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        rel_path = 'ico/focus_stack_bkg.png'
-        icon_path = f'{get_app_base_path()}/{rel_path}'
-        if not os.path.exists(icon_path):
-            icon_path = f'{get_app_base_path()}/../{rel_path}'
-        if os.path.exists(icon_path):
-            pixmap = QPixmap(icon_path)
-            pixmap = pixmap.scaled(250, 250, Qt.AspectRatioMode.KeepAspectRatio,
-                                   Qt.TransformationMode.SmoothTransformation)
-            self.placeholder.setPixmap(pixmap)
-        else:
-            self.placeholder.setText("Run logs will appear here.")
-        self.stacked_widget.addWidget(self.placeholder)
-        self.tab_widget.currentChanged.connect(self._on_current_changed)
-        self.tab_widget.tabCloseRequested.connect(self._on_tab_close_requested)
-        self.update_placeholder_visibility()
-
-    def _on_current_changed(self, index):
-        self.currentChanged.emit(index)
-        self.update_placeholder_visibility()
-
-    def _on_tab_close_requested(self, index):
-        self.tabCloseRequested.emit(index)
-        self.update_placeholder_visibility()
-
-    def update_placeholder_visibility(self):
-        if self.tab_widget.count() == 0:
-            self.stacked_widget.setCurrentIndex(1)
-        else:
-            self.stacked_widget.setCurrentIndex(0)
-
-    # pylint: disable=C0103
-    def addTab(self, widget, label):
-        result = self.tab_widget.addTab(widget, label)
-        self.update_placeholder_visibility()
-        return result
-
-    def removeTab(self, index):
-        result = self.tab_widget.removeTab(index)
-        self.update_placeholder_visibility()
-        return result
-
-    def count(self):
-        return self.tab_widget.count()
-
-    def setCurrentIndex(self, index):
-        return self.tab_widget.setCurrentIndex(index)
-
-    def currentIndex(self):
-        return self.tab_widget.currentIndex()
-
-    def currentWidget(self):
-        return self.tab_widget.currentWidget()
-
-    def widget(self, index):
-        return self.tab_widget.widget(index)
-
-    def indexOf(self, widget):
-        return self.tab_widget.indexOf(widget)
-    # pylint: enable=C0103
-
-
 LIST_STYLE_SHEET = f"""
     QListWidget::item:selected {{
         background-color: #{ColorPalette.LIGHT_BLUE.hex()};;
@@ -121,16 +47,18 @@ LIST_STYLE_SHEET = f"""
 """
 
 
-class MainWindow(ActionsWindow, LogManager):
+class MainWindow(QMainWindow, LogManager):
     def __init__(self):
-        ActionsWindow.__init__(self)
+        QMainWindow.__init__(self)
         LogManager.__init__(self)
+        self.project_controller = ProjectController(self)
+        self.project_editor = self.project_controller.project_editor
         actions = {
-            "&New...": self.new_project,
-            "&Open...": self.open_project,
-            "&Close": self.close_project,
-            "&Save": self.save_project,
-            "Save &As...": self.save_project_as,
+            "&New...": self.project_controller.new_project,
+            "&Open...": self.project_controller.open_project,
+            "&Close": self.project_controller.close_project,
+            "&Save": self.project_controller.save_project,
+            "Save &As...": self.project_controller.save_project_as,
             "&Undo": self.project_editor.undo,
             "&Cut": self.project_editor.cut_element,
             "Cop&y": self.project_editor.copy_element,
@@ -194,6 +122,7 @@ class MainWindow(ActionsWindow, LogManager):
         h_layout.addLayout(vbox_right)
         layout.addWidget(h_splitter)
         self.central_widget.setLayout(layout)
+        self.update_title()
 
         def handle_modified(modified):
             self.save_actions_set_enabled(modified)
@@ -204,12 +133,137 @@ class MainWindow(ActionsWindow, LogManager):
         self.project_editor.refresh_ui_signal.connect(self.refresh_ui)
         self.project_editor.enable_delete_action_signal.connect(
             self.menu_manager.delete_element_action.setEnabled)
+        self.project_controller.update_title_requested.connect(self.update_title)
+        self.project_controller.refresh_ui_requested.connect(self.refresh_ui)
+        self.project_controller.activate_window_requested.connect(self.activateWindow)
+        self.project_controller.enable_save_actions_requested.connect(
+            self.menu_manager.save_actions_set_enabled)
+
+    def modified(self):
+        return self.project_editor.modified()
+
+    def set_project(self, project):
+        self.project_editor.set_project(project)
+
+    def project(self):
+        return self.project_editor.project()
+
+    def project_jobs(self):
+        return self.project_editor.project_jobs()
+
+    def project_job(self, i):
+        return self.project_editor.project_job(i)
+
+    def add_job_to_project(self, job):
+        self.project_editor.add_job_to_project(job)
+
+    def num_project_jobs(self):
+        return self.project_editor.num_project_jobs()
+
+    def current_file_path(self):
+        return self.project_editor.current_file_path()
+
+    def current_file_directory(self):
+        return self.project_editor.current_file_directory()
+
+    def current_file_name(self):
+        return self.project_editor.current_file_name()
+
+    def set_current_file_path(self, path):
+        self.project_editor.set_current_file_path(path)
+
+    def job_list(self):
+        return self.project_editor.job_list()
+
+    def action_list(self):
+        return self.project_editor.action_list()
+
+    def current_job_index(self):
+        return self.project_editor.current_job_index()
+
+    def current_action_index(self):
+        return self.project_editor.current_action_index()
+
+    def set_current_job(self, index):
+        return self.project_editor.set_current_job(index)
+
+    def set_current_action(self, index):
+        return self.project_editor.set_current_action(index)
+
+    def job_list_count(self):
+        return self.project_editor.job_list_count()
+
+    def action_list_count(self):
+        return self.project_editor.action_list_count()
+
+    def job_list_item(self, index):
+        return self.project_editor.job_list_item(index)
+
+    def action_list_item(self, index):
+        return self.project_editor.action_list_item(index)
+
+    def job_list_has_focus(self):
+        return self.project_editor.job_list_has_focus()
+
+    def action_list_has_focus(self):
+        return self.project_editor.action_list_has_focus()
+
+    def clear_job_list(self):
+        self.project_editor.clear_job_list()
+
+    def clear_action_list(self):
+        self.project_editor.clear_action_list()
+
+    def num_selected_jobs(self):
+        return self.project_editor.num_selected_jobs()
+
+    def num_selected_actions(self):
+        return self.project_editor.num_selected_actions()
+
+    def get_current_action_at(self, job, action_index):
+        return self.project_editor.get_current_action_at(job, action_index)
+
+    def action_config_dialog(self, action):
+        return self.project_editor.action_config_dialog(action)
+
+    def action_text(self, action, is_sub_action=False, indent=True, long_name=False, html=False):
+        return self.project_editor.action_text(action, is_sub_action, indent, long_name, html)
+
+    def job_text(self, job, long_name=False, html=False):
+        return self.project_editor.job_text(job, long_name, html)
+
+    def on_job_selected(self, index):
+        return self.project_editor.on_job_selected(index)
+
+    def get_action_at(self, action_row):
+        return self.project_editor.get_action_at(action_row)
+
+    def on_job_edit(self, item):
+        self.project_controller.on_job_edit(item)
+
+    def on_action_edit(self, item):
+        self.project_controller.on_action_edit(item)
+
+    def edit_current_action(self):
+        self.project_controller.edit_current_action()
+
+    def edit_action(self, action):
+        self.project_controller.edit_action(action)
 
     def set_retouch_callback(self, callback):
         self.retouch_callback = callback
 
     def save_actions_set_enabled(self, enabled):
         self.menu_manager.save_actions_set_enabled(enabled)
+
+    def update_title(self):
+        title = constants.APP_TITLE
+        file_name = self.current_file_name()
+        if file_name:
+            title += f" - {file_name}"
+            if self.modified():
+                title += " *"
+        self.window().setWindowTitle(title)
 
     # pylint: disable=C0103
     def contextMenuEvent(self, event):
@@ -355,7 +409,7 @@ class MainWindow(ActionsWindow, LogManager):
             self.menu_manager.run_all_jobs_action.setEnabled(True)
 
     def quit(self):
-        if self._check_unsaved_changes():
+        if self.project_controller.check_unsaved_changes():
             for worker in self._workers:
                 worker.stop()
             self.close()

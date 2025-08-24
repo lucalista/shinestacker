@@ -70,7 +70,7 @@ expert options are visible by default.
     window.show()
     filename = args['filename']
     if filename:
-        QTimer.singleShot(100, lambda: window.open_project(filename))
+        QTimer.singleShot(100, lambda: window.project_controller.open_project(filename))
     else:
         QTimer.singleShot(100, window.new_project)
     sys.exit(app.exec())

@@ -34,7 +34,7 @@ def test_open_file_success(main_window, qtbot, mocker):
             "PySide6.QtWidgets.QFileDialog.getOpenFileName",
             return_value=(str(tmp_path), "")
         )
-        main_window.open_project()
+        main_window.project_controller.open_project()
         qtbot.wait(100)
         assert main_window is not None
         assert main_window.windowTitle() == f"{constants.APP_TITLE} - {tmp_path.name}"
