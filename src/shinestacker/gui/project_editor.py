@@ -557,8 +557,8 @@ class ProjectEditor(QObject):
     def undo(self):
         job_row = self.current_job_index()
         action_row = self.current_action_index()
-        if self.project_editor.filled_undo():
-            self.set_project(self.project_editor.pop_undo())
+        if self.filled_undo():
+            self.set_project(self.pop_undo())
             self.refresh_ui_signal.emit(-1, -1)
             len_jobs = self.num_project_jobs()
             if len_jobs > 0:

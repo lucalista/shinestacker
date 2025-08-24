@@ -14,6 +14,7 @@ from .gui_logging import LogManager
 from .gui_run import RunWindow, RunWorker
 from .project_converter import ProjectConverter
 from .project_model import get_action_working_path, get_action_input_path, get_action_output_path
+from .menu_manager import MenuManager
 
 
 class JobLogWorker(RunWorker):
@@ -124,6 +125,30 @@ class MainWindow(ActionsWindow, LogManager):
     def __init__(self):
         ActionsWindow.__init__(self)
         LogManager.__init__(self)
+        actions = {
+            "&New...": self.new_project,
+            "&Open...": self.open_project,
+            "&Close": self.close_project,
+            "&Save": self.save_project,
+            "Save &As...": self.save_project_as,
+            "&Undo": self.project_editor.undo,
+            "&Cut": self.project_editor.cut_element,
+            "Cop&y": self.project_editor.copy_element,
+            "&Paste": self.project_editor.paste_element,
+            "Duplicate": self.project_editor.clone_element,
+            "Delete": self.delete_element,
+            "Move &Up": self.project_editor.move_element_up,
+            "Move &Down": self.project_editor.move_element_down,
+            "E&nable": self.project_editor.enable,
+            "Di&sable": self.project_editor.disable,
+            "Enable All": self.project_editor.enable_all,
+            "Disable All": self.project_editor.disable_all,
+            "Expert Options": self.toggle_expert_options,
+            "Add Job": self.project_editor.add_job,
+            "Run Job": self.run_job,
+            "Run All Jobs": self.run_all_jobs,
+        }
+        self.menu_manager = MenuManager(self.menuBar(), actions, self.project_editor, self)
         self.script_dir = os.path.dirname(__file__)
         self._windows = []
         self._workers = []
@@ -131,13 +156,7 @@ class MainWindow(ActionsWindow, LogManager):
         self.expert_options = False
         self.job_list().setStyleSheet(LIST_STYLE_SHEET)
         self.action_list().setStyleSheet(LIST_STYLE_SHEET)
-        menubar = self.menuBar()
-        self.add_file_menu(menubar)
-        self.add_edit_menu(menubar)
-        self.add_view_menu(menubar)
-        self.add_job_menu(menubar)
-        self.add_actions_menu(menubar)
-        self.add_help_menu(menubar)
+        self.menu_manager.add_menus()
         toolbar = QToolBar(self)
         self.addToolBar(Qt.TopToolBarArea, toolbar)
         self.fill_toolbar(toolbar)
@@ -184,191 +203,16 @@ class MainWindow(ActionsWindow, LogManager):
         self.project_editor.select_signal.connect(self.update_delete_action_state)
         self.project_editor.refresh_ui_signal.connect(self.refresh_ui)
         self.project_editor.enable_delete_action_signal.connect(
-            self.delete_element_action.setEnabled)
+            self.menu_manager.delete_element_action.setEnabled)
 
     def set_retouch_callback(self, callback):
         self.retouch_callback = callback
 
-    def add_file_menu(self, menubar):
-        menu = menubar.addMenu("&File")
-        new_action = QAction("&New...", self)
-        new_action.setShortcut("Ctrl+N")
-        new_action.triggered.connect(self.new_project)
-        menu.addAction(new_action)
-        open_action = QAction("&Open...", self)
-        open_action.setShortcut("Ctrl+O")
-        open_action.triggered.connect(self.open_project)
-        menu.addAction(open_action)
-        self.save_action = QAction("&Save", self)
-        self.save_action.setShortcut("Ctrl+S")
-        self.save_action.triggered.connect(self.save_project)
-        menu.addAction(self.save_action)
-        self.save_as_action = QAction("Save &As...", self)
-        self.save_as_action.setShortcut("Ctrl+Shift+S")
-        self.save_as_action.triggered.connect(self.save_project_as)
-        menu.addAction(self.save_as_action)
-        self.save_actions_set_enabled(False)
-        close_action = QAction("&Close", self)
-        close_action.setShortcut("Ctrl+W")
-        close_action.triggered.connect(self.close_project)
-        menu.addAction(close_action)
-
     def save_actions_set_enabled(self, enabled):
-        self.save_action.setEnabled(enabled)
-        self.save_as_action.setEnabled(enabled)
-
-    def add_edit_menu(self, menubar):
-        menu = menubar.addMenu("&Edit")
-        undo_action = QAction("&Undo", self)
-        undo_action.setShortcut("Ctrl+Z")
-        undo_action.triggered.connect(self.project_editor.undo)
-        menu.addAction(undo_action)
-        menu.addSeparator()
-        cut_action = QAction("&Cut", self)
-        cut_action.setShortcut("Ctrl+X")
-        cut_action.triggered.connect(self.project_editor.cut_element)
-        menu.addAction(cut_action)
-        copy_action = QAction("Cop&y", self)
-        copy_action.setShortcut("Ctrl+C")
-        copy_action.triggered.connect(self.project_editor.copy_element)
-        menu.addAction(copy_action)
-        paste_action = QAction("&Paste", self)
-        paste_action.setShortcut("Ctrl+V")
-        paste_action.triggered.connect(self.project_editor.paste_element)
-        menu.addAction(paste_action)
-        clone_action = QAction("Duplicate", self)
-        clone_action.setShortcut("Ctrl+D")
-        clone_action.triggered.connect(self.project_editor.clone_element)
-        menu.addAction(clone_action)
-        self.delete_element_action = QAction("Delete", self)
-        self.delete_element_action.setShortcut("Del")  # Qt.Key_Backspace
-        self.delete_element_action.setIcon(self.get_icon("close-round-line-icon"))
-        self.delete_element_action.setToolTip("delete")
-        self.delete_element_action.triggered.connect(self.delete_element)
-        self.delete_element_action.setEnabled(False)
-        menu.addAction(self.delete_element_action)
-        menu.addSeparator()
-        up_action = QAction("Move &Up", self)
-        up_action.setShortcut("Ctrl+Up")
-        up_action.triggered.connect(self.project_editor.move_element_up)
-        menu.addAction(up_action)
-        down_action = QAction("Move &Down", self)
-        down_action.setShortcut("Ctrl+Down")
-        down_action.triggered.connect(self.project_editor.move_element_down)
-        menu.addAction(down_action)
-        menu.addSeparator()
-        self.enable_action = QAction("E&nable", self)
-        self.enable_action.setShortcut("Ctrl+E")
-        self.enable_action.triggered.connect(self.project_editor.enable)
-        menu.addAction(self.enable_action)
-        self.disable_action = QAction("Di&sable", self)
-        self.disable_action.setShortcut("Ctrl+B")
-        self.disable_action.triggered.connect(self.project_editor.disable)
-        menu.addAction(self.disable_action)
-        enable_all_action = QAction("Enable All", self)
-        enable_all_action.setShortcut("Ctrl+Shift+E")
-        enable_all_action.triggered.connect(self.project_editor.enable_all)
-        menu.addAction(enable_all_action)
-        disable_all_action = QAction("Disable All", self)
-        disable_all_action.setShortcut("Ctrl+Shift+B")
-        disable_all_action.triggered.connect(self.project_editor.disable_all)
-        menu.addAction(disable_all_action)
-
-    def add_view_menu(self, menubar):
-        menu = menubar.addMenu("&View")
-        self.expert_options_action = QAction("Expert Options", self)
-        self.expert_options_action.setShortcut("Ctrl+Shift+X")
-        self.expert_options_action.triggered.connect(self.toggle_expert_options)
-        self.expert_options_action.setCheckable(True)
-        self.expert_options_action.setChecked(self.expert_options)
-        menu.addAction(self.expert_options_action)
-
-    def add_job_menu(self, menubar):
-        menu = menubar.addMenu("&Jobs")
-        self.add_job_action = QAction("Add Job", self)
-        self.add_job_action.setShortcut("Ctrl+P")
-        self.add_job_action.setIcon(self.get_icon("plus-round-line-icon"))
-        self.add_job_action.setToolTip("Add job")
-        self.add_job_action.triggered.connect(self.project_editor.add_job)
-        menu.addAction(self.add_job_action)
-        menu.addSeparator()
-        self.run_job_action = QAction("Run Job", self)
-        self.run_job_action.setShortcut("Ctrl+J")
-        self.run_job_action.setIcon(self.get_icon("play-button-round-icon"))
-        self.run_job_action.setToolTip("Run job")
-        self.run_job_action.setEnabled(False)
-        self.run_job_action.triggered.connect(self.run_job)
-        menu.addAction(self.run_job_action)
-        self.run_all_jobs_action = QAction("Run All Jobs", self)
-        self.run_all_jobs_action.setShortcut("Ctrl+Shift+J")
-        self.run_all_jobs_action.setIcon(self.get_icon("forward-button-icon"))
-        self.run_all_jobs_action.setToolTip("Run all jobs")
-        self.run_all_jobs_action.setEnabled(False)
-        self.run_all_jobs_action.triggered.connect(self.run_all_jobs)
-        menu.addAction(self.run_all_jobs_action)
-
-    def add_action_combined_actions(self):
-        self.add_action(constants.ACTION_COMBO)
-
-    def add_action_noise_detection(self):
-        self.add_action(constants.ACTION_NOISEDETECTION)
-
-    def add_action_focus_stack(self):
-        self.add_action(constants.ACTION_FOCUSSTACK)
-
-    def add_action_focus_stack_bunch(self):
-        self.add_action(constants.ACTION_FOCUSSTACKBUNCH)
-
-    def add_action_multilayer(self):
-        self.add_action(constants.ACTION_MULTILAYER)
-
-    def add_sub_action_make_noise(self):
-        self.add_sub_action(constants.ACTION_MASKNOISE)
-
-    def add_sub_action_vignetting(self):
-        self.add_sub_action(constants.ACTION_VIGNETTING)
-
-    def add_sub_action_align_frames(self):
-        self.add_sub_action(constants.ACTION_ALIGNFRAMES)
-
-    def add_sub_action_balance_frames(self):
-        self.add_sub_action(constants.ACTION_BALANCEFRAMES)
-
-    def add_actions_menu(self, menubar):
-        menu = menubar.addMenu("&Actions")
-        add_action_menu = QMenu("Add Action", self)
-        for action in constants.ACTION_TYPES:
-            entry_action = QAction(action, self)
-            entry_action.triggered.connect({
-                constants.ACTION_COMBO: self.add_action_combined_actions,
-                constants.ACTION_NOISEDETECTION: self.add_action_noise_detection,
-                constants.ACTION_FOCUSSTACK: self.add_action_focus_stack,
-                constants.ACTION_FOCUSSTACKBUNCH: self.add_action_focus_stack_bunch,
-                constants.ACTION_MULTILAYER: self.add_action_multilayer
-            }[action])
-            add_action_menu.addAction(entry_action)
-        menu.addMenu(add_action_menu)
-        add_sub_action_menu = QMenu("Add Sub Action", self)
-        self.sub_action_menu_entries = []
-        for action in constants.SUB_ACTION_TYPES:
-            entry_action = QAction(action, self)
-            entry_action.triggered.connect({
-                constants.ACTION_MASKNOISE: self.add_sub_action_make_noise,
-                constants.ACTION_VIGNETTING: self.add_sub_action_vignetting,
-                constants.ACTION_ALIGNFRAMES: self.add_sub_action_align_frames,
-                constants.ACTION_BALANCEFRAMES: self.add_sub_action_balance_frames
-            }[action])
-            entry_action.setEnabled(False)
-            self.sub_action_menu_entries.append(entry_action)
-            add_sub_action_menu.addAction(entry_action)
-        menu.addMenu(add_sub_action_menu)
-
-    def add_help_menu(self, menubar):
-        menu = menubar.addMenu("&Help")
-        menu.setObjectName("Help")
+        self.menu_manager.save_actions_set_enabled(enabled)
 
     def fill_toolbar(self, toolbar):
-        toolbar.addAction(self.add_job_action)
+        toolbar.addAction(self.menu_manager.add_job_action)
         toolbar.addSeparator()
         self.action_selector = QComboBox()
         self.action_selector.addItems(constants.ACTION_TYPES)
@@ -378,7 +222,7 @@ class MainWindow(ActionsWindow, LogManager):
         self.add_action_entry_action.setIcon(
             QIcon(os.path.join(self.script_dir, "img/plus-round-line-icon.png")))
         self.add_action_entry_action.setToolTip("Add action")
-        self.add_action_entry_action.triggered.connect(self.add_action)
+        self.add_action_entry_action.triggered.connect(self.menu_manager.add_action)
         self.add_action_entry_action.setEnabled(False)
         toolbar.addAction(self.add_action_entry_action)
         self.sub_action_selector = QComboBox()
@@ -389,14 +233,16 @@ class MainWindow(ActionsWindow, LogManager):
         self.add_sub_action_entry_action.setIcon(
             QIcon(os.path.join(self.script_dir, "img/plus-round-line-icon.png")))
         self.add_sub_action_entry_action.setToolTip("Add sub action")
-        self.add_sub_action_entry_action.triggered.connect(self.add_sub_action)
+        self.add_sub_action_entry_action.triggered.connect(self.menu_manager.add_sub_action)
         self.add_sub_action_entry_action.setEnabled(False)
+        self.menu_manager.set_selectors(
+            self.action_selector, self.sub_action_selector)
         toolbar.addAction(self.add_sub_action_entry_action)
         toolbar.addSeparator()
-        toolbar.addAction(self.delete_element_action)
+        toolbar.addAction(self.menu_manager.delete_element_action)
         toolbar.addSeparator()
-        toolbar.addAction(self.run_job_action)
-        toolbar.addAction(self.run_all_jobs_action)
+        toolbar.addAction(self.menu_manager.run_job_action)
+        toolbar.addAction(self.menu_manager.run_all_jobs_action)
 
     # pylint: disable=C0103
     def contextMenuEvent(self, event):
@@ -537,9 +383,9 @@ class MainWindow(ActionsWindow, LogManager):
         else:
             self.add_action_entry_action.setEnabled(True)
             self.action_selector.setEnabled(True)
-            self.delete_element_action.setEnabled(True)
-            self.run_job_action.setEnabled(True)
-            self.run_all_jobs_action.setEnabled(True)
+            self.menu_manager.delete_element_action.setEnabled(True)
+            self.menu_manager.run_job_action.setEnabled(True)
+            self.menu_manager.run_all_jobs_action.setEnabled(True)
 
     def quit(self):
         if self._check_unsaved_changes():
@@ -548,21 +394,15 @@ class MainWindow(ActionsWindow, LogManager):
             self.close()
 
     def toggle_expert_options(self):
-        self.expert_options = self.expert_options_action.isChecked()
+        self.expert_options = self.menu_manager.expert_options_action.isChecked()
 
     def set_expert_options(self):
         self.expert_options_action.setChecked(True)
         self.expert_options = True
 
-    def add_action(self):
-        self.project_editor.add_action(self.action_selector.currentText())
-
-    def add_sub_action(self):
-        self.project_editor.add_sub_action(self.sub_action_selector.currentText())
-
     def before_thread_begins(self):
-        self.run_job_action.setEnabled(False)
-        self.run_all_jobs_action.setEnabled(False)
+        self.menu_manager.run_job_action.setEnabled(False)
+        self.menu_manager.run_all_jobs_action.setEnabled(False)
 
     def get_tab_and_position(self, id_str):
         for i in range(self.tab_widget.count()):
@@ -580,8 +420,8 @@ class MainWindow(ActionsWindow, LogManager):
         return i
 
     def do_handle_end_message(self, status, id_str, message):
-        self.run_job_action.setEnabled(True)
-        self.run_all_jobs_action.setEnabled(True)
+        self.menu_manager.run_job_action.setEnabled(True)
+        self.menu_manager.run_all_jobs_action.setEnabled(True)
         tab = self.get_tab_at_position(id_str)
         tab.close_button.setEnabled(True)
         tab.stop_button.setEnabled(False)
@@ -624,7 +464,7 @@ class MainWindow(ActionsWindow, LogManager):
     def set_enabled_sub_actions_gui(self, enabled):
         self.add_sub_action_entry_action.setEnabled(enabled)
         self.sub_action_selector.setEnabled(enabled)
-        for a in self.sub_action_menu_entries:
+        for a in self.menu_manager.sub_action_menu_entries:
             a.setEnabled(enabled)
 
     def run_job(self):
@@ -677,7 +517,8 @@ class MainWindow(ActionsWindow, LogManager):
     def update_delete_action_state(self):
         has_job_selected = self.num_selected_jobs() > 0
         has_action_selected = self.num_selected_actions() > 0
-        self.delete_element_action.setEnabled(has_job_selected or has_action_selected)
+        self.menu_manager.delete_element_action.setEnabled(
+            has_job_selected or has_action_selected)
         if has_action_selected and has_job_selected:
             job_index = min(self.current_job_index(), self.num_project_jobs() - 1)
             action_index = self.current_action_index()
