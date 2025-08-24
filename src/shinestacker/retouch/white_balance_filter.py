@@ -84,7 +84,9 @@ class WhiteBalanceFilter(BaseFilter):
         for name in ("R", "G", "B"):
             self.value_labels[name].setText(str(self.sliders[name].value()))
         rgb = tuple(self.sliders[n].value() for n in ("R", "G", "B"))
+        self.rgb_hex.blockSignals(True)
         self.rgb_hex.setText(self.hex_color(rgb))
+        self.rgb_hex.blockSignals(False)
         self.apply_preview(rgb)
 
     def on_rgb_change(self):
@@ -93,8 +95,10 @@ class WhiteBalanceFilter(BaseFilter):
             return
         rgb = [int(txt[i:i + 2], 16) for i in range(0, 6, 2)]
         for name, c in zip(("R", "G", "B"), rgb):
-            self.value_labels[name].setText(str(c))
+            self.sliders[name].blockSignals(True)
             self.sliders[name].setValue(c)
+            self.sliders[name].blockSignals(False)
+            self.value_labels[name].setText(str(c))
         self.apply_preview(rgb)
 
     def start_color_pick(self):
