@@ -2,7 +2,7 @@
 import os
 import subprocess
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QLabel, QMessageBox,
-                               QSplitter, QToolBar, QMenu, QComboBox, QStackedWidget)
+                               QSplitter, QToolBar, QMenu, QStackedWidget)
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QGuiApplication, QAction, QIcon, QPixmap
 from .. config.constants import constants
@@ -159,7 +159,7 @@ class MainWindow(ActionsWindow, LogManager):
         self.menu_manager.add_menus()
         toolbar = QToolBar(self)
         self.addToolBar(Qt.TopToolBarArea, toolbar)
-        self.fill_toolbar(toolbar)
+        self.menu_manager.fill_toolbar(toolbar)
         self.resize(1200, 800)
         self.move(QGuiApplication.primaryScreen().geometry().center() -
                   self.rect().center())
@@ -210,39 +210,6 @@ class MainWindow(ActionsWindow, LogManager):
 
     def save_actions_set_enabled(self, enabled):
         self.menu_manager.save_actions_set_enabled(enabled)
-
-    def fill_toolbar(self, toolbar):
-        toolbar.addAction(self.menu_manager.add_job_action)
-        toolbar.addSeparator()
-        self.action_selector = QComboBox()
-        self.action_selector.addItems(constants.ACTION_TYPES)
-        self.action_selector.setEnabled(False)
-        toolbar.addWidget(self.action_selector)
-        self.add_action_entry_action = QAction("Add Action", self)
-        self.add_action_entry_action.setIcon(
-            QIcon(os.path.join(self.script_dir, "img/plus-round-line-icon.png")))
-        self.add_action_entry_action.setToolTip("Add action")
-        self.add_action_entry_action.triggered.connect(self.menu_manager.add_action)
-        self.add_action_entry_action.setEnabled(False)
-        toolbar.addAction(self.add_action_entry_action)
-        self.sub_action_selector = QComboBox()
-        self.sub_action_selector.addItems(constants.SUB_ACTION_TYPES)
-        self.sub_action_selector.setEnabled(False)
-        toolbar.addWidget(self.sub_action_selector)
-        self.add_sub_action_entry_action = QAction("Add Sub Action", self)
-        self.add_sub_action_entry_action.setIcon(
-            QIcon(os.path.join(self.script_dir, "img/plus-round-line-icon.png")))
-        self.add_sub_action_entry_action.setToolTip("Add sub action")
-        self.add_sub_action_entry_action.triggered.connect(self.menu_manager.add_sub_action)
-        self.add_sub_action_entry_action.setEnabled(False)
-        self.menu_manager.set_selectors(
-            self.action_selector, self.sub_action_selector)
-        toolbar.addAction(self.add_sub_action_entry_action)
-        toolbar.addSeparator()
-        toolbar.addAction(self.menu_manager.delete_element_action)
-        toolbar.addSeparator()
-        toolbar.addAction(self.menu_manager.run_job_action)
-        toolbar.addAction(self.menu_manager.run_all_jobs_action)
 
     # pylint: disable=C0103
     def contextMenuEvent(self, event):
@@ -376,13 +343,13 @@ class MainWindow(ActionsWindow, LogManager):
         if action_row >= 0:
             self.set_current_action(action_row)
         if self.job_list_count() == 0:
-            self.add_action_entry_action.setEnabled(False)
-            self.action_selector.setEnabled(False)
+            self.menu_manager.add_action_entry_action.setEnabled(False)
+            self.menu_manager.action_selector.setEnabled(False)
             self.run_job_action.setEnabled(False)
             self.run_all_jobs_action.setEnabled(False)
         else:
-            self.add_action_entry_action.setEnabled(True)
-            self.action_selector.setEnabled(True)
+            self.menu_manager.add_action_entry_action.setEnabled(True)
+            self.menu_manager.action_selector.setEnabled(True)
             self.menu_manager.delete_element_action.setEnabled(True)
             self.menu_manager.run_job_action.setEnabled(True)
             self.menu_manager.run_all_jobs_action.setEnabled(True)
@@ -461,12 +428,6 @@ class MainWindow(ActionsWindow, LogManager):
         worker.save_plot_signal.connect(window.handle_save_plot)
         worker.open_app_signal.connect(window.handle_open_app)
 
-    def set_enabled_sub_actions_gui(self, enabled):
-        self.add_sub_action_entry_action.setEnabled(enabled)
-        self.sub_action_selector.setEnabled(enabled)
-        for a in self.menu_manager.sub_action_menu_entries:
-            a.setEnabled(enabled)
-
     def run_job(self):
         current_index = self.current_job_index()
         if current_index < 0:
@@ -528,6 +489,6 @@ class MainWindow(ActionsWindow, LogManager):
                     self.get_current_action_at(job, action_index)
                 enable_sub_actions = current_action is not None and \
                     not is_sub_action and current_action.type_name == constants.ACTION_COMBO
-                self.set_enabled_sub_actions_gui(enable_sub_actions)
+                self.menu_manager.set_enabled_sub_actions_gui(enable_sub_actions)
         else:
-            self.set_enabled_sub_actions_gui(False)
+            self.menu_manager.set_enabled_sub_actions_gui(False)

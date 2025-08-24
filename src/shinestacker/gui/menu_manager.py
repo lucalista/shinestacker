@@ -1,6 +1,7 @@
+# pylint: disable=C0114, C0115, C0116, R0904, E0611, R0902, W0201
 import os
 from PySide6.QtGui import QAction, QIcon
-from PySide6.QtWidgets import QMenu
+from PySide6.QtWidgets import QMenu, QComboBox
 from .. config.constants import constants
 
 
@@ -48,10 +49,6 @@ class MenuManager:
             "Run Job": "Run job",
             "Run All Jobs": "Run all jobs",
         }
-
-    def set_selectors(self, action_selector, sub_action_selector):
-        self.action_selector = action_selector
-        self.sub_action_selector = sub_action_selector
 
     def get_icon(self, icon):
         return QIcon(os.path.join(self.script_dir, f"img/{icon}.png"))
@@ -159,12 +156,12 @@ class MenuManager:
         self.add_help_menu()
 
     def add_action(self, type_name=False):
-        if type_name == False:
+        if type_name is False:
             type_name = self.action_selector.currentText()
         self.project_editor.add_action(type_name)
 
     def add_sub_action(self, type_name=False):
-        if type_name == False:
+        if type_name is False:
             type_name = self.sub_action_selector.currentText()
         self.project_editor.add_sub_action(type_name)
 
@@ -198,3 +195,40 @@ class MenuManager:
 
     def add_sub_action_balance_frames(self):
         self.add_sub_action(constants.ACTION_BALANCEFRAMES)
+
+    def fill_toolbar(self, toolbar):
+        toolbar.addAction(self.add_job_action)
+        toolbar.addSeparator()
+        self.action_selector = QComboBox()
+        self.action_selector.addItems(constants.ACTION_TYPES)
+        self.action_selector.setEnabled(False)
+        toolbar.addWidget(self.action_selector)
+        self.add_action_entry_action = QAction("Add Action", self.parent)
+        self.add_action_entry_action.setIcon(
+            QIcon(os.path.join(self.script_dir, "img/plus-round-line-icon.png")))
+        self.add_action_entry_action.setToolTip("Add action")
+        self.add_action_entry_action.triggered.connect(self.add_action)
+        self.add_action_entry_action.setEnabled(False)
+        toolbar.addAction(self.add_action_entry_action)
+        self.sub_action_selector = QComboBox()
+        self.sub_action_selector.addItems(constants.SUB_ACTION_TYPES)
+        self.sub_action_selector.setEnabled(False)
+        toolbar.addWidget(self.sub_action_selector)
+        self.add_sub_action_entry_action = QAction("Add Sub Action", self.parent)
+        self.add_sub_action_entry_action.setIcon(
+            QIcon(os.path.join(self.script_dir, "img/plus-round-line-icon.png")))
+        self.add_sub_action_entry_action.setToolTip("Add sub action")
+        self.add_sub_action_entry_action.triggered.connect(self.add_sub_action)
+        self.add_sub_action_entry_action.setEnabled(False)
+        toolbar.addAction(self.add_sub_action_entry_action)
+        toolbar.addSeparator()
+        toolbar.addAction(self.delete_element_action)
+        toolbar.addSeparator()
+        toolbar.addAction(self.run_job_action)
+        toolbar.addAction(self.run_all_jobs_action)
+
+    def set_enabled_sub_actions_gui(self, enabled):
+        self.add_sub_action_entry_action.setEnabled(enabled)
+        self.sub_action_selector.setEnabled(enabled)
+        for a in self.sub_action_menu_entries:
+            a.setEnabled(enabled)
