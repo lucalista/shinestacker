@@ -142,6 +142,9 @@ class MainWindow(QMainWindow, LogManager):
     def modified(self):
         return self.project_editor.modified()
 
+    def mark_as_modified(self, modified=True):
+        self.project_editor.mark_as_modified(modified)
+
     def set_project(self, project):
         self.project_editor.set_project(project)
 
@@ -527,7 +530,7 @@ class MainWindow(QMainWindow, LogManager):
     def delete_element(self):
         self.project_editor.delete_element()
         if self.job_list_count() > 0:
-            self.delete_element_action.setEnabled(True)
+            self.menu_manager.delete_element_action.setEnabled(True)
 
     def update_delete_action_state(self):
         has_job_selected = self.num_selected_jobs() > 0

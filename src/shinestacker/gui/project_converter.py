@@ -65,7 +65,7 @@ class ProjectConverter:
         for j in proj.jobs:
             job = self.job(j, logger_name, callbacks)
             if job is None:
-                raise RuntimeError("Job instantiation failed.")
+                raise RuntimeError("Job creation failed.")
             jobs.append(job)
         return jobs
 
@@ -143,6 +143,6 @@ class ProjectConverter:
         except Exception as e:
             msg = str(e)
             logger = self.get_logger(logger_name)
-            logger.error(msg=f"=== can't instantiate job: {name}: {msg} ===")
+            logger.error(msg=f"=== can't create job: {name}: {msg} ===")
             traceback.print_tb(e.__traceback__)
             raise e
