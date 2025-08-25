@@ -19,6 +19,7 @@ class ProjectController(QObject):
     refresh_ui_requested = Signal(int, int)
     activate_window_requested = Signal()
     enable_save_actions_requested = Signal(bool)
+    enable_sub_actions_requested = Signal(bool)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -323,7 +324,7 @@ class ProjectController(QObject):
             current_action, is_sub_action = self.get_current_action_at(job, action_index)
             if current_action:
                 if not is_sub_action:
-                    self.set_enabled_sub_actions_gui(
+                    self.enable_sub_actions_requested.emit(
                         current_action.type_name == constants.ACTION_COMBO)
                 dialog = self.action_config_dialog(current_action)
                 if dialog.exec() == QDialog.Accepted:

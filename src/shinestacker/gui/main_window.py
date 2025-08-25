@@ -52,6 +52,7 @@ class MainWindow(QMainWindow, LogManager):
     def __init__(self):
         QMainWindow.__init__(self)
         LogManager.__init__(self)
+        self.setObjectName("mainWindow")
         self.project_controller = ProjectController(self)
         self.project_editor = self.project_controller.project_editor
         actions = {
@@ -139,6 +140,8 @@ class MainWindow(QMainWindow, LogManager):
         self.project_controller.activate_window_requested.connect(self.activateWindow)
         self.project_controller.enable_save_actions_requested.connect(
             self.menu_manager.save_actions_set_enabled)
+        self.project_controller.enable_sub_actions_requested.connect(
+            self.menu_manager.set_enabled_sub_actions_gui)
 
     def modified(self):
         return self.project_editor.modified()
@@ -286,9 +289,9 @@ class MainWindow(QMainWindow, LogManager):
         if current_action:
             menu = QMenu(self)
             if current_action.enabled():
-                menu.addAction(self.disable_action)
+                menu.addAction(self.menu_manager.disable_action)
             else:
-                menu.addAction(self.enable_action)
+                menu.addAction(self.menu_manager.enable_action)
             edit_config_action = QAction("Edit configuration")
             edit_config_action.triggered.connect(self.edit_current_action)
             menu.addAction(edit_config_action)
@@ -332,8 +335,8 @@ class MainWindow(QMainWindow, LogManager):
                     self.browse_output_path_action.triggered.connect(self.browse_output_path)
                     menu.addAction(self.browse_output_path_action)
             menu.addSeparator()
-            menu.addAction(self.run_job_action)
-            menu.addAction(self.run_all_jobs_action)
+            menu.addAction(self.menu_manager.run_job_action)
+            menu.addAction(self.menu_manager.run_all_jobs_action)
             if current_action.type_name == constants.ACTION_JOB:
                 retouch_path = self.get_retouch_path(current_action)
                 if len(retouch_path) > 0:

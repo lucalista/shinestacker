@@ -56,8 +56,9 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
         self.set_master_layer(master_layer)
         self.undo_manager.reset()
         self.blank_layer = np.zeros(master_layer.shape[:2])
-        self.finish_loading_setup(stack, None, master_layer,
-                                  f"Loaded: {self.current_file_path()}")
+        self.finish_loading_setup(
+            stack, None, master_layer, False,
+            f"Loaded: {self.current_file_path()}")
 
     def on_file_error(self, error_msg):
         QApplication.restoreOverrideCursor()
@@ -136,23 +137,26 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
             msg.setText(str(e))
             msg.exec()
             return
-        self.finish_loading_setup(stack, labels, master, "Selected frames imported")
+        self.finish_loading_setup(
+            stack, labels, master, True,
+            "Selected frames imported")
 
-    def finish_loading_setup(self, stack, labels, master, message):
-        if self.layer_stack() is None and len(stack) > 0:
-            self.set_layer_stack(np.array(stack))
-            if labels is None:
-                labels = self.layer_labels()
+    def finish_loading_setup(self, stack, labels, master, add_layers, message):
+        if add_layers:
+            if self.layer_stack() is None and len(stack) > 0:
+                self.set_layer_stack(np.array(stack))
+                if labels is None:
+                    labels = self.layer_labels()
+                else:
+                    self.set_layer_labels(labels)
+                self.set_master_layer(master)
+                self.blank_layer = np.zeros(master.shape[:2])
             else:
-                self.set_layer_labels(labels)
-            self.set_master_layer(master)
-            self.blank_layer = np.zeros(master.shape[:2])
-        else:
-            if labels is None:
-                labels = self.layer_labels()
-            for img, label in zip(stack, labels):
-                self.add_layer_label(label)
-                self.add_layer(img)
+                if labels is None:
+                    labels = self.layer_labels()
+                for img, label in zip(stack, labels):
+                    self.add_layer_label(label)
+                    self.add_layer(img)
         self.display_manager.update_thumbnails()
         self.mark_as_modified_requested.emit(True)
         self.change_layer_requested.emit(0)

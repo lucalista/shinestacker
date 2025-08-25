@@ -2,6 +2,17 @@
 
 This page reports the main releases only and the main changes therein.
 
+## [v1.0.2] - 2025-08-25
+**Bug fixes**
+
+### Changes
+
+* fixed context menu
+* fixed retouch callback for shiestacker-project app
+* fixed double image loading
+
+---
+
 ## [v1.0.1] - 2025-08-25
 **First stable release**
 

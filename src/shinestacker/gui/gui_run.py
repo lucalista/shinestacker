@@ -133,11 +133,11 @@ class RunWindow(QTextEditLogger):
         def find_parent(widget, class_name):
             current = widget
             while current is not None:
-                if current.__class__.__name__ == class_name:
+                if current.objectName() == class_name:
                     return current
                 current = current.parent()
             return None
-        parent = find_parent(self, "MainWindow")
+        parent = find_parent(self, "mainWindow")
         if parent:
             parent.retouch_callback(path[1])
         else:
