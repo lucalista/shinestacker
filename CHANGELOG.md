@@ -2,6 +2,16 @@
 
 This page reports the main releases only and the main changes therein.
 
+## [v-.-.-] - 2025-08-25
+**Unreleased changes**
+
+### Changes
+
+* fixed menu text
+* code cleanup
+
+---
+
 ## [v1.0.2] - 2025-08-25
 **Bug fixes**
 
