@@ -152,7 +152,7 @@ expert options are visible by default.
             main_app.switch_to_retouch()
         else:
             main_app.switch_to_project()
-            QTimer.singleShot(100, main_app.project_window.new_project)
+            QTimer.singleShot(100, main_app.project_window.project_controller.new_project)
     QTimer.singleShot(100, main_app.setFocus)
     sys.exit(app.exec())
 

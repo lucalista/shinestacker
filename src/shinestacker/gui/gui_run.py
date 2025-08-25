@@ -14,7 +14,9 @@ from .colors import ColorPalette
 
 
 ACTION_RUNNING_COLOR = ColorPalette.MEDIUM_BLUE
-ACTION_DONE_COLOR = ColorPalette.MEDIUM_GREEN
+ACTION_COMPLETED_COLOR = ColorPalette.MEDIUM_GREEN
+ACTION_STOPPED_COLOR = ColorPalette.MEDIUM_RED
+ACTION_FAILED_COLOR = ColorPalette.MEDIUM_RED
 
 
 class ColorButton(QPushButton):
@@ -52,6 +54,7 @@ class TimerProgressBar(QProgressBar):
         self.set_running_style()
         self._start_time = -1
         self._current_time = -1
+        self.elapsed_str = ''
 
     def set_style(self, bar_color=None):
         if bar_color is None:
@@ -97,10 +100,10 @@ class TimerProgressBar(QProgressBar):
             raise RuntimeError("TimeProgressbar: start and must be called before setValue and stop")
         self._current_time = time.time()
         elapsed_time = self._current_time - self._start_time
-        elapsed_str = self.time_str(elapsed_time)
-        fmt = f"Progress: %p% - %v of %m - elapsed: {elapsed_str}"
+        self.elapsed_str = self.time_str(elapsed_time)
+        fmt = f"Progress: %p% - %v of %m - elapsed: {self.elapsed_str}"
         if 0 < val < self.maximum():
-            time_per_iter = elapsed_time / val
+            time_per_iter = float(elapsed_time) / float(val)
             estimated_time = time_per_iter * self.maximum()
             remaining_time = max(0, estimated_time - elapsed_time)
             remaining_str = self.time_str(remaining_time)
@@ -126,7 +129,7 @@ class TimerProgressBar(QProgressBar):
         self.set_style(ACTION_RUNNING_COLOR)
 
     def set_done_style(self):
-        self.set_style(ACTION_DONE_COLOR)
+        self.set_style(ACTION_COMPLETED_COLOR)
 
 
 class RunWindow(QTextEditLogger):
@@ -245,17 +248,26 @@ class RunWindow(QTextEditLogger):
 
     @Slot(int, str)
     def handle_before_action(self, run_id, _name):
-        if 0 <= run_id < len(self.color_widgets[self.row_widget_id]):
-            self.color_widgets[self.row_widget_id][run_id].set_color(*ACTION_RUNNING_COLOR.tuple())
-            self.progress_bar.start(1)
+        if self.row_widget_id < len(self.color_widgets):
+            widgets = self.color_widgets[self.row_widget_id]
+            if 0 <= run_id < len(widgets):
+                widget = widgets[run_id]
+                widget.set_color(*ACTION_RUNNING_COLOR.tuple())
+                widget.setText(widget.text() + " - running")
+                self.progress_bar.start(1)
         if run_id == -1:
             self.progress_bar.set_running_style()
 
     @Slot(int, str)
     def handle_after_action(self, run_id, _name):
-        if 0 <= run_id < len(self.color_widgets[self.row_widget_id]):
-            self.color_widgets[self.row_widget_id][run_id].set_color(*ACTION_DONE_COLOR.tuple())
-            self.progress_bar.stop()
+        if self.row_widget_id < len(self.color_widgets):
+            widgets = self.color_widgets[self.row_widget_id]
+            if 0 <= run_id < len(widgets):
+                widget = widgets[run_id]
+                widget.set_color(*ACTION_COMPLETED_COLOR.tuple())
+                postfix = f" - completed in {self.progress_bar.elapsed_str}"
+                widget.setText(widget.text().replace(" - running", "") + postfix)
+                self.progress_bar.stop()
         if run_id == -1:
             self.row_widget_id += 1
             self.progress_bar.set_done_style()
@@ -318,6 +330,28 @@ class RunWindow(QTextEditLogger):
             0, lambda: self.right_area.verticalScrollBar().setValue(
                 self.right_area.verticalScrollBar().maximum()))
 
+    @Slot(int)
+    def handle_run_completed(self, _run_id):
+        self.progress_bar.setFormat(self.progress_bar.format() + " - completed")
+
+    def handle_run_interrupt(self, run_id, color, postfix):
+        if self.row_widget_id < len(self.color_widgets):
+            widgets = self.color_widgets[self.row_widget_id]
+            if 0 <= run_id < len(widgets):
+                widget = widgets[run_id]
+                widget.set_color(*color)
+                widget.setText(widget.text().replace(" - running", "") + postfix)
+
+    @Slot(int)
+    def handle_run_stopped(self, run_id):
+        postfix = f" - stopped after {self.progress_bar.elapsed_str}"
+        self.handle_run_interrupt(run_id, ACTION_STOPPED_COLOR.tuple(), postfix)
+
+    @Slot(int)
+    def handle_run_failed(self, run_id):
+        postfix = f" - failed after {self.progress_bar.elapsed_str}"
+        self.handle_run_interrupt(run_id, ACTION_FAILED_COLOR.tuple(), postfix)
+
 
 class RunWorker(LogWorker):
     before_action_signal = Signal(int, str)
@@ -328,6 +362,9 @@ class RunWorker(LogWorker):
     after_step_signal = Signal(int, str, int)
     save_plot_signal = Signal(int, str, str)
     open_app_signal = Signal(int, str, str, str)
+    run_completed_signal = Signal(int)
+    run_stopped_signal = Signal(int)
+    run_failed_signal = Signal(int)
 
     def __init__(self, id_str):
         LogWorker.__init__(self)
@@ -382,15 +419,19 @@ class RunWorker(LogWorker):
         </div>
         ''') # noqa
         status, error_message = self.do_run()
-        if status == constants.RUN_FAILED:
-            message = f"{self.tag} failed"
-            color = "#" + ColorPalette.DARK_RED.hex()
-        elif status == constants.RUN_COMPLETED:
+        run_id = int(self.id_str.split('_')[-1])
+        if status == constants.RUN_COMPLETED:
             message = f"{self.tag} ended successfully"
+            self.run_completed_signal.emit(run_id)
             color = "#" + ColorPalette.DARK_BLUE.hex()
         elif status == constants.RUN_STOPPED:
             message = f"{self.tag} stopped"
             color = "#" + ColorPalette.DARK_RED.hex()
+            self.run_stopped_signal.emit(run_id)
+        elif status == constants.RUN_FAILED:
+            message = f"{self.tag} failed"
+            color = "#" + ColorPalette.DARK_RED.hex()
+            self.run_failed_signal.emit(run_id)
         else:
             message = ''
             color = "#000000"

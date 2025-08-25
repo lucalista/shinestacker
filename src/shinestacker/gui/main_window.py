@@ -1,4 +1,5 @@
-# pylint: disable=C0114, C0115, C0116, E0611, R0902, R0915, R0904, R0914, R0912, E1101, W0201, E1121, R0913, R0917
+# pylint: disable=C0114, C0115, C0116, E0611, R0902, R0915, R0904, R0914
+# pylint: disable=R0912, E1101, W0201, E1121, R0913, R0917
 import os
 import subprocess
 from PySide6.QtCore import Qt
@@ -484,6 +485,9 @@ class MainWindow(QMainWindow, LogManager):
         worker.after_step_signal.connect(window.handle_after_step)
         worker.save_plot_signal.connect(window.handle_save_plot)
         worker.open_app_signal.connect(window.handle_open_app)
+        worker.run_completed_signal.connect(window.handle_run_completed)
+        worker.run_stopped_signal.connect(window.handle_run_stopped)
+        worker.run_failed_signal.connect(window.handle_run_failed)
 
     def run_job(self):
         current_index = self.current_job_index()

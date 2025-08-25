@@ -26,6 +26,7 @@ class NewProjectDialog(BaseFormDialog):
         self.add_row_to_layout(button_box)
         ok_button.clicked.connect(self.accept)
         cancel_button.clicked.connect(self.reject)
+        self.n_image_files = 0
 
     def expert(self):
         return self.parent().expert_options
@@ -136,14 +137,14 @@ class NewProjectDialog(BaseFormDialog):
                         count += 1
             return count
 
-        n_image_files = count_image_files(self.input_folder.text())
-        if n_image_files == 0:
+        self.n_image_files = count_image_files(self.input_folder.text())
+        if self.n_image_files == 0:
             self.bunches_label.setText(DEFAULT_NO_COUNT_LABEL)
             self.frames_label.setText(DEFAULT_NO_COUNT_LABEL)
             return
-        self.frames_label.setText(f"{n_image_files}")
+        self.frames_label.setText(f"{self.n_image_files}")
         if self.bunch_stack.isChecked():
-            bunches = get_bunches(list(range(n_image_files)),
+            bunches = get_bunches(list(range(self.n_image_files)),
                                   self.bunch_frames.value(),
                                   self.bunch_overlap.value())
             self.bunches_label.setText(f"{len(bunches)}")
@@ -164,6 +165,20 @@ class NewProjectDialog(BaseFormDialog):
         if len(input_folder.split('/')) < 2:
             QMessageBox.warning(self, "Invalid Path", "The path must have a parent folder")
             return
+        if self.n_image_files > 15 and not self.bunch_stack.isChecked():
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Warning)
+            msg.setWindowTitle("Too many frames")
+            msg.setText(f"{self.n_image_files} images selected.\n"
+                        "Processing will require a significant amount of RAM.\n"
+                        "Continue anyway?")
+            msg.setInformativeText("You may consider to split the processing "
+                                   " using a bunch stack to reduce memory usage.\n"
+                                   '✅ Check the option "Bunch stack".')
+            msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+            msg.setDefaultButton(QMessageBox.Cancel)
+            if msg.exec_() != QMessageBox.Ok:
+                return
         super().accept()
 
     def get_input_folder(self):
