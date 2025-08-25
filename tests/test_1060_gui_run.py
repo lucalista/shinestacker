@@ -93,7 +93,7 @@ class TestRunWindow:
 class TestRunWorker:
     @pytest.fixture
     def run_worker(self):
-        worker = RunWorker("test_id")
+        worker = RunWorker("test_123")
         worker.do_run = MagicMock(return_value=(constants.RUN_COMPLETED, ""))
         return worker
 
