@@ -42,7 +42,7 @@ class TimerProgressBar(QProgressBar):
         ss = int(secs)
         x = secs - ss
         s = ss % 60
-        mm = ss // 36
+        mm = ss // 60
         m = mm % 60
         h = mm // 60
         t_str = f"{s:02d}" + f"{x:.1f}s".lstrip('0')
