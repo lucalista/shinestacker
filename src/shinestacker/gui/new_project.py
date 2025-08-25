@@ -1,16 +1,19 @@
 # pylint: disable=C0114, C0115, C0116, E0611, R0915, R0902
 import os
+import numpy as np
 from PySide6.QtWidgets import (QHBoxLayout, QPushButton, QLabel, QCheckBox, QSpinBox,
                                QMessageBox)
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt
 from .. config.gui_constants import gui_constants
 from .. config.constants import constants
+from .. algorithms.utils import read_img
 from .. algorithms.stack import get_bunches
 from .select_path_widget import create_select_file_paths_widget
 from .base_form_dialog import BaseFormDialog
 
 DEFAULT_NO_COUNT_LABEL = " - "
+EXTENSIONS = ['jpg', 'jpeg', 'tif', 'tiff']
 
 
 class NewProjectDialog(BaseFormDialog):
@@ -128,12 +131,11 @@ class NewProjectDialog(BaseFormDialog):
         def count_image_files(path):
             if path == '' or not os.path.isdir(path):
                 return 0
-            extensions = ['jpg', 'jpeg', 'tif', 'tiff']
             count = 0
             for filename in os.listdir(path):
                 if '.' in filename:
                     ext = filename.lower().split('.')[-1]
-                    if ext in extensions:
+                    if ext in EXTENSIONS:
                         count += 1
             return count
 
@@ -165,20 +167,53 @@ class NewProjectDialog(BaseFormDialog):
         if len(input_folder.split('/')) < 2:
             QMessageBox.warning(self, "Invalid Path", "The path must have a parent folder")
             return
-        if self.n_image_files > 15 and not self.bunch_stack.isChecked():
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Warning)
-            msg.setWindowTitle("Too many frames")
-            msg.setText(f"{self.n_image_files} images selected.\n"
-                        "Processing will require a significant amount of RAM.\n"
-                        "Continue anyway?")
-            msg.setInformativeText("You may consider to split the processing "
-                                   " using a bunch stack to reduce memory usage.\n"
-                                   '✅ Check the option "Bunch stack".')
-            msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
-            msg.setDefaultButton(QMessageBox.Cancel)
-            if msg.exec_() != QMessageBox.Ok:
+        if self.n_image_files > 0 and not self.bunch_stack.isChecked():
+            path = self.input_folder.text()
+            files = os.listdir(path)
+            file_path = None
+            for filename in files:
+                full_path = os.path.join(path, filename)
+                if os.path.isfile(full_path):
+                    ext = full_path.split(".")[-1].lower()
+                    if ext in EXTENSIONS:
+                        file_path = full_path
+                        break
+            if file_path is None:
+                QMessageBox.warning(
+                    self, "Invalid input", "Could not find images now in the selected path")
                 return
+            img = read_img(file_path)
+            height, width = img.shape[:2]
+            n_bytes = 1 if img.dtype == np.uint8 else 2
+            n_bits = 8 if img.dtype == np.uint8 else 16
+            n_mbytes = float(n_bytes * height * width * self.n_image_files) / 10**6
+            if n_mbytes > 500 and not self.bunch_stack.isChecked():
+                msg = QMessageBox()
+                msg.setStyleSheet("""
+                    QMessageBox {
+                        min-width: 600px;
+                        font-weight: bold;
+                        font-size: 14px;
+                    }
+                    QMessageBox QLabel#qt_msgbox_informativelabel {
+                        font-weight: normal;
+                        font-size: 14px;
+                        color: #555555;
+                    }
+                """)
+                msg.setIcon(QMessageBox.Warning)
+                msg.setWindowTitle("Too many frames")
+                msg.setText(f"You selected {self.n_image_files} images "
+                            f"with resolution {width}×{height} pixels, {n_bits} bits depth. "
+                            "Processing may require a significant amount of memory.\n\n"
+                            "Continue anyway?")
+                msg.setInformativeText("You may consider to split the processing "
+                                       " using a bunch stack to reduce memory usage.\n\n"
+                                       '✅ Check the option "Bunch stack".')
+                msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+                msg.setDefaultButton(QMessageBox.Cancel)
+                if msg.exec_() != QMessageBox.Ok:
+                    return
         super().accept()
 
     def get_input_folder(self):
