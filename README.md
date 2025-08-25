@@ -45,7 +45,7 @@ The GUI has two main working areas:
 
 The first version of the core focus stack algorithm was initially inspired by the [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar that was used under permission of the author. The implementation in the latest releases was rewritten from the original code.
 
-<img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/src/src/shinestacker/gui/ico/shinestacker.png' width="256" referrerpolicy="no-referrer" alt="Shine Stacker Logo">
+<img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/src/shinestacker/gui/ico/shinestacker.png' width="256" referrerpolicy="no-referrer" alt="Shine Stacker Logo">
 
 ## Logo attribution
 
@@ -66,7 +66,7 @@ The software is provided as is under the [GNU Lesser General Public License v3.0
 - **Logo**: The Shine Stacker logo was designed by [Alessandro Lista](https://linktr.ee/alelista).  
   Copyright © Alessandro Lista. All rights reserved.  
   The logo is not covered by the LGPL-3.0 license of this project.
-  
+
 # Attribution request
 📸 If you publish images created with Shine Stacker, please consider adding a note such as:
 
