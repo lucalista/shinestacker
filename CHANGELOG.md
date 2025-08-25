@@ -2,8 +2,8 @@
 
 This page reports the main releases only and the main changes therein.
 
-## [v-.-..] - 2025-08-25
-**Unreleased changes**
+## [v1.0.0] - 2025-08-25
+**First stable release**
 
 ### Changes
 
@@ -11,6 +11,7 @@ This page reports the main releases only and the main changes therein.
 * improved vignetting performance using subsampling
 * implemented fast subsample option in balance algorithms
 * implemented hex color line editin white balance filter
+* new application logo
 * interface improvements: implemented master/layer toggle
 * more informative GUI messages and colors
 * code refactoring and various cleanup 

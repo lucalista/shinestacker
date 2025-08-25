@@ -45,6 +45,14 @@ The GUI has two main working areas:
 
 The first version of the core focus stack algorithm was initially inspired by the [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation by Sami Jawhar that was used under permission of the author. The implementation in the latest releases was rewritten from the original code.
 
+<img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/src/src/shinestacker/gui/ico/shinestacker.png' width="256" referrerpolicy="no-referrer" alt="Shine Stacker Logo">
+
+## Logo attribution
+
+The Shine Stacker logo was designed by [Alessandro Lista](https://linktr.ee/alelista).  
+Copyright © Alessandro Lista. All rights reserved.  
+The logo is not covered by the LGPL-3.0 license of this project.
+
 # Resources
 
 * [Pyramid Methods in Image Processing](https://www.researchgate.net/publication/246727904_Pyramid_Methods_in_Image_Processing), E. H. Adelson, C. H. Anderson,  J. R. Bergen, P. J. Burt, J. M. Ogden, RCA Engineer, 29-6, Nov/Dec 1984
@@ -53,9 +61,12 @@ Pyramid methods in image processing
 
 # License
 
-<img src="https://www.gnu.org/graphics/lgplv3-147x51.png" alt="LGPL 3 logo">
+- **Code**: <img src="https://www.gnu.org/graphics/lgplv3-147x51.png" alt="LGPL 3 logo">
 The software is provided as is under the [GNU Lesser General Public License v3.0](https://www.gnu.org/licenses/lgpl-3.0.en.html). See [LICENSE](https://github.com/lucalista/shinestacker/blob/main/LICENSE) for details.
-
+- **Logo**: The Shine Stacker logo was designed by [Alessandro Lista](https://linktr.ee/alelista).  
+  Copyright © Alessandro Lista. All rights reserved.  
+  The logo is not covered by the LGPL-3.0 license of this project.
+  
 # Attribution request
 📸 If you publish images created with Shine Stacker, please consider adding a note such as:
 
