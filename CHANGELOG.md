@@ -2,6 +2,15 @@
 
 This page reports the main releases only and the main changes therein.
 
+## [v1.0.1] - 2025-08-25
+**First stable release**
+
+### Changes
+
+* added source file missing by mistake in v1.0.0
+
+---
+
 ## [v1.0.0] - 2025-08-25
 **First stable release**
 
@@ -16,6 +25,10 @@ This page reports the main releases only and the main changes therein.
 * more informative GUI messages and colors
 * code refactoring and various cleanup 
 * bug fixes
+
+Note
+
+A source file was missing in this tag, and was added in v1.0.1
 
 ---
 
