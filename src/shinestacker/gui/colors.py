@@ -50,3 +50,8 @@ BLUE_COMBO_STYLE = f"""
         color: #{ColorPalette.MEDIUM_BLUE.hex()};
     }}
 """
+
+ACTION_RUNNING_COLOR = ColorPalette.MEDIUM_BLUE
+ACTION_COMPLETED_COLOR = ColorPalette.MEDIUM_GREEN
+ACTION_STOPPED_COLOR = ColorPalette.MEDIUM_RED
+ACTION_FAILED_COLOR = ColorPalette.MEDIUM_RED

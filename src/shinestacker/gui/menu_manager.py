@@ -92,7 +92,9 @@ class MenuManager:
             menu.addAction(self.action(name))
         menu.addSeparator()
         self.enable_action = self.action("E&nable")
+        menu.addAction(self.enable_action)
         self.disable_action = self.action("Di&sable")
+        menu.addAction(self.disable_action)
         for name in ["Enable All", "Disable All"]:
             menu.addAction(self.action(name))
 

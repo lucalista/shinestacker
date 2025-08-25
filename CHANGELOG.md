@@ -2,7 +2,7 @@
 
 This page reports the main releases only and the main changes therein.
 
-## [v-.-..] - 2025-08-23
+## [v-.-..] - 2025-08-25
 **Unreleased changes**
 
 ### Changes
@@ -12,6 +12,7 @@ This page reports the main releases only and the main changes therein.
 * implemented fast subsample option in balance algorithms
 * implemented hex color line editin white balance filter
 * interface improvements: implemented master/layer toggle
+* more informative GUI messages and colors
 * code refactoring and various cleanup 
 * bug fixes
 
