@@ -330,9 +330,8 @@ class ImageEditorUI(QMainWindow, LayerCollectionHandler):
         view_individual_action.setShortcut("L")
         view_individual_action.triggered.connect(self.set_view_individual)
         view_menu.addAction(view_individual_action)
-        view_menu.addSeparator()
 
-        toggle_view_master_individual_action = QAction("View Individual", self)
+        toggle_view_master_individual_action = QAction("Toggle Master/Individual", self)
         toggle_view_master_individual_action.setShortcut("T")
         toggle_view_master_individual_action.triggered.connect(self.toggle_view_master_individual)
         view_menu.addAction(toggle_view_master_individual_action)
