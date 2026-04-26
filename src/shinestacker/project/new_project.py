@@ -56,7 +56,7 @@ class NewProjectDialog(BaseFormDialog):
         name_row.addStretch()
         name_row.addLayout(expert_layout)
         self.form_layout.addRow(name_row)
-        self.input_widget = FolderFileSelectionWidget()
+        self.input_widget = FolderFileSelectionWidget(AppConfig.get('input_folder_path'))
         self.input_widget.text_changed_connect(self.input_submitted)
         self.noise_detection = self.create_expert_widget(
             QCheckBox(), "noise_detection",

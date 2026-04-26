@@ -1,21 +1,17 @@
-# pylint: disable=C0114, C0115, C0116, E0611
+# pylint: disable=C0114, C0115, C0116, E0611, R0902
 import os
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QWidget, QRadioButton, QButtonGroup, QLineEdit,
                                QPushButton, QHBoxLayout, QVBoxLayout, QFileDialog, QMessageBox)
-from .. config.app_config import AppConfig
 from .. algorithms.utils import EXTENSIONS_GUI_STR_IN
 
 
-def get_input_folder_path():
-    input_folder_path = AppConfig.get('input_folder_path')
-    return input_folder_path if input_folder_path else os.path.expanduser("~")
-
-
 class SessionFileDialog:
-    def __init__(self, parent=None):
+    def __init__(self, default_input_path='', parent=None):
         self.parent = parent
-        self._last_path = get_input_folder_path()
+        self._default_input_path = default_input_path if default_input_path \
+            else os.path.expanduser("~")
+        self._last_path = self._default_input_path
 
     def update_last_path(self, path):
         if path:
@@ -30,7 +26,8 @@ class SessionFileDialog:
     def open_files(self, caption="", file_filter=""):
         file_paths, selected_filter = QFileDialog.getOpenFileNames(
             self.parent, caption, self._last_path, file_filter)
-        self.update_last_path(os.path.dirname(file_paths[0]))
+        if file_paths and len(file_paths) > 0:
+            self.update_last_path(os.path.dirname(file_paths[0]))
         return file_paths, selected_filter
 
     def save_file(self, caption="", file_filter="", default_path=""):
@@ -42,10 +39,12 @@ class SessionFileDialog:
 
 
 class FolderFileSelectionWidget(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, default_input_path='', parent=None):
         super().__init__(parent)
         self.selection_mode = 'folder'  # 'folder' or 'files'
         self.selected_files = []
+        self._default_input_path = default_input_path if default_input_path \
+            else os.path.expanduser("~")
         self.setup_ui()
 
     def setup_ui(self):
@@ -104,7 +103,7 @@ class FolderFileSelectionWidget(QWidget):
         current_path = self.path_edit.text()
         if current_path != '' and os.path.isdir(current_path):
             return current_path
-        return get_input_folder_path()
+        return self._default_input_path
 
     def browse_folder(self):
         input_folder_path = self._get_input_folder_path()

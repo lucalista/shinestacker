@@ -152,7 +152,7 @@ class MainWindow(ProjectHandler, QMainWindow):
         self.show_status_message("Shine Stacker ready.", 4000)
         self.set_view(self.current_mode)
         self.action_dialog = None
-        self.file_dialog = SessionFileDialog(self)
+        self.file_dialog = SessionFileDialog(AppConfig.get('input_folder_path'), self)
 
     def reset_project(self):
         self.set_project(Project())

@@ -66,7 +66,7 @@ class JobConfigurator(DefaultActionConfigurator):
 
     def create_form(self, layout, action):
         super().create_form(layout, action, "Job")
-        self.input_widget = FolderFileSelectionWidget()
+        self.input_widget = FolderFileSelectionWidget(AppConfig.get('input_folder_path'))
         self.frames_label = QLabel("0")
         working_path = action.params.get('working_path', '')
         input_path = action.params.get('input_path', '')

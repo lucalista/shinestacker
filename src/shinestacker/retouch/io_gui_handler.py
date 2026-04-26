@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
     QPushButton, QButtonGroup, QHBoxLayout)
 from PySide6.QtGui import QGuiApplication, QCursor
 from PySide6.QtCore import Qt, QObject, QTimer, Signal
+from .. config.app_config import AppConfig
 from .. algorithms.utils import EXTENSIONS_GUI_STR_IN, extension_tif, write_img
 from .. algorithms.exif import get_exif, write_image_with_exif_data
 from ..gui.folder_file_selection import SessionFileDialog
@@ -50,7 +51,7 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
         self.save_master_only = None
         self.selected_format = None
         self.selected_bit_depth = None
-        self.file_dialog = SessionFileDialog(self.parent())
+        self.file_dialog = SessionFileDialog(AppConfig.get('input_folder_path'), self.parent())
 
     def reset_save_config(self):
         self.save_master_only = None
