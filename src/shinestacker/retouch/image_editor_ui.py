@@ -1,16 +1,17 @@
 # pylint: disable=C0114, C0115, C0116, E0611, R0902, R0914, R0915, R0904, W0108, R0911, R0903, W0718
+import os
 import traceback
 from functools import partial
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QShortcut, QKeySequence, QAction, QActionGroup, QGuiApplication
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QMenu,
-                               QFileDialog, QListWidget, QSlider, QMainWindow, QMessageBox,
-                               QDialog)
+                               QListWidget, QSlider, QMainWindow, QMessageBox, QDialog)
 from .. config.constants import constants
 from .. config.app_config import AppConfig
 from .. config.gui_constants import gui_constants
 from .. gui.recent_file_manager import RecentFileManager
 from .. algorithms.exif import get_exif
+from .. algorithms.utils import EXTENSIONS_GUI_STR_IN
 from .image_viewer import ImageViewer
 from .shortcuts_help import ShortcutsHelp
 from .brush import Brush
@@ -826,7 +827,11 @@ class ImageEditorUI(QMainWindow, LayerCollectionHandler):
                 self.redo_action.setEnabled(False)
 
     def select_exif_path(self):
-        path, _ = QFileDialog.getOpenFileName(None, "Select file with exif data")
+        current_file_path = os.path.dirname(self.io_gui_handler.current_file_path_master)
+        path, _ = self.io_gui_handler.file_dialog.open_file(
+            "Select file with exif data",
+            f"Images ({EXTENSIONS_GUI_STR_IN});;All Files (*)",
+            current_file_path)
         if path:
             try:
                 temp_exif_data = get_exif(path)
