@@ -154,8 +154,10 @@ class IOGuiHandler(QObject, LayerCollectionHandler):
     def open_file(self, file_paths=None):
         self.cleanup_old_threads()
         if file_paths is None:
+            current_file_path = os.path.dirname(self.current_file_path_master)
             file_paths, _ = self.file_dialog.open_files(
-                "Open Project", f"Images ({EXTENSIONS_GUI_STR_IN});;All Files (*)")
+                "Open Project", f"Images ({EXTENSIONS_GUI_STR_IN});;All Files (*)",
+                current_file_path)
         if not file_paths:
             return
         if self.loader_thread and self.loader_thread.isRunning():
