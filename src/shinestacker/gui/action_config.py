@@ -406,9 +406,10 @@ class FieldBuilder:
         spins = [QSpinBox() for i in range(size)]
         labels = kwargs.get('labels', ('') * size)
         value = self.action.params.get(tag, default)
+        vals = list(value.values()) if isinstance(value, dict) else value
         for i, spin in enumerate(spins):
             spin.setRange(min_val[i], max_val[i])
-            spin.setValue(value[i])
+            spin.setValue(vals[i])
             spin.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             label = QLabel(labels[i] + ":")
             label.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)

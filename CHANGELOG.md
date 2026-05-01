@@ -1,12 +1,13 @@
 # Changelog
 
-## [v1.15.x] - 2026-04-26
+## [v1.15.x] - 2026-05-01
 ***Fixes, updates and clean up***
 
 ### Fixed
 - updated release and pylint scripts with more recent external script versions to prevent warning messages
 - robustness fix to command line option -p/--path (#38)
 - fixed default dialog path when opening image files in retouch mode (#36)
+- fixed configurable parameter dialog for integer tuples
 
 ### Changed
 - added new setting: "Raw Formats" > "Auto-brightness threshold" parameter (default: 1%) (#33)
