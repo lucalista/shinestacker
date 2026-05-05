@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.15.x] - 2026-05-04
+
+### Fixed
+- input path is no longer empty in case of a trailing "/", or "\\" on Windows (#45)
+- fallback protection prevents empty module base name in the pathologic case the input path is empty
+
+---
+
 ## [v1.15.2] - 2026-05-03
 ***Fixes, updates and clean up***
 

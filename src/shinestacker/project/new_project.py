@@ -431,8 +431,8 @@ def fill_new_project(project, parent, initial_path=None):
     dialog = NewProjectDialog(parent, initial_path=initial_path)
     if dialog.exec() == QDialog.Accepted:
         input_folder = dialog.get_input_folder()
-        working_path = os.path.dirname(input_folder)
-        input_path = os.path.basename(input_folder)
+        working_path, input_path = os.path.split(input_folder)
+        base_name = input_path if input_path else 'shinestacker'
         selected_filenames = dialog.get_selected_filenames()
         if dialog.get_noise_detection():
             job_noise = ActionConfig(
@@ -445,7 +445,7 @@ def fill_new_project(project, parent, initial_path=None):
             job_noise.add_sub_action(noise_detection)
             jobs.append(job_noise)
         job_params = {
-            'name': f'{input_path}-stack-job',
+            'name': f'{base_name}-stack-job',
             'working_path': working_path,
             'input_path': input_path
         }
@@ -455,7 +455,7 @@ def fill_new_project(project, parent, initial_path=None):
         preprocess_name = ''
         if dialog.get_noise_detection() or dialog.get_vignetting_correction() or \
            dialog.get_align_frames() or dialog.get_balance_frames():
-            preprocess_name = f'{input_path}-preprocess'
+            preprocess_name = f'{base_name}-preprocess'
             combo_action = ActionConfig(
                 constants.ACTION_COMBO, {'name': preprocess_name})
             if dialog.get_noise_detection():
@@ -480,7 +480,7 @@ def fill_new_project(project, parent, initial_path=None):
                 combo_action.add_sub_action(balance)
             job.add_sub_action(combo_action)
         if dialog.get_bunch_stack():
-            bunch_stack_name = f'{input_path}-bunches'
+            bunch_stack_name = f'{base_name}-bunches'
             bunch_stack = ActionConfig(
                 constants.ACTION_FOCUSSTACKBUNCH,
                 {'name': bunch_stack_name, 'frames': dialog.get_bunch_frames(),
@@ -488,7 +488,7 @@ def fill_new_project(project, parent, initial_path=None):
             job.add_sub_action(bunch_stack)
         stack_input_path = bunch_stack_name if dialog.get_bunch_stack() else preprocess_name
         if dialog.get_focus_stack_pyramid():
-            focus_pyramid_name = f'{input_path}-focus-stack-pyramid'
+            focus_pyramid_name = f'{base_name}-focus-stack-pyramid'
             focus_pyramid_params = {'name': focus_pyramid_name,
                                     'stacker': constants.STACK_ALGO_PYRAMID,
                                     'exif_path': input_path}
@@ -497,7 +497,7 @@ def fill_new_project(project, parent, initial_path=None):
             focus_pyramid = ActionConfig(constants.ACTION_FOCUSSTACK, focus_pyramid_params)
             job.add_sub_action(focus_pyramid)
         if dialog.get_focus_stack_depth_map():
-            focus_depth_map_name = f'{input_path}-focus-stack-depth-map'
+            focus_depth_map_name = f'{base_name}-focus-stack-depth-map'
             focus_depth_map_params = {'name': focus_depth_map_name,
                                       'stacker': constants.STACK_ALGO_DEPTH_MAP,
                                       'exif_path': input_path}
@@ -517,7 +517,7 @@ def fill_new_project(project, parent, initial_path=None):
                 multi_input_path.append(preprocess_name)
             multi_layer = ActionConfig(
                 constants.ACTION_MULTILAYER,
-                {'name': f'{input_path}-multi-layer',
+                {'name': f'{base_name}-multi-layer',
                  'input_path': constants.PATH_SEPARATOR.join(multi_input_path)})
             job.add_sub_action(multi_layer)
         jobs.append(job)
