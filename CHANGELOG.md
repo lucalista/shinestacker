@@ -1,20 +1,20 @@
 # Changelog
 
-## [v1.15.x] - 2026-05-14
+## [v1.15.3] - 2026-05-14
 **Fixes and minor GUI improvements**
 
 ### Fixed
-- input path is no longer empty in case of a trailing "/", or "\\" on Windows (#45)
-- fallback protection prevents empty module base name in the pathologic case the input path is empty
-- project template with folder parameters pointing to non-existing paths are requested to the user instead of failing when the job runs (#47)
+- input path no longer becomes empty when it contains a trailing "/" or "\" on Windows (#45, #46)
+- added fallback protection to prevent an empty module base name when the input path is empty (#45, #46)
+- project templates with folder parameters pointing to non-existent paths now prompt the user for input instead of failing when the job runs (#47)
 
 ### Changed
-- improved messages to the user when opening a project template (#47)
+- improved user messages when opening a project template that contains missing folder paths (#47)
 
 ---
 
 ## [v1.15.2] - 2026-05-03
-***Fixes, updates and clean up***
+**Fixes, updates and clean up**
 
 ### Fixed
 - updated release and pylint scripts with more recent external script versions to prevent warning messages
@@ -31,7 +31,7 @@
 ---
 
 ## [v1.15.1] - 2026-04-22
-***Bug fixes and user-requested improvements***
+**Bug fixes and user-requested improvements**
 
 ### Fixed
 - fixed bugs and improved implementation of the "Open Template" action (#31)
