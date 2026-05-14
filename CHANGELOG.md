@@ -1,10 +1,15 @@
 # Changelog
 
-## [v1.15.x] - 2026-05-04
+## [v1.15.x] - 2026-05-14
+**Fixes and minor GUI improvements**
 
 ### Fixed
 - input path is no longer empty in case of a trailing "/", or "\\" on Windows (#45)
 - fallback protection prevents empty module base name in the pathologic case the input path is empty
+- project template with folder parameters pointing to non-existing paths are requested to the user instead of failing when the job runs (#47)
+
+### Changed
+- improved messages to the user when opening a project template (#47)
 
 ---
 

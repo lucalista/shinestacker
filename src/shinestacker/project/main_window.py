@@ -7,7 +7,8 @@ import jsonpickle
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication, QAction, QPalette
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QToolBar, QMainWindow, QApplication, QStackedWidget, QMessageBox)
+    QWidget, QVBoxLayout, QToolBar, QMainWindow, QApplication, QStackedWidget, QMessageBox,
+    QFileDialog)
 from ..config.constants import constants
 from ..config.app_config import AppConfig
 from ..core.exceptions import InvalidProjectError
@@ -337,7 +338,22 @@ class MainWindow(ProjectHandler, QMainWindow):
         for job_index, job in enumerate(jobs):
             self.selection_state.set_indices(job_index)
             old_input_path = os.path.basename(job.params['input_path'])
-            new_input_path = os.path.basename(self.element_action.open_job_browse_folder_dialog())
+            msg = QMessageBox(self)
+            msg.setIcon(QMessageBox.Information)
+            msg.setWindowTitle("Select Input Folder")
+            msg.setText(f"Please now select your input folder for job {job.params['name']}")
+            msg.setStandardButtons(QMessageBox.Ok)
+            if msg.exec_() != QMessageBox.Ok:
+                self.close_project()
+                return
+            new_input_path = self.element_action.open_job_browse_folder_dialog()
+            if not new_input_path:
+                QMessageBox.warning(self, "Operation Aborted",
+                                    "No folder selected. Template operation cancelled.")
+                self.close_project()
+                return
+            working_path = job.params['working_path']
+            par_strings = {'output_path': 'output path', 'exif_path': 'EXIF files path'}
             for action in job.sub_actions:
                 name = action.params['name']
                 if old_input_path and name.startswith(old_input_path):
@@ -345,6 +361,25 @@ class MainWindow(ProjectHandler, QMainWindow):
                 else:
                     name = f"{new_input_path}-{name}"
                 action.params['name'] = name
+                for param_name in ['output_path', 'exif_path']:
+                    if param_name in action.params and action.params[param_name]:
+                        msg = QMessageBox(self)
+                        msg.setIcon(QMessageBox.Information)
+                        msg.setWindowTitle(f"Select {par_strings[param_name]}")
+                        msg.setText(f"Please now select your {par_strings[param_name]} "
+                                    f"for action {action.params['name']}")
+                        msg.setStandardButtons(QMessageBox.Ok)
+                        if msg.exec_() != QMessageBox.Ok:
+                            continue
+                        selected_path = QFileDialog.getExistingDirectory(
+                            self, f"Select {par_strings[param_name]} folder", working_path)
+                        if selected_path:
+                            if os.path.commonpath([working_path, selected_path]) == working_path:
+                                rel_path = os.path.relpath(selected_path, working_path)
+                                action.params[param_name] = rel_path
+                            else:
+                                QMessageBox.warning(self, "Invalid Selection",
+                                                    f"Selected path must be within {working_path}")
             for view in self.views.values():
                 view.update_widget_recursive(self.selection_state)
         self.selection_state.set_indices()
