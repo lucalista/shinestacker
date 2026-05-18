@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.15.x] - 2026-05-18
+**Bug fixes**
+
+### Fixed
+- input path no longer becomes empty when it contains a trailing "/" or "\" on Windows (#45, #46). Additional fix with respect to 1.15.3 release.
+
+---
+
 ## [v1.15.3] - 2026-05-14
 **Fixes and minor GUI improvements**
 

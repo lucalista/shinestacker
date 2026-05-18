@@ -431,7 +431,8 @@ def fill_new_project(project, parent, initial_path=None):
     dialog = NewProjectDialog(parent, initial_path=initial_path)
     if dialog.exec() == QDialog.Accepted:
         input_folder = dialog.get_input_folder()
-        working_path, input_path = os.path.split(input_folder)
+        working_path, input_path = os.path.split(os.path.normpath(input_folder))
+        print(f"split: {input_folder} => {working_path} + {input_path}")
         base_name = input_path if input_path else 'shinestacker'
         selected_filenames = dialog.get_selected_filenames()
         if dialog.get_noise_detection():
