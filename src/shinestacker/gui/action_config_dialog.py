@@ -76,15 +76,17 @@ class JobConfigurator(DefaultActionConfigurator):
         self.working_path_label = QLabel(working_path or "Not set")
         self.input_path_label = QLabel(input_path or "Not set")
         if input_filepaths:
-            full_input_dir = os.path.join(working_path, input_path)
+            full_input_dir = os.path.normpath(os.path.join(working_path, input_path))
             self.input_widget.selected_files = [os.path.join(full_input_dir, f)
                                                 for f in input_filepaths]
             self.input_widget.path_edit.setText(full_input_dir)
             self.input_widget.files_mode_radio.setChecked(True)
+            self.input_widget.selection_mode = 'files'  # Explicitly set the mode
         else:
-            full_input_dir = os.path.join(working_path, input_path)
+            full_input_dir = os.path.normpath(os.path.join(working_path, input_path))
             self.input_widget.path_edit.setText(full_input_dir)
-            self.input_widget.folder_mode_radio.setChecked(False)
+            self.input_widget.folder_mode_radio.setChecked(True)
+            self.input_widget.selection_mode = 'folder'  # Explicitly set the mode
         self.input_widget.text_changed_connect(self.update_paths_and_frames)
         self.input_widget.folder_mode_radio.toggled.connect(self.update_paths_and_frames)
         self.input_widget.files_mode_radio.toggled.connect(self.update_paths_and_frames)
@@ -108,10 +110,15 @@ class JobConfigurator(DefaultActionConfigurator):
         self.working_path_label.setText(working_path or "Not set")
         self.frames_label.setText(str(len(input_filepaths)))
 
-    def update_paths_and_frames(self, ):
+    def update_paths_and_frames(self):
         input_fullpath = self.input_widget.get_path()
-        input_path = os.path.basename(os.path.normpath(input_fullpath)) if input_fullpath else ""
-        working_path = os.path.dirname(input_fullpath) if input_fullpath else ""
+        if input_fullpath:
+            normalized_path = os.path.normpath(input_fullpath)
+            working_path = os.path.dirname(normalized_path)
+            input_path = os.path.basename(normalized_path)
+        else:
+            working_path = ""
+            input_path = ""
         self.input_path_label.setText(input_path or "Not set")
         self.working_path_label.setText(working_path or "Not set")
         self.update_frames_count()
@@ -136,8 +143,13 @@ class JobConfigurator(DefaultActionConfigurator):
         else:
             input_full_path = self.input_widget.get_path()
             params['input_filepaths'] = []
-        input_path = os.path.basename(os.path.normpath(input_full_path)) if input_full_path else ""
-        working_path = os.path.dirname(input_full_path) if input_full_path else ""
+        input_full_path = os.path.normpath(input_full_path) if input_full_path else ""
+        if input_full_path:
+            working_path = os.path.dirname(input_full_path)
+            input_path = os.path.basename(input_full_path)
+        else:
+            working_path = ""
+            input_path = ""
         if not working_path:
             QMessageBox.warning(
                 None, "Error",
@@ -155,11 +167,10 @@ class JobConfigurator(DefaultActionConfigurator):
             self.input_widget.browse_button.setFocus()
             return False
         if selection_mode == 'folder':
-            full_input_path = os.path.join(working_path, input_path)
-            if not os.path.exists(full_input_path):
+            if not os.path.exists(input_full_path):
                 QMessageBox.warning(
                     None, "Error",
-                    f"Input directory '{full_input_path}' does not exist. "
+                    f"Input directory '{input_full_path}' does not exist. "
                     "Please select a valid directory."
                 )
                 self.input_widget.browse_button.setFocus()

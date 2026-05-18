@@ -209,7 +209,7 @@ class FolderParameter(BaseParameter):
             self.line_edit.text() or os.path.expanduser("~")
         )
         if folder:
-            self.line_edit.setText(folder)
+            self.line_edit.setText(os.path.normpath(folder))
 
     def get_value(self):
         return self.line_edit.text()

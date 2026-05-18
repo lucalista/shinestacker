@@ -95,7 +95,7 @@ class FolderFileSelectionWidget(QWidget):
             # self.path_edit.setPlaceholderText("input files")
 
     def handle_browse(self):
-        self.path_edit.setText('')
+        self.path_edit.clear()
         if self.selection_mode == 'folder':
             self.browse_folder()
         else:
@@ -104,7 +104,7 @@ class FolderFileSelectionWidget(QWidget):
     def _get_input_folder_path(self):
         current_path = self.path_edit.text()
         if current_path != '' and os.path.isdir(current_path):
-            return current_path
+            return os.path.normpath(current_path)
         return self._default_input_path
 
     def browse_folder(self):
