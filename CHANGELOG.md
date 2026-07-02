@@ -1,5 +1,15 @@
 # Changelog
 
+----
+
+## [v1.15.5] - 2026-07-02
+**Forced OpenCV compatibility**
+
+### Fixed
+- cv2 version forced to be < 5.0.0 for compatibility
+
+---
+
 ## [v1.15.4] - 2026-05-21
 **Bug fixes**
 
