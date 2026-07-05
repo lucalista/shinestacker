@@ -2,7 +2,7 @@
 
 ----
 
-## [v1.15.5] - 2026-07-02
+## [v1.15.5] - 2026-07-05
 **Forced OpenCV compatibility**
 
 ### Fixed
