@@ -11,7 +11,7 @@ To allow Shine Stacker to run safely, please follow these steps:
 3. Open the **Terminal** (found in *Applications > Utilities > Terminal*).
 4. Run the following command to remove the quarantine attribute:
 ```bash
-xattr -cr /Applications/shinestacker.app
+sudo xattr -cr /Applications/shinestacker.app
 ```
 5. You can now launch Shine Stacker normally from your Applications folder.
 
