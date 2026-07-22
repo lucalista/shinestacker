@@ -1,5 +1,12 @@
 # Changelog
 
+
+## [v1.15.x] - 2026-07-2
+**Removed uv lock file**
+
+### Changed
+- removed uv.lock file since uv is not supported and uv.lock is not updated in the development workflow
+
 ----
 
 ## [v1.15.5] - 2026-07-05
