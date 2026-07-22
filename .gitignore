@@ -22,3 +22,4 @@ src/shinestacker/_version.py
 *.spec
 logs
 .vscode/
+uv.lock
