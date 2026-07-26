@@ -304,6 +304,10 @@ class SettingsDialog(ConfigDialog, AlignFramesConfigBase):
                         'Max num. of cores:',
                         DEFAULTS['align_frames_params']['max_threads'], 0, 256),
                     NestedCallbackComboBoxParameter(
+                        'align_frames_params', 'transform', 'Transform:',
+                        DEFAULTS['align_frames_params']['transform'],
+                        list(zip(self.TRANSFORM_OPTIONS, constants.VALID_TRANSFORMS))),
+                    NestedCallbackComboBoxParameter(
                         'align_frames_params', 'detector', 'Detector:',
                         DEFAULTS['align_frames_params']['detector'],
                         [(d, d) for d in constants.VALID_DETECTORS],

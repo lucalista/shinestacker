@@ -1,11 +1,13 @@
 # Changelog
 
-
-## [v1.15.x] - 2026-07-2
+## [v1.15.x] - 2026-07-26
 **Removed uv lock file**
 
 ### Changed
 - removed uv.lock file since uv is not supported and uv.lock is not updated in the development workflow
+
+### Added
+- new configurable setting: aling transform, valid options are: rigid, homography (#55)
 
 ----
 

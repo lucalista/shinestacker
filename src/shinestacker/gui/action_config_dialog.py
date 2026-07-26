@@ -719,6 +719,7 @@ class SubsampleActionConfigurator(DefaultActionConfigurator):
 
 
 class AlignFramesConfigBase:
+    TRANSFORM_OPTIONS = ['Rigid', 'Homography']
     MATCHING_METHOD_OPTIONS = ['K-nearest neighbors', 'Hamming distance']
     DETECTOR_DESCRIPTOR_TOOLTIPS = {
         'detector':
@@ -729,7 +730,6 @@ class AlignFramesConfigBase:
             "ORB/AKAZE: Require Hamming distance with ORB/AKAZE detectors",
         'match_method':
             "Automatically selected based on detector/descriptor combination"
-
     }
 
     def __init__(self):
@@ -773,7 +773,6 @@ class AlignFramesConfigBase:
 
 class AlignFramesConfigurator(SubsampleActionConfigurator, AlignFramesConfigBase):
     BORDER_MODE_OPTIONS = ['Constant', 'Replicate', 'Replicate and blur']
-    TRANSFORM_OPTIONS = ['Rigid', 'Homography']
     METHOD_OPTIONS = ['Random Sample Consensus (RANSAC)', 'Least Median (LMEDS)']
     MODE_OPTIONS = ['Auto', 'Sequential', 'Parallel']
 
