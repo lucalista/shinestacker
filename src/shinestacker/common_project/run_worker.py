@@ -25,11 +25,13 @@ class RunWorker(LogWorker):
     add_frame_signal = Signal(str, str, int)
     set_total_actions_signal = Signal(str, str, int)
     update_frame_status_signal = Signal(str, str, int)
+    retouch_after_run_signal = Signal(int, str)
 
-    def __init__(self, id_str):
+    def __init__(self, id_str, retouch_after_run=False):
         LogWorker.__init__(self)
         self.id_str = id_str
         self.status = constants.STATUS_RUNNING
+        self.retouch_after_run = retouch_after_run
         self.callbacks = {
             constants.CALLBACK_BEFORE_ACTION: self.before_action,
             constants.CALLBACK_AFTER_ACTION: self.after_action,
@@ -102,6 +104,8 @@ class RunWorker(LogWorker):
         if status == constants.RUN_COMPLETED:
             message = f"{self.tag} ended successfully"
             self.run_completed_signal.emit(run_id, self.name)
+            if self.retouch_after_run:
+                self.retouch_after_run_signal.emit(run_id, self.name)
             color = COLOR_BLUE
         elif status == constants.RUN_STOPPED:
             message = f"{self.tag} stopped"
@@ -129,8 +133,8 @@ class RunWorker(LogWorker):
 
 
 class JobLogWorker(RunWorker):
-    def __init__(self, job, id_str):
-        super().__init__(id_str)
+    def __init__(self, job, id_str, retouch_after_run=False):
+        super().__init__(id_str, retouch_after_run)
         self.job = job
         self.tag = "Job"
 
@@ -140,8 +144,8 @@ class JobLogWorker(RunWorker):
 
 
 class ProjectLogWorker(RunWorker):
-    def __init__(self, project, id_str):
-        super().__init__(id_str)
+    def __init__(self, project, id_str, retouch_after_run=False):
+        super().__init__(id_str, retouch_after_run)
         self.project = project
         self.tag = "Project"
 

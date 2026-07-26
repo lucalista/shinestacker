@@ -278,7 +278,10 @@ class SettingsDialog(ConfigDialog, AlignFramesConfigBase):
                         DEFAULTS['temp_folder_path'],
                         'Temporary folder for processing files.\n'
                         'Using a fast drive (SSD recommended) \n'
-                        'with ample free space will improve\nperformance.')
+                        'with ample free space will improve\nperformance.'),
+                    CheckBoxParameter(
+                        'retouch_after_run', 'Run retouch after run',
+                        DEFAULTS['retouch_after_run'])
                 ]),
                 ("Raw Formats", [
                     NestedCheckBoxParameter(
@@ -342,7 +345,7 @@ class SettingsDialog(ConfigDialog, AlignFramesConfigBase):
             ]
         if self.retouch_settings:
             self.retouch_parameters = [
-                ("General Appearance", [
+                ("General", [
                     ComboBoxParameter(
                         'retouch_view_strategy', 'View strategy:',
                         DEFAULTS['retouch_view_strategy'],

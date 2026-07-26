@@ -248,6 +248,12 @@ class MenuManager(QObject, IconManager):
         menu.addSeparator()
         self.run_retouch_selected_job_action = self.action("Retouch Job Output", requires_file=True)
         menu.addAction(self.run_retouch_selected_job_action)
+        self.retouch_after_run_action = QAction("Retouch After Run", self.parent)
+        self.retouch_after_run_action.setCheckable(True)
+        self.retouch_after_run_action.setChecked(AppConfig.get('retouch_after_run'))
+        self.retouch_after_run_action.setProperty("requires_file", False)
+        self.retouch_after_run_action.triggered.connect(self.parent.toggle_retouch_after_run)
+        menu.addAction(self.retouch_after_run_action)
 
     def add_actions_menu(self):
         menu = self.menubar.addMenu("&Actions")

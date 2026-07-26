@@ -181,6 +181,13 @@ class MainWindow(ProjectHandler, QMainWindow):
     def set_retouch_callback(self, callback):
         self.retouch_callback = callback
 
+    def toggle_retouch_after_run(self):
+        retouch_after_run = self.menu_manager.retouch_after_run_action.isChecked()
+        for view in self.views.values():
+            view.set_retouch_after_run(retouch_after_run)
+        self.show_status_message(
+            f"Retouch after run {'enabled' if retouch_after_run else 'disabled'}")
+
     def update_title(self):
         title = constants.APP_TITLE
         file_name = self.element_action.current_file_name()
@@ -460,6 +467,9 @@ class MainWindow(ProjectHandler, QMainWindow):
     def handle_config(self):
         self.menu_manager.expert_options_action.setChecked(
             AppConfig.get('expert_options'))
+        print("retouch after run: ", AppConfig.get('retouch_after_run'))
+        self.menu_manager.retouch_after_run_action.setChecked(
+            AppConfig.get('retouch_after_run'))
 
     def toggle_expert_options(self):
         AppConfig.set('expert_options', self.menu_manager.expert_options_action.isChecked())

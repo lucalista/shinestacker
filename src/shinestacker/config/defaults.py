@@ -7,6 +7,7 @@ DEFAULTS = {
     'plots_format': 'png',
     'project_view_strategy': 'modern_horizontal',
     'retouch_view_strategy': 'overlaid',
+    'retouch_after_run': False,
     'input_folder_path': '',
     'paint_refresh_time': 50,  # ms
     'display_refresh_time': 50,  # ms

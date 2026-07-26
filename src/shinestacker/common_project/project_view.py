@@ -37,8 +37,12 @@ class ProjectView(QWidget, LogManager, ProjectHandler):
         LogManager.__init__(self)
         self.dark_theme = dark_theme
         self.selection_state = selection_state
+        self.retouch_after_run = False
         self._current_file_name = ''
         self._setup_common_menu_actions()
+
+    def set_retouch_after_run(self, enabled):
+        self.retouch_after_run = enabled
 
     def set_current_file_name(self, file_name):
         self._current_file_name = file_name
@@ -62,6 +66,7 @@ class ProjectView(QWidget, LogManager, ProjectHandler):
         worker.set_total_actions_signal.connect(signal_target.handle_set_total_actions, unique)
         worker.save_plot_signal.connect(signal_target.handle_save_plot, unique)
         worker.open_app_signal.connect(signal_target.handle_open_app, unique)
+        worker.retouch_after_run_signal.connect(self.handle_retouch_after_run, unique)
 
     def _setup_common_menu_actions(self):
         pass
@@ -126,6 +131,10 @@ class ProjectView(QWidget, LogManager, ProjectHandler):
         job = self.project_job(current_index)
         self.run_retouch_job(job)
         return True
+
+    def handle_retouch_after_run(self, _run_id, _name):
+        if self.retouch_after_run:
+            self.run_retouch_selected_job()
 
     def has_run_metadata(self):
         return False
