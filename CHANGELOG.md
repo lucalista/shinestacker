@@ -1,7 +1,7 @@
 # Changelog
 
 ## [v1.15.x] - 2026-07-26
-**Removed uv lock file**
+**Added user-requested improvements**
 
 ### Changed
 - removed uv.lock file since uv is not supported and uv.lock is not updated in the development workflow

@@ -57,7 +57,7 @@ class ShortcutsHelp(QDialog):
             "Ctrl + S": "Save multilayer tiff",
             "Ctrl + Z": "Undo brush draw",
             "Ctrl + M": "Copy selected layer to master",
-            "Ctrl + Cmd + F, F11": "Full screen mode",
+            "Ctrl + Cmd + F, F11": "Toggle full screen mode",
             "Ctrl + +, Ctrl + =, +, =": "Zoom in",
             "Ctrl + -, -": "Zoom out",
             "Ctrl + 0": "Fit to screen",
