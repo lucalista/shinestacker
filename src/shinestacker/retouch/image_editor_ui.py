@@ -459,13 +459,14 @@ class ImageEditorUI(QMainWindow, LayerCollectionHandler):
         view_menu.addSeparator()
 
         zoom_in_action = QAction("Zoom In", self)
-        zoom_in_action.setShortcut("Ctrl++")
+        zoom_in_action.setShortcuts([QKeySequence("Ctrl++"), QKeySequence("+"),
+                                     QKeySequence("Ctrl+="), QKeySequence("=")])
         zoom_in_action.setProperty("requires_file", True)
         zoom_in_action.triggered.connect(self.image_viewer.zoom_in)
         view_menu.addAction(zoom_in_action)
 
         zoom_out_action = QAction("Zoom Out", self)
-        zoom_out_action.setShortcut("Ctrl+-")
+        zoom_out_action.setShortcuts([QKeySequence("Ctrl+-"), QKeySequence("-")])
         zoom_out_action.setProperty("requires_file", True)
         zoom_out_action.triggered.connect(self.image_viewer.zoom_out)
         view_menu.addAction(zoom_out_action)
