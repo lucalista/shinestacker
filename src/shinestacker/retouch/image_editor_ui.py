@@ -365,7 +365,8 @@ class ImageEditorUI(QMainWindow, LayerCollectionHandler):
         view_menu = menubar.addMenu("&View")
 
         fullscreen_action = QAction("Full Screen", self)
-        fullscreen_action.setShortcut("Ctrl+Cmd+F")
+        fullscreen_action.setShortcuts([QKeySequence("Ctrl+Meta+F"), QKeySequence("F11")])
+        fullscreen_action.triggered.connect(self.toggle_fullscreen)
         fullscreen_action.setCheckable(True)
         fullscreen_action.triggered.connect(self.toggle_fullscreen)
         view_menu.addAction(fullscreen_action)

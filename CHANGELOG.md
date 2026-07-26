@@ -8,6 +8,8 @@
 
 ### Added
 - new configurable setting: aling transform, valid options are: rigid, homography (#55)
+- full screen view menu option added to project window
+- full screen shortcut is Ctrl + Cmd + F or F11 on Windows (#57)
 
 ----
 

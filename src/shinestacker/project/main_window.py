@@ -1,5 +1,5 @@
 # pylint: disable=C0114, C0115, C0116, E0611, R0902, R0915, R0904, R0914
-# pylint: disable=R0912, E1101, W0201, E1121, R0913, R0917, W0718
+# pylint: disable=R0912, E1101, W0201, E1121, R0913, R0917, W0718, R1702
 import os
 import traceback
 import json
@@ -93,7 +93,8 @@ class MainWindow(ProjectHandler, QMainWindow):
             "Clear Project Outputs": self.clear_project_images,
         }
         self.menu_manager = MenuManager(
-            self.menuBar(), actions, self.add_action, self.add_subaction, dark_theme, self)
+            self.menuBar(), actions, self.toggle_fullscreen, self.add_action, self.add_subaction,
+            dark_theme, self)
         self.classic_view.connect_signals(
             self.update_gui_actions_enable,
             self.menu_manager.set_enabled_subactions_gui,
@@ -154,6 +155,12 @@ class MainWindow(ProjectHandler, QMainWindow):
         self.set_view(self.current_mode)
         self.action_dialog = None
         self.file_dialog = SessionFileDialog(AppConfig.get('input_folder_path'), self)
+
+    def toggle_fullscreen(self, checked):
+        if checked:
+            self.window().showFullScreen()
+        else:
+            self.window().showNormal()
 
     def reset_project(self):
         self.set_project(Project())

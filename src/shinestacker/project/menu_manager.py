@@ -12,10 +12,12 @@ from ..gui.icon_manager import IconManager
 class MenuManager(QObject, IconManager):
     open_file_requested = Signal(str)
 
-    def __init__(self, menubar, actions, add_action, add_subaction, dark_theme, parent):
+    def __init__(self, menubar, actions, toggle_fullscreen, add_action, add_subaction,
+                 dark_theme, parent):
         IconManager.__init__(self, dark_theme)
         QObject.__init__(self, parent)
         self._recent_file_manager = RecentFileManager("shinestacker-recent-project-files.txt")
+        self.toggle_fullscreen = toggle_fullscreen
         self.add_action = add_action
         self.add_subaction = add_subaction
         self.dark_theme = dark_theme
@@ -163,6 +165,13 @@ class MenuManager(QObject, IconManager):
 
     def add_view_menu(self):
         menu = self.menubar.addMenu("&View")
+        fullscreen_action = QAction("Full Screen", self)
+        fullscreen_action.setShortcuts([QKeySequence("Ctrl+Meta+F"), QKeySequence("F11")])
+        fullscreen_action.triggered.connect(self.toggle_fullscreen)
+        fullscreen_action.setCheckable(True)
+        fullscreen_action.triggered.connect(self.toggle_fullscreen)
+        menu.addAction(fullscreen_action)
+        menu.addSeparator()
         self.expert_options_action = self.action("Expert Options")
         self.expert_options_action.setCheckable(True)
         self.expert_options_action.setChecked(AppConfig.get('expert_options'))
