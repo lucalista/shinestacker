@@ -67,9 +67,15 @@ def main():
     app.window = window
     window.show()
     if filename:
-        QTimer.singleShot(100, lambda: window.open_project(filename))
+        if args.start:
+            QTimer.singleShot(100, lambda: window.open_project_and_run(filename))
+        else:
+            QTimer.singleShot(100, lambda: window.open_project(filename))
     elif args.path:
-        QTimer.singleShot(100, lambda: window.new_project(args.path))
+        if args.start:
+            QTimer.singleShot(100, lambda: window.new_project_silent_and_run(args.path))
+        else:
+            QTimer.singleShot(100, lambda: window.new_project(args.path))
     elif args.new_project:
         QTimer.singleShot(100, window.new_project)
     sys.exit(app.exec())

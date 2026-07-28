@@ -14,7 +14,7 @@ from ..config.app_config import AppConfig
 from ..core.exceptions import InvalidProjectError
 from ..core.core_utils import get_app_base_path
 from ..gui.folder_file_selection import SessionFileDialog
-from ..gui.project_model import Project, get_retouch_path
+from ..gui.project_model import Project, get_retouch_path, ActionConfig
 from ..gui.sys_mon import StatusBarSystemMonitor
 from ..gui.action_config_dialog import ActionConfigDialog
 from ..common_project.project_handler import ProjectHandler
@@ -411,6 +411,51 @@ class MainWindow(ProjectHandler, QMainWindow):
             self.menu_manager.save_actions_set_enabled(True)
             self.set_enabled_file_open_close_actions(True)
             self.show_status_message("New project created.")
+
+    def new_project_silent(self, path):
+        os.chdir(get_app_base_path())
+        self.reset_project()
+        self.update_title()
+        self._create_default_project(path)
+        self.element_action.mark_as_modified()
+        for view in self.views.values():
+            view.clear_project()
+        self.refresh_ui_and_select_first_job()
+        self.menu_manager.save_actions_set_enabled(True)
+        self.set_enabled_file_open_close_actions(True)
+        self.show_status_message(f"New project created from {path}")
+
+    def _create_default_project(self, path):
+        working_path, input_path = os.path.split(os.path.normpath(path))
+        base_name = input_path if input_path else 'shinestacker'
+        job_params = {
+            'name': f'{base_name}-stack-job',
+            'working_path': working_path,
+            'input_path': input_path
+        }
+        job = ActionConfig(constants.ACTION_JOB, job_params)
+        preprocess_name = f'{base_name}-preprocess'
+        combo_action = ActionConfig(
+            constants.ACTION_COMBO, {'name': preprocess_name})
+        align = ActionConfig(
+            constants.ACTION_ALIGNFRAMES, {'name': 'align'})
+        combo_action.add_sub_action(align)
+        balance = ActionConfig(
+            constants.ACTION_BALANCEFRAMES, {'name': 'balance'})
+        combo_action.add_sub_action(balance)
+        job.add_sub_action(combo_action)
+        focus_stack = ActionConfig(
+            constants.ACTION_FOCUSSTACK,
+            {'name': f'{base_name}-focus-stack-pyramid',
+             'stacker': constants.STACK_ALGO_PYRAMID,
+             'exif_path': input_path}
+        )
+        job.add_sub_action(focus_stack)
+        self.project().jobs.append(job)
+
+    def new_project_silent_and_run(self, path):
+        self.new_project_silent(path)
+        self.run_all_jobs()
 
     def close_project(self):
         if self.check_unsaved_changes():

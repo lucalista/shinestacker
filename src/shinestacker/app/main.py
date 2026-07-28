@@ -279,7 +279,12 @@ open retouch window at startup instead of project window.
             open_frames(main_app.retouch_window, filename, args.image_folder)
     elif args.path:
         main_app.switch_to_project()
-        QTimer.singleShot(100, lambda: main_app.project_window.new_project(args.path))
+        if args.start:
+            QTimer.singleShot(
+                100, lambda: main_app.project_window.new_project_silent_and_run(args.path))
+        else:
+            QTimer.singleShot(
+                100, lambda: main_app.project_window.new_project(args.path))
     elif args.image_folder:
         main_app.switch_to_retouch()
         open_frames(main_app.retouch_window, filename, args.image_folder)
