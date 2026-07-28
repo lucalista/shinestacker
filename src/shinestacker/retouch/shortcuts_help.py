@@ -89,7 +89,7 @@ class ShortcutsHelp(QDialog):
             right_layout.addRow(f"<b>{k}</b>", QLabel(v))
 
         mouse_controls = {
-            "Space + Drag": "Move",
+            "Space + Drag or P + Drag": "Move",
             "Wheel": "Zoom in/out",
             "Ctrl + Wheel": "Adjust brush size",
             "Shift + Wheel": "Adjust brush hardness",

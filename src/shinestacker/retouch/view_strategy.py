@@ -692,7 +692,7 @@ class ViewStrategy(LayerCollectionHandler):
     def keyPressEvent(self, event):
         if self.empty():
             return
-        if event.key() == Qt.Key_Space and not self.scrolling:
+        if event.key() in (Qt.Key_Space, Qt.Key_P) and not self.scrolling:
             self.space_pressed = True
             self.get_master_view().setCursor(Qt.OpenHandCursor)
             self.hide_brush_cursor()
@@ -704,7 +704,7 @@ class ViewStrategy(LayerCollectionHandler):
     def keyReleaseEvent(self, event):
         if self.empty():
             return
-        if event.key() == Qt.Key_Space:
+        if event.key() in (Qt.Key_Space, Qt.Key_P):
             self.space_pressed = False
             if not self.scrolling:
                 self.get_master_view().setCursor(Qt.BlankCursor)

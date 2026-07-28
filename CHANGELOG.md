@@ -13,6 +13,7 @@
 - more shortcuts added for zoom in/out: +, =, Ctrl-+ and Ctrl-= could all zoom in, -, Ctrl-- could all zoom out (#57)
 - added option to automatically run retouch after run. The option can be persisted in the settings (#56)
 - command line option --start (-s) that automatially stars a specified project. It only works together with -f or -o options (#54)
+- in retouch mode, P + Drag is an alternative for Space + Drag (#57) 
 
 ----
 
