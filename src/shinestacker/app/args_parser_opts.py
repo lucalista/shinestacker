@@ -13,6 +13,9 @@ do not open new project dialog at startup (default: open).
     parser.add_argument('-p', '--path', nargs='?', help='''
 input folder path for new project.
 ''')
+    parser.add_argument('-s', '--start', action='store_true', help='''
+Automatically run scheduled jobs at startup.
+''')
 
 
 def add_retouch_arguments(parser):

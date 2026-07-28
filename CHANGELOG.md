@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.15.x] - 2026-07-26
+## [v1.15.x] - 2026-07-28
 **Added user-requested improvements**
 
 ### Changed
@@ -12,6 +12,7 @@
 - full screen shortcut is Ctrl + Cmd + F or F11 on Windows (#57)
 - more shortcuts added for zoom in/out: +, =, Ctrl-+ and Ctrl-= could all zoom in, -, Ctrl-- could all zoom out (#57)
 - added option to automatically run retouch after run. The option can be persisted in the settings (#56)
+- command line option --start (-s) that automatially stars a specified project (#54)
 
 ----
 

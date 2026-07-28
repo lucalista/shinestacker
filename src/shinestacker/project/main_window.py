@@ -644,6 +644,10 @@ class MainWindow(ProjectHandler, QMainWindow):
             self.menu_manager.run_all_jobs_action.setEnabled(False)
             self.menu_manager.stop_action.setEnabled(True)
 
+    def open_project_and_run(self, file_path):
+        self.open_project(file_path)
+        self.run_all_jobs()
+
     def run_retouch_selected_job(self):
         self.current_view.run_retouch_selected_job()
 
