@@ -184,7 +184,7 @@ class ClassicProjectView(ProjectView, ListContainer):
         retouch_paths = [] if len(r) == 0 else [(job_name, r)]
         new_window, id_str = self.create_new_window(f"{job_name} [Job]",
                                                     labels, retouch_paths)
-        worker = JobLogWorker(job, id_str, self.retouch_after_run)
+        worker = JobLogWorker(job, id_str)
         self.connect_worker_signals(worker, new_window)
         self.start_thread(worker)
         self._workers.append(worker)
@@ -203,7 +203,7 @@ class ClassicProjectView(ProjectView, ListContainer):
                 retouch_paths.append((job.params["name"], r))
         new_window, id_str = self.create_new_window(f"{project_name} [Project]",
                                                     labels, retouch_paths)
-        worker = ProjectLogWorker(self.project(), id_str, self.retouch_after_run)
+        worker = ProjectLogWorker(self.project(), id_str)
         self.connect_worker_signals(worker, new_window)
         self.start_thread(worker)
         self._workers.append(worker)

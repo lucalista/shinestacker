@@ -682,14 +682,14 @@ class ModernProjectView(ProjectView):
 
     def _start_job_worker(self, job_index, job):
         self._prepare_job_run_ui(job_index, job)
-        self._worker = JobLogWorker(job, self.last_id_str(), self.retouch_after_run)
+        self._worker = JobLogWorker(job, self.last_id_str())
         self._connect_worker_signals(self._worker)
         self.start_thread(self._worker)
         return True
 
     def _start_project_worker(self):
         self._prepare_project_run_ui()
-        self._worker = ProjectLogWorker(self.project(), self.last_id_str(), self.retouch_after_run)
+        self._worker = ProjectLogWorker(self.project(), self.last_id_str())
         self._connect_worker_signals(self._worker)
         self.start_thread(self._worker)
         return True
