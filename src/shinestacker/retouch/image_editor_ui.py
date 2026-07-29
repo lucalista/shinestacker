@@ -471,7 +471,7 @@ class ImageEditorUI(QMainWindow, LayerCollectionHandler):
         zoom_out_action.triggered.connect(self.image_viewer.zoom_out)
         view_menu.addAction(zoom_out_action)
 
-        adapt_action = QAction("Adapt to Screen", self)
+        adapt_action = QAction("Fit to Window", self)
         adapt_action.setShortcut("Ctrl+0")
         adapt_action.setProperty("requires_file", True)
         adapt_action.triggered.connect(self.image_viewer.reset_zoom)

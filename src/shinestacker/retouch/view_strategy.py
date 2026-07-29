@@ -7,7 +7,7 @@ from PySide6.QtCore import Qt, QPointF, QTime, QPoint, Signal, QRectF
 from PySide6.QtGui import QImage, QPainter, QColor, QBrush, QPen, QCursor, QPixmap, QPainterPath
 from PySide6.QtWidgets import (
     QGraphicsEllipseItem, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QApplication,
-    QGraphicsItemGroup, QGraphicsPathItem)
+    QGraphicsItemGroup, QGraphicsPathItem, QSizePolicy)
 from .. config.gui_constants import gui_constants
 from .. config.defaults import DEFAULTS
 from .. config.app_config import AppConfig
@@ -103,6 +103,23 @@ class ImageGraphicsViewBase(QGraphicsView):
         self.setCursor(Qt.BlankCursor)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+    # pylint: disable=C0103
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        parent = self.parent()
+        if hasattr(parent, 'auto_fit_to_window') and hasattr(parent, 'handle_resize'):
+            if parent.auto_fit_to_window:
+                parent.handle_resize(self)
+        else:
+            while parent:
+                if hasattr(parent, 'auto_fit_to_window') and hasattr(parent, 'handle_resize'):
+                    if parent.auto_fit_to_window:
+                        parent.handle_resize(self)
+                    break
+                parent = parent.parent()
+    # pylint: enable=C0103
 
 
 class ViewStrategy(LayerCollectionHandler):
@@ -131,6 +148,7 @@ class ViewStrategy(LayerCollectionHandler):
         self.last_color_update_time = 0
         self.last_cursor_update_time = 0
         self.enable_paint = True
+        self.auto_fit_to_window = False
 
     @abstractmethod
     def create_pixmaps(self):
@@ -342,6 +360,34 @@ class ViewStrategy(LayerCollectionHandler):
             self.setup_brush_cursor()
         self.show_master()
 
+    def handle_resize(self, view):
+        if self.empty() or not self.auto_fit_to_window:
+            return
+        pixmap_item = None
+        for pixmap, v in self.get_pixmaps().items():
+            if v == view:
+                pixmap_item = pixmap
+                break
+        if pixmap_item is None:
+            return
+        pixmap = pixmap_item.pixmap()
+        if pixmap.isNull():
+            return
+        viewport_rect = view.viewport().rect()
+        pixmap_rect = pixmap.rect()
+        if pixmap_rect.width() == 0 or pixmap_rect.height() == 0:
+            return
+        scale_x = viewport_rect.width() / pixmap_rect.width()
+        scale_y = viewport_rect.height() / pixmap_rect.height()
+        new_scale = min(scale_x, scale_y)
+        new_scale = max(self.min_scale(), min(new_scale, self.max_scale()))
+        view.resetTransform()
+        view.scale(new_scale, new_scale)
+        self.set_zoom_factor(new_scale)
+        view.centerOn(pixmap_item)
+        self.center_image(view)
+        self.update_cursor_pen_width()
+
     def numpy_to_qimage(self, array):
         if array is None:
             return None
@@ -444,6 +490,7 @@ class ViewStrategy(LayerCollectionHandler):
         old_center = view.mapToScene(ref_pos)
         self.apply_zoom_and_center(view, new_scale, ref_pos, old_center)
         self.update_cursor_pen_width()
+        self.auto_fit_to_window = False
 
     def handle_wheel_event(self, event):
         if self.empty() or self.gesture_active:
@@ -513,6 +560,7 @@ class ViewStrategy(LayerCollectionHandler):
             view.scale(self.zoom_factor(), self.zoom_factor())
         self.update_brush_cursor()
         self.update_cursor_pen_width()
+        self.auto_fit_to_window = True
 
     def actual_size(self):
         if self.empty():
@@ -523,6 +571,7 @@ class ViewStrategy(LayerCollectionHandler):
             view.scale(self.zoom_factor(), self.zoom_factor())
         self.update_brush_cursor()
         self.update_cursor_pen_width()
+        self.auto_fit_to_window = False
 
     def setup_simple_brush_style(self, center_x, center_y, radius):
         if self.brush_cursor:

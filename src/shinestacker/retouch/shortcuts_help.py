@@ -60,7 +60,7 @@ class ShortcutsHelp(QDialog):
             "Ctrl + Cmd + F, F11": "Toggle full screen mode",
             "Ctrl + +, Ctrl + =, +, =": "Zoom in",
             "Ctrl + -, -": "Zoom out",
-            "Ctrl + 0": "Fit to screen",
+            "Ctrl + 0": "Fit to window",
             "Ctrl + R": "Actual size",
             "Ctrl + 1": "View: overlaid",
             "Ctrl + 2": "View: side by side",

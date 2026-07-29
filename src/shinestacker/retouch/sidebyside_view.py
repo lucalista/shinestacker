@@ -62,6 +62,17 @@ class DoubleViewBase(ViewStrategy, QWidget, ViewSignals):
         self.current_brush_cursor = None
         self.last_color_update_time_current = 0
         self._updating_scrollbars = False
+# pylint: disable=C0103
+        self.current_view.resizeEvent = lambda event: self._handle_view_resize(
+            self.current_view, event)
+        self.master_view.resizeEvent = lambda event: self._handle_view_resize(
+            self.master_view, event)
+# pylint: enable=C0103
+
+    def _handle_view_resize(self, view, event):
+        super(type(view), view).resizeEvent(event)
+        if self.auto_fit_to_window:
+            self.handle_resize(view)
 
     def setup_layout(self):
         raise NotImplementedError("Subclasses must implement setup_layout")

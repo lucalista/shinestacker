@@ -14,6 +14,7 @@
 - added option to automatically run retouch after run. The option can be persisted in the settings (#56)
 - command line option --start (-s) that automatially starts a specified project. It only works together with -f or -o options (#54)
 - in retouch mode, P toggles pan mode, as alternative for Space + Drag (#57) 
+- in retouch mode, when the menu action "Fit to Window" (Ctrl+0) is called, the image is automatically fit to window if the window is sesized. This is also the behavior the first time the image is opened for retouch (#58).
 
 ----
 

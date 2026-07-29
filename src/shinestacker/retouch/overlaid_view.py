@@ -48,7 +48,7 @@ class OverlaidView(ViewStrategy, ImageGraphicsViewBase, ViewSignals):
             self.pixmap_item_current: self
         }
 
-    # pylint: disable=C0103
+# pylint: disable=C0103
     def mousePressEvent(self, event):
         self.mouse_press_event(event)
         super().mousePressEvent(event)
@@ -75,16 +75,21 @@ class OverlaidView(ViewStrategy, ImageGraphicsViewBase, ViewSignals):
                 self.brush_cursor.show()
         super().enterEvent(event)
 
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if self.auto_fit_to_window:
+            self.handle_resize(self)
+
     def get_mouse_callbacks(self):
         return self.mousePressEvent
 
     def set_mouse_callbacks(self, callbacks):
         self.mousePressEvent = callbacks
+# pylint: enable=C0103
 
     def get_view_with_mouse(self, event=None):
         return self
 
-    # pylint: enable=C0103
     def show(self):
         self.show_master()
         super().show()
