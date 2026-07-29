@@ -253,9 +253,11 @@ open retouch window at startup instead of project window.
     app = make_app(Application)
     main_app = MainApp()
     app.main_app = main_app
-
     main_app.show()
     main_app.activateWindow()
+    if args.auto_retouch is not None:
+        main_app.project_window.menu_manager.retouch_after_run_action.setChecked(args.auto_retouch)
+        main_app.project_window.toggle_retouch_after_run()
     if args.expert:
         main_app.project_window.set_expert_options()
     if args.view_overlaid:

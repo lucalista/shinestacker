@@ -66,6 +66,9 @@ def main():
         window.set_expert_options()
     app.window = window
     window.show()
+    if args.auto_retouch is not None:
+        window.menu_manager.retouch_after_run_action.setChecked(args.auto_retouch)
+        window.toggle_retouch_after_run()
     if filename:
         if args.start:
             QTimer.singleShot(100, lambda: window.open_project_and_run(filename))

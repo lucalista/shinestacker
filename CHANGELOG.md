@@ -11,7 +11,7 @@
 - full screen view menu option added to project window
 - full screen shortcut is Ctrl + Cmd + F or F11 on Windows (#57)
 - more shortcuts added for zoom in/out: +, =, Ctrl-+ and Ctrl-= could all zoom in, -, Ctrl-- could all zoom out (#57)
-- added option to automatically run retouch after run. The option can be persisted in the settings (#56)
+- added option to automatically run retouch after run. The option can be persisted in the settings. This option can be enabled at startup, regardless fo the default settings, using the command-line argument --enable-auto-retouch (-e) (#56)
 - command line option --start (-s) that automatially starts a specified project. It only works together with -f or -o options (#54)
 - in retouch mode, P toggles pan mode, as alternative for Space + Drag (#57) 
 - in retouch mode, when the menu action "Fit to Window" (Ctrl+0) is called, the image is automatically fit to window if the window is sesized. This is also the behavior the first time the image is opened for retouch (#58).
