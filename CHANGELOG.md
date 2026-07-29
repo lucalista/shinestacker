@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.15.x] - 2026-07-29
+## [v1.16.0] - 2026-07-29
 **Added user-requested improvements**
 
 ### Changed
