@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.15.x] - 2026-07-28
+## [v1.15.x] - 2026-07-29
 **Added user-requested improvements**
 
 ### Changed
@@ -13,7 +13,7 @@
 - more shortcuts added for zoom in/out: +, =, Ctrl-+ and Ctrl-= could all zoom in, -, Ctrl-- could all zoom out (#57)
 - added option to automatically run retouch after run. The option can be persisted in the settings (#56)
 - command line option --start (-s) that automatially stars a specified project. It only works together with -f or -o options (#54)
-- in retouch mode, P + Drag is an alternative for Space + Drag (#57) 
+- in retouch mode, P toggles pan mode, as alternative for Space + Drag (#57) 
 
 ----
 
