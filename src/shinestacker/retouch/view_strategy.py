@@ -495,6 +495,9 @@ class ViewStrategy(LayerCollectionHandler):
     def handle_wheel_event(self, event):
         if self.empty() or self.gesture_active:
             return
+        if self.in_pan_mode():
+            self.hide_brush_cursor()
+            self.hide_brush_preview()
         if event.source() == Qt.MouseEventNotSynthesized:  # Physical mouse
             modifiers = QApplication.keyboardModifiers()
             if modifiers & Qt.ControlModifier and modifiers & Qt.ShiftModifier:
@@ -507,7 +510,8 @@ class ViewStrategy(LayerCollectionHandler):
                 self.brush_opacity_change_requested.emit(1 if event.angleDelta().y() > 0 else -1)
             else:
                 self.handle_zoom_wheel(self.get_view_with_mouse(event), event)
-            self.update_brush_cursor()
+            if not self.in_pan_mode():
+                self.update_brush_cursor()
         else:
             self.handle_wheel_touchpad_event(event)
 
@@ -812,11 +816,16 @@ class ViewStrategy(LayerCollectionHandler):
         self.copy_brush_area_to_master(pos)
         self.needs_update_requested.emit()
 
+    def in_pan_mode(self):
+        return self.space_pressed or self.pan_toggle
+
     def mouse_press_event(self, event):
         if self.empty():
             return
         if event.button() & Qt.LeftButton and self.has_master_layer():
-            if self.space_pressed or self.pan_toggle:
+            if (self.in_pan_mode() or
+                    event.modifiers() & Qt.ControlModifier or
+                    event.modifiers() & Qt.ShiftModifier):
                 self.scrolling = True
                 self.last_mouse_pos = event.position()
                 self.setCursor(Qt.ClosedHandCursor)
@@ -835,9 +844,20 @@ class ViewStrategy(LayerCollectionHandler):
         if current_time - self.last_cursor_update_time < cursor_update_interval:
             return
         self.last_cursor_update_time = current_time
+        in_pan_mode = (self.space_pressed or self.pan_toggle or
+                       event.modifiers() & Qt.ControlModifier or
+                       event.modifiers() & Qt.ShiftModifier)
+        if in_pan_mode:
+            self.hide_brush_cursor()
+            self.hide_brush_preview()
+        else:
+            self.update_brush_cursor()
         position = event.position()
         brush_size = self.brush.size
-        if not self.space_pressed and not self.pan_toggle:
+        if self.in_pan_mode():
+            self.hide_brush_cursor()
+            self.hide_brush_preview()
+        else:
             self.update_brush_cursor()
         if self.enable_paint and self.dragging and event.buttons() & Qt.LeftButton:
             current_time = QTime.currentTime()
@@ -860,7 +880,7 @@ class ViewStrategy(LayerCollectionHandler):
                 self.last_update_time = current_time
         if self.scrolling and event.buttons() & Qt.LeftButton:
             master_view = self.get_master_view()
-            if self.space_pressed or self.pan_toggle:
+            if self.in_pan_mode():
                 master_view.setCursor(Qt.ClosedHandCursor)
                 self.hide_brush_cursor()
             delta = position - self.last_mouse_pos
@@ -871,12 +891,13 @@ class ViewStrategy(LayerCollectionHandler):
         if self.empty():
             return
         master_view = self.get_master_view()
-        if self.space_pressed or self.pan_toggle:
+        if self.in_pan_mode():
             master_view.setCursor(Qt.OpenHandCursor)
             self.hide_brush_cursor()
         else:
             master_view.setCursor(Qt.BlankCursor)
             self.show_brush_cursor()
+            self.update_brush_cursor()
         if event.button() == Qt.LeftButton:
             if self.scrolling:
                 self.scrolling = False
