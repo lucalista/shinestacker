@@ -642,6 +642,10 @@ class ViewStrategy(LayerCollectionHandler):
             self.hide_brush_cursor()
             self.get_master_view().setCursor(Qt.ArrowCursor)
             return
+        if self.in_pan_mode():
+            self.hide_brush_cursor()
+            self.hide_brush_preview()
+            return
         self.update_cursor_pen_width()
         master_view = self.get_master_view()
         mouse_pos = master_view.mapFromGlobal(QCursor.pos())
