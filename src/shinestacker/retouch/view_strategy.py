@@ -102,8 +102,8 @@ class ImageGraphicsViewBase(QGraphicsView):
         self.setRenderHint(QPainter.Antialiasing)
         self.setRenderHint(QPainter.SmoothPixmapTransform)
         self.setCursor(Qt.BlankCursor)
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
     # pylint: disable=C0103
@@ -501,6 +501,7 @@ class ViewStrategy(LayerCollectionHandler):
             self.hide_brush_preview()
             if not self.is_mouse_over_image_area():
                 self.get_master_view().setCursor(Qt.ArrowCursor)
+                self.get_master_view().viewport().setCursor(Qt.ArrowCursor)
         if event.source() == Qt.MouseEventNotSynthesized:
             modifiers = QApplication.keyboardModifiers()
             if modifiers & Qt.ControlModifier and modifiers & Qt.ShiftModifier:
@@ -804,6 +805,7 @@ class ViewStrategy(LayerCollectionHandler):
             self.setCursor(Qt.ArrowCursor)
         else:
             self.get_master_view().setCursor(Qt.ArrowCursor)
+            self.get_master_view().viewport().setCursor(Qt.ArrowCursor)
             self.hide_brush_cursor()
         super().leaveEvent(event)
 
@@ -904,6 +906,10 @@ class ViewStrategy(LayerCollectionHandler):
         in_pan_mode = (self.space_pressed or self.pan_toggle or
                        event.modifiers() & Qt.ControlModifier or
                        event.modifiers() & Qt.ShiftModifier)
+        if in_pan_mode:
+            self.get_master_view().setCursor(Qt.OpenHandCursor)
+        else:
+            self.get_master_view().setCursor(Qt.BlankCursor)
         if self.brush_cursor:
             master_view = self.get_master_view()
             scene_pos = master_view.mapToScene(position.toPoint())
@@ -922,7 +928,6 @@ class ViewStrategy(LayerCollectionHandler):
                 self.setup_simple_brush_style(scene_pos.x(), scene_pos.y(), radius)
             if in_pan_mode:
                 self.hide_brush_cursor()
-                self.get_master_view().setCursor(Qt.OpenHandCursor)
             else:
                 self.show_brush_cursor()
                 self.update_master_cursor_color()
