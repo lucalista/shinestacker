@@ -129,8 +129,20 @@ class ProjectView(QWidget, LogManager, ProjectHandler):
         self.run_retouch_job(job)
         return True
 
-    def handle_retouch_after_run(self, _run_id, _name):
-        if AppConfig.get('retouch_after_run'):
+    def handle_retouch_after_run(self, _run_id, _name, is_project_run):
+        if not AppConfig.get('retouch_after_run'):
+            return
+        if is_project_run:
+            if self.selection_state.is_job_selected():
+                selected_job_index = self.selection_state.job_index
+                if 0 <= selected_job_index < self.num_project_jobs():
+                    job = self.project_job(selected_job_index)
+                    self.run_retouch_job(job)
+                    return
+            if self.num_project_jobs() > 0:
+                last_job = self.project_job(self.num_project_jobs() - 1)
+                self.run_retouch_job(last_job)
+        else:
             self.run_retouch_selected_job()
 
     def has_run_metadata(self):

@@ -18,7 +18,7 @@ class RunWorker(LogWorker):
     after_step_signal = Signal(int, str, int)
     save_plot_signal = Signal(int, str, str, str, str)
     open_app_signal = Signal(int, str, str, str)
-    run_completed_signal = Signal(int, str)
+    run_completed_signal = Signal(int, str, bool)
     run_stopped_signal = Signal(int, str)
     run_failed_signal = Signal(int, str)
     add_status_box_signal = Signal(str)
@@ -48,6 +48,10 @@ class RunWorker(LogWorker):
         self.tag = ""
         self.plot_manager = QtPlotManager(self)
         self.name = ''
+
+    @property
+    def is_project_run(self):
+        raise NotImplementedError("Subclasses must implement is_project_run")
 
     def before_action(self, run_id, name):
         self.name = name
@@ -101,7 +105,7 @@ class RunWorker(LogWorker):
         run_id = int(self.id_str.split('_')[-1])
         if status == constants.RUN_COMPLETED:
             message = f"{self.tag} ended successfully"
-            self.run_completed_signal.emit(run_id, self.name)
+            self.run_completed_signal.emit(run_id, self.name, self.is_project_run)
             color = COLOR_BLUE
         elif status == constants.RUN_STOPPED:
             message = f"{self.tag} stopped"
@@ -134,6 +138,10 @@ class JobLogWorker(RunWorker):
         self.job = job
         self.tag = "Job"
 
+    @property
+    def is_project_run(self):
+        return False
+
     def do_run(self):
         converter = ProjectConverter(self.plot_manager)
         return converter.run_job(self.job, self.id_str, self.callbacks)
@@ -144,6 +152,10 @@ class ProjectLogWorker(RunWorker):
         super().__init__(id_str)
         self.project = project
         self.tag = "Project"
+
+    @property
+    def is_project_run(self):
+        return True
 
     def do_run(self):
         converter = ProjectConverter(self.plot_manager)
