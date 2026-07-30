@@ -773,10 +773,12 @@ class ViewStrategy(LayerCollectionHandler):
                 master_view.setCursor(Qt.OpenHandCursor)
                 self.hide_brush_cursor()
                 self.hide_brush_preview()
+                self.status.showMessage("Pan mode activated", 1000) 
             else:
                 master_view.setCursor(Qt.BlankCursor)
                 self.show_brush_cursor()
                 self.update_brush_cursor()
+                self.status.showMessage("Edit mode activated", 1000)
             return
         if event.key() == Qt.Key_Space and not self.scrolling:
             self.space_pressed = True
