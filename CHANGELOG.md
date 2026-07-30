@@ -1,7 +1,10 @@
 # Changelog
 
-## [v1.16.0] - 2026-07-29
+## [v1.16.0] - 2026-07-30
 **Added user-requested improvements**
+
+### Fixed
+- cursor no longer disappears on scrollbars in retouch mode (#57)
 
 ### Changed
 - removed uv.lock file since uv is not supported and uv.lock is not updated in the development workflow
