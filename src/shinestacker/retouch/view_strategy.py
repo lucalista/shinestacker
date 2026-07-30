@@ -564,6 +564,9 @@ class ViewStrategy(LayerCollectionHandler):
         for view in self.get_views():
             view.resetTransform()
             view.scale(self.zoom_factor(), self.zoom_factor())
+        self.status.set_scroll(
+            self.get_master_view().horizontalScrollBar().value(),
+            self.get_master_view().verticalScrollBar().value())
         self.update_brush_cursor()
         self.update_cursor_pen_width()
         self.auto_fit_to_window = True
@@ -572,9 +575,15 @@ class ViewStrategy(LayerCollectionHandler):
         if self.empty():
             return
         self.set_zoom_factor(max(self.min_scale(), min(self.max_scale(), 1.0)))
-        for view in self.get_views():
-            view.resetTransform()
-            view.scale(self.zoom_factor(), self.zoom_factor())
+        view = self.get_master_view()
+        center = view.mapToScene(view.viewport().rect().center())
+        for v in self.get_views():
+            v.resetTransform()
+            v.scale(self.zoom_factor(), self.zoom_factor())
+            v.centerOn(center)
+        self.status.set_scroll(
+            self.get_master_view().horizontalScrollBar().value(),
+            self.get_master_view().verticalScrollBar().value())
         self.update_brush_cursor()
         self.update_cursor_pen_width()
         self.auto_fit_to_window = False

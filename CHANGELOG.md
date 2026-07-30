@@ -5,6 +5,7 @@
 
 ### Fixed
 - cursor no longer disappears on scrollbars in retouch mode (#57)
+- when the zoom is reset to actual size (Ctrl+R), the image is centered correctly, preventing jumps when changing layers (#58)
 
 ### Changed
 - removed uv.lock file since uv is not supported and uv.lock is not updated in the development workflow
