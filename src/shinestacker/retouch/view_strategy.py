@@ -839,10 +839,12 @@ class ViewStrategy(LayerCollectionHandler):
         master_view = self.get_master_view()
         if self.in_pan_mode():
             master_view.setCursor(Qt.OpenHandCursor)
+            master_view.viewport().setCursor(Qt.OpenHandCursor)
             self.hide_brush_cursor()
             self.hide_brush_preview()
         else:
             master_view.setCursor(Qt.BlankCursor)
+            master_view.viewport().setCursor(Qt.BlankCursor)
             self.show_brush_cursor()
             self.update_brush_cursor()
         super().enterEvent(event)
