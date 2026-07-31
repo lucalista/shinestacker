@@ -18,7 +18,7 @@ Automatically run scheduled jobs at startup.
 ''')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-e', '--enable-auto-retouch', action='store_true',
-                       help='''
+                       dest='auto_retouch', help='''
 Enable retouch after run at startup''')
     group.add_argument('-d', '--disable-auto-retouch', action='store_false',
                        dest='auto_retouch', help='''
