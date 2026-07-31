@@ -180,7 +180,7 @@ class DoubleViewBase(ViewStrategy, QWidget, ViewSignals):
         super().show_brush_cursor()
         self.current_brush_cursor.show()
 
-    # pylint: disable=C0103
+# pylint: disable=C0103
     def focusInEvent(self, event):
         super().focusInEvent(event)
         self.activateWindow()
@@ -240,6 +240,11 @@ class DoubleViewBase(ViewStrategy, QWidget, ViewSignals):
     def keyReleaseEvent(self, event):
         super().keyReleaseEvent(event)
         if event.key() == Qt.Key_Space:
+            if not self.in_pan_mode():
+                self._set_cursor(Qt.BlankCursor)
+                self.show_brush_cursor()
+                if self.current_brush_cursor:
+                    self.current_brush_cursor.show()
             self.update_brush_cursor()
 
     def get_mouse_callbacks(self):
@@ -251,7 +256,7 @@ class DoubleViewBase(ViewStrategy, QWidget, ViewSignals):
         else:
             self.master_view.mousePressEvent = callbacks
             self.current_view.mousePressEvent = callbacks
-    # pylint: enable=C0103
+# pylint: enable=C0103
 
     def get_view_with_mouse(self, event=None):
         if event is None:
@@ -300,14 +305,16 @@ class DoubleViewBase(ViewStrategy, QWidget, ViewSignals):
         if self.brush_cursor is None or self.current_brush_cursor is None:
             self.setup_brush_cursor()
         self.update_cursor_pen_width()
-        if self.space_pressed:
-            cursor_style = Qt.OpenHandCursor if not self.scrolling else Qt.ClosedHandCursor
-            self.master_view.setCursor(cursor_style)
-            self.current_view.setCursor(cursor_style)
+        if self.in_pan_mode():
             self.hide_brush_cursor()
+            if self.current_brush_cursor:
+                self.current_brush_cursor.hide()
+            if not self.scrolling:
+                self._set_cursor(Qt.OpenHandCursor)
+            else:
+                self._set_cursor(Qt.ClosedHandCursor)
             return
-        self.master_view.setCursor(Qt.BlankCursor)
-        self.current_view.setCursor(Qt.BlankCursor)
+        self._set_cursor(Qt.BlankCursor)
         mouse_pos_global = QCursor.pos()
         mouse_pos_current = self.current_view.mapFromGlobal(mouse_pos_global)
         mouse_pos_master = self.master_view.mapFromGlobal(mouse_pos_global)
@@ -335,8 +342,7 @@ class DoubleViewBase(ViewStrategy, QWidget, ViewSignals):
         else:
             self.brush_cursor.hide()
             self.current_brush_cursor.hide()
-            self.master_view.setCursor(Qt.ArrowCursor)
-            self.current_view.setCursor(Qt.ArrowCursor)
+            self._set_cursor(Qt.ArrowCursor)
 
     def update_current_cursor_color(self):
         self.update_cursor_color_based_on_background(
@@ -364,9 +370,13 @@ class DoubleViewBase(ViewStrategy, QWidget, ViewSignals):
 
     def handle_current_mouse_press(self, event):
         position = event.position()
-        if self.space_pressed:
+        if self.in_pan_mode():
             self.pan_start = position
             self.panning_current = True
+            self._set_cursor(Qt.ClosedHandCursor)
+            self.hide_brush_cursor()
+            if self.current_brush_cursor:
+                self.current_brush_cursor.hide()
             self.update_brush_cursor()
 
     def handle_current_mouse_move(self, event):
@@ -381,6 +391,8 @@ class DoubleViewBase(ViewStrategy, QWidget, ViewSignals):
     def handle_current_mouse_release(self, _event):
         if self.panning_current:
             self.panning_current = False
+            if self.in_pan_mode():
+                self._set_cursor(Qt.OpenHandCursor)
             self.update_brush_cursor()
 
     def handle_gesture_event(self, event):
