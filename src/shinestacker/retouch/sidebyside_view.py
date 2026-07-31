@@ -50,10 +50,8 @@ class DoubleViewBase(ViewStrategy, QWidget, ViewSignals):
         self.master_scene.addItem(self.brush_preview)
         self.setup_layout()
         self._connect_signals()
-        self.panning_current = False
         self.brush_cursor = None
         self.setFocusPolicy(Qt.StrongFocus)
-        self.pan_start = None
         self.pinch_start_scale = None
         self.current_view.installEventFilter(self)
         self.master_view.installEventFilter(self)
@@ -357,43 +355,33 @@ class DoubleViewBase(ViewStrategy, QWidget, ViewSignals):
         self.last_color_update_time_current = current_time
         return True
 
+    def handle_current_mouse_press(self, event):
+        self.setFocus()
+        self._active_view = self.current_view
+        self.mouse_press_event(event)
+
+    def handle_current_mouse_move(self, event):
+        self._active_view = self.current_view
+        self.mouse_move_event(event)
+        self.update_brush_cursor()
+
+    def handle_current_mouse_release(self, event):
+        self._active_view = self.current_view
+        self.mouse_release_event(event)
+
     def handle_master_mouse_press(self, event):
         self.setFocus()
+        self._active_view = self.master_view
         self.mouse_press_event(event)
 
     def handle_master_mouse_move(self, event):
+        self._active_view = self.master_view
         self.mouse_move_event(event)
         self.update_brush_cursor()
 
     def handle_master_mouse_release(self, event):
+        self._active_view = self.master_view
         self.mouse_release_event(event)
-
-    def handle_current_mouse_press(self, event):
-        position = event.position()
-        if self.in_pan_mode():
-            self.pan_start = position
-            self.panning_current = True
-            self._set_cursor(Qt.ClosedHandCursor)
-            self.hide_brush_cursor()
-            if self.current_brush_cursor:
-                self.current_brush_cursor.hide()
-            self.update_brush_cursor()
-
-    def handle_current_mouse_move(self, event):
-        position = event.position()
-        if self.panning_current and self.space_pressed:
-            delta = position - self.pan_start
-            self.pan_start = position
-            self.scroll_view(self.current_view, delta.x(), delta.y())
-        else:
-            self.update_brush_cursor()
-
-    def handle_current_mouse_release(self, _event):
-        if self.panning_current:
-            self.panning_current = False
-            if self.in_pan_mode():
-                self._set_cursor(Qt.OpenHandCursor)
-            self.update_brush_cursor()
 
     def handle_gesture_event(self, event):
         if self.empty():

@@ -150,6 +150,7 @@ class ViewStrategy(LayerCollectionHandler):
         self.last_cursor_update_time = 0
         self.enable_paint = True
         self.auto_fit_to_window = False
+        self._active_view = None
 
     @abstractmethod
     def create_pixmaps(self):
@@ -882,13 +883,13 @@ class ViewStrategy(LayerCollectionHandler):
         return self.space_pressed or self.pan_toggle
 
     def is_mouse_over_image_area(self):
-        master_view = self.get_master_view()
-        if not master_view:
+        active_view = self._active_view if self._active_view is not None else self.get_master_view()
+        if not active_view:
             return False
-        mouse_pos = master_view.mapFromGlobal(QCursor.pos())
-        viewport_rect = master_view.viewport().rect()
-        h_scroll = master_view.horizontalScrollBar()
-        v_scroll = master_view.verticalScrollBar()
+        mouse_pos = active_view.mapFromGlobal(QCursor.pos())
+        viewport_rect = active_view.viewport().rect()
+        h_scroll = active_view.horizontalScrollBar()
+        v_scroll = active_view.verticalScrollBar()
         rect = viewport_rect
         if h_scroll and h_scroll.isVisible():
             rect = rect.adjusted(0, 0, 0, -h_scroll.height())
@@ -931,24 +932,39 @@ class ViewStrategy(LayerCollectionHandler):
         in_pan_mode = (self.space_pressed or self.pan_toggle or
                        event.modifiers() & Qt.ControlModifier or
                        event.modifiers() & Qt.ShiftModifier)
+        if self.scrolling and event.buttons() & Qt.LeftButton:
+            if self.in_pan_mode():
+                self._set_cursor(Qt.ClosedHandCursor)
+                self.hide_brush_cursor()
+            delta = position - self.last_mouse_pos
+            self.last_mouse_pos = position
+            active_view = self._active_view if self._active_view is not None \
+                else self.get_master_view()
+            self.scroll_view(active_view, delta.x(), delta.y())
+            return
         if in_pan_mode:
             self._set_cursor(Qt.OpenHandCursor)
         else:
             self._set_cursor(Qt.BlankCursor)
         if self.brush_cursor:
-            master_view = self.get_master_view()
-            scene_pos = master_view.mapToScene(position.toPoint())
+            active_view = self._active_view if self._active_view is not None \
+                else self.get_master_view()
+            scene_pos = active_view.mapToScene(position.toPoint())
             size = self.brush.size
             radius = size / 2
             self.brush_cursor.setRect(scene_pos.x() - radius, scene_pos.y() - radius, size, size)
             if self.cursor_style == 'preview':
-                if in_pan_mode:
-                    self.brush_preview.hide()
+                pos = QCursor.pos()
+                if isinstance(pos, QPointF):
+                    scene_pos = pos
                 else:
-                    self.brush_preview.update(scene_pos, int(size))
-                    self.brush_preview.show()
+                    cursor_pos = active_view.mapFromGlobal(pos)
+                    scene_pos = active_view.mapToScene(cursor_pos)
+                self.brush_preview.update(scene_pos, int(size))
+                self.brush_preview.show()
             else:
                 self.hide_brush_preview()
+            self.update_master_cursor_color()
             if self.cursor_style == 'brush' and not in_pan_mode:
                 self.setup_simple_brush_style(scene_pos.x(), scene_pos.y(), radius)
             if in_pan_mode:
@@ -975,14 +991,6 @@ class ViewStrategy(LayerCollectionHandler):
                         self.continue_copy_brush_area(pos)
                     self.last_brush_pos = position
                 self.last_update_time = current_time
-        if self.scrolling and event.buttons() & Qt.LeftButton:
-            master_view = self.get_master_view()
-            if self.in_pan_mode():
-                self._set_cursor(Qt.ClosedHandCursor)
-                self.hide_brush_cursor()
-            delta = position - self.last_mouse_pos
-            self.last_mouse_pos = position
-            self.scroll_view(master_view, delta.x(), delta.y())
 
     def mouse_release_event(self, event):
         if self.empty():
