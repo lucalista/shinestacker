@@ -105,6 +105,7 @@ class OverlaidView(ViewStrategy, ImageGraphicsViewBase, ViewSignals):
         self.resetTransform()
         self.scale(scale_factor, scale_factor)
         self.centerOn(pixmap_item)
+        self.sync_scroll_from_view(self)
         self.center_image(self)
         self.update_cursor_pen_width()
 

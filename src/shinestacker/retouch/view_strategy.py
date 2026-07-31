@@ -4,7 +4,7 @@ import math
 import time
 from abc import abstractmethod
 import numpy as np
-from PySide6.QtCore import Qt, QPointF, QTime, QPoint, Signal, QRectF
+from PySide6.QtCore import Qt, QPointF, QTime, QPoint, Signal, QRectF, QTimer
 from PySide6.QtGui import QImage, QPainter, QColor, QBrush, QPen, QCursor, QPixmap, QPainterPath
 from PySide6.QtWidgets import (
     QGraphicsEllipseItem, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QApplication,
@@ -93,7 +93,7 @@ class ImageGraphicsViewBase(QGraphicsView):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setTransformationAnchor(QGraphicsView.AnchorViewCenter)
-        self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
+        self.setResizeAnchor(QGraphicsView.AnchorViewCenter)
         self.setInteractive(False)
         self.grabGesture(Qt.PinchGesture)
         self.grabGesture(Qt.PanGesture)
@@ -361,6 +361,17 @@ class ViewStrategy(LayerCollectionHandler):
             self.setup_brush_cursor()
         self.show_master()
 
+    def center_on_settled(self, views, center):
+        for v in views:
+            v.centerOn(center)
+
+        def _resettle():
+            for v in views:
+                v.centerOn(center)
+            self.sync_scroll_from_view(self.get_master_view())
+
+        QTimer.singleShot(0, _resettle)
+
     def handle_resize(self, view):
         if self.empty() or not self.auto_fit_to_window:
             return
@@ -386,6 +397,7 @@ class ViewStrategy(LayerCollectionHandler):
         view.scale(new_scale, new_scale)
         self.set_zoom_factor(new_scale)
         view.centerOn(pixmap_item)
+        self.sync_scroll_from_view(view)
         self.center_image(view)
         self.update_cursor_pen_width()
 
@@ -447,6 +459,11 @@ class ViewStrategy(LayerCollectionHandler):
     def center_image(self, view):
         view.horizontalScrollBar().setValue(self.status.h_scroll)
         view.verticalScrollBar().setValue(self.status.v_scroll)
+
+    def sync_scroll_from_view(self, view):
+        self.status.set_scroll(
+            view.horizontalScrollBar().value(),
+            view.verticalScrollBar().value())
 
     def set_scroll_and_center(self, view, delta):
         self.status.set_scroll(
@@ -579,13 +596,11 @@ class ViewStrategy(LayerCollectionHandler):
         self.set_zoom_factor(max(self.min_scale(), min(self.max_scale(), 1.0)))
         view = self.get_master_view()
         center = view.mapToScene(view.viewport().rect().center())
-        for v in self.get_views():
+        views = self.get_views()
+        for v in views:
             v.resetTransform()
             v.scale(self.zoom_factor(), self.zoom_factor())
-            v.centerOn(center)
-        self.status.set_scroll(
-            self.get_master_view().horizontalScrollBar().value(),
-            self.get_master_view().verticalScrollBar().value())
+        self.center_on_settled(views, center)
         self.update_brush_cursor()
         self.update_cursor_pen_width()
         self.auto_fit_to_window = False

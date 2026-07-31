@@ -403,6 +403,7 @@ class DoubleViewBase(ViewStrategy, QWidget, ViewSignals):
         self.master_view.resetTransform()
         self.master_view.scale(scale_factor, scale_factor)
         self.master_view.centerOn(self.pixmap_item_master)
+        self.sync_scroll_from_view(self.master_view)
         self.center_image(self.master_view)
         self.update_cursor_pen_width()
 
@@ -418,6 +419,7 @@ class DoubleViewBase(ViewStrategy, QWidget, ViewSignals):
         self.current_view.resetTransform()
         self.current_view.scale(scale_factor, scale_factor)
         self.current_view.centerOn(self.pixmap_item_current)
+        self.sync_scroll_from_view(self.master_view)
         self.center_image(self.current_view)
         self.update_cursor_pen_width()
 
