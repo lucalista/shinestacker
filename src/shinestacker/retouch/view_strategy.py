@@ -1,5 +1,5 @@
 # pylint: disable=C0114, C0115, C0116, E0611, R0904, R0903, R0902, E1101, R0914, R0913, R0917
-# pylint: disable=R0912, R0915
+# pylint: disable=R0912, R0915, C0302
 import math
 import time
 from abc import abstractmethod
@@ -503,9 +503,18 @@ class ViewStrategy(LayerCollectionHandler):
             return
         if view is None:
             view = self.get_master_view()
-        global_pos = QCursor.pos()
-        ref_pos = view.mapFromGlobal(global_pos)
-        old_center = view.mapToScene(ref_pos)
+        if self.brush_cursor and self.brush_cursor.isVisible():
+            rect = self.brush_cursor.rect()
+            center_scene = rect.center()
+            ref_pos = view.mapFromScene(center_scene)
+            if view.viewport().rect().contains(ref_pos):
+                old_center = center_scene
+            else:
+                ref_pos = view.viewport().rect().center()
+                old_center = view.mapToScene(ref_pos)
+        else:
+            ref_pos = view.viewport().rect().center()
+            old_center = view.mapToScene(ref_pos)
         self.apply_zoom_and_center(view, new_scale, ref_pos, old_center)
         self.update_cursor_pen_width()
         self.auto_fit_to_window = False
