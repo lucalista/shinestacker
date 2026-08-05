@@ -387,19 +387,27 @@ class ViewStrategy(LayerCollectionHandler):
         if pixmap.isNull():
             return
         viewport_rect = view.viewport().rect()
+        h_scroll = view.horizontalScrollBar()
+        v_scroll = view.verticalScrollBar()
+        available_rect = viewport_rect
+        if h_scroll and h_scroll.isVisible():
+            available_rect = available_rect.adjusted(0, 0, 0, -h_scroll.height())
+        if v_scroll and v_scroll.isVisible():
+            available_rect = available_rect.adjusted(0, 0, -v_scroll.width(), 0)
         pixmap_rect = pixmap.rect()
         if pixmap_rect.width() == 0 or pixmap_rect.height() == 0:
             return
-        scale_x = viewport_rect.width() / pixmap_rect.width()
-        scale_y = viewport_rect.height() / pixmap_rect.height()
+        scale_x = available_rect.width() / pixmap_rect.width()
+        scale_y = available_rect.height() / pixmap_rect.height()
         new_scale = min(scale_x, scale_y)
         new_scale = max(self.min_scale(), min(new_scale, self.max_scale()))
         view.resetTransform()
         view.scale(new_scale, new_scale)
         self.set_zoom_factor(new_scale)
-        view.centerOn(pixmap_item)
+        center_point = available_rect.center()
+        scene_center = view.mapToScene(center_point)
+        view.centerOn(scene_center)
         self.sync_scroll_from_view(view)
-        self.center_image(view)
         self.update_cursor_pen_width()
 
     def numpy_to_qimage(self, array):
@@ -504,17 +512,25 @@ class ViewStrategy(LayerCollectionHandler):
             return
         if view is None:
             view = self.get_master_view()
+        viewport_rect = view.viewport().rect()
+        h_scroll = view.horizontalScrollBar()
+        v_scroll = view.verticalScrollBar()
+        available_rect = viewport_rect
+        if h_scroll and h_scroll.isVisible():
+            available_rect = available_rect.adjusted(0, 0, 0, -h_scroll.height())
+        if v_scroll and v_scroll.isVisible():
+            available_rect = available_rect.adjusted(0, 0, -v_scroll.width(), 0)
         if self.brush_cursor and self.brush_cursor.isVisible():
             rect = self.brush_cursor.rect()
             center_scene = rect.center()
             ref_pos = view.mapFromScene(center_scene)
-            if view.viewport().rect().contains(ref_pos):
+            if available_rect.contains(ref_pos):
                 old_center = center_scene
             else:
-                ref_pos = view.viewport().rect().center()
+                ref_pos = available_rect.center()
                 old_center = view.mapToScene(ref_pos)
         else:
-            ref_pos = view.viewport().rect().center()
+            ref_pos = available_rect.center()
             old_center = view.mapToScene(ref_pos)
         self.apply_zoom_and_center(view, new_scale, ref_pos, old_center)
         self.update_cursor_pen_width()
@@ -585,13 +601,29 @@ class ViewStrategy(LayerCollectionHandler):
         self.gesture_active = False
         self.pinch_center_view = None
         self.pinch_center_scene = None
-        for pixmap, view in self.get_pixmaps().items():
-            view.fitInView(pixmap, Qt.KeepAspectRatio)
-        self.set_zoom_factor(self.get_current_scale())
-        self.set_zoom_factor(max(self.min_scale(), min(self.max_scale(), self.zoom_factor())))
-        for view in self.get_views():
-            view.resetTransform()
-            view.scale(self.zoom_factor(), self.zoom_factor())
+        master_view = self.get_master_view()
+        master_pixmap = self.get_master_pixmap()
+        if not master_pixmap or master_pixmap.pixmap().isNull():
+            return
+        pixmap = master_pixmap.pixmap()
+        viewport_rect = master_view.viewport().rect()
+        h_scroll = master_view.horizontalScrollBar()
+        v_scroll = master_view.verticalScrollBar()
+        available_rect = viewport_rect
+        if h_scroll and h_scroll.isVisible():
+            available_rect = available_rect.adjusted(0, 0, 0, -h_scroll.height())
+        if v_scroll and v_scroll.isVisible():
+            available_rect = available_rect.adjusted(0, 0, -v_scroll.width(), 0)
+        scale_x = available_rect.width() / pixmap.width()
+        scale_y = available_rect.height() / pixmap.height()
+        self.set_zoom_factor(max(self.min_scale(), min(self.max_scale(), min(scale_x, scale_y))))
+        master_scene = self.get_master_scene()
+        if master_scene is not None:
+            center = master_scene.sceneRect().center()
+            for view in self.get_views():
+                view.resetTransform()
+                view.scale(self.zoom_factor(), self.zoom_factor())
+                view.centerOn(center)
         self.status.set_scroll(
             self.get_master_view().horizontalScrollBar().value(),
             self.get_master_view().verticalScrollBar().value())
