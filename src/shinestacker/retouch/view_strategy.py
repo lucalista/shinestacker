@@ -865,7 +865,10 @@ class ViewStrategy(LayerCollectionHandler):
         if event.key() == Qt.Key_P and not event.isAutoRepeat():
             self.pan_toggle = not self.pan_toggle
             if self.pan_toggle:
-                self._set_cursor(Qt.OpenHandCursor)
+                if self.is_mouse_over_image_area():
+                    self._set_cursor(Qt.OpenHandCursor)
+                else:
+                    self._set_cursor(Qt.ArrowCursor)
                 self.hide_brush_cursor()
                 self.hide_brush_preview()
             else:
