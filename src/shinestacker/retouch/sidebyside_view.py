@@ -325,6 +325,12 @@ class DoubleViewBase(ViewStrategy, QWidget, ViewSignals):
             super().update_brush_cursor()
             self.sync_current_cursor_with_master()
         elif current_has_mouse:
+            if not self.is_mouse_over_image_area(self.current_view):
+                self.brush_cursor.hide()
+                self.current_brush_cursor.hide()
+                self.hide_brush_preview()
+                self._set_cursor(Qt.ArrowCursor)
+                return
             self.hide_brush_preview()
             scene_pos = self.current_view.mapToScene(mouse_pos_current)
             size = self.brush.size

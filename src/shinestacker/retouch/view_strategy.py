@@ -953,14 +953,15 @@ class ViewStrategy(LayerCollectionHandler):
     def in_pan_mode(self):
         return self.space_pressed or self.pan_toggle
 
-    def is_mouse_over_image_area(self):
-        active_view = self._active_view if self._active_view is not None else self.get_master_view()
-        if not active_view:
+    def is_mouse_over_image_area(self, view=None):
+        if view is None:
+            view = self._active_view if self._active_view is not None else self.get_master_view()
+        if not view:
             return False
-        mouse_pos = active_view.mapFromGlobal(QCursor.pos())
-        viewport_rect = active_view.viewport().rect()
-        h_scroll = active_view.horizontalScrollBar()
-        v_scroll = active_view.verticalScrollBar()
+        mouse_pos = view.mapFromGlobal(QCursor.pos())
+        viewport_rect = view.viewport().rect()
+        h_scroll = view.horizontalScrollBar()
+        v_scroll = view.verticalScrollBar()
         rect = viewport_rect
         if h_scroll and h_scroll.isVisible():
             rect = rect.adjusted(0, 0, 0, -h_scroll.height())
