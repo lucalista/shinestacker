@@ -902,7 +902,10 @@ class ViewStrategy(LayerCollectionHandler):
         if self.empty():
             return
         if self.in_pan_mode():
-            self._set_cursor(Qt.OpenHandCursor)
+            if self.is_mouse_over_image_area():
+                self._set_cursor(Qt.OpenHandCursor)
+            else:
+                self._set_cursor(Qt.ArrowCursor)
             self.hide_brush_cursor()
             self.hide_brush_preview()
         else:
