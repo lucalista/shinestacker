@@ -345,6 +345,41 @@ class ViewStrategy(LayerCollectionHandler):
             self.brush_cursor.setPen(pen)
         return width
 
+    def update_scrollbar_visibility(self, pos=None):
+        if self.empty():
+            return
+        for view in self.get_views():
+            viewport = view.viewport().rect()
+            if pos is None:
+                cursor_pos = view.mapFromGlobal(QCursor.pos())
+                if viewport.contains(cursor_pos):
+                    margin = 30
+                    near_edge = (cursor_pos.x() > viewport.width() - margin or
+                                 cursor_pos.y() > viewport.height() - margin)
+                    if near_edge:
+                        view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+                        view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+                    else:
+                        view.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+                        view.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+            else:
+                margin = 30
+                near_edge = (pos.x() > viewport.width() - margin or
+                             pos.y() > viewport.height() - margin)
+                if near_edge:
+                    view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+                    view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+                else:
+                    view.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+                    view.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+            view.horizontalScrollBar().setVisible(
+                view.horizontalScrollBarPolicy() == Qt.ScrollBarAlwaysOn)
+            view.verticalScrollBar().setVisible(
+                view.verticalScrollBarPolicy() == Qt.ScrollBarAlwaysOn)
+            view.horizontalScrollBar().update()
+            view.verticalScrollBar().update()
+            view.update()
+
     def clear_image(self):
         for scene in self.get_scenes():
             scene.clear()
@@ -860,14 +895,6 @@ class ViewStrategy(LayerCollectionHandler):
                 self.control_pressed = False
             super().keyReleaseEvent(event)
 
-    def leaveEvent(self, event):
-        if self.empty():
-            self._set_cursor(Qt.ArrowCursor)
-        else:
-            self._set_cursor(Qt.ArrowCursor)
-            self.hide_brush_cursor()
-        super().leaveEvent(event)
-
     def enterEvent(self, event):
         if self.empty():
             return
@@ -879,7 +906,19 @@ class ViewStrategy(LayerCollectionHandler):
             self._set_cursor(Qt.BlankCursor)
             self.show_brush_cursor()
             self.update_brush_cursor()
+        self.update_scrollbar_visibility(QCursor.pos())
         super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        if self.empty():
+            self._set_cursor(Qt.ArrowCursor)
+        else:
+            self._set_cursor(Qt.ArrowCursor)
+            self.hide_brush_cursor()
+        for view in self.get_views():
+            view.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+            view.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        super().leaveEvent(event)
 # pylint: enable=C0103
 
     def scroll_view(self, view, delta_x, delta_y):
@@ -1023,6 +1062,7 @@ class ViewStrategy(LayerCollectionHandler):
                         self.continue_copy_brush_area(pos)
                     self.last_brush_pos = position
                 self.last_update_time = current_time
+        self.update_scrollbar_visibility(position.toPoint())
 
     def mouse_release_event(self, event):
         if self.empty():
