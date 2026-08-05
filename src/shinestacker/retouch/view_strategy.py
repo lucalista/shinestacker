@@ -1014,6 +1014,7 @@ class ViewStrategy(LayerCollectionHandler):
             if self.in_pan_mode():
                 self._set_cursor(Qt.ClosedHandCursor)
                 self.hide_brush_cursor()
+                self.hide_brush_preview()
             delta = position - self.last_mouse_pos
             self.last_mouse_pos = position
             active_view = self._active_view if self._active_view is not None \
@@ -1022,6 +1023,9 @@ class ViewStrategy(LayerCollectionHandler):
             return
         if in_pan_mode:
             self._set_cursor(Qt.OpenHandCursor)
+            self.hide_brush_cursor()
+            self.hide_brush_preview()
+            return
         else:
             self._set_cursor(Qt.BlankCursor)
         if self.brush_cursor:
