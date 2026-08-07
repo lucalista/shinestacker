@@ -363,8 +363,8 @@ class ViewStrategy(LayerCollectionHandler):
                 cursor_pos = pos
             near_right = cursor_pos.x() > viewport.width() - margin
             near_bottom = cursor_pos.y() > viewport.height() - margin
-            show_h = h_scrollable and near_right
-            show_v = v_scrollable and near_bottom
+            show_h = h_scrollable and (near_right or near_bottom)
+            show_v = v_scrollable and (near_right or near_bottom)
             view.setHorizontalScrollBarPolicy(
                 Qt.ScrollBarAlwaysOn if show_h else Qt.ScrollBarAsNeeded)
             view.setVerticalScrollBarPolicy(
