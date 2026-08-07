@@ -676,7 +676,7 @@ class ViewStrategy(LayerCollectionHandler):
             return
         self.set_zoom_factor(max(self.min_scale(), min(self.max_scale(), 1.0)))
         view = self.get_master_view()
-        center = view.mapToScene(view.viewport().rect().center())
+        center = self.get_master_scene().sceneRect().center()
         views = self.get_views()
         for v in views:
             v.resetTransform()
