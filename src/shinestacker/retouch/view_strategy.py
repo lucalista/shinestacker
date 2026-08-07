@@ -348,36 +348,31 @@ class ViewStrategy(LayerCollectionHandler):
     def update_scrollbar_visibility(self, pos=None):
         if self.empty():
             return
+        margin = 30
         for view in self.get_views():
             viewport = view.viewport().rect()
+            h_scroll = view.horizontalScrollBar()
+            v_scroll = view.verticalScrollBar()
+            h_scrollable = h_scroll.maximum() > 0
+            v_scrollable = v_scroll.maximum() > 0
             if pos is None:
                 cursor_pos = view.mapFromGlobal(QCursor.pos())
-                if viewport.contains(cursor_pos):
-                    margin = 30
-                    near_edge = (cursor_pos.x() > viewport.width() - margin or
-                                 cursor_pos.y() > viewport.height() - margin)
-                    if near_edge:
-                        view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-                        view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-                    else:
-                        view.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-                        view.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+                if not viewport.contains(cursor_pos):
+                    continue
             else:
-                margin = 30
-                near_edge = (pos.x() > viewport.width() - margin or
-                             pos.y() > viewport.height() - margin)
-                if near_edge:
-                    view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-                    view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-                else:
-                    view.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-                    view.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-            view.horizontalScrollBar().setVisible(
-                view.horizontalScrollBarPolicy() == Qt.ScrollBarAlwaysOn)
-            view.verticalScrollBar().setVisible(
-                view.verticalScrollBarPolicy() == Qt.ScrollBarAlwaysOn)
-            view.horizontalScrollBar().update()
-            view.verticalScrollBar().update()
+                cursor_pos = pos
+            near_right = cursor_pos.x() > viewport.width() - margin
+            near_bottom = cursor_pos.y() > viewport.height() - margin
+            show_h = h_scrollable and near_right
+            show_v = v_scrollable and near_bottom
+            view.setHorizontalScrollBarPolicy(
+                Qt.ScrollBarAlwaysOn if show_h else Qt.ScrollBarAsNeeded)
+            view.setVerticalScrollBarPolicy(
+                Qt.ScrollBarAlwaysOn if show_v else Qt.ScrollBarAsNeeded)
+            h_scroll.setVisible(show_h)
+            v_scroll.setVisible(show_v)
+            h_scroll.update()
+            v_scroll.update()
             view.update()
 
     def clear_image(self):
@@ -421,29 +416,38 @@ class ViewStrategy(LayerCollectionHandler):
         pixmap = pixmap_item.pixmap()
         if pixmap.isNull():
             return
-        viewport_rect = view.viewport().rect()
-        h_scroll = view.horizontalScrollBar()
-        v_scroll = view.verticalScrollBar()
-        available_rect = viewport_rect
-        if h_scroll and h_scroll.isVisible():
-            available_rect = available_rect.adjusted(0, 0, 0, -h_scroll.height())
-        if v_scroll and v_scroll.isVisible():
-            available_rect = available_rect.adjusted(0, 0, -v_scroll.width(), 0)
+        
+        old_h_policy = view.horizontalScrollBarPolicy()
+        old_v_policy = view.verticalScrollBarPolicy()
+        view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        view.updateGeometry()
+        
+        available_rect = view.viewport().rect()
         pixmap_rect = pixmap.rect()
         if pixmap_rect.width() == 0 or pixmap_rect.height() == 0:
+            view.setHorizontalScrollBarPolicy(old_h_policy)
+            view.setVerticalScrollBarPolicy(old_v_policy)
             return
+        
         scale_x = available_rect.width() / pixmap_rect.width()
         scale_y = available_rect.height() / pixmap_rect.height()
         new_scale = min(scale_x, scale_y)
         new_scale = max(self.min_scale(), min(new_scale, self.max_scale()))
+        
         view.resetTransform()
         view.scale(new_scale, new_scale)
         self.set_zoom_factor(new_scale)
+        
         center_point = available_rect.center()
         scene_center = view.mapToScene(center_point)
         view.centerOn(scene_center)
         self.sync_scroll_from_view(view)
         self.update_cursor_pen_width()
+        
+        view.setHorizontalScrollBarPolicy(old_h_policy)
+        view.setVerticalScrollBarPolicy(old_v_policy)
+        view.updateGeometry()
 
     def numpy_to_qimage(self, array):
         if array is None:
@@ -641,17 +645,18 @@ class ViewStrategy(LayerCollectionHandler):
         if not master_pixmap or master_pixmap.pixmap().isNull():
             return
         pixmap = master_pixmap.pixmap()
-        viewport_rect = master_view.viewport().rect()
-        h_scroll = master_view.horizontalScrollBar()
-        v_scroll = master_view.verticalScrollBar()
-        available_rect = viewport_rect
-        if h_scroll and h_scroll.isVisible():
-            available_rect = available_rect.adjusted(0, 0, 0, -h_scroll.height())
-        if v_scroll and v_scroll.isVisible():
-            available_rect = available_rect.adjusted(0, 0, -v_scroll.width(), 0)
+        
+        old_h_policy = master_view.horizontalScrollBarPolicy()
+        old_v_policy = master_view.verticalScrollBarPolicy()
+        master_view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        master_view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        master_view.updateGeometry()
+        
+        available_rect = master_view.viewport().rect()
         scale_x = available_rect.width() / pixmap.width()
         scale_y = available_rect.height() / pixmap.height()
         self.set_zoom_factor(max(self.min_scale(), min(self.max_scale(), min(scale_x, scale_y))))
+        
         master_scene = self.get_master_scene()
         if master_scene is not None:
             center = master_scene.sceneRect().center()
@@ -659,9 +664,15 @@ class ViewStrategy(LayerCollectionHandler):
                 view.resetTransform()
                 view.scale(self.zoom_factor(), self.zoom_factor())
                 view.centerOn(center)
+        
         self.status.set_scroll(
             self.get_master_view().horizontalScrollBar().value(),
             self.get_master_view().verticalScrollBar().value())
+        
+        master_view.setHorizontalScrollBarPolicy(old_h_policy)
+        master_view.setVerticalScrollBarPolicy(old_v_policy)
+        master_view.updateGeometry()
+        
         self.update_brush_cursor()
         self.update_cursor_pen_width()
         self.auto_fit_to_window = True

@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.16.0] - 2026-08-05
+## [v1.16.0] - 2026-08-07
 **Added user-requested improvements**
 
 ### Fixed
