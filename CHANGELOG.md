@@ -8,6 +8,7 @@
 - when the zoom is reset to actual size (Ctrl+R), the image is centered correctly, preventing jumps when changing layers (#58)
 - image centering issue when zooming with Ctrl++ (#58)
 - image panning (Space + drag or the new key P) works when the mouse is in either view in the side-by-side view mode
+- cured warning from unit test
 
 ### Changed
 - removed uv.lock file since uv is not supported and uv.lock is not updated in the development workflow
