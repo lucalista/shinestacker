@@ -129,7 +129,7 @@ class Settings(StdPathFile):
                 'version': CURRENT_SETTINGS_FILE_VERSION,
                 'settings': serializable_diff
             }
-            json_obj = jsonpickle.encode(json_data)
+            json_obj = jsonpickle.encode(json_data, keys=True)
             with open(self.get_file_path(), 'w', encoding="utf-8") as f:
                 f.write(json_obj)
         except IOError as e:

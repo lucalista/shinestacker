@@ -1,10 +1,10 @@
 import pytest
 import time
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, Mock
 from PySide6.QtWidgets import QApplication
 from shinestacker.config.constants import constants
 from shinestacker.gui.colors import ColorEntry
-from shinestacker.common_project.run_worker import RunWorker
+from shinestacker.common_project.run_worker import RunWorker, JobLogWorker
 from shinestacker.classic_project.gui_run import (
     ColorPalette, ColorButton, TimerProgressBar, RunWindow)
 
@@ -187,7 +187,8 @@ class TestRunWindow:
 class TestRunWorker:
     @pytest.fixture
     def run_worker(self):
-        worker = RunWorker("test_123")
+        mock_job = Mock()
+        worker = JobLogWorker(mock_job, "test_123")
         worker.do_run = MagicMock(return_value=(constants.RUN_COMPLETED, ""))
         return worker
 

@@ -416,35 +416,29 @@ class ViewStrategy(LayerCollectionHandler):
         pixmap = pixmap_item.pixmap()
         if pixmap.isNull():
             return
-        
         old_h_policy = view.horizontalScrollBarPolicy()
         old_v_policy = view.verticalScrollBarPolicy()
         view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         view.updateGeometry()
-        
         available_rect = view.viewport().rect()
         pixmap_rect = pixmap.rect()
         if pixmap_rect.width() == 0 or pixmap_rect.height() == 0:
             view.setHorizontalScrollBarPolicy(old_h_policy)
             view.setVerticalScrollBarPolicy(old_v_policy)
             return
-        
         scale_x = available_rect.width() / pixmap_rect.width()
         scale_y = available_rect.height() / pixmap_rect.height()
         new_scale = min(scale_x, scale_y)
         new_scale = max(self.min_scale(), min(new_scale, self.max_scale()))
-        
         view.resetTransform()
         view.scale(new_scale, new_scale)
         self.set_zoom_factor(new_scale)
-        
         center_point = available_rect.center()
         scene_center = view.mapToScene(center_point)
         view.centerOn(scene_center)
         self.sync_scroll_from_view(view)
         self.update_cursor_pen_width()
-        
         view.setHorizontalScrollBarPolicy(old_h_policy)
         view.setVerticalScrollBarPolicy(old_v_policy)
         view.updateGeometry()
@@ -653,7 +647,7 @@ class ViewStrategy(LayerCollectionHandler):
         available_rect = master_view.viewport().rect()
         scale_x = available_rect.width() / pixmap.width()
         scale_y = available_rect.height() / pixmap.height()
-        self.set_zoom_factor(max(self.min_scale(), min(self.max_scale(), min(scale_x, scale_y))))
+        self.set_zoom_factor(max(self.min_scale(), self.max_scale(), scale_x, scale_y))
         master_scene = self.get_master_scene()
         if master_scene is not None:
             center = master_scene.sceneRect().center()
@@ -675,7 +669,6 @@ class ViewStrategy(LayerCollectionHandler):
         if self.empty():
             return
         self.set_zoom_factor(max(self.min_scale(), min(self.max_scale(), 1.0)))
-        view = self.get_master_view()
         center = self.get_master_scene().sceneRect().center()
         views = self.get_views()
         for v in views:
@@ -1031,8 +1024,7 @@ class ViewStrategy(LayerCollectionHandler):
             self.hide_brush_cursor()
             self.hide_brush_preview()
             return
-        else:
-            self._set_cursor(Qt.BlankCursor)
+        self._set_cursor(Qt.BlankCursor)
         if self.brush_cursor:
             active_view = self._active_view if self._active_view is not None \
                 else self.get_master_view()
