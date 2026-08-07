@@ -645,36 +645,28 @@ class ViewStrategy(LayerCollectionHandler):
         if not master_pixmap or master_pixmap.pixmap().isNull():
             return
         pixmap = master_pixmap.pixmap()
-        
         old_h_policy = master_view.horizontalScrollBarPolicy()
         old_v_policy = master_view.verticalScrollBarPolicy()
         master_view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         master_view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         master_view.updateGeometry()
-        
         available_rect = master_view.viewport().rect()
         scale_x = available_rect.width() / pixmap.width()
         scale_y = available_rect.height() / pixmap.height()
-        new_scale = max(self.min_scale(), min(self.max_scale(), min(scale_x, scale_y)))
-        self.set_zoom_factor(new_scale)
-        
-        # Center on the IMAGE center, not the scene rect center
-        # The image is always at (0,0) in scene coordinates
-        image_center = QPointF(pixmap.width() / 2.0, pixmap.height() / 2.0)
-        
-        for view in self.get_views():
-            view.resetTransform()
-            view.scale(new_scale, new_scale)
-            view.centerOn(image_center)
-        
+        self.set_zoom_factor(max(self.min_scale(), min(self.max_scale(), min(scale_x, scale_y))))
+        master_scene = self.get_master_scene()
+        if master_scene is not None:
+            center = master_scene.sceneRect().center()
+            for view in self.get_views():
+                view.resetTransform()
+                view.scale(self.zoom_factor(), self.zoom_factor())
+                view.centerOn(center)
         self.status.set_scroll(
             self.get_master_view().horizontalScrollBar().value(),
             self.get_master_view().verticalScrollBar().value())
-        
         master_view.setHorizontalScrollBarPolicy(old_h_policy)
         master_view.setVerticalScrollBarPolicy(old_v_policy)
         master_view.updateGeometry()
-        
         self.update_brush_cursor()
         self.update_cursor_pen_width()
         self.auto_fit_to_window = True
