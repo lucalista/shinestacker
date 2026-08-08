@@ -68,9 +68,16 @@ class DoubleViewBase(ViewStrategy, QWidget, ViewSignals):
 # pylint: enable=C0103
 
     def _handle_view_resize(self, view, event):
-        super(type(view), view).resizeEvent(event)
-        if self.auto_fit_to_window:
-            self.handle_resize(view)
+        if view._in_resize:
+            super(type(view), view).resizeEvent(event)
+            return
+        view._in_resize = True
+        try:
+            super(type(view), view).resizeEvent(event)
+            if self.auto_fit_to_window:
+                self.handle_resize(view)
+        finally:
+            view._in_resize = False
 
     def setup_layout(self):
         raise NotImplementedError("Subclasses must implement setup_layout")

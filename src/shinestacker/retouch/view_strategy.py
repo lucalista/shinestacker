@@ -105,21 +105,28 @@ class ImageGraphicsViewBase(QGraphicsView):
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self._in_resize = False
 
     # pylint: disable=C0103
     def resizeEvent(self, event):
-        super().resizeEvent(event)
-        parent = self.parent()
-        if hasattr(parent, 'auto_fit_to_window') and hasattr(parent, 'handle_resize'):
-            if parent.auto_fit_to_window:
-                parent.handle_resize(self)
-        else:
-            while parent:
-                if hasattr(parent, 'auto_fit_to_window') and hasattr(parent, 'handle_resize'):
-                    if parent.auto_fit_to_window:
-                        parent.handle_resize(self)
-                    break
-                parent = parent.parent()
+        if self._in_resize:
+            return
+        self._in_resize = True
+        try:
+            super().resizeEvent(event)
+            parent = self.parent()
+            if hasattr(parent, 'auto_fit_to_window') and hasattr(parent, 'handle_resize'):
+                if parent.auto_fit_to_window:
+                    parent.handle_resize(self)
+            else:
+                while parent:
+                    if hasattr(parent, 'auto_fit_to_window') and hasattr(parent, 'handle_resize'):
+                        if parent.auto_fit_to_window:
+                            parent.handle_resize(self)
+                        break
+                    parent = parent.parent()
+        finally:
+            self._in_resize = False
     # pylint: enable=C0103
 
 
@@ -386,42 +393,48 @@ class ViewStrategy(LayerCollectionHandler):
     def handle_resize(self, view):
         if self.empty() or not self.auto_fit_to_window:
             return
-        pixmap_item = None
-        for pixmap, v in self.get_pixmaps().items():
-            if v == view:
-                pixmap_item = pixmap
-                break
-        if pixmap_item is None:
+        if view._in_resize:
             return
-        pixmap = pixmap_item.pixmap()
-        if pixmap.isNull():
-            return
-        old_h_policy = view.horizontalScrollBarPolicy()
-        old_v_policy = view.verticalScrollBarPolicy()
-        view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        view.updateGeometry()
-        available_rect = view.viewport().rect()
-        pixmap_rect = pixmap.rect()
-        if pixmap_rect.width() == 0 or pixmap_rect.height() == 0:
+        view._in_resize = True
+        try:
+            pixmap_item = None
+            for pixmap, v in self.get_pixmaps().items():
+                if v == view:
+                    pixmap_item = pixmap
+                    break
+            if pixmap_item is None:
+                return
+            pixmap = pixmap_item.pixmap()
+            if pixmap.isNull():
+                return
+            old_h_policy = view.horizontalScrollBarPolicy()
+            old_v_policy = view.verticalScrollBarPolicy()
+            view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            view.updateGeometry()
+            available_rect = view.viewport().rect()
+            pixmap_rect = pixmap.rect()
+            if pixmap_rect.width() == 0 or pixmap_rect.height() == 0:
+                view.setHorizontalScrollBarPolicy(old_h_policy)
+                view.setVerticalScrollBarPolicy(old_v_policy)
+                return
+            scale_x = available_rect.width() / pixmap_rect.width()
+            scale_y = available_rect.height() / pixmap_rect.height()
+            new_scale = min(scale_x, scale_y)
+            new_scale = max(self.min_scale(), min(new_scale, self.max_scale()))
+            view.resetTransform()
+            view.scale(new_scale, new_scale)
+            self.set_zoom_factor(new_scale)
+            center_point = available_rect.center()
+            scene_center = view.mapToScene(center_point)
+            view.centerOn(scene_center)
+            self.sync_scroll_from_view(view)
+            self.update_cursor_pen_width()
             view.setHorizontalScrollBarPolicy(old_h_policy)
             view.setVerticalScrollBarPolicy(old_v_policy)
-            return
-        scale_x = available_rect.width() / pixmap_rect.width()
-        scale_y = available_rect.height() / pixmap_rect.height()
-        new_scale = min(scale_x, scale_y)
-        new_scale = max(self.min_scale(), min(new_scale, self.max_scale()))
-        view.resetTransform()
-        view.scale(new_scale, new_scale)
-        self.set_zoom_factor(new_scale)
-        center_point = available_rect.center()
-        scene_center = view.mapToScene(center_point)
-        view.centerOn(scene_center)
-        self.sync_scroll_from_view(view)
-        self.update_cursor_pen_width()
-        view.setHorizontalScrollBarPolicy(old_h_policy)
-        view.setVerticalScrollBarPolicy(old_v_policy)
-        view.updateGeometry()
+            view.updateGeometry()
+        finally:
+            view._in_resize = False
 
     def numpy_to_qimage(self, array):
         if array is None:

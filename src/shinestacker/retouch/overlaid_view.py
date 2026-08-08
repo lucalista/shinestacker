@@ -75,11 +75,6 @@ class OverlaidView(ViewStrategy, ImageGraphicsViewBase, ViewSignals):
                 self.brush_cursor.show()
         super().enterEvent(event)
 
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        if self.auto_fit_to_window:
-            self.handle_resize(self)
-
     def get_mouse_callbacks(self):
         return self.mousePressEvent
 
