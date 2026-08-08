@@ -5,6 +5,7 @@
 
 ### Fixed
 - default zoom was mistakenly off (#60)
+- fixed scrollbar apparence (#61)
 
 ---
 

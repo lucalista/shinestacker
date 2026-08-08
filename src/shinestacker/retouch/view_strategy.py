@@ -348,31 +348,11 @@ class ViewStrategy(LayerCollectionHandler):
     def update_scrollbar_visibility(self, pos=None):
         if self.empty():
             return
-        margin = 30
         for view in self.get_views():
-            viewport = view.viewport().rect()
             h_scroll = view.horizontalScrollBar()
             v_scroll = view.verticalScrollBar()
-            h_scrollable = h_scroll.maximum() > 0
-            v_scrollable = v_scroll.maximum() > 0
-            if pos is None:
-                cursor_pos = view.mapFromGlobal(QCursor.pos())
-                if not viewport.contains(cursor_pos):
-                    continue
-            else:
-                cursor_pos = pos
-            near_right = cursor_pos.x() > viewport.width() - margin
-            near_bottom = cursor_pos.y() > viewport.height() - margin
-            show_h = h_scrollable and (near_right or near_bottom)
-            show_v = v_scrollable and (near_right or near_bottom)
-            view.setHorizontalScrollBarPolicy(
-                Qt.ScrollBarAlwaysOn if show_h else Qt.ScrollBarAsNeeded)
-            view.setVerticalScrollBarPolicy(
-                Qt.ScrollBarAlwaysOn if show_v else Qt.ScrollBarAsNeeded)
-            h_scroll.setVisible(show_h)
-            v_scroll.setVisible(show_v)
-            h_scroll.update()
-            v_scroll.update()
+            h_scroll.setVisible(h_scroll.maximum() > 0)
+            v_scroll.setVisible(v_scroll.maximum() > 0)
             view.update()
 
     def clear_image(self):
@@ -920,9 +900,6 @@ class ViewStrategy(LayerCollectionHandler):
         else:
             self._set_cursor(Qt.ArrowCursor)
             self.hide_brush_cursor()
-        for view in self.get_views():
-            view.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-            view.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         super().leaveEvent(event)
 # pylint: enable=C0103
 
