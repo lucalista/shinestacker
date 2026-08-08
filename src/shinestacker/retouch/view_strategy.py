@@ -1,6 +1,7 @@
 # pylint: disable=C0114, C0115, C0116, E0611, R0904, R0903, R0902, E1101, R0914, R0913, R0917
 # pylint: disable=R0912, R0915, C0302
 import math
+import sys
 import time
 from abc import abstractmethod
 import numpy as np
@@ -120,7 +121,18 @@ class ImageGraphicsViewBase(QGraphicsView):
                         parent.handle_resize(self)
                     break
                 parent = parent.parent()
+        if sys.platform == 'darwin':
+            QTimer.singleShot(0, self._nudge_scrollbar_style)
     # pylint: enable=C0103
+
+    def _nudge_scrollbar_style(self):
+        for bar in (self.horizontalScrollBar(), self.verticalScrollBar()):
+            if bar.isVisible():
+                style = bar.style()
+                style.unpolish(bar)
+                style.polish(bar)
+                bar.update()
+        self.viewport().update()
 
 
 class ViewStrategy(LayerCollectionHandler):
@@ -348,11 +360,31 @@ class ViewStrategy(LayerCollectionHandler):
     def update_scrollbar_visibility(self, pos=None):
         if self.empty():
             return
+        margin = 30
         for view in self.get_views():
+            viewport = view.viewport().rect()
             h_scroll = view.horizontalScrollBar()
             v_scroll = view.verticalScrollBar()
-            h_scroll.setVisible(h_scroll.maximum() > 0)
-            v_scroll.setVisible(v_scroll.maximum() > 0)
+            h_scrollable = h_scroll.maximum() > 0
+            v_scrollable = v_scroll.maximum() > 0
+            if pos is None:
+                cursor_pos = view.mapFromGlobal(QCursor.pos())
+                if not viewport.contains(cursor_pos):
+                    continue
+            else:
+                cursor_pos = pos
+            near_right = cursor_pos.x() > viewport.width() - margin
+            near_bottom = cursor_pos.y() > viewport.height() - margin
+            show_h = h_scrollable and (near_right or near_bottom)
+            show_v = v_scrollable and (near_right or near_bottom)
+            view.setHorizontalScrollBarPolicy(
+                Qt.ScrollBarAlwaysOn if show_h else Qt.ScrollBarAsNeeded)
+            view.setVerticalScrollBarPolicy(
+                Qt.ScrollBarAlwaysOn if show_v else Qt.ScrollBarAsNeeded)
+            h_scroll.setVisible(show_h)
+            v_scroll.setVisible(show_v)
+            h_scroll.update()
+            v_scroll.update()
             view.update()
 
     def clear_image(self):
@@ -900,6 +932,9 @@ class ViewStrategy(LayerCollectionHandler):
         else:
             self._set_cursor(Qt.ArrowCursor)
             self.hide_brush_cursor()
+        for view in self.get_views():
+            view.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+            view.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         super().leaveEvent(event)
 # pylint: enable=C0103
 
