@@ -568,6 +568,7 @@ class ViewStrategy(LayerCollectionHandler):
         self.apply_zoom_and_center(view, new_scale, ref_pos, old_center)
         self.update_cursor_pen_width()
         self.auto_fit_to_window = False
+        self.update_scrollbar_visibility()
 
     def handle_wheel_event(self, event):
         if self.empty() or self.gesture_active:
