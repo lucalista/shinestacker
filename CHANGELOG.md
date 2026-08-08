@@ -1,7 +1,15 @@
 # Changelog
 
+## [v1.16.1] - 2026-08-08
+**Bug fixes**
+
+### Fixed
+- default zoom was mistakenly off (#60)
+
+---
+
 ## [v1.16.0] - 2026-08-07
-**Added user-requested improvements**
+**Added user-requested improvements and bug fixes**
 
 ### Fixed
 - cursor no longer disappears on scrollbars in retouch mode (#57)

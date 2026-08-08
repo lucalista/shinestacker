@@ -647,7 +647,7 @@ class ViewStrategy(LayerCollectionHandler):
         available_rect = master_view.viewport().rect()
         scale_x = available_rect.width() / pixmap.width()
         scale_y = available_rect.height() / pixmap.height()
-        self.set_zoom_factor(max(self.min_scale(), self.max_scale(), scale_x, scale_y))
+        self.set_zoom_factor(max(self.min_scale(), min(self.max_scale(), scale_x, scale_y)))
         master_scene = self.get_master_scene()
         if master_scene is not None:
             center = master_scene.sceneRect().center()
