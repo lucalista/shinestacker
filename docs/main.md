@@ -37,6 +37,20 @@ cd shinestacker
 pip install -e .
 ```
 
+On Linux and other system that require extra protection level, you may need to use ```pip``` with avirtual environment:
+
+```bash
+git clone https://github.com/lucalista/shinestacker.git
+cd shinestacker
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
+```
+
+Note that, depending on your installation, you may need to use ```python3``` and ```pip3``` instead of
+```python``` and ```pip```, respectively.
+
+
 ## GUI Workflow
 Launch GUI
 

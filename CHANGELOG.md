@@ -6,6 +6,7 @@
 ### Fixed
 - default zoom was mistakenly off (#60)
 - fixed scrollbar apparence (#61)
+- updated installation documentation using ```pip```
 
 ---
 
