@@ -2,7 +2,7 @@
 import os
 import traceback
 from functools import partial
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QShortcut, QKeySequence, QAction, QActionGroup, QGuiApplication
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QMenu,
                                QListWidget, QSlider, QMainWindow, QMessageBox, QDialog)
@@ -51,7 +51,6 @@ class ImageEditorUI(QMainWindow, LayerCollectionHandler):
         self.undo_manager.stack_changed.connect(self.update_undo_redo_actions)
         self.shortcuts_help_dialog = None
         self.update_title()
-        self.resize(1400, 900)
         center = QGuiApplication.primaryScreen().geometry().center()
         self.move(center - self.rect().center())
         central_widget = QWidget()
@@ -77,12 +76,12 @@ class ImageEditorUI(QMainWindow, LayerCollectionHandler):
         brush_layout = QVBoxLayout(brush_panel)
         brush_layout.setContentsMargins(0, 0, 0, 0)
         brush_layout.setSpacing(2)
-
         self.size_label = QLabel("Size")
         self.size_label.setAlignment(Qt.AlignLeft)
         brush_layout.addWidget(self.size_label)
         self.size_slider = QSlider(Qt.Horizontal)
         self.size_slider.setRange(0, gui_constants.BRUSH_SIZE_SLIDER_MAX)
+        QTimer.singleShot(100, lambda: self.resize(1400, 900))
 
         def brush_size_to_slider(size):
             if size <= gui_constants.BRUSH_SIZES['min']:
