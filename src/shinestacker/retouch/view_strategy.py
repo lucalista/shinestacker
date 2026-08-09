@@ -105,31 +105,27 @@ class ImageGraphicsViewBase(QGraphicsView):
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self._in_resize = False
+        self.in_resize = False
 
     # pylint: disable=C0103
     def resizeEvent(self, event):
-        if self._in_resize:
+        if self.in_resize:
             return
-        self._in_resize = True
+        self.in_resize = True
         try:
             super().resizeEvent(event)
-            # Check if this is OverlaidView (self is the strategy)
             if hasattr(self, 'auto_fit_to_window'):
                 if self.auto_fit_to_window:
                     self.handle_resize(self)
-                # Always update scrollbars on resize - pass self as the view
-                self._update_scrollbars(self)
+                self.update_scrollbars(self)
             else:
-                # Must be ImageGraphicsView inside DoubleViewBase
                 parent = self.parent()
                 if parent and hasattr(parent, 'auto_fit_to_window'):
                     if parent.auto_fit_to_window:
                         parent.handle_resize(self)
-                    # Always update scrollbars on resize - pass self as the view
-                    parent._update_scrollbars(self)
+                    parent.update_scrollbars(self)
         finally:
-            self._in_resize = False
+            self.in_resize = False
     # pylint: enable=C0103
 
 
@@ -233,41 +229,27 @@ class ViewStrategy(LayerCollectionHandler):
     @abstractmethod
     def get_view_with_mouse(self, event=None):
         pass
-        
-    def _update_scrollbars(self, view):
-        """Update scrollbar ranges based on current view state.
-        This is needed on Linux where scrollbars don't update their ranges
-        when the viewport resizes and auto_fit_to_window is False.
-        """
+
+    def update_scrollbars(self, view):
         if self.empty():
             return
-        
         h_scroll = view.horizontalScrollBar()
         v_scroll = view.verticalScrollBar()
-        
-        # Calculate the actual content size after transformation
         scene_rect = view.sceneRect()
         viewport_rect = view.viewport().rect()
         transform = view.transform()
-        
-        # Content size in view coordinates
         content_width = scene_rect.width() * transform.m11()
         content_height = scene_rect.height() * transform.m22()
-        
-        # Calculate scrollbar ranges
         h_max = max(0, int(content_width - viewport_rect.width()))
         v_max = max(0, int(content_height - viewport_rect.height()))
-        
         if h_scroll:
             h_scroll.setRange(0, h_max)
             h_scroll.setPageStep(viewport_rect.width())
             h_scroll.setVisible(h_max > 0)
-        
         if v_scroll:
             v_scroll.setRange(0, v_max)
             v_scroll.setPageStep(viewport_rect.height())
             v_scroll.setVisible(v_max > 0)
-        
         view.update()
 
     def hide_brush_cursor(self):
@@ -391,7 +373,7 @@ class ViewStrategy(LayerCollectionHandler):
             self.brush_cursor.setPen(pen)
         return width
 
-    def update_scrollbar_visibility(self, pos=None):
+    def update_scrollbar_visibility(self):
         if self.empty():
             return
         for view in self.get_views():
@@ -432,9 +414,9 @@ class ViewStrategy(LayerCollectionHandler):
     def handle_resize(self, view):
         if self.empty() or not self.auto_fit_to_window:
             return
-        if view._in_resize:
+        if view.in_resize:
             return
-        view._in_resize = True
+        view.in_resize = True
         try:
             pixmap_item = None
             for pixmap, v in self.get_pixmaps().items():
@@ -473,7 +455,7 @@ class ViewStrategy(LayerCollectionHandler):
             view.setVerticalScrollBarPolicy(old_v_policy)
             view.updateGeometry()
         finally:
-            view._in_resize = False
+            view.in_resize = False
 
     def numpy_to_qimage(self, array):
         if array is None:
@@ -943,7 +925,7 @@ class ViewStrategy(LayerCollectionHandler):
             self._set_cursor(Qt.BlankCursor)
             self.show_brush_cursor()
             self.update_brush_cursor()
-        self.update_scrollbar_visibility(QCursor.pos())
+        self.update_scrollbar_visibility()
         super().enterEvent(event)
 
     def leaveEvent(self, event):
@@ -1100,7 +1082,7 @@ class ViewStrategy(LayerCollectionHandler):
                         self.continue_copy_brush_area(pos)
                     self.last_brush_pos = position
                 self.last_update_time = current_time
-        self.update_scrollbar_visibility(position.toPoint())
+        self.update_scrollbar_visibility()
 
     def mouse_release_event(self, event):
         if self.empty():
