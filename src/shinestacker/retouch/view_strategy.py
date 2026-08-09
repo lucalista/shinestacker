@@ -114,17 +114,20 @@ class ImageGraphicsViewBase(QGraphicsView):
         self._in_resize = True
         try:
             super().resizeEvent(event)
-            parent = self.parent()
-            if hasattr(parent, 'auto_fit_to_window') and hasattr(parent, 'handle_resize'):
-                if parent.auto_fit_to_window:
-                    parent.handle_resize(self)
+            # Check if this is OverlaidView (self is the strategy)
+            if hasattr(self, 'auto_fit_to_window'):
+                if self.auto_fit_to_window:
+                    self.handle_resize(self)
+                # Always update scrollbars on resize - pass self as the view
+                self._update_scrollbars(self)
             else:
-                while parent:
-                    if hasattr(parent, 'auto_fit_to_window') and hasattr(parent, 'handle_resize'):
-                        if parent.auto_fit_to_window:
-                            parent.handle_resize(self)
-                        break
-                    parent = parent.parent()
+                # Must be ImageGraphicsView inside DoubleViewBase
+                parent = self.parent()
+                if parent and hasattr(parent, 'auto_fit_to_window'):
+                    if parent.auto_fit_to_window:
+                        parent.handle_resize(self)
+                    # Always update scrollbars on resize - pass self as the view
+                    parent._update_scrollbars(self)
         finally:
             self._in_resize = False
     # pylint: enable=C0103
@@ -230,6 +233,42 @@ class ViewStrategy(LayerCollectionHandler):
     @abstractmethod
     def get_view_with_mouse(self, event=None):
         pass
+        
+    def _update_scrollbars(self, view):
+        """Update scrollbar ranges based on current view state.
+        This is needed on Linux where scrollbars don't update their ranges
+        when the viewport resizes and auto_fit_to_window is False.
+        """
+        if self.empty():
+            return
+        
+        h_scroll = view.horizontalScrollBar()
+        v_scroll = view.verticalScrollBar()
+        
+        # Calculate the actual content size after transformation
+        scene_rect = view.sceneRect()
+        viewport_rect = view.viewport().rect()
+        transform = view.transform()
+        
+        # Content size in view coordinates
+        content_width = scene_rect.width() * transform.m11()
+        content_height = scene_rect.height() * transform.m22()
+        
+        # Calculate scrollbar ranges
+        h_max = max(0, int(content_width - viewport_rect.width()))
+        v_max = max(0, int(content_height - viewport_rect.height()))
+        
+        if h_scroll:
+            h_scroll.setRange(0, h_max)
+            h_scroll.setPageStep(viewport_rect.width())
+            h_scroll.setVisible(h_max > 0)
+        
+        if v_scroll:
+            v_scroll.setRange(0, v_max)
+            v_scroll.setPageStep(viewport_rect.height())
+            v_scroll.setVisible(v_max > 0)
+        
+        view.update()
 
     def hide_brush_cursor(self):
         if self.brush_cursor:
