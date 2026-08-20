@@ -137,6 +137,27 @@ class ComboBoxParameter(BaseParameter):
             self.widget.setCurrentIndex(idx)
 
 
+class TextParameter(BaseParameter):
+    def __init__(self, key, label, default_value="", tooltip=""):
+        super().__init__(key, label, tooltip)
+        self.default_value = default_value
+
+    def create_widget(self, parent):
+        self.widget = QLineEdit(parent)
+        if self.tooltip:
+            self.widget.setToolTip(self.tooltip)
+        return self.widget
+
+    def get_value(self):
+        return self.widget.text()
+
+    def set_value(self, value):
+        self.widget.setText(value)
+
+    def set_default(self):
+        self.widget.setText(self.default_value)
+
+
 class CallbackComboBoxParameter(ComboBoxParameter):
     def __init__(self, key, label, default_value, options, tooltip="", on_change=None):
         super().__init__(key, label, default_value, options, tooltip)
@@ -178,6 +199,18 @@ class NestedCheckBoxParameter(CheckBoxParameter, NestedParameter):
                  tooltip=""):
         CheckBoxParameter.__init__(
             self, key, label, default_value, tooltip)
+        NestedParameter.__init__(self, parent_key, key, label, tooltip)
+
+
+class NestedComboBoxParameter(ComboBoxParameter, NestedParameter):
+    def __init__(self, parent_key, key, label, default_value, options, tooltip=""):
+        ComboBoxParameter.__init__(self, key, label, default_value, options, tooltip)
+        NestedParameter.__init__(self, parent_key, key, label, tooltip)
+
+
+class NestedTextParameter(TextParameter, NestedParameter):
+    def __init__(self, parent_key, key, label, default_value, tooltip=""):
+        TextParameter.__init__(self, key, label, default_value, tooltip)
         NestedParameter.__init__(self, parent_key, key, label, tooltip)
 
 
@@ -333,15 +366,45 @@ class SettingsDialog(ConfigDialog, AlignFramesConfigBase):
                         list(zip(constants.FIELD_SUBSAMPLE_OPTIONS,
                                  constants.FIELD_SUBSAMPLE_VALUES)))
                 ]),
-                ("Focus Stacking", [
+                ("Focus Stacking - Common", [
                     NestedDoubleSpinBoxParameter(
                         'focus_stack_params', 'memory_limit',
                         'Mem. limit (approx., GBytes):',
                         DEFAULTS['focus_stack_params']['memory_limit'], 1.0, 1024.0, 1.0),
                     NestedSpinBoxParameter(
                         'focus_stack_params', 'max_threads', 'Max. num. of cores:',
-                        DEFAULTS['focus_stack_params']['max_threads'], 0, 256)
-                ])
+                        DEFAULTS['focus_stack_params']['max_threads'], 0, 256),
+                ]),
+                ("Focus Stacking - Naming", [
+                    NestedComboBoxParameter(
+                        'focus_stack_params', 'naming_mode', 'Default filename mode:',
+                        DEFAULTS['focus_stack_params']['naming_mode'],
+                        [
+                            ("Prefix", "PREFIX"),
+                            ("Template", "TEMPLATE")
+                        ]),
+                    NestedTextParameter(
+                        'focus_stack_params', 'prefix', 'Default prefix:',
+                        DEFAULTS['focus_stack_params']['prefix']),
+                    NestedTextParameter(
+                        'focus_stack_params', 'output_file_template', 'Default template:',
+                        DEFAULTS['focus_stack_params']['output_file_template'])
+                ]),
+                ("Focus Stacking Bunches - Naming", [
+                    NestedComboBoxParameter(
+                        'focus_stack_bunch_params', 'naming_mode', 'Default filename mode:',
+                        DEFAULTS['focus_stack_bunch_params']['naming_mode'],
+                        [
+                            ("Prefix", "PREFIX"),
+                            ("Template", "TEMPLATE")
+                        ]),
+                    NestedTextParameter(
+                        'focus_stack_bunch_params', 'prefix', 'Default prefix:',
+                        DEFAULTS['focus_stack_bunch_params']['prefix']),
+                    NestedTextParameter(
+                        'focus_stack_bunch_params', 'output_file_template', 'Default template:',
+                        DEFAULTS['focus_stack_bunch_params']['output_file_template'])
+                ]),
             ]
         if self.retouch_settings:
             self.retouch_parameters = [

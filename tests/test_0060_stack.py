@@ -127,6 +127,31 @@ def test_bunches():
         assert False
 
 
+def test_jpg_template():
+    try:
+        job = StackJob("job", "examples", input_path="input/img-jpg")
+        job.add_action(FocusStack("stack-pyramid", PyramidStack(),
+                                  output_path="output/img-jpg-stack",
+                                  delete_output_at_end=True,
+                                  output_file_template="{method}_{input_count}frames_stack"))
+        job.run()
+    except Exception:
+        assert False
+
+
+def test_bunches_template():
+    try:
+        job = StackJob("job", "examples", input_path="input/img-jpg")
+        job.add_action(FocusStackBunch("stack-pyramid-bunch", PyramidStack(),
+                                       output_path="output/img-jpg-bunches",
+                                       delete_output_at_end=True,
+                                       frames=3,
+                                       output_file_template="{method}_{input_count}frames_bunch-{bunch_index:03d}"))
+        job.run()
+    except Exception:
+        assert False
+
+
 if __name__ == '__main__':
     test_jpg()
     test_jpg_filter()
@@ -138,3 +163,5 @@ if __name__ == '__main__':
     test_jpg_auto_1()
     test_jpg_auto_2()
     test_bunches()
+    test_jpg_template()
+    test_bunches_template()

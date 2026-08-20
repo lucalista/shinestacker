@@ -85,12 +85,13 @@ DEFAULTS = {
         'memory_limit': 8,  # GB
         'max_threads': int(min(os.cpu_count() or 4, 256)),
         'prefix': "stack_",
+        'output_file_template': "{input_prefix}{input_min}-{input_max}_{input_count}-frames",
+        'naming_mode': 'PREFIX',  # or 'TEMPLATE' - user can change default
         'plot_stack': True,
         'denoise_amount': 0.0,
         'sharpen_amount_percent': 0.0,
         'sharpen_radius': 1.0,
         'sharpen_threshold': 0.0
-
     },
     'focus_stack_bunch_params': {
         'memory_limit': 8,  # GB
@@ -98,6 +99,9 @@ DEFAULTS = {
         'frames': 10,
         'overlap': 2,
         'prefix': "bunch_",
+        'output_file_template': "{input_prefix}{input_min}-{input_max}_"
+                                "{input_count}frames_bunch-{bunch_index:03d}",
+        'naming_mode': 'PREFIX',  # or 'TEMPLATE' - user can change default
         'plot_stack': True
     },
     'depth_map_params': {

@@ -15,7 +15,8 @@ Arguments for the constructor of ```FocusStack``` are:
 * ```sharpen_amount_percent``` (optional; default: 0): if > 0, a unsharp mask algorithm is applied. Values from 50% up apply a visible amount of sharpening.
 * ```sharpen_radius``` (optional; default: 1): specifies the radius, in pixels, of the unsharp mask algorithm.
 * ```sharpen_threshold``` (optional; default: 0): specifies the threshold value of the unsharp mask algorithm.
-* ```prefix``` (optional): if specified, the specified string is pre-pended to the file name. May be useful if more algorithms are ran, and different file names are used for the output of different algorithms.
+* ```prefix``` (optional): if specified, the specified string is pre-pended to the file name. May be useful if more algorithms are ran, and different file names are used for the output of different algorithms. Cannot be used together with ```output_file_template```.
+* ```output_file_template``` (optional): defines a template for the output filename. Alternative to `prefix` - cannot be used together. Supports `{method}`, `{input_count}`, `{input_prefix}`, `{input_min}`, and `{input_max}` placeholders.
 * ```enabled``` (optional, default: ``True```): allows to switch on and off this module.
 * ```scratch_output_dir``` (optional, default: ```True```): scratch output directory before processing. This avoids that existing files pollute the output.
 * ```delete_output_at_end``` (optional, default: ```False```): delete output after processing. This cleans disk space in case of processing an intermediate step that is not part of the final output.
@@ -29,17 +30,40 @@ Arguments for the constructor of ```FocusStackBunch``` are:
 * ```name```: the name of the action, used for printout, and possibly for output path
 * ```stacker```: an object defining the focus stacking algorithm. Can be ```PyramidStack```, ```PyramidStack``` or ```DepthMapStack```, see below for possible algorithms. 
 * ```input_path``` (optional): the subdirectory within ```working_path``` that contains input images to be processed. If not specified, the last output path is used, or, if this is the first action, the ```input_path``` specified with the ```StackJob``` construction is used. If the ```StackJob``` specifies no ```input_path```, at least the first action must specify an  ```input_path```.
-* * ```output_path``` (optional): the subdirectory within ```working_path``` where aligned images are written. If not specified,  it is equal to  ```name```.
+* ```output_path``` (optional): the subdirectory within ```working_path``` where aligned images are written. If not specified,  it is equal to  ```name```.
 * ```working_path```: the directory that contains input and output image subdirectories. If not specified, it is the same as ```job.working_path```.
 * ```plot_path``` (optional, default: ```plots```): the directory within ```working_path``` that contains plots produced by the algrithm.
-* ```exif_path``` (optional): if specified, EXIF data are copied to the output file from file in the specified directory. If not specified, it is the source directory used as * ```frames``` (optional, default: 10): the number of frames in each bunch that are stacked together.
+* ```exif_path``` (optional): if specified, EXIF data are copied to the output file from file in the specified directory. If not specified, it is the source directory used as input for the first action. If set equal to ```''``` no EXIF data is saved.
 * ```frames``` (optional, default: 10): the number of frames that are fused together. 
 * ```overlap``` (optional, default: 0): the number of overlapping frames between a bunch and the following one. 
 * ```denoise_amount``` (optoinal): if specified, a denois algorithm is applied. A value of 0.75 to 1.00 does not reduce details in an appreciable way, and is suitable for modest noise reduction. denoise may be useful for 8-bit images, or for images taken at large ISO. 16-bits images at low ISO usually don't require denoise. See [Image Denoising](https://docs.opencv.org/3.4/d5/d69/tutorial_py_non_local_means.html) for more details.
-* ```prefix``` (optional): if specified, the specified string is pre-pended to the file name. May be useful if more algorithms are ran, and different file names are used for the output of different algorithms.
+* ```prefix``` (optional): if specified, the specified string is pre-pended to the file name. May be useful if more algorithms are ran, and different file names are used for the output of different algorithms. Cannot be used together with ```output_file_template```.
+* ```output_file_template``` (optional): defines a template for the output filename. Alternative to `prefix` - cannot be used together. Supports `{method}`, `{input_count}`, `{input_prefix}`, `{input_min}`, `{input_max}`, and `{bunch_index:03d}` placeholders.
 * ```enabled``` (optional, default: ```True```): allows to switch on and off this module.
 * ```scratch_output_dir``` (optional, default: ```True```): scratch output directory before processing. This avoids that existing files pollute the output.
 * ```delete_output_at_end``` (optional, default: ```False```): delete output after processing. This cleans disk space in case of processing an intermediate step that is not part of the final output.
+
+## Template Placeholders
+
+When using `output_file_template`, the following placeholders are available:
+
+| Placeholder | Description | Example |
+|-------------|-------------|---------|
+| `{method}` | Stacking algorithm name | `pyramid` or `depth_map` |
+| `{input_count}` | Total number of input frames | `9` |
+| `{input_prefix}` | Common prefix of input filenames | `flies_` |
+| `{input_min}` | Variable part of first input filename | `0000` |
+| `{input_max}` | Variable part of last input filename | `0008` |
+| `{bunch_index:03d}` | Zero-padded bunch index (FocusStackBunch only) | `001` |
+
+**Examples** with input files `flies_0000.jpg` to `flies_0008.jpg`:
+
+| Template | Result |
+|----------|--------|
+| `"{input_prefix}{input_min}-{input_max}_{input_count}frames"` | `flies_0000-0008_9frames.tif` |
+| `"{method}_{input_count}frames_stack"` | `pyramid_9frames_stack.tif` |
+| `"{method}_{input_min}-{input_max}"` | `pyramid_0000-0008.tif` |
+| `"{input_prefix}{input_min}-{input_max}_bunch-{bunch_index:03d}"` | `flies_0000-0008_bunch-001.tif` |
 
 ## Stack algorithms
 

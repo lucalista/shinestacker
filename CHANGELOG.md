@@ -1,8 +1,13 @@
 # Changelog
 
 ## [v1.16.2] - 2026-08-20
-**Bug fixes**
+**New output file template format plus bug fixes**
+
+### Fixed
 - incorrect GUI widget creation when adding an action to a job in the modern project view (#68)
+
+### Added
+- the user can spefify the stack output filename format using a template, for instance as: `{input_prefix}{input_min}-{input_max}_{input_count}-frames` (#66)
 
 --
 

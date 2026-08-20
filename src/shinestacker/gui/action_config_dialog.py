@@ -284,6 +284,8 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
     PY_MODE_OPTIONS = ['Auto', 'All in memory', 'Tiled I/O buffered']
     BLEND_METHODS_OPTIONS = ['Pyramid', 'Bilateral']
     DM_MODE_OPTIONS = ['Auto', 'All in memory', 'I/O buffered']
+    NAMING_MODE_OPTIONS = ['Prefix', 'Template']
+    NAMING_MODE_VALUES = ['PREFIX', 'TEMPLATE']
 
     def __init__(self, expert, current_wd):
         super().__init__(expert, current_wd)
@@ -301,6 +303,9 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
         self.depthmap_weights_sigma_space = None
         self.depthmap_temperature = None
         self.depthmap_map_type = None
+        self.naming_mode_field = None
+        self.prefix_field = None
+        self.template_field = None
 
     def create_form(self, layout, action):
         super().create_form(layout, action)
@@ -342,6 +347,22 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
             layout, 'sharpen_threshold', FIELD_FLOAT, 'Sharpen, threshold', required=False,
             expert=False, default=AppConfig.get('focus_stack_params')['sharpen_threshold'],
             min_val=0.0, max_val=64.0, step=1)
+        self.naming_mode_field = self.add_field_to_layout(
+            layout, 'naming_mode', FIELD_COMBO,
+            'Filename mode', required=True,
+            options=self.NAMING_MODE_OPTIONS,
+            values=self.NAMING_MODE_VALUES,
+            default='PREFIX')
+        self.prefix_field = self.add_field_to_layout(
+            layout, 'prefix', FIELD_TEXT,
+            'Output filename prefix', required=False,
+            expert=True)
+        self.template_field = self.add_field_to_layout(
+            layout, 'output_file_template', FIELD_TEXT,
+            'Output filename template', required=False,
+            expert=True)
+        self.naming_mode_field.currentIndexChanged.connect(self.change_naming_mode)
+        self.change_naming_mode()
 
     def create_algorithm_tab(self, layout):
         self.add_bold_label_to_layout(layout, "Stacking algorithm:")
@@ -545,49 +566,91 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
             q_depthmap.layout(), 'depthmap_plot_depth_map', FIELD_BOOL, 'Plot depth map',
             required=False, default=AppConfig.get('depth_map_params')['plot_depth_map'])
 
+    def change_naming_mode(self):
+        current_text = self.naming_mode_field.currentText()
+        if current_text == self.NAMING_MODE_OPTIONS[0]:  # 'Prefix'
+            self.prefix_field.setEnabled(True)
+            self.template_field.setEnabled(False)
+        else:  # 'Template'
+            self.prefix_field.setEnabled(False)
+            self.template_field.setEnabled(True)
+
+    def set_naming_defaults(self, naming_mode, prefix, output_file_template):
+        display_text = dict(zip(self.NAMING_MODE_VALUES, self.NAMING_MODE_OPTIONS))[naming_mode]
+        self.naming_mode_field.setCurrentText(display_text)
+        self.prefix_field.setText(prefix)
+        self.prefix_field.setPlaceholderText(prefix)
+        self.template_field.setText(output_file_template)
+        self.template_field.setPlaceholderText(output_file_template)
+        self.change_naming_mode()
+
+    def clear_inactive_param(self, params):
+        current_text = self.naming_mode_field.currentText()
+        if current_text == self.NAMING_MODE_OPTIONS[0]:  # 'Prefix'
+            params['output_file_template'] = ""
+            if 'output_file_template' in params:
+                del params['output_file_template']
+        else:  # 'Template'
+            params['prefix'] = ""
+            if 'prefix' in params:
+                del params['prefix']
+        return params
+
+    def update_params(self, params):
+        self.clear_inactive_param(params)
+        result = super().update_params(params)
+        if params.get('naming_mode') == 'PREFIX':
+            params.pop('output_file_template', None)
+        else:
+            params.pop('prefix', None)
+        return result
+
 
 class FocusStackConfigurator(FocusStackBaseConfigurator):
     def create_form(self, layout, action):
         super().create_form(layout, action)
+        focus_defaults = AppConfig.get('focus_stack_params')
+        naming_mode = action.params.get('naming_mode', focus_defaults.get('naming_mode', 'PREFIX'))
+        self.set_naming_defaults(
+            naming_mode,
+            action.params.get('prefix', focus_defaults['prefix']),
+            action.params.get('output_file_template', focus_defaults['output_file_template'])
+        )
         self.add_field_to_layout(
             self.general_tab_layout, 'exif_path', FIELD_REL_PATH,
             'Exif data path', required=False,
             expert=True,
             placeholder='relative to working path')
-        self.add_field_to_layout(
-            self.general_tab_layout, 'prefix', FIELD_TEXT,
-            'Output filename prefix', required=False,
-            expert=True,
-            default=AppConfig.get('focus_stack_params')['prefix'],
-            placeholder=AppConfig.get('focus_stack_params')['prefix'])
+
         self.add_field_to_layout(
             self.general_tab_layout, 'plot_stack', FIELD_BOOL, 'Plot stack', required=False,
-            default=AppConfig.get('focus_stack_params')['plot_stack'])
+            default=focus_defaults['plot_stack'])
 
 
 class FocusStackBunchConfigurator(FocusStackBaseConfigurator):
     def create_form(self, layout, action):
         super().create_form(layout, action)
+        bunch_defaults = AppConfig.get('focus_stack_bunch_params')
+        naming_mode = action.params.get('naming_mode', bunch_defaults.get('naming_mode', 'PREFIX'))
+        self.set_naming_defaults(
+            naming_mode,
+            action.params.get('prefix', bunch_defaults['prefix']),
+            action.params.get('output_file_template', bunch_defaults['output_file_template'])
+        )
         self.add_field_to_layout(
             self.general_tab_layout, 'frames', FIELD_INT, 'Frames', required=False,
-            default=AppConfig.get('focus_stack_bunch_params')['frames'],
+            default=bunch_defaults['frames'],
             min_val=1, max_val=100)
         self.add_field_to_layout(
             self.general_tab_layout, 'overlap', FIELD_INT, 'Overlapping frames', required=False,
-            default=AppConfig.get('focus_stack_bunch_params')['overlap'], min_val=0, max_val=100)
-        self.add_field_to_layout(
-            self.general_tab_layout, 'prefix', FIELD_TEXT,
-            'Output filenames prefix', required=False,
-            expert=True,
-            default=AppConfig.get('focus_stack_bunch_params')['prefix'],
-            placeholder=AppConfig.get('focus_stack_bunch_params')['prefix'])
+            default=bunch_defaults['overlap'], min_val=0, max_val=100)
         self.add_field_to_layout(
             self.general_tab_layout, 'delete_output_at_end', FIELD_BOOL,
             'Delete output at end of job',
             required=False, default=False)
         self.add_field_to_layout(
             self.general_tab_layout, 'plot_stack', FIELD_BOOL, 'Plot stack', required=False,
-            default=AppConfig.get('focus_stack_bunch_params')['plot_stack'])
+            default=bunch_defaults['plot_stack'])
 
 
 class MultiLayerConfigurator(DefaultActionConfigurator):
