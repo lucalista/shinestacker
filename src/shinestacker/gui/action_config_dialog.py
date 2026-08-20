@@ -580,28 +580,29 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
         self.naming_mode_field.setCurrentText(display_text)
         self.prefix_field.setText(prefix)
         self.prefix_field.setPlaceholderText(prefix)
-        self.template_field.setText(output_file_template)
+        if naming_mode == 'TEMPLATE':
+            self.template_field.setText(output_file_template)
+        else:
+            self.template_field.setText("")
         self.template_field.setPlaceholderText(output_file_template)
         self.change_naming_mode()
 
     def clear_inactive_param(self, params):
         current_text = self.naming_mode_field.currentText()
         if current_text == self.NAMING_MODE_OPTIONS[0]:  # 'Prefix'
-            params['output_file_template'] = ""
-            if 'output_file_template' in params:
-                del params['output_file_template']
+            self.template_field.setText("")
+            params.pop('output_file_template', None)
         else:  # 'Template'
-            params['prefix'] = ""
-            if 'prefix' in params:
-                del params['prefix']
+            self.prefix_field.setText("")
+            params.pop('prefix', None)
         return params
 
     def update_params(self, params):
-        self.clear_inactive_param(params)
         result = super().update_params(params)
-        if params.get('naming_mode') == 'PREFIX':
+        current_text = self.naming_mode_field.currentText()
+        if current_text == self.NAMING_MODE_OPTIONS[0]:  # 'Prefix'
             params.pop('output_file_template', None)
-        else:
+        else:  # 'Template'
             params.pop('prefix', None)
         return result
 

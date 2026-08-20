@@ -1,5 +1,6 @@
 # pylint: disable=C0114, C0115, C0116, R0913, R0917, W0718, R0902, R0912, R0914, R0915, R1702
 import os
+import re
 import traceback
 import logging
 import numpy as np
@@ -26,20 +27,16 @@ class FocusStackBase(TaskBase, ImageSequenceManager):
         self.stack_algo = stack_algo
         self.exif_path = kwargs.pop("exif_path", "")
         self.naming_mode = kwargs.pop("naming_mode", specific_params.get("naming_mode", "PREFIX"))
-        
-        prefix_provided = "prefix" in kwargs and kwargs.get("prefix", "") != ""
-        template_provided = "output_file_template" in kwargs and kwargs.get("output_file_template", "") != ""
 
         self.prefix = kwargs.pop("prefix", specific_params.get("prefix", ""))
         self.output_file_template = kwargs.pop("output_file_template",
                                                specific_params.get("output_file_template", ""))
 
-        if prefix_provided and template_provided:
-            raise ValueError(
-                "Cannot specify both 'prefix' and 'output_file_template'. "
-                "Use 'naming_mode' to choose between 'PREFIX' and 'TEMPLATE'."
-            )
-        
+        if self.naming_mode == 'PREFIX':
+            self.output_file_template = ""
+        else:
+            self.prefix = ""
+
         self.denoise_amount = kwargs.pop("denoise_amount", common_params["denoise_amount"])
         self.sharpen_amount = (
             kwargs.pop("sharpen_amount_percent", common_params["sharpen_amount_percent"])
@@ -316,7 +313,15 @@ class FocusStackBunch(SequentialTask, FocusStackBase):
         if self.naming_mode == 'TEMPLATE':
             filename = self.replace_template_placeholders(self.output_file_template)
             if hasattr(self, 'bunch_index') and self.bunch_index is not None:
-                filename = filename.replace("{bunch_index:03d}", f"{self.bunch_index:03d}")
+                match = re.search(r'\{bunch_index:([^}]+)\}', filename)
+                if match:
+                    format_spec = match.group(1)
+                    filename = filename.replace(
+                        f'{{bunch_index:{format_spec}}}',
+                        f'{self.bunch_index:{format_spec}}'
+                    )
+                else:
+                    filename = filename.replace("{bunch_index}", str(self.bunch_index))
             _, ext = os.path.splitext(base_filename)
             return filename + ext
         filename = self.prefix + base_filename

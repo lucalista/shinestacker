@@ -15,6 +15,7 @@ Arguments for the constructor of ```FocusStack``` are:
 * ```sharpen_amount_percent``` (optional; default: 0): if > 0, a unsharp mask algorithm is applied. Values from 50% up apply a visible amount of sharpening.
 * ```sharpen_radius``` (optional; default: 1): specifies the radius, in pixels, of the unsharp mask algorithm.
 * ```sharpen_threshold``` (optional; default: 0): specifies the threshold value of the unsharp mask algorithm.
+* ```naming_mode``` (optional, default: `'PREFIX'`): Determines which filename mode to use. Can be `'PREFIX'` or `'TEMPLATE'`. When `'PREFIX'`, the `prefix` parameter is used and `output_file_template` is ignored. When `'TEMPLATE'`, the `output_file_template` is used and `prefix` is ignored. This parameter resolves conflicts when both are present in a project file.
 * ```prefix``` (optional): if specified, the specified string is pre-pended to the file name. May be useful if more algorithms are ran, and different file names are used for the output of different algorithms. Cannot be used together with ```output_file_template```.
 * ```output_file_template``` (optional): defines a template for the output filename. Alternative to `prefix` - cannot be used together. Supports `{method}`, `{input_count}`, `{input_prefix}`, `{input_min}`, and `{input_max}` placeholders.
 * ```enabled``` (optional, default: ``True```): allows to switch on and off this module.
@@ -37,6 +38,7 @@ Arguments for the constructor of ```FocusStackBunch``` are:
 * ```frames``` (optional, default: 10): the number of frames that are fused together. 
 * ```overlap``` (optional, default: 0): the number of overlapping frames between a bunch and the following one. 
 * ```denoise_amount``` (optoinal): if specified, a denois algorithm is applied. A value of 0.75 to 1.00 does not reduce details in an appreciable way, and is suitable for modest noise reduction. denoise may be useful for 8-bit images, or for images taken at large ISO. 16-bits images at low ISO usually don't require denoise. See [Image Denoising](https://docs.opencv.org/3.4/d5/d69/tutorial_py_non_local_means.html) for more details.
+* ```naming_mode``` (optional, default: `'PREFIX'`): Determines which filename mode to use. Can be `'PREFIX'` or `'TEMPLATE'`. When `'PREFIX'`, the `prefix` parameter is used and `output_file_template` is ignored. When `'TEMPLATE'`, the `output_file_template` is used and `prefix` is ignored. This parameter resolves conflicts when both are present in a project file.
 * ```prefix``` (optional): if specified, the specified string is pre-pended to the file name. May be useful if more algorithms are ran, and different file names are used for the output of different algorithms. Cannot be used together with ```output_file_template```.
 * ```output_file_template``` (optional): defines a template for the output filename. Alternative to `prefix` - cannot be used together. Supports `{method}`, `{input_count}`, `{input_prefix}`, `{input_min}`, `{input_max}`, and `{bunch_index:03d}` placeholders.
 * ```enabled``` (optional, default: ```True```): allows to switch on and off this module.
@@ -54,7 +56,7 @@ When using `output_file_template`, the following placeholders are available:
 | `{input_prefix}` | Common prefix of input filenames | `flies_` |
 | `{input_min}` | Variable part of first input filename | `0000` |
 | `{input_max}` | Variable part of last input filename | `0008` |
-| `{bunch_index:03d}` | Zero-padded bunch index (FocusStackBunch only) | `001` |
+| `{bunch_index:format}` | Bunch index with optional format specifier (FocusStackBunch only) | `{bunch_index:03d}` → `001`<br>`{bunch_index:04d}` → `0001` |
 
 **Examples** with input files `flies_0000.jpg` to `flies_0008.jpg`:
 
@@ -64,6 +66,7 @@ When using `output_file_template`, the following placeholders are available:
 | `"{method}_{input_count}frames_stack"` | `pyramid_9frames_stack.tif` |
 | `"{method}_{input_min}-{input_max}"` | `pyramid_0000-0008.tif` |
 | `"{input_prefix}{input_min}-{input_max}_bunch-{bunch_index:03d}"` | `flies_0000-0008_bunch-001.tif` |
+| `"{input_prefix}{input_min}-{input_max}_bunch-{bunch_index:04d}"` | `flies_0000-0008_bunch-0001.tif` |
 
 ## Stack algorithms
 
