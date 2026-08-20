@@ -301,9 +301,15 @@ class ModernProjectView(ProjectView):
         self.selected_widget = widget
         self.selection_state.from_tuple((job_index, action_index, subaction_index))
         self.update_gui_actions_enable_requested.emit()
-        element = self.project_element(job_index, action_index, subaction_index)
-        self.enable_sub_actions_requested.emit(
-            subaction_index >= 0 or element.type_name == constants.ACTION_COMBO)
+        try:
+            element = self.project_element(job_index, action_index, subaction_index)
+            if element is not None:
+                self.enable_sub_actions_requested.emit(
+                    subaction_index >= 0 or element.type_name == constants.ACTION_COMBO)
+            else:
+                self.enable_sub_actions_requested.emit(subaction_index >= 0)
+        except Exception:
+            self.enable_sub_actions_requested.emit(subaction_index >= 0)
         self.setFocus()
 
     def _update_widget(self, selection, element):
@@ -325,8 +331,14 @@ class ModernProjectView(ProjectView):
         if not old_selection or not old_selection.is_valid():
             return
         try:
+            element = self.project_element(*self.selection_state.to_tuple())
+            if element is None:
+                self.refresh_ui()
+                return
+            if self.selection_state.is_job_selected():
+                return
             new_widget = self._insert_widget(
-                self.selection_state, self.project_element(*self.selection_state.to_tuple()))
+                self.selection_state, element)
             if new_widget:
                 if self.selected_widget:
                     self._clear_hover_on_widget(self.selected_widget)
@@ -460,16 +472,20 @@ class ModernProjectView(ProjectView):
         return self.selection_state.job_index
 
     def update_added_element(self):
+        if self.selection_state.is_job_selected():
+            self.refresh_ui()
+            return False
         element = self.project_element(*self.selection_state.to_tuple())
         if element is None:
+            self.refresh_ui()
             return False
         try:
             self._insert_widget(self.selection_state, element)
             self._select_widget(self.selection_state)
             return True
         except Exception:
-            pass
-        return False
+            self.refresh_ui()
+            return False
 
     def update_widget(self, selection):
         if not selection.is_valid():
@@ -620,6 +636,8 @@ class ModernProjectView(ProjectView):
 
     def _insert_widget(self, selection, element):
         if not selection.is_valid():
+            return None
+        if element is None:
             return None
         inserted_widget = None
         job_index, action_index, subaction_index = selection.to_tuple()

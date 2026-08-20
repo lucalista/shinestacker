@@ -1,5 +1,11 @@
 # Changelog
 
+## [v1.16.2] - 2026-08-20
+**Bug fixes**
+- incorrect GUI widget creation when adding an action to a job in the modern project view (#68)
+
+--
+
 ## [v1.16.1] - 2026-08-10
 **Bug fixes**
 
