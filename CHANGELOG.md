@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.16.2] - 2026-08-20
+## [v1.16.2] - 2026-08-22
 **New output file template format plus bug fixes**
 
 ### Fixed
@@ -9,7 +9,7 @@
 ### Added
 - the user can spefify the stack output filename format using a template, for instance as: `{input_prefix}{input_min}-{input_max}_{input_count}-frames` (#66)
 
---
+---
 
 ## [v1.16.1] - 2026-08-10
 **Bug fixes**
