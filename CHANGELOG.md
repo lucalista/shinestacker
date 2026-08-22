@@ -1,5 +1,12 @@
 # Changelog
 
+## [v1.16.3] - 2026-08-22
+
+### Fixed
+- updated PyPI publishing script to prevent warning message
+
+---
+
 ## [v1.16.2] - 2026-08-22
 **New output file template format plus bug fixes**
 
