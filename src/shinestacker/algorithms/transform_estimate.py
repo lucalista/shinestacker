@@ -448,4 +448,15 @@ class TransformationExtractor:
             blurred_warp = cv2.GaussianBlur(
                 img_warp, (21, 21), sigmaX=self.alignment_config['border_blur'])
             img_warp[mask == 0] = blurred_warp[mask == 0]
+        if img_warp.ndim == 3 and img_warp.shape[2] == 4:
+            # revealed border area must read as fully transparent, whatever the
+            # colour border mode did there
+            coverage = np.ones(img_0.shape[:2], dtype=np.uint8)
+            if transform_type == constants.ALIGN_HOMOGRAPHY:
+                coverage = cv2.warpPerspective(coverage, m, (w_ref, h_ref),
+                                               borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+            else:
+                coverage = cv2.warpAffine(coverage, m, (w_ref, h_ref),
+                                          borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+            img_warp[..., 3][coverage == 0] = 0
         return img_warp

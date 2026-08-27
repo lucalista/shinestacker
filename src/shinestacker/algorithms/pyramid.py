@@ -28,7 +28,6 @@ class PyramidBase(BaseStackAlgo):
         self.max_pixel_value = None
         self.n_levels = 0
         self.n_frames = 0
-        self.alpha_mode = False
 
     def init(self, filenames):
         super().init(filenames)
@@ -138,9 +137,8 @@ class PyramidBase(BaseStackAlgo):
         """Split an RGBA frame into premultiplied colour + straight alpha, packed
         back into a 4-channel float array. Colour is premultiplied so that fully
         transparent regions carry no colour energy into the Laplacian pyramid
-        (avoids haloing at the matte edge). Sets self.alpha_mode."""
-        if img.ndim == 3 and img.shape[2] == 4:
-            self.alpha_mode = True
+        (avoids haloing at the matte edge)."""
+        if self.alpha_mode and img.ndim == 3 and img.shape[2] == 4:
             f = img.astype(self.float_type)
             a_norm = f[..., 3:4] / self.max_pixel_value
             color_pm = f[..., :3] * a_norm
