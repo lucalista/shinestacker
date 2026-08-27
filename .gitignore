@@ -23,3 +23,8 @@ src/shinestacker/_version.py
 logs
 .vscode/
 uv.lock
+
+.venv/
+examples/output/
+examples/plots/
+/output/

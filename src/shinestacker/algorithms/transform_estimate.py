@@ -239,8 +239,8 @@ def rescale_transform(m, w0, h0, w_sub, h_sub, subsample, transform):
 
 def find_transform_phase_correlation(img_ref, img_0):
     if len(img_ref.shape) == 3:
-        ref_gray = cv2.cvtColor(img_ref, cv2.COLOR_BGR2GRAY)
-        mov_gray = cv2.cvtColor(img_0, cv2.COLOR_BGR2GRAY)
+        ref_gray = cv2.cvtColor(img_ref[..., :3], cv2.COLOR_BGR2GRAY)
+        mov_gray = cv2.cvtColor(img_0[..., :3], cv2.COLOR_BGR2GRAY)
     else:
         ref_gray = img_ref
         mov_gray = img_0
@@ -289,8 +289,8 @@ def find_transform_phase_correlation(img_ref, img_0):
         mov_centered = img_0
         scale = 1.0
     if len(img_ref.shape) == 3:
-        ref_gray_trans = cv2.cvtColor(img_ref, cv2.COLOR_BGR2GRAY)
-        mov_gray_trans = cv2.cvtColor(mov_centered, cv2.COLOR_BGR2GRAY)
+        ref_gray_trans = cv2.cvtColor(img_ref[..., :3], cv2.COLOR_BGR2GRAY)
+        mov_gray_trans = cv2.cvtColor(mov_centered[..., :3], cv2.COLOR_BGR2GRAY)
     else:
         ref_gray_trans = img_ref
         mov_gray_trans = mov_centered
@@ -444,7 +444,7 @@ class TransformationExtractor:
         if self.alignment_config['border_mode'] == constants.BORDER_REPLICATE_BLUR:
             if callbacks and 'blur_message' in callbacks:
                 callbacks['blur_message']()
-            mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+            mask = cv2.cvtColor(mask[..., :3], cv2.COLOR_BGR2GRAY)
             blurred_warp = cv2.GaussianBlur(
                 img_warp, (21, 21), sigmaX=self.alignment_config['border_blur'])
             img_warp[mask == 0] = blurred_warp[mask == 0]

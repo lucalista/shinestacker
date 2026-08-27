@@ -28,6 +28,7 @@ class PyramidBase(BaseStackAlgo):
         self.max_pixel_value = None
         self.n_levels = 0
         self.n_frames = 0
+        self.alpha_mode = False
 
     def init(self, filenames):
         super().init(filenames)
@@ -103,8 +104,8 @@ class PyramidBase(BaseStackAlgo):
         entropies = np.zeros(images.shape[:3], dtype=self.float_type)
         deviations = np.copy(entropies)
         gray_images = np.array([cv2.cvtColor(
-            images[layer] if self.float_type == np.float32 else
-            images[layer].astype(np.float32),
+            images[layer][..., :3] if self.float_type == np.float32 else
+            images[layer][..., :3].astype(np.float32),
             cv2.COLOR_BGR2GRAY).astype(self.dtype) for layer in range(layers)])
         entropies = np.array([self.entropy(img) for img in gray_images])
         deviations = np.array([self.deviation(img) for img in gray_images])
@@ -133,6 +134,34 @@ class PyramidBase(BaseStackAlgo):
             laplacian.append(pyr - expanded)
         return laplacian
 
+    def premultiply_alpha(self, img):
+        """Split an RGBA frame into premultiplied colour + straight alpha, packed
+        back into a 4-channel float array. Colour is premultiplied so that fully
+        transparent regions carry no colour energy into the Laplacian pyramid
+        (avoids haloing at the matte edge). Sets self.alpha_mode."""
+        if img.ndim == 3 and img.shape[2] == 4:
+            self.alpha_mode = True
+            f = img.astype(self.float_type)
+            a_norm = f[..., 3:4] / self.max_pixel_value
+            color_pm = f[..., :3] * a_norm
+            return np.concatenate([color_pm, f[..., 3:4]], axis=2)
+        return img
+
+    def unpremultiply_alpha(self, img):
+        """Invert premultiply_alpha on the collapsed result: recover straight
+        colour and clip alpha back into range."""
+        if not getattr(self, 'alpha_mode', False):
+            return img
+        f = img.astype(self.float_type)
+        a = np.clip(f[..., 3:4], 0, self.max_pixel_value)
+        a_norm = a / self.max_pixel_value
+        # below ~0.2% coverage the premultiplied colour is dominated by pyramid
+        # ringing / border blur; treat those pixels as fully transparent black.
+        floor = 2.0 / 255.0
+        color = np.where(a_norm > floor, f[..., :3] / np.maximum(a_norm, floor), 0.0)
+        color = np.clip(color, 0, self.max_pixel_value)
+        return np.concatenate([color, a], axis=2)
+
     def fuse_laplacian(self, laplacians_list):
         laplacians = np.stack(laplacians_list, axis=0)
         n_layers, h, w, _ = laplacians.shape
@@ -142,7 +171,7 @@ class PyramidBase(BaseStackAlgo):
             laplacians_32 = laplacians
         energies = np.empty((n_layers, h, w), dtype=np.float32)
         for i in range(n_layers):
-            gray = cv2.cvtColor(laplacians_32[i], cv2.COLOR_BGR2GRAY)
+            gray = cv2.cvtColor(laplacians_32[i][..., :3], cv2.COLOR_BGR2GRAY)
             energies[i] = self.convolve(gray * gray)
         best = np.argmax(energies, axis=0)
         rows = np.arange(h)[:, None]
@@ -152,6 +181,8 @@ class PyramidBase(BaseStackAlgo):
 
 
 class PyramidStack(PyramidBase):
+    supports_alpha = True
+
     def __init__(self, **kwargs):
         super().__init__("pyramid", **kwargs)
         self.offset = np.arange(-self.pad_amount, self.pad_amount + 1)
@@ -188,6 +219,7 @@ class PyramidStack(PyramidBase):
             self.process.callback(constants.CALLBACK_UPDATE_FRAME_STATUS,
                                   self.process.input_path, filename, 200)
             img = read_and_validate_img(img_path, self.shape, self.dtype)
+            img = self.premultiply_alpha(img)
             self.check_running()
             self.print_message(
                 f": processing {self.image_str(i)}")
@@ -204,4 +236,5 @@ class PyramidStack(PyramidBase):
                                   self.process.input_path, filename, 201)
             self.check_running()
         stacked_image = self.collapse(self.fuse_pyramids(all_laplacians))
+        stacked_image = self.unpremultiply_alpha(stacked_image)
         return stacked_image.astype(self.dtype)
