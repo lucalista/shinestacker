@@ -153,7 +153,13 @@ def write_img(file_path, img):
     if extension_jpg(file_path):
         cv2.imwrite(file_path, img, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
     elif extension_tif(file_path):
-        cv2.imwrite(file_path, img, [int(cv2.IMWRITE_TIFF_COMPRESSION), 1])
+        if img.ndim == 3 and img.shape[2] == 4:
+            # Write with ExtraSamples tag so Affinity/Photoshop recognise the alpha channel.
+            # Pyramid stacking un-premultiplies before calling write_img, so alpha is straight.
+            tifffile.imwrite(file_path, img, photometric='rgb', compression='lzw',
+                             extrasamples=['UNASSALPHA'])
+        else:
+            cv2.imwrite(file_path, img, [int(cv2.IMWRITE_TIFF_COMPRESSION), 1])
     elif extension_png(file_path):
         cv2.imwrite(file_path, img, [
             int(cv2.IMWRITE_PNG_COMPRESSION), 9,
