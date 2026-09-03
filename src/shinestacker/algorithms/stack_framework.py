@@ -101,7 +101,8 @@ class ImageSequenceManager:
                 filelist = []
                 for _dirpath, _, filenames in os.walk(d):
                     filelist = [os.path.join(_dirpath, name)
-                                for name in filenames if extension_supported_input(name)]
+                                for name in filenames
+                                if extension_supported_input(name) and not name.startswith('.')]
                     filelist.sort()
                     if self.reverse_order:
                         filelist.reverse()
