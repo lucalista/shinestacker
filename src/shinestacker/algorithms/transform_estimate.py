@@ -49,7 +49,7 @@ def decompose_affine_matrix(m):
     return (scale_x, scale_y), rotation, shear, (tx, ty)
 
 
-def check_affine_matrix(m, img_shape, affine_thresholds):  # =_AFFINE_THRESHOLDS)
+def check_affine_matrix(m, img_shape, affine_thresholds):
     if affine_thresholds is None:
         return True, "No thresholds provided", None
     (scale_x, scale_y), rotation, shear, (tx, ty) = decompose_affine_matrix(m)
@@ -75,7 +75,7 @@ def check_affine_matrix(m, img_shape, affine_thresholds):  # =_AFFINE_THRESHOLDS
         (scale_x, scale_y, tx, ty, rotation, shear)
 
 
-def check_homography_distortion(m, img_shape, homography_thresholds):  # =_HOMOGRAPHY_THRESHOLDS)
+def check_homography_distortion(m, img_shape, homography_thresholds):
     if homography_thresholds is None:
         return True, "No thresholds provided", None
     h, w = img_shape[:2]
@@ -449,8 +449,6 @@ class TransformationExtractor:
                 img_warp, (21, 21), sigmaX=self.alignment_config['border_blur'])
             img_warp[mask == 0] = blurred_warp[mask == 0]
         if img_warp.ndim == 3 and img_warp.shape[2] == 4:
-            # revealed border area must read as fully transparent, whatever the
-            # colour border mode did there
             coverage = np.ones(img_0.shape[:2], dtype=np.uint8)
             if transform_type == constants.ALIGN_HOMOGRAPHY:
                 coverage = cv2.warpPerspective(coverage, m, (w_ref, h_ref),

@@ -132,7 +132,7 @@ def read_img(file_path):
                 raise RuntimeError("OpenCV imgread returned empty file")
         except Exception:
             img = tifffile.imread(file_path)
-            if img.ndim == 4:  # Multi-page color image
+            if img.ndim == 4:
                 img = img[0]
             elif img.ndim == 3 and img.shape[0] > 1 and img.shape[2] not in [3, 4]:
                 img = img[0]
@@ -154,8 +154,6 @@ def write_img(file_path, img):
         cv2.imwrite(file_path, img, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
     elif extension_tif(file_path):
         if img.ndim == 3 and img.shape[2] == 4:
-            # Write with ExtraSamples tag so Affinity/Photoshop recognise the alpha channel.
-            # Pyramid stacking un-premultiplies before calling write_img, so alpha is straight.
             tifffile.imwrite(file_path, img, photometric='rgb', compression='lzw',
                              extrasamples=['UNASSALPHA'])
         else:

@@ -617,8 +617,6 @@ class BalanceFrames(SubAction):
             return
         img = read_img(self.process.input_filepath(process.ref_idx))
         self.shape = img.shape
-        # colour balance operates on RGB only; the alpha channel (if any) is
-        # carried through untouched by run_frame().
         self.correction.begin(drop_alpha(img), self.process.total_action_counts,
                               process.ref_idx)
 

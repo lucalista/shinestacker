@@ -1,6 +1,6 @@
 # Changelog
 
-## [unreleased] - alpha-channel-support branch
+## [v1.17.0] - 2026-09-06
 **RGBA / alpha-channel support for the focus stackers (#69)**
 
 ### Added

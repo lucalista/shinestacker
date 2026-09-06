@@ -11,7 +11,6 @@ from .utils import read_img, get_img_metadata, get_first_image_file, has_alpha
 
 
 class BaseStackAlgo:
-    # subclasses that carry an alpha channel through fusion set this True
     supports_alpha = False
 
     def __init__(self, name, steps_per_frame, float_type):
@@ -25,8 +24,6 @@ class BaseStackAlgo:
         self.max_pixel_value = None
         self.do_step_callback = False
         self.output_filename = 'undefined'
-        # set in init() from the first input frame; only ever True for
-        # subclasses with supports_alpha = True
         self.alpha_mode = False
         if float_type == constants.FLOAT_32:
             self.float_type = np.float32

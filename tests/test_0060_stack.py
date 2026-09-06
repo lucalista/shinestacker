@@ -142,11 +142,12 @@ def test_jpg_template():
 def test_bunches_template():
     try:
         job = StackJob("job", "examples", input_path="input/img-jpg")
-        job.add_action(FocusStackBunch("stack-pyramid-bunch", PyramidStack(),
-                                       output_path="output/img-jpg-bunches",
-                                       delete_output_at_end=True,
-                                       frames=3,
-                                       output_file_template="{method}_{input_count}frames_bunch-{bunch_index:03d}"))
+        job.add_action(
+            FocusStackBunch("stack-pyramid-bunch", PyramidStack(),
+                            output_path="output/img-jpg-bunches",
+                            delete_output_at_end=True, frames=3,
+                            output_file_template="{method}_{input_count}"
+                            "frames_bunch-{bunch_index:03d}"))
         job.run()
     except Exception:
         assert False

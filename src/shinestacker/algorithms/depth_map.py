@@ -297,9 +297,6 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
                 if img_float.max() > 1.0:
                     img_float = img_float / self.num_pixel_values
             if self.alpha_mode:
-                # premultiply colour by alpha so transparent regions carry no
-                # colour into the Laplacian pyramid; alpha rides the 4th channel
-                # and is blended with the same per-pixel weights as colour.
                 img_float = img_float.copy()
                 img_float[..., :3] *= img_float[..., 3:4]
             gp_weight, lp_img = self._build_pyramids_for_image(img_float, weight)

@@ -1,17 +1,7 @@
-"""RGBA / alpha-channel support for the pyramid + depth-map focus stackers.
-
-A synthetic focus stack of a semi-transparent disc: which frame is in sharp
-focus varies across the stack, the soft alpha edge is constant. We check that
-every alpha-capable stacker produces a result that:
-  * keeps 4 channels,
-  * has opaque centre / transparent background / a fractional edge band,
-  * carries no straight-colour bleed into fully transparent regions,
-  * picks colour from the in-focus frame inside the disc.
-"""
 import numpy as np
 import cv2
 import pytest
-
+from shinestacker.core.exceptions import InvalidOptionError
 from shinestacker.algorithms.stack_framework import StackJob, CombinedActions
 from shinestacker.algorithms.stack import FocusStack
 from shinestacker.algorithms.align import AlignFrames
@@ -53,7 +43,6 @@ def _make_frame(sharp, tint, seed=0):
 def rgba_src(tmp_path):
     src = tmp_path / "src"
     src.mkdir()
-    # only frame 1 is sharp -> its (green) colour should win inside the disc
     frames = [
         _make_frame(sharp=False, tint=(60000, 8000, 8000), seed=1),
         _make_frame(sharp=True, tint=(8000, 60000, 8000), seed=2),
@@ -99,7 +88,6 @@ def test_no_transparent_colour_bleed(rgba_src, make_algo):
 
 @pytest.mark.parametrize("make_algo", ALPHA_STACKERS)
 def test_alpha_follows_focus_selection(rgba_src, make_algo):
-    """Inside the disc the sharp (green) frame should dominate the result."""
     out = _run(rgba_src, make_algo)
     c = out[H // 2, W // 2, :3].astype(float)   # BGR
     assert c[1] > c[0] and c[1] > c[2]
@@ -125,7 +113,6 @@ def test_align_then_stack_rgba(tmp_path, make_algo):
 
 
 def test_align_balance_rgba(tmp_path):
-    """BalanceFrames must colour-correct RGB only and pass alpha through."""
     from shinestacker.algorithms.balance import BalanceFrames
     from shinestacker.config.constants import constants
     src = tmp_path / "src"
@@ -143,7 +130,6 @@ def test_align_balance_rgba(tmp_path):
 
 
 def test_reference_rgb_only_untouched(tmp_path):
-    """Plain RGB stacks still emit 3 channels."""
     src = tmp_path / "src"
     src.mkdir()
     rng = np.random.default_rng(1)
@@ -156,8 +142,6 @@ def test_reference_rgb_only_untouched(tmp_path):
 
 
 def test_non_alpha_algo_rejects_rgba(rgba_src):
-    """A stacker with supports_alpha = False must fail loudly, not drop alpha."""
-    from shinestacker.core.exceptions import InvalidOptionError
 
     class NoAlphaPyramid(PyramidStack):
         supports_alpha = False

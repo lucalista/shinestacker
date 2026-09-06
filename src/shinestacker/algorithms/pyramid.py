@@ -134,10 +134,6 @@ class PyramidBase(BaseStackAlgo):
         return laplacian
 
     def premultiply_alpha(self, img):
-        """Split an RGBA frame into premultiplied colour + straight alpha, packed
-        back into a 4-channel float array. Colour is premultiplied so that fully
-        transparent regions carry no colour energy into the Laplacian pyramid
-        (avoids haloing at the matte edge)."""
         if self.alpha_mode and img.ndim == 3 and img.shape[2] == 4:
             f = img.astype(self.float_type)
             a_norm = f[..., 3:4] / self.max_pixel_value
@@ -146,15 +142,11 @@ class PyramidBase(BaseStackAlgo):
         return img
 
     def unpremultiply_alpha(self, img):
-        """Invert premultiply_alpha on the collapsed result: recover straight
-        colour and clip alpha back into range."""
         if not getattr(self, 'alpha_mode', False):
             return img
         f = img.astype(self.float_type)
         a = np.clip(f[..., 3:4], 0, self.max_pixel_value)
         a_norm = a / self.max_pixel_value
-        # below ~0.2% coverage the premultiplied colour is dominated by pyramid
-        # ringing / border blur; treat those pixels as fully transparent black.
         floor = 2.0 / 255.0
         color = np.where(a_norm > floor, f[..., :3] / np.maximum(a_norm, floor), 0.0)
         color = np.clip(color, 0, self.max_pixel_value)
