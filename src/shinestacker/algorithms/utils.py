@@ -153,7 +153,13 @@ def write_img(file_path, img):
     if extension_jpg(file_path):
         cv2.imwrite(file_path, img, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
     elif extension_tif(file_path):
-        cv2.imwrite(file_path, img, [int(cv2.IMWRITE_TIFF_COMPRESSION), 1])
+        if img.ndim == 3 and img.shape[2] == 4:
+            # Write with ExtraSamples tag so Affinity/Photoshop recognise the alpha channel.
+            # Pyramid stacking un-premultiplies before calling write_img, so alpha is straight.
+            tifffile.imwrite(file_path, img, photometric='rgb', compression='lzw',
+                             extrasamples=['UNASSALPHA'])
+        else:
+            cv2.imwrite(file_path, img, [int(cv2.IMWRITE_TIFF_COMPRESSION), 1])
     elif extension_png(file_path):
         cv2.imwrite(file_path, img, [
             int(cv2.IMWRITE_PNG_COMPRESSION), 9,
@@ -167,17 +173,41 @@ def img_8bit(img):
     return (img >> 8).astype(np.uint8) if img.dtype == np.uint16 else img
 
 
+def has_alpha(img):
+    return img is not None and img.ndim == 3 and img.shape[2] == 4
+
+
+def split_alpha(img):
+    """Return (color, alpha) for a 4-channel image, or (img, None) otherwise."""
+    if has_alpha(img):
+        return img[..., :3], img[..., 3]
+    return img, None
+
+
+def merge_alpha(color, alpha):
+    """Re-attach an alpha channel; alpha may be (h, w) or (h, w, 1)."""
+    if alpha is None:
+        return color
+    if alpha.ndim == 2:
+        alpha = alpha[..., np.newaxis]
+    return np.concatenate([color[..., :3], alpha.astype(color.dtype)], axis=2)
+
+
+def drop_alpha(img):
+    return img[..., :3] if has_alpha(img) else img
+
+
 def img_bw_8bit(img):
     img = img_8bit(img)
     if len(img.shape) == 3:
-        return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        return cv2.cvtColor(drop_alpha(img), cv2.COLOR_BGR2GRAY)
     if len(img.shape) == 2:
         return img
     raise ValueError(f"Unsupported image format: {img.shape}")
 
 
 def img_bw(img):
-    return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    return cv2.cvtColor(drop_alpha(img), cv2.COLOR_BGR2GRAY)
 
 
 def get_first_image_file(filenames):

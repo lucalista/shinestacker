@@ -4,6 +4,9 @@ import numpy as np
 
 
 def unsharp_mask(image, radius=1.0, amount=1.0, threshold=0.0):
+    if image.ndim == 3 and image.shape[2] == 4:
+        color = unsharp_mask(image[..., :3], radius, amount, threshold)
+        return np.concatenate([color, image[..., 3:4]], axis=2)
     if image.dtype == np.uint16:
         threshold = threshold * 256
     blurred = cv2.GaussianBlur(image, (0, 0), radius)

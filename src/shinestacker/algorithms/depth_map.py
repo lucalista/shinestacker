@@ -10,6 +10,8 @@ from .base_stack_algo import BaseStackAlgo, TempDirBase
 
 
 class DepthMapStack(BaseStackAlgo, TempDirBase):
+    supports_alpha = True
+
     def __init__(self, **kwargs):
         default_params = DEFAULTS['depth_map_params']
         focus_stack_params = DEFAULTS['focus_stack_params']
@@ -270,7 +272,8 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
             w = (w + 1) // 2
             pyramid_shapes_f2c.append((h, w))
         pyramid_shapes_c2f = list(reversed(pyramid_shapes_f2c))
-        blended_pyramid = [np.zeros((*shape, 3), dtype=self.float_type)
+        n_ch = 4 if self.alpha_mode else 3
+        blended_pyramid = [np.zeros((*shape, n_ch), dtype=self.float_type)
                            for shape in pyramid_shapes_c2f]
         weight_pyramid_accum = [np.zeros(shape, dtype=self.float_type)
                                 for shape in pyramid_shapes_c2f]
@@ -293,6 +296,12 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
                 img_float = img.astype(self.float_type)
                 if img_float.max() > 1.0:
                     img_float = img_float / self.num_pixel_values
+            if self.alpha_mode:
+                # premultiply colour by alpha so transparent regions carry no
+                # colour into the Laplacian pyramid; alpha rides the 4th channel
+                # and is blended with the same per-pixel weights as colour.
+                img_float = img_float.copy()
+                img_float[..., :3] *= img_float[..., 3:4]
             gp_weight, lp_img = self._build_pyramids_for_image(img_float, weight)
             for level in range(self.pyramid_levels):
                 np.multiply(lp_img[level],
@@ -319,6 +328,11 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
         for level in range(1, self.pyramid_levels):
             size = (blended_pyramid[level].shape[1], blended_pyramid[level].shape[0])
             result = cv2.pyrUp(result, dstsize=size) + blended_pyramid[level]
+        if self.alpha_mode:
+            alpha = np.clip(result[..., 3:4], 0.0, 1.0)
+            floor = 2.0 / 255.0
+            color = np.where(alpha > floor, result[..., :3] / np.maximum(alpha, floor), 0.0)
+            result = np.concatenate([np.clip(color, 0.0, 1.0), alpha], axis=2)
         if self.dtype == np.uint8:
             result = np.clip(result * 255.0, 0, 255).astype(np.uint8)
         elif self.dtype == np.uint16:

@@ -7,10 +7,13 @@ from .. core.exceptions import InvalidOptionError, RunStopException
 from .. config.constants import constants
 from .. config.app_config import AppConfig
 from .. core.colors import color_str
-from .utils import read_img, get_img_metadata, get_first_image_file
+from .utils import read_img, get_img_metadata, get_first_image_file, has_alpha
 
 
 class BaseStackAlgo:
+    # subclasses that carry an alpha channel through fusion set this True
+    supports_alpha = False
+
     def __init__(self, name, steps_per_frame, float_type):
         self._name = name
         self._steps_per_frame = steps_per_frame
@@ -22,6 +25,9 @@ class BaseStackAlgo:
         self.max_pixel_value = None
         self.do_step_callback = False
         self.output_filename = 'undefined'
+        # set in init() from the first input frame; only ever True for
+        # subclasses with supports_alpha = True
+        self.alpha_mode = False
         if float_type == constants.FLOAT_32:
             self.float_type = np.float32
         elif float_type == constants.FLOAT_64:
@@ -56,7 +62,15 @@ class BaseStackAlgo:
 
     def init(self, filenames):
         self.filenames = filenames
-        self.shape, self.dtype = get_img_metadata(read_img(get_first_image_file(filenames)))
+        first_img = read_img(get_first_image_file(filenames))
+        self.shape, self.dtype = get_img_metadata(first_img)
+        if has_alpha(first_img) and not self.supports_alpha:
+            raise InvalidOptionError(
+                "input", "RGBA image",
+                details=f" the {self._name} algorithm does not carry an alpha "
+                        "channel through fusion; use PyramidStack() for RGBA "
+                        "input, or drop the alpha channel first")
+        self.alpha_mode = has_alpha(first_img)
         self.num_pixel_values = constants.NUM_UINT8 \
             if self.dtype == np.uint8 else constants.NUM_UINT16
         self.max_pixel_value = constants.MAX_UINT8 \

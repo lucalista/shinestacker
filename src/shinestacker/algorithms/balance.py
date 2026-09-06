@@ -12,7 +12,8 @@ from .. core.exceptions import InvalidOptionError
 from .. core.colors import color_str
 from .. core.core_utils import setup_matplotlib_mode
 from .utils import (read_img, img_subsample, bgr_to_hsv, bgr_to_hls,
-                    hsv_to_bgr, hls_to_bgr, bgr_to_lab, lab_to_bgr)
+                    hsv_to_bgr, hls_to_bgr, bgr_to_lab, lab_to_bgr,
+                    split_alpha, merge_alpha, drop_alpha)
 from .stack_framework import SubAction
 setup_matplotlib_mode()
 
@@ -616,7 +617,10 @@ class BalanceFrames(SubAction):
             return
         img = read_img(self.process.input_filepath(process.ref_idx))
         self.shape = img.shape
-        self.correction.begin(img, self.process.total_action_counts, process.ref_idx)
+        # colour balance operates on RGB only; the alpha channel (if any) is
+        # carried through untouched by run_frame().
+        self.correction.begin(drop_alpha(img), self.process.total_action_counts,
+                              process.ref_idx)
 
     def end(self):
         self.process.print_message(' ' * 60)
@@ -636,5 +640,6 @@ class BalanceFrames(SubAction):
             self.process.print_message(
                 color_str(f'{self.process.frame_str(idx)}: balance image',
                           constants.LOG_COLOR_LEVEL_3))
-        image = self.correction.apply_correction(idx, image)
-        return image
+        color, alpha = split_alpha(image)
+        color = self.correction.apply_correction(idx, color)
+        return merge_alpha(color, alpha)

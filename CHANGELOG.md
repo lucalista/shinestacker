@@ -1,5 +1,27 @@
 # Changelog
 
+## [unreleased] - alpha-channel-support branch
+**RGBA / alpha-channel support for the focus stackers (#69)**
+
+### Added
+- `PyramidStack`, `PyramidTilesStack`, `DepthMapStack` and `PyramidAutoStack`
+  now carry a 4th (alpha) channel through alignment and fusion. RGBA input
+  frames (16-bit TIFF / PNG) produce an RGBA stacked result. Colour is
+  premultiplied by alpha before pyramids are built (so transparent regions
+  contribute no focus energy) and un-premultiplied on output.
+- Focus metrics (entropy / deviation / Laplacian energy / depth-map weights) are
+  computed from the RGB channels only; the alpha channel is fused with the same
+  per-pixel frame selection / weights as the colour, so colour and matte never
+  diverge.
+- `AlignFrames` carries alpha through the warp and forces revealed border area
+  to fully transparent; `BalanceFrames` colour-corrects RGB only; `denoise` and
+  `unsharp_mask` pass alpha through untouched.
+- A stacker that cannot carry alpha (`BaseStackAlgo.supports_alpha = False`)
+  raises a clear error on RGBA input instead of silently dropping the channel.
+- `algorithms.utils`: `has_alpha`, `split_alpha`, `merge_alpha`, `drop_alpha`.
+
+---
+
 ## [v1.16.3] - 2026-08-22
 
 ### Fixed

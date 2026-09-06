@@ -20,6 +20,8 @@ from .pyramid import PyramidBase
 
 
 class PyramidTilesStack(PyramidBase, TempDirBase):
+    supports_alpha = True
+
     def __init__(self, **kwargs):
         PyramidBase.__init__(self, "fast_pyramid", **kwargs)
         TempDirBase.__init__(self)
@@ -37,6 +39,10 @@ class PyramidTilesStack(PyramidBase, TempDirBase):
         max_threads = kwargs.get('max_threads', focus_stack_defaults_params['max_threads'])
         self.num_threads = max(1, min(max_threads, available_cores))
         self.min_free_space_gb = 5
+
+    @property
+    def n_ch(self):
+        return 4 if self.alpha_mode else 3
 
     def init(self, filenames):
         super().init(filenames)
@@ -57,6 +63,7 @@ class PyramidTilesStack(PyramidBase, TempDirBase):
         return idx, img_path, level_count
 
     def process_single_image(self, img, levels, img_index):
+        img = self.premultiply_alpha(img)
         laplacian = self.single_image_laplacian(img, levels)
         self.level_shapes[img_index] = [level.shape for level in laplacian[::-1]]
         for level_idx, level_data in enumerate(laplacian[::-1]):
@@ -116,7 +123,7 @@ class PyramidTilesStack(PyramidBase, TempDirBase):
                 traceback.print_exc()
 
     def _fuse_level_tiles_serial(self, level, num_images, all_level_counts, h, w, count):
-        fused_level = np.zeros((h, w, 3), dtype=self.float_type)
+        fused_level = np.zeros((h, w, self.n_ch), dtype=self.float_type)
         for y in range(0, h, self.tile_size):
             for x in range(0, w, self.tile_size):
                 y_end, x_end = min(y + self.tile_size, h), min(x + self.tile_size, w)
@@ -138,7 +145,7 @@ class PyramidTilesStack(PyramidBase, TempDirBase):
         return fused_level, count
 
     def _fuse_level_tiles_parallel(self, level, num_images, all_level_counts, h, w, count):
-        fused_level = np.zeros((h, w, 3), dtype=self.float_type)
+        fused_level = np.zeros((h, w, self.n_ch), dtype=self.float_type)
         tiles = []
         for y in range(0, h, self.tile_size):
             for x in range(0, w, self.tile_size):
@@ -192,7 +199,7 @@ class PyramidTilesStack(PyramidBase, TempDirBase):
             y_end = min(y + self.tile_size, h)
             x_end = min(x + self.tile_size, w)
             gc.collect()
-            return np.zeros((y_end - y, x_end - x, 3), dtype=self.float_type)
+            return np.zeros((y_end - y, x_end - x, self.n_ch), dtype=self.float_type)
         except Exception:
             traceback.print_exc()
             self.print_message(color_str(
@@ -313,10 +320,10 @@ class PyramidTilesStack(PyramidBase, TempDirBase):
                             x_end = min(x + self.tile_size, w)
                             tile_height = y_end - y
                             tile_width = x_end - x
-                            tile_size_bytes = tile_height * tile_width * 3 * 4
+                            tile_size_bytes = tile_height * tile_width * self.n_ch * 4
                             processing_size_bytes += tile_size_bytes
                 else:
-                    level_size_bytes = h * w * 3 * 4  # float32
+                    level_size_bytes = h * w * self.n_ch * 4  # float32
                     processing_size_bytes += level_size_bytes
         fusion_size_bytes = 0
         largest_level_size = 0
@@ -331,9 +338,9 @@ class PyramidTilesStack(PyramidBase, TempDirBase):
                         x_end = min(x + self.tile_size, w)
                         tile_height = y_end - y
                         tile_width = x_end - x
-                        tile_size_bytes = tile_height * tile_width * 3 * 4
+                        tile_size_bytes = tile_height * tile_width * self.n_ch * 4
                         level_tiles_size += tile_size_bytes
-            fused_level_size = h * w * 3 * 4
+            fused_level_size = h * w * self.n_ch * 4
             total_level_size = level_tiles_size + fused_level_size
             largest_level_size = max(largest_level_size, total_level_size)
         fusion_size_bytes = largest_level_size
@@ -470,7 +477,8 @@ class PyramidTilesStack(PyramidBase, TempDirBase):
             self.check_running(lambda: None)
             try:
                 fused_pyramid = self.fuse_pyramids(all_level_counts)
-                stacked_image = self.collapse(fused_pyramid).astype(self.dtype)
+                stacked_image = self.collapse(fused_pyramid)
+                stacked_image = self.unpremultiply_alpha(stacked_image).astype(self.dtype)
             except Exception as e:
                 traceback.print_exc()
                 self.process.sub_message_r(color_str(

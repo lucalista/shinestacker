@@ -12,6 +12,8 @@ from .pyramid_tiles import PyramidTilesStack
 
 
 class PyramidAutoStack(BaseStackAlgo):
+    supports_alpha = True
+
     def __init__(self, **kwargs):
         pyramid_default_params = DEFAULTS['pyramid_params']
         focus_stack_defaults_params = DEFAULTS['focus_stack_params']
@@ -44,6 +46,9 @@ class PyramidAutoStack(BaseStackAlgo):
 
     def init(self, filenames):
         super().init(filenames)
+        if self.alpha_mode:
+            self.channels = 4
+            self.bytes_per_pixel = self.channels * np.dtype(self.float_type).itemsize
         self.n_levels = int(np.log2(min(self.shape) / self.min_size))
         self.n_frames = len(filenames)
         memory_required_memory = self._estimate_memory_memory()
