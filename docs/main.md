@@ -9,7 +9,7 @@
 > **Focus stacking** for microscopy, macro photography, and computational imaging
 
 ## Key Features
-- 📸 **Image Formats**: JPEG, 8 and 16 bits TIFF and PNG and most of RAW formats are supported as input; output can be JPEG, 8 and 16 bits TIFF and PNG
+- 📸 **Image Formats**: JPEG, 8 and 16 bits TIFF and PNG and most of RAW formats are supported as input; output can be JPEG, 8 and 16 bits TIFF and PNG. Alpha channel (RGBA) is also supported.
 - 🚀 **Batch Processing**: Align, balance, and stack hundreds of images
 - 🧩 **Modular Architecture**: Mix-and-match processing modules
 - 🖌️ **Retouch Editing**: Final interactive retouch of stacked image from individual frames
