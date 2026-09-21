@@ -1,6 +1,6 @@
 # Shine Stacker
 
-ShineStacker is a focus stacking application that combines multiple images taken at different focus distances to produce images with extended depth of field. It provides an interactive GUI and a Python API for advanced image processing workflows in macro photography and microscopy. 👉 [Learn more about focus stacking on Wikipedia](https://en.wikipedia.org/wiki/Focus_stacking).
+**Shine Stacker** is a focus stacking application that combines multiple images taken at different focus distances to produce images with extended depth of field. It provides an interactive GUI and a Python API for advanced image processing workflows in macro photography and microscopy. 👉 [Learn more about focus stacking on Wikipedia](https://en.wikipedia.org/wiki/Focus_stacking).
 
 [![CI multiplatform](https://github.com/lucalista/shinestacker/actions/workflows/ci-multiplatform.yml/badge.svg)](https://github.com/lucalista/shinestacker/actions/workflows/ci-multiplatform.yml)
 [![PyPI version](https://img.shields.io/pypi/v/shinestacker?color=success)](https://pypi.org/project/shinestacker/)
