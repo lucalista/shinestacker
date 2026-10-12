@@ -37,6 +37,12 @@ cd shinestacker
 pip install -e .
 ```
 
+You can start shinestacker with the command:
+
+```bash
+shinestacker
+```
+
 On Linux and other system that require extra protection level, you may need to use ```pip``` with avirtual environment:
 
 ```bash
@@ -45,6 +51,14 @@ cd shinestacker
 python -m venv .venv
 source .venv/bin/activate
 pip install -e .
+```
+
+When using a virtual environment, you can start shinestacker with the commands:
+
+```bash
+cd shinestacker
+source .venv/bin/activate
+shinestacker
 ```
 
 Note that, depending on your installation, you may need to use ```python3``` and ```pip3``` instead of
