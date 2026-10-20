@@ -10,7 +10,6 @@ from psdtags import (PsdBlendMode, PsdChannel, PsdChannelId, PsdClippingType, Ps
                      PsdLayerFlag, PsdLayerMask, PsdLayers, PsdRectangle, PsdString, PsdUserMask,
                      TiffImageSourceData, overlay)
 from .. config.constants import constants
-from .. config.config import config
 from .. config.defaults import DEFAULTS
 from .. core.colors import color_str
 from .. core.framework import TaskBase
@@ -220,6 +219,5 @@ class MultiLayer(TaskBase, ImageSequenceManager):
         }
         write_multilayer_tiff(input_files, output_file, labels=None, exif_path=self.exif_path,
                               callbacks=callbacks)
-        app = 'internal_retouch_app' if config.COMBINED_APP else f'{constants.RETOUCH_APP}'
-        self.callback(constants.CALLBACK_OPEN_APP, self.id, self.name, app, output_file)
+        self.callback(constants.CALLBACK_OPEN_APP, self.id, self.name, output_file)
         return True

@@ -171,10 +171,9 @@ class GuiImageView(QWidget):
 
 
 class GuiOpenApp(QWidget):
-    def __init__(self, app, file_path, parent=None, fixed_height=False):
+    def __init__(self, file_path, parent=None, fixed_height=False):
         super().__init__(parent)
         self.file_path = file_path
-        self.app = app
         self.main_layout = QVBoxLayout()
         self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.main_layout.setSpacing(0)
@@ -210,27 +209,19 @@ class GuiOpenApp(QWidget):
 
     def mouseDoubleClickEvent(self, event):
         if event.button() == Qt.LeftButton:
-            if self.app != 'internal_retouch_app':
-                try:
-                    os.system(f"{self.app} -f {self.file_path} &")
-                except Exception as e:
-                    traceback.print_exc()
-                    raise RuntimeError(
-                        f"Can't open file {self.file_path} with app: {self.app}.\n{str(e)}") from e
-            else:
-                app = None
-                stacked_widget = self.parent().window().findChild(QStackedWidget)
-                if stacked_widget:
-                    for child in stacked_widget.children():
-                        if child.metaObject().className() == 'MainWindow':
-                            app = child
-                            break
-                    else:
-                        raise RuntimeError("MainWindow object not found")
-                if app:
-                    app.retouch_callback(self.file_path)
+            app = None
+            stacked_widget = self.parent().window().findChild(QStackedWidget)
+            if stacked_widget:
+                for child in stacked_widget.children():
+                    if child.metaObject().className() == 'MainWindow':
+                        app = child
+                        break
                 else:
                     raise RuntimeError("MainWindow object not found")
+            if app:
+                app.retouch_callback(self.file_path)
+            else:
+                raise RuntimeError("MainWindow object not found")
             return
         super().mouseDoubleClickEvent(event)
 

@@ -560,7 +560,7 @@ class ImgBaseWidget(BaseWidget):
                         if view_type == 'GuiPdfView':
                             image_view = GuiPdfView(file_path, self)
                         elif view_type == 'GuiOpenApp':
-                            image_view = GuiOpenApp(view_state.get('app', ''), file_path, self)
+                            image_view = GuiOpenApp(file_path, self)
                         else:
                             image_view = GuiImageView(file_path, self)
                         if tag not in self.scroll_areas_by_tag:

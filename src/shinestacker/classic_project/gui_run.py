@@ -254,11 +254,11 @@ class RunWindow(QTextEditLogger):
             traceback.print_exc()
 
     @Slot(int, str, str, str)
-    def handle_open_app(self, _run_id, name, app, path):
+    def handle_open_app(self, _run_id, name, path):
         label = QLabel(name, self)
         label.setStyleSheet("QLabel {margin-top: 5px; font-weight: bold;}")
         self.image_layout.addWidget(label)
-        image_view = GuiOpenApp(app, path, self)
+        image_view = GuiOpenApp(path, self)
         self.image_views.append(image_view)
         self.image_layout.addWidget(image_view)
         max_width = max(pv.size().width() for pv in self.image_views) if self.image_views else 0

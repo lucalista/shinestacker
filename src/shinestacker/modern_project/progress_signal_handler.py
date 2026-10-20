@@ -114,12 +114,12 @@ class ProgressSignalHandler(QObject):
         widget.add_image_view(image_view, tag)
 
     @Slot(int, str, str, str)
-    def handle_open_app(self, _run_id, name, app, path):
+    def handle_open_app(self, _run_id, name, path):
         state = self.progress_mapper.get_state(name)
         if not state:
             return
         widget = self.find_widget(state)
         if not widget:
             return
-        image_view = GuiOpenApp(app, path, widget, fixed_height=state.subaction_index == -1)
+        image_view = GuiOpenApp(path, widget, fixed_height=state.subaction_index == -1)
         widget.add_image_view(image_view)

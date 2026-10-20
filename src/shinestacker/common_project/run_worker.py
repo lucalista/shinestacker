@@ -17,7 +17,7 @@ class RunWorker(LogWorker):
     end_steps_signal = Signal(int, str)
     after_step_signal = Signal(int, str, int)
     save_plot_signal = Signal(int, str, str, str, str)
-    open_app_signal = Signal(int, str, str, str)
+    open_app_signal = Signal(int, str, str)
     run_completed_signal = Signal(int, str, bool)
     run_stopped_signal = Signal(int, str)
     run_failed_signal = Signal(int, str)
@@ -75,8 +75,8 @@ class RunWorker(LogWorker):
     def save_plot(self, run_id, module_name, caption, path, tag="_default"):
         self.save_plot_signal.emit(run_id, module_name, caption, path, tag)
 
-    def open_app(self, run_id, name, app, path):
-        self.open_app_signal.emit(run_id, name, app, path)
+    def open_app(self, run_id, name, path):
+        self.open_app_signal.emit(run_id, name, path)
 
     def add_status_box(self, module_name):
         self.add_status_box_signal.emit(module_name)

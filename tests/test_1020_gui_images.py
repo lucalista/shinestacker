@@ -109,11 +109,9 @@ def test_gui_pdf_view_click(sample_pdf, qtbot, monkeypatch):
 
 
 def test_gui_open_app_initialization(sample_image, qtbot):
-    test_app = "test_app"
-    open_app = GuiOpenApp(test_app, sample_image)
+    open_app = GuiOpenApp(sample_image)
     qtbot.addWidget(open_app)
     assert open_app.file_path == sample_image
-    assert open_app.app == test_app
     assert open_app.image_label.pixmap() is not None
     assert open_app.width() == 250
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.17.1] - 2026-10-20
+**Security vulnerability fixed**
+
+### Fixed
+- fixed potential vulnerability due to misuse of project metadata by disabling external retouch app. This feature was only used for internal purpposes and does not affect normal usage.
+
+---
+
 ## [v1.17.0] - 2026-09-06
 **RGBA / alpha-channel support for the focus stackers (#69)**
 
