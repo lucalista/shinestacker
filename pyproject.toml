@@ -46,8 +46,6 @@ dev = [
 
 [project.scripts]
 shinestacker = "shinestacker.app.main:main"
-shinestacker-project = "shinestacker.app.project:main"
-shinestacker-retouch = "shinestacker.app.retouch:main"
 
 [tool.setuptools.exclude-package-data]
 "*" = [
