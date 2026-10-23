@@ -10,7 +10,8 @@ from ..core.framework import TaskBase
 from ..core.colors import color_str
 from ..core.exceptions import InvalidOptionError
 from .utils import (
-    read_img, write_img, extension_supported_input, get_output_filename, extension_raw)
+    read_img, write_img, extension_supported_input, get_output_filename, extension_raw,
+    read_icc_profile)
 from .stack_framework import ImageSequenceManager, SequentialTask
 from .exif import copy_exif_from_file_to_file
 from .denoise import denoise
@@ -26,6 +27,7 @@ class FocusStackBase(TaskBase, ImageSequenceManager):
         self.apply_postifx = apply_postifx
         self.stack_algo = stack_algo
         self.exif_path = kwargs.pop("exif_path", "")
+        self.icc_source_path = ""
         self.naming_mode = kwargs.pop("naming_mode", specific_params.get("naming_mode", "PREFIX"))
 
         self.prefix = kwargs.pop("prefix", specific_params.get("prefix", ""))
@@ -126,7 +128,14 @@ class FocusStackBase(TaskBase, ImageSequenceManager):
                 self.sharpen_radius,
                 self.sharpen_threshold,
             )
-        write_img(output_filename, stacked_img)
+        # Without EXIF copying the colour profile of the source images would be
+        # lost (intermediate frames are written without one): embed it directly.
+        icc_profile = None
+        if self.exif_path == "" and self.icc_source_path != "":
+            icc_file = self.first_source_file(self.icc_source_path, filenames)
+            if icc_file is not None:
+                icc_profile = read_icc_profile(icc_file)
+        write_img(output_filename, stacked_img, icc_profile=icc_profile)
         if self.exif_path != "":
             if (
                 stacked_img.dtype == np.uint16
@@ -197,10 +206,32 @@ class FocusStackBase(TaskBase, ImageSequenceManager):
         if self.frame_count >= 0:
             self.frame_count += 1
 
+    @staticmethod
+    def first_source_file(path, filenames):
+        """The image in path whose extension matches the first input file, else
+        the first non-raw image, else the first image; None if there is none."""
+        if not os.path.isdir(path):
+            return None
+        _dirpath, _, fnames = next(os.walk(path))
+        fnames = sorted(name for name in fnames if extension_supported_input(name))
+        if not fnames:
+            return None
+        input_ext = os.path.splitext(filenames[0])[1].lower()
+        for name in fnames:
+            if os.path.splitext(name)[1].lower() == input_ext:
+                return os.path.join(path, name)
+        for name in fnames:
+            if not extension_raw(name):
+                return os.path.join(path, name)
+        return os.path.join(path, fnames[0])
+
     def init(self, job, working_path=""):
         if working_path == "":
             working_path = job.working_path
         ImageSequenceManager.init(self, job)
+        source_path = job.action_path(0)
+        if source_path:
+            self.icc_source_path = os.path.join(working_path, source_path)
         if self.exif_path is None:
             self.exif_path = job.action_path(0)
         if self.exif_path != "":
