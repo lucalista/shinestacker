@@ -56,6 +56,7 @@ DEFAULTS = {
         'border_mode': 'BORDER_REPLICATE_BLUR',
         'border_value': [0] * 4,
         'border_blur': 50,  # px
+        'interpolation': 'INTER_LINEAR',
         'subsample': 0,
         'fast_subsampling': False,
         'min_good_matches': 20,
