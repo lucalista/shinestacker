@@ -1,5 +1,18 @@
 # Changelog
 
+## [v1.17.x] - 2026-10-23
+**User pull requests**
+
+### Fixed
+- Pylint CI script fixed for pull requests, and updated to python 3.14
+
+### Changed
+- Alignment: make the warp interpolation selectable (#82)
+
+
+
+---
+
 ## [v1.17.1] - 2026-10-20
 **Security vulnerability fixed**
 

@@ -13,11 +13,28 @@ jobs:
       contents: write
     steps:
     - uses: actions/checkout@v6
+      with:
+        ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.ref }}
 
-    - uses: Silleellie/pylint-github-action@v3
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.14'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pylint
+
+    - name: Run pylint
+      run: pylint --rcfile=.pylintrc src
+
+    - name: Update pylint badge
+      if: github.event_name == 'push'
+      uses: Silleellie/pylint-github-action@v3
       with:
         lint-path: src
-        python-version: 3.12
+        python-version: 3.14
         requirements-path: requirements.txt
         readme-path: README.md
         pylintrc-path: .pylintrc
