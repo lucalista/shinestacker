@@ -117,6 +117,7 @@ DEFAULTS = {
         'energy_smooth_size': 1,
         'energy_sigma_color': 0.8,
         'energy_sigma_space': 2,
+        'energy_gauss_sigma': 0.0,  # px, 0 = off
         'pyramid_smooth_size': 1,
         'temperature': 0.0,
         'plot_depth_map': False

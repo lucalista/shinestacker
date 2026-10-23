@@ -503,6 +503,12 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
             expert=True,
             required=False, default=AppConfig.get('depth_map_params')['energy_sigma_space'],
             min_val=0, max_val=256)
+        self.add_field_to_layout(
+            q_depthmap.layout(), 'depthmap_energy_gauss_sigma', FIELD_FLOAT,
+            'Energy Gaussian σ (px, 0 = off)',
+            expert=True,
+            required=False, default=AppConfig.get('depth_map_params')['energy_gauss_sigma'],
+            min_val=0, max_val=64, step=0.5)
 
         def change_depthmap_energy_smooth_size():
             enabled = self.depthmap_energy_smooth_size.value() > 0
