@@ -1,12 +1,13 @@
 # Changelog
 
 ## [v1.17.x] - 2026-10-23
-**User pull requests**
+**User pull requests and more fixes**
 
 ### Fixed
 - Pylint CI script fixed for pull requests, and updated to python 3.14
 - Fixed some default parameter values in documentation (#78)
 - Aligment retries using SIFT detector and descriptor methods in case ORB fails (#77)
+- TIFF output: write Exif tags into the Exif IFD (#84)
 
 ### Changed
 - FocusStack: keep the source colour profile without EXIF copying (#79)

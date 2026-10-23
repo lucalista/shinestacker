@@ -67,6 +67,11 @@ License: BSD-3-Clause
 https://www.lfd.uci.edu/~gohlke/
 
 -------------------------------------------------------------------------------
+tifftools
+Apache Software License 2.0
+http://www.apache.org/licenses/LICENSE-2.0
+
+-------------------------------------------------------------------------------
 tqdm
 License: Mozilla Public License 2.0 (MPL-2.0)
 https://github.com/tqdm/tqdm
