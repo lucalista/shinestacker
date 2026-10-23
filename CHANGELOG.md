@@ -9,6 +9,7 @@
 ### Changed
 - Alignment: make the warp interpolation selectable (#82)
 - Default alignment interpolation method changed to cubic (#82)
+- DepthMapStack: optional Gaussian smoothing of the energy maps (#81)
 
 ---
 
