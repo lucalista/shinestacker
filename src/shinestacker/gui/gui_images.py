@@ -1,6 +1,5 @@
 # pylint: disable=C0114, C0115, C0116, E0611, W0718, E1101, C0103, R0914, R0915
 import traceback
-import webbrowser
 import subprocess
 import os
 import numpy as np
@@ -29,15 +28,14 @@ def open_file(file_path, parent_widget=None):
             QMessageBox.StandardButton.Ok
         )
         return
-    try:
-        if running_under_macos():
-            subprocess.Popen(('open', file_path))
-        elif running_under_windows():
-            os.startfile(file_path)
-        else:
-            subprocess.Popen(('xdg-open', file_path))
-    except Exception:
-        webbrowser.open("file://" + file_path)
+    if running_under_macos():
+        with subprocess.Popen(['open', file_path]):
+            pass
+    elif running_under_windows():
+        os.startfile(file_path)
+    else:
+        with subprocess.Popen(['xdg-open', file_path]):
+            pass
 
 
 class GuiPdfView(QPdfView):

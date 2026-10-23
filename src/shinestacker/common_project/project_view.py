@@ -80,6 +80,7 @@ class ProjectView(QWidget, LogManager, ProjectHandler):
                 else:
                     cmd = 'open' if running_under_macos() else 'xdg-open'
                     try:
+                        # pylint: disable-next=consider-using-with
                         subprocess.Popen(
                             [cmd, os.path.normpath(p)],
                             stdout=subprocess.DEVNULL,

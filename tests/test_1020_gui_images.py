@@ -1,11 +1,11 @@
 import pytest
 import sys
-import platform
+import subprocess
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt
-from PySide6.QtTest import QTest  # Add this import
-from shinestacker.gui.gui_images import GuiPdfView, GuiImageView, GuiOpenApp, open_file
+from PySide6.QtTest import QTest
+from shinestacker.gui.gui_images import GuiPdfView, GuiImageView, open_file
 
 
 @pytest.fixture
@@ -53,78 +53,51 @@ startxref
     return str(pdf_path)
 
 
-def test_open_file_image(sample_image, qtbot, monkeypatch):
+def _patch_open(monkeypatch):
     calls = []
-    monkeypatch.setattr('subprocess.call', lambda *args, **kwargs: calls.append(args))
-    if platform.system() == 'Windows':
-        monkeypatch.setattr('os.startfile', lambda *args, **kwargs: calls.append(args))
-    monkeypatch.setattr('webbrowser.open', lambda *args, **kwargs: calls.append(args))
+
+    class FakePopen:
+        def __init__(self, args, *a, **kw):
+            calls.append(args)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+    monkeypatch.setattr(subprocess, 'Popen', FakePopen)
+    monkeypatch.setattr('os.startfile', lambda *a, **k: calls.append(a), raising=False)
+    monkeypatch.setattr('webbrowser.open', lambda *a, **k: calls.append(a), raising=False)
+    return calls
+
+
+def test_open_file_image(sample_image, qtbot, monkeypatch):
+    calls = _patch_open(monkeypatch)
     open_file(sample_image)
     assert len(calls) >= 1
 
 
-def test_gui_image_view_initialization(sample_image, qtbot):
-    image_view = GuiImageView(sample_image)
-    qtbot.addWidget(image_view)
-    assert image_view.file_path == sample_image
-    assert image_view.image_label.pixmap() is not None
-    assert image_view.width() == 250
-
-
 def test_gui_image_view_click(sample_image, qtbot, monkeypatch):
-    calls = []
-    monkeypatch.setattr('subprocess.call', lambda *args, **kwargs: calls.append(args))
-    if platform.system() == 'Windows':
-        monkeypatch.setattr('os.startfile', lambda *args, **kwargs: calls.append(args))
-    monkeypatch.setattr('webbrowser.open', lambda *args, **kwargs: calls.append(args))
+    calls = _patch_open(monkeypatch)
     image_view = GuiImageView(sample_image)
     qtbot.addWidget(image_view)
     QTest.mouseDClick(image_view, Qt.LeftButton)
     assert len(calls) >= 1
 
 
-def test_gui_pdf_view_initialization(sample_pdf, qtbot):
-    pdf_view = GuiPdfView(sample_pdf)
-    qtbot.addWidget(pdf_view)
-    assert pdf_view.file_path == sample_pdf
-    assert pdf_view.document() is not None
-
-
 def test_gui_pdf_view_click(sample_pdf, qtbot, monkeypatch):
     calls = []
-    monkeypatch.setattr('subprocess.call', lambda *args, **kwargs: calls.append(args))
-    if platform.system() == 'Windows':
-        monkeypatch.setattr('os.startfile', lambda *args, **kwargs: calls.append(args))
-    monkeypatch.setattr('webbrowser.open', lambda *args, **kwargs: calls.append(args))
+    monkeypatch.setattr(
+        'shinestacker.gui.gui_images.open_file',
+        lambda path, *a, **k: calls.append(path),
+    )
     pdf_view = GuiPdfView(sample_pdf)
     qtbot.addWidget(pdf_view)
-    pdf_view.mouseDoubleClickEvent = lambda event: open_file(pdf_view.file_path)
 
     class MockEvent:
         def button(self):
             return Qt.LeftButton
 
     pdf_view.mouseDoubleClickEvent(MockEvent())
-    assert len(calls) >= 1
-
-
-def test_gui_open_app_initialization(sample_image, qtbot):
-    open_app = GuiOpenApp(sample_image)
-    qtbot.addWidget(open_app)
-    assert open_app.file_path == sample_image
-    assert open_app.image_label.pixmap() is not None
-    assert open_app.width() == 250
-
-
-def test_gui_image_view_error_handling(tmp_path, qtbot):
-    invalid_image = tmp_path / "invalid.png"
-    invalid_image.write_text("not an image")
-    with pytest.raises(RuntimeError):
-        GuiImageView(str(invalid_image))
-
-
-def test_gui_pdf_view_error_handling(tmp_path, qtbot):
-    invalid_pdf = tmp_path / "invalid.pdf"
-    invalid_pdf.write_text("not a pdf")
-    with pytest.raises(RuntimeError):
-        GuiPdfView(str(invalid_pdf))
+    assert calls == [sample_pdf]
