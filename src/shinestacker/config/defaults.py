@@ -56,6 +56,7 @@ DEFAULTS = {
         'border_mode': 'BORDER_REPLICATE_BLUR',
         'border_value': [0] * 4,
         'border_blur': 50,  # px
+        'interpolation': 'INTER_CUBIC',
         'subsample': 0,
         'fast_subsampling': False,
         'min_good_matches': 20,
@@ -116,6 +117,7 @@ DEFAULTS = {
         'energy_smooth_size': 1,
         'energy_sigma_color': 0.8,
         'energy_sigma_space': 2,
+        'energy_gauss_sigma': 0.0,  # px, 0 = off
         'pyramid_smooth_size': 1,
         'temperature': 0.0,
         'plot_depth_map': False

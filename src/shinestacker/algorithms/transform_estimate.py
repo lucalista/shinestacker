@@ -413,6 +413,15 @@ class TransformationExtractor:
             }[self.alignment_config['border_mode']]
         except KeyError as e:
             raise InvalidOptionError("border_mode", self.alignment_config['border_mode']) from e
+        interpolation = self.alignment_config.get('interpolation', constants.INTER_LINEAR)
+        try:
+            cv2_interpolation = {
+                constants.INTER_LINEAR: cv2.INTER_LINEAR,
+                constants.INTER_CUBIC: cv2.INTER_CUBIC,
+                constants.INTER_LANCZOS4: cv2.INTER_LANCZOS4
+            }[interpolation]
+        except KeyError as e:
+            raise InvalidOptionError("interpolation", interpolation) from e
         if callbacks and 'estimation_message' in callbacks:
             callbacks['estimation_message']()
         transform_type = self.alignment_config['transform']
@@ -429,14 +438,14 @@ class TransformationExtractor:
         img_warp = None
         if transform_type == constants.ALIGN_HOMOGRAPHY:
             img_warp = cv2.warpPerspective(
-                img_0, m, (w_ref, h_ref),
+                img_0, m, (w_ref, h_ref), flags=cv2_interpolation,
                 borderMode=cv2_border_mode, borderValue=self.alignment_config['border_value'])
             if self.alignment_config['border_mode'] == constants.BORDER_REPLICATE_BLUR:
                 mask = cv2.warpPerspective(img_mask, m, (w_ref, h_ref),
                                            borderMode=cv2.BORDER_CONSTANT, borderValue=0)
         elif transform_type == constants.ALIGN_RIGID:
             img_warp = cv2.warpAffine(
-                img_0, m, (w_ref, h_ref),
+                img_0, m, (w_ref, h_ref), flags=cv2_interpolation,
                 borderMode=cv2_border_mode, borderValue=self.alignment_config['border_value'])
             if self.alignment_config['border_mode'] == constants.BORDER_REPLICATE_BLUR:
                 mask = cv2.warpAffine(img_mask, m, (w_ref, h_ref),

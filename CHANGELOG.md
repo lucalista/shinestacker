@@ -1,5 +1,21 @@
 # Changelog
 
+## [v1.17.x] - 2026-10-23
+**User pull requests**
+
+### Fixed
+- Pylint CI script fixed for pull requests, and updated to python 3.14
+- Fixed some default parameter values in documentation (#78)
+
+### Changed
+- FocusStack: keep the source colour profile without EXIF copying (#79)
+- Round instead of truncating when converting to integer pixels (#80)
+- DepthMapStack: optional Gaussian smoothing of the energy maps (#81)
+- Alignment: make the warp interpolation selectable (#82)
+- Default alignment interpolation method changed to cubic (#82)
+
+---
+
 ## [v1.17.1] - 2026-10-20
 **Security vulnerability fixed**
 

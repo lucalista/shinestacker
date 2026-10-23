@@ -10,7 +10,7 @@ from .. core.core_utils import check_path_exists
 from .. core.exceptions import RunStopException
 from .utils import (
     read_img, write_img, extension_supported_input, get_img_metadata, validate_image,
-    get_output_filename)
+    get_output_filename, read_icc_profile)
 from .plot_manager import DirectPlotManager
 
 
@@ -393,7 +393,9 @@ class CombinedActions(ReferenceFrameTask):
             self.print_message(
                 color_str(f'write output {self.frame_str(idx)}, '
                           f'{os.path.basename(output_path)}', constants.LOG_COLOR_LEVEL_3))
-            write_img(output_path, img)
+            # the intermediate frame keeps the colour profile of its input, so that a
+            # later job (e.g. stacking the aligned frames) can pass it on
+            write_img(output_path, img, icc_profile=read_icc_profile(input_path))
             self.callback(
                 constants.CALLBACK_UPDATE_FRAME_STATUS, self.output_path, output_path, 1000)
             return img

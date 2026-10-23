@@ -377,6 +377,15 @@ def test_focus_stack_identical_frames_not_darkened(path):
     source = read_img(path).astype(np.float64)
     for map_type in (constants.DM_MAP_MAX, constants.DM_MAP_AVERAGE):
         dms = DepthMapStack(map_type=map_type)
+@pytest.mark.parametrize("params", [
+    {'map_type': 'max'},
+    {'map_type': 'average'},
+    {'map_type': 'average', 'weight_power': 2.0},
+])
+def test_focus_stack_threads_identical(example_images, params):
+    results = []
+    for max_threads in (1, 4):
+        dms = DepthMapStack(max_threads=max_threads, **params)
         dms.process = MagicMock()
         dms.process.callback.return_value = True
         dms.print_message = MagicMock()
@@ -387,3 +396,78 @@ def test_focus_stack_identical_frames_not_darkened(path):
         assert abs(diff.mean()) < 0.001
         if map_type == constants.DM_MAP_MAX:
             assert not diff.any()
+        dms.init(example_images[:4])
+        results.append(dms.focus_stack())
+    assert np.array_equal(results[0], results[1])
+
+
+def test_energy_gauss_sigma_default_off_and_validated():
+    assert DepthMapStack().energy_gauss_sigma == 0
+    with pytest.raises(InvalidOptionError):
+        DepthMapStack(energy_gauss_sigma=-1)
+
+
+def test_energy_gauss_sigma_finds_faint_texture(tmp_path):
+    # faint texture in focus in one frame, defocused in the others, all under sensor noise:
+    # the per-pixel energy maximum is mostly noise, its local average is not
+    rng = np.random.default_rng(0)
+    h, w = 256, 256
+    texture = cv2.GaussianBlur(rng.normal(0, 1, (h, w)).astype(np.float32), (0, 0), 2)
+    texture /= texture.std()
+    sharp = 0.6 + 0.003 * texture
+    soft = 0.6 + 0.003 * cv2.GaussianBlur(texture, (0, 0), 4)
+    paths = []
+    for i, base in enumerate([soft, soft, sharp, soft, soft]):
+        img = base + rng.normal(0, 0.006, (h, w)).astype(np.float32)
+        img = np.clip(img * 65535, 0, 65535).astype(np.uint16)
+        paths.append(str(tmp_path / f"frame_{i}.tif"))
+        cv2.imwrite(paths[-1], cv2.merge([img] * 3))
+
+    def band(a):
+        return (cv2.GaussianBlur(a, (0, 0), 1) - cv2.GaussianBlur(a, (0, 0), 4))[16:-16, 16:-16]
+
+    correlation = {}
+    for sigma in (0, 8):
+        dms = DepthMapStack(energy_gauss_sigma=sigma)
+        dms.process = MagicMock()
+        dms.process.callback.return_value = True
+        dms.print_message = MagicMock()
+        dms.after_step = MagicMock()
+        dms.check_running = MagicMock()
+        dms.init(paths)
+        result = dms.focus_stack()[..., 0].astype(np.float32) / 65535
+        correlation[sigma] = np.corrcoef(band(result).ravel(), band(sharp).ravel())[0, 1]
+    assert correlation[8] > correlation[0] + 0.15
+    assert correlation[8] > 0.65
+
+
+def test_frames_in_flight_respects_memory_limit():
+    dms = DepthMapStack(max_threads=8, memory_limit=1)
+    assert dms.frames_in_flight(300 * 1024**2) == 3
+    assert dms.frames_in_flight(4 * 1024**3) == 1
+    assert dms.frames_in_flight(1) == 8
+    assert dms.frames_in_flight(300 * 1024**2, resident_bytes=512 * 1024**2) == 1
+    assert dms.frames_in_flight(300 * 1024**2, resident_bytes=2 * 1024**3) == 1
+
+
+def test_ordered_parallel_map_order_and_early_stop():
+    import threading
+    from concurrent.futures import ThreadPoolExecutor
+    from shinestacker.algorithms.depth_map import ordered_parallel_map
+    started = []
+    lock = threading.Lock()
+
+    def work(i):
+        with lock:
+            started.append(i)
+        time.sleep(0.01 * (5 - i % 5))
+        return i * i
+
+    with ThreadPoolExecutor(4) as executor:
+        results = list(ordered_parallel_map(executor, work, range(12), 3))
+        assert results == [i * i for i in range(12)]
+        started.clear()
+        results = ordered_parallel_map(executor, work, range(100), 3)
+        assert next(results) == 0
+        results.close()
+    assert len(started) <= 5

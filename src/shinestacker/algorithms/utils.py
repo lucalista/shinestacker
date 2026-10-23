@@ -5,6 +5,7 @@ import numpy as np
 import cv2
 import tifffile
 import rawpy
+from PIL import Image
 from .. core.exceptions import ShapeError, BitDepthError, PathTooLong, InvalidWinPath
 from .. config.app_config import AppConfig
 
@@ -146,7 +147,19 @@ def read_img(file_path):
     return img
 
 
-def write_img(file_path, img):
+def read_icc_profile(file_path):
+    """ICC profile embedded in an image file (bytes), or None."""
+    try:
+        with Image.open(file_path) as image:
+            icc = image.info.get('icc_profile')
+    except Exception:
+        return None
+    return icc if icc else None
+
+
+def write_img(file_path, img, icc_profile=None):
+    """Write an image (BGR/BGRA channel order). icc_profile (bytes) is embedded
+    in TIFF output; the other formats ignore it."""
     if img is None:
         raise RuntimeError("Trying to write null image.")
     check_windows_path(file_path)
@@ -155,7 +168,11 @@ def write_img(file_path, img):
     elif extension_tif(file_path):
         if img.ndim == 3 and img.shape[2] == 4:
             tifffile.imwrite(file_path, img, photometric='rgb', compression='lzw',
-                             extrasamples=['UNASSALPHA'])
+                             extrasamples=['UNASSALPHA'], iccprofile=icc_profile)
+        elif icc_profile is not None:
+            rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) if img.ndim == 3 else img
+            tifffile.imwrite(file_path, rgb, photometric='rgb' if img.ndim == 3 else 'minisblack',
+                             iccprofile=icc_profile)
         else:
             cv2.imwrite(file_path, img, [int(cv2.IMWRITE_TIFF_COMPRESSION), 1])
     elif extension_png(file_path):
