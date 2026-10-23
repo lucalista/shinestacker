@@ -100,8 +100,8 @@ Arguments for the constructor are the same ad for ```PyramidStack``` plus:
 ```DepthMapStack```, Depth map focus stacking algorithm
 
 Arguments for the constructor are:
-   * ```map_type``` (optional)_ possible values are   ```DM_MAP_AVERAGE```  (default) and ```DM_MAP_MAX```. ```DM_MAP_MAX``` select for wach pixel the layer which has the best focus. ```DM_MAP_AVERAGE``` performs for each pixel an average of all layers weighted by the quality of focus.
-   * ```energy``` (optional): possible values are ```DM_ENERGY_TENENGRAD``` (default), ```DM_ENERGY_LAPLACIAN```, ```DM_ENERGY_MOD_LAPLACIAN```, ```DM_ENERGY_SOBEL``` and ```DM_ENERGY_VARIANCE```. For more information, see [Sobel Derivatives](https://docs.opencv.org/4.x/d2/d2c/tutorial_sobel_derivatives.html), 
+   * ```map_type``` (optional)_ possible values are   ```DM_MAP_AVERAGE``` and ```DM_MAP_MAX``` (default). ```DM_MAP_MAX``` (default): select for wach pixel the layer which has the best focus. ```DM_MAP_AVERAGE``` performs for each pixel an average of all layers weighted by the quality of focus.
+   * ```energy``` (optional): possible values are ```DM_ENERGY_TENENGRAD```, ```DM_ENERGY_LAPLACIAN``` (default), ```DM_ENERGY_MOD_LAPLACIAN```, ```DM_ENERGY_SOBEL``` and ```DM_ENERGY_VARIANCE```. For more information, see [Sobel Derivatives](https://docs.opencv.org/4.x/d2/d2c/tutorial_sobel_derivatives.html), 
    * ```kernel_size``` (optional, default: 5): size in pixels of Laplacian kernel. Used only with the ```DM_ENERGY_MOD_LAPLACIAN``` ```energy``` option.
    * ```blur_size``` (optional, default: 5): size in pixels of the pre-Laplacian Gaussian blur. Used only with the ```DM_ENERGY_MOD_LAPLACIAN``` ```energy``` option.
    * ```weight_power``` (optiona, default: 1.0): apply a power law correction to energy weights. Note that this correction has only effect if ```map_type=DM_MAP_AVERAGE``` or if ```map_type=DM_MAP_MAX``` and ```temperature``` is greater than zero.

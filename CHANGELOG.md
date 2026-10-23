@@ -5,11 +5,12 @@
 
 ### Fixed
 - Pylint CI script fixed for pull requests, and updated to python 3.14
+- Fixed some default parameter values in documentation (#78)
 
 ### Changed
+- DepthMapStack: optional Gaussian smoothing of the energy maps (#81)
 - Alignment: make the warp interpolation selectable (#82)
 - Default alignment interpolation method changed to cubic (#82)
-- DepthMapStack: optional Gaussian smoothing of the energy maps (#81)
 
 ---
 
