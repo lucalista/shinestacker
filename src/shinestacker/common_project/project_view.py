@@ -79,7 +79,7 @@ class ProjectView(QWidget, LogManager, ProjectHandler):
                     os.startfile(os.path.normpath(p))
                 else:
                     cmd = 'open' if running_under_macos() else 'xdg-open'
-                    subprocess.run([cmd, p], check=True)
+                    subprocess.Popen([cmd, p])
 
     def browse_working_path(self):
         if self.current_action_working_path:
