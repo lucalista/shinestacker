@@ -105,6 +105,25 @@ alignment_config = {
 * ```plot_matches```  (optional, default: ```False```): if ```True```, for each image matches with reference frame are drawn. May be useful for inspection and debugging.
 * ```enabled``` (optional, default: ```True```): allows to switch on and off this module.
 
+## Automatic fallback
+
+Some detector/descriptor combinations — most notably ORB/ORB, which is the
+default — can occasionally fail to find enough matches, or to estimate a
+reliable transformation. When this happens, alignment is automatically retried
+with a more robust configuration (SIFT/SIFT with KNN matching). The fallback is
+built into the code: it is not configurable and it is not exposed in the GUI.
+
+A fallback attempt is logged as a warning for the affected frame.
+
+If `plot_matches` is enabled, the match plot of the fallback attempt is saved
+with a `-fb-sift` suffix (e.g. `align-matches-0042-fb-sift.png`), alongside the
+plot of the primary attempt.
+
+If the fallback also fails, the frame is handled as usual: it is skipped, or
+recovered by phase correlation if `phase_corr_fallback` is enabled. No
+success/failure message is emitted for the fallback itself: the existing
+warnings cover both cases.
+
 ## Parallel processing
 
 A class ```AlignFramesParallel``` implements alignment using parallel processing.

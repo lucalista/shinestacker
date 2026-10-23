@@ -18,6 +18,18 @@ from .transform_estimate import (
     AFFINE_THRESHOLDS, HOMOGRAPHY_THRESHOLDS, AFFINE_THRESHOLDS_LARGE,
     HOMOGRAPHY_THRESHOLDS_LARGE)
 
+DETECTOR_FALLBACKS = {
+    constants.DETECTOR_ORB: constants.DETECTOR_SIFT,
+}
+
+DESCRIPTOR_FALLBACKS = {
+    constants.DESCRIPTOR_ORB: constants.DESCRIPTOR_SIFT,
+}
+
+MATCH_METHOD_FALLBACKS = {
+    (constants.DETECTOR_SIFT, constants.DESCRIPTOR_SIFT): constants.MATCHING_KNN,
+}
+
 
 def get_subsample_factor(h0, w0, target_res):
     img_res = (float(h0) / constants.ONE_KILO) * (float(w0) / constants.ONE_KILO)
@@ -102,6 +114,18 @@ class AlignFramesBase(SubAction):
             self.feature_config, self.matching_config, self.alignment_config)
         self.transformation_extractor = TransformationExtractor(
             self.alignment_config, affine_thresholds, homography_thresholds)
+        self._fallback_pair = None
+
+    def _build_fallback_pair(self):
+        det = self.feature_config['detector']
+        desc = self.feature_config['descriptor']
+        new_det = DETECTOR_FALLBACKS.get(det, det)
+        new_desc = DESCRIPTOR_FALLBACKS.get(desc, desc)
+        if (new_det, new_desc) == (det, desc):
+            return None
+        new_match = MATCH_METHOD_FALLBACKS.get(
+            (new_det, new_desc), self.matching_config['match_method'])
+        return (new_det, new_desc, new_match)
 
     def align_images(self, _idx, _img_ref, _img_0):
         pass
@@ -125,6 +149,7 @@ class AlignFramesBase(SubAction):
         self._inlier_fractions = np.zeros(process.total_action_counts)
         self._avg_errors = np.zeros(process.total_action_counts)
         self._max_errors = np.zeros(process.total_action_counts)
+        self._fallback_pair = self._build_fallback_pair()
 
     def get_img_ref(self, _ref_idx):
         return None
@@ -422,25 +447,29 @@ class AlignFramesBase(SubAction):
         self._avg_errors[idx] = quality.get('avg_error_px', 0)
         self._max_errors[idx] = quality.get('max_error_px', 0)
 
-    def compute_transformation(self, idx, img_ref, img_0, callbacks, plot_path):
+    def _attempt(self, matcher, img_ref, img_0, subsample, callbacks,
+                 plot_path, warning_callback):
+        match_result, final_subsample = matcher.match_images_with_fallback(
+            img_ref, img_0, subsample=subsample,
+            warning_callback=warning_callback)
+        n_good_matches = match_result.n_good_matches()
+        img_ref_sub, img_0_sub = matcher.get_last_subsampled_images()
+        m, phase_corr_called, _msk, quality = \
+            self.transformation_extractor.extract_transformation(
+                match_result, img_ref_sub, img_0_sub, final_subsample, img_0.shape, callbacks,
+                plot_path, self.process.plot_manager)
+        return m, phase_corr_called, quality, n_good_matches
+
+    def _run_with_subsample(self, matcher, idx, img_ref, img_0, callbacks, plot_path):
         def run_with_subsample(subsample_val):
-            match_result, final_subsample = self.feature_matcher.match_images_with_fallback(
-                img_ref, img_0, subsample=subsample_val,
-                warning_callback=warning_callback
-            )
-            n_good_matches = match_result.n_good_matches()
-            img_ref_sub, img_0_sub = self.feature_matcher.get_last_subsampled_images()
-            m, phase_corr_called, _msk, quality = \
-                self.transformation_extractor.extract_transformation(
-                    match_result, img_ref_sub, img_0_sub, final_subsample, img_0.shape, callbacks,
-                    plot_path, self.process.plot_manager)
-            return m, phase_corr_called, quality, n_good_matches
+            return self._attempt(matcher, img_ref, img_0, subsample_val, callbacks,
+                                 plot_path, warning_callback)
+
         h0, w0 = img_0.shape[:2]
         subsample = self.alignment_config['subsample']
         if subsample == 0:
             subsample = get_subsample_factor(h0, w0, self.alignment_config['resolution_target'])
             self._subsamples[idx] = subsample
-        warning_callback = None
         if callbacks and 'warning' in callbacks:
             warning_callback = callbacks['warning']
         else:
@@ -459,6 +488,31 @@ class AlignFramesBase(SubAction):
         if quality:
             self.save_quality_metrics(idx, quality)
         return m, phase_corr_called, quality, n_good_matches
+
+    def compute_transformation(self, idx, img_ref, img_0, callbacks, plot_path):
+        m, phase_corr_called, quality, n_good_matches = self._run_with_subsample(
+            self.feature_matcher, idx, img_ref, img_0, callbacks, plot_path)
+
+        if m is not None or self._fallback_pair is None:
+            return m, phase_corr_called, quality, n_good_matches
+
+        det, desc, match_method = self._fallback_pair
+        self.print_message(
+            f'{self.image_str(idx)}: primary '
+            f'{self.feature_config["detector"]}/{self.feature_config["descriptor"]} '
+            f'failed, retrying with {det}/{desc}',
+            color=constants.LOG_COLOR_WARNING, level=logging.WARNING)
+
+        fb_feature_config = {**self.feature_config, 'detector': det, 'descriptor': desc}
+        fb_matching_config = {**self.matching_config, 'match_method': match_method}
+        fb_matcher = SubsamplingFeatureMatcher(
+            fb_feature_config, fb_matching_config, self.alignment_config, callbacks)
+        fb_plot_path = None
+        if plot_path is not None:
+            base, ext = os.path.splitext(plot_path)
+            fb_plot_path = f"{base}-fb-{det.lower()}{ext}"
+        return self._run_with_subsample(
+            fb_matcher, idx, img_ref, img_0, callbacks, fb_plot_path)
 
 
 class AlignFrames(AlignFramesBase):
