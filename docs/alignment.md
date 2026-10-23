@@ -86,6 +86,7 @@ alignment_config = {
 * ```align_confidence``` (optional, default: 99.9): alignment algorithm confidence (%). Used only if ```transform=ALIGN_RIGID```. 
 * ```max_iters``` (optional, default: 2000): maximum number of iterations. Used only if ```transform=ALIGN_HOMOGRAPHY```. 
 * ```subsample``` (optional, default: 0=automatic): subsample image for faster alignment. Faster, but alignment could be less accurate if only a small portion of the image is focused. It can save time, in particular for large images.
+* ```resolution_target``` (optional, default: 2): with ```subsample=0```, the image is subsampled for feature matching to about this many megapixels. Larger values match finer detail and take longer.
 * ```fast_subsampling``` (optional, default: ```False```): perform fast image subsampling without interpolation. Used if ```subsample``` is set to ```True```.
 * ```min_good_matches``` (optional, default: 100): if ```subsample```>1 and the number of good matches is below ```min_good_matches```, the alignment is retried without subsampling. This improbes robustness in case a too large subsampling factor is specified. 
 * ```phase_corr_fallback``` (optional, default: ```False```): use phase correlation alignment in case the number of matches is too low to allow to estimate the transformation. This algorithm is not very precise, and may help only in case of blurred images.
