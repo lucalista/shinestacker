@@ -6,7 +6,6 @@ import logging
 import numpy as np
 import matplotlib.pyplot as plt
 from .. config.constants import constants
-from .. config.defaults import DEFAULTS
 from .. config.app_config import AppConfig
 from .. core.exceptions import InvalidOptionError
 from .. core.colors import color_str
@@ -37,8 +36,7 @@ def align_images(img_ref, img_0, feature_config=None, matching_config=None, alig
     h0, w0 = img_0.shape[:2]
     subsample = alignment_config['subsample']
     if subsample == 0:
-        subsample = get_subsample_factor(
-            h0, w0, DEFAULTS['align_frames_params']['resolution_target'])
+        subsample = get_subsample_factor(h0, w0, alignment_config['resolution_target'])
     feature_matcher = SubsamplingFeatureMatcher(
         feature_config, matching_config, alignment_config, callbacks)
     match_result, _final_subsample = feature_matcher.match_images_with_fallback(
@@ -440,8 +438,7 @@ class AlignFramesBase(SubAction):
         h0, w0 = img_0.shape[:2]
         subsample = self.alignment_config['subsample']
         if subsample == 0:
-            subsample = get_subsample_factor(
-                h0, w0, DEFAULTS['align_frames_params']['resolution_target'])
+            subsample = get_subsample_factor(h0, w0, self.alignment_config['resolution_target'])
             self._subsamples[idx] = subsample
         warning_callback = None
         if callbacks and 'warning' in callbacks:

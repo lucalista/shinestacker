@@ -31,6 +31,7 @@ DEFAULT_ALIGNMENT_CONFIG = {
     'border_blur': DEFAULTS['align_frames_params']['border_blur'],
     'interpolation': DEFAULTS['align_frames_params']['interpolation'],
     'subsample': DEFAULTS['align_frames_params']['subsample'],
+    'resolution_target': DEFAULTS['align_frames_params']['resolution_target'],
     'fast_subsampling': DEFAULTS['align_frames_params']['fast_subsampling'],
     'min_good_matches': DEFAULTS['align_frames_params']['min_good_matches'],
     'phase_corr_fallback': DEFAULTS['align_frames_params']['phase_corr_fallback'],

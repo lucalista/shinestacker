@@ -1,12 +1,11 @@
 # pylint: disable=C0114, C0115, C0116, W0718, R0912, R0915, E1101, R0914, R0911, E0606, R0801, R0902
 # pylint: disable=R0913, R0917
 import os
-import numpy as np
 from ..config.constants import constants
 from ..config.defaults import DEFAULTS
 from .align import AlignFramesBase, AlignFrames
 from .align_parallel import AlignFramesParallel
-from .utils import get_first_image_file, get_img_metadata, read_img
+from .utils import get_first_image_file, read_img
 
 
 class AlignFramesAuto(AlignFramesBase):
@@ -29,7 +28,10 @@ class AlignFramesAuto(AlignFramesBase):
         self.num_threads = min(self.max_threads, available_cores)
         self._implementation = None
         self.overhead = 30.0
-        self.mem_per_gpx_sift = 0.1
+        # memory per alignment thread with SIFT/AKAZE, in input frames: features are
+        # found on the subsampled image, but each thread holds its frame and the
+        # warped copy (33 MP 16-bit RGB frames: about 0.7 frames per extra thread)
+        self.frames_per_thread_sift = 1.0
 
     def begin(self, process):
         if not self.enabled:
@@ -51,13 +53,9 @@ class AlignFramesAuto(AlignFramesBase):
                     descriptor = default_descriptor
                 if detector in (constants.DETECTOR_SIFT, constants.DETECTOR_AKAZE) or \
                         descriptor in (constants.DESCRIPTOR_SIFT, constants.DESCRIPTOR_AKAZE):
-                    shape, dtype = get_img_metadata(read_img(
-                        get_first_image_file(process.input_filepaths())))
-                    img_pxls = shape[0] * shape[1]
-                    mem_gb = img_pxls / constants.ONE_MEGA * self.mem_per_gpx_sift * \
-                        np.dtype(dtype).itemsize
-                    num_threads = min(self.num_threads, int(self.memory_limit / mem_gb))
-                    num_threads = min(num_threads, self.num_threads)
+                    img = read_img(get_first_image_file(process.input_filepaths()))
+                    mem_gb = img.nbytes * self.frames_per_thread_sift / constants.ONE_GIGA
+                    num_threads = max(1, min(self.num_threads, int(self.memory_limit / mem_gb)))
                     chunk_submit = True
                 else:
                     num_threads = self.num_threads

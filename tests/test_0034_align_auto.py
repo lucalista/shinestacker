@@ -77,12 +77,11 @@ class TestAlignFramesAuto(unittest.TestCase):
 
     @patch('shinestacker.algorithms.align_auto.get_first_image_file')
     @patch('shinestacker.algorithms.align_auto.read_img')
-    @patch('shinestacker.algorithms.align_auto.get_img_metadata')
     @patch('shinestacker.algorithms.align_auto.AlignFramesParallel')
     @patch('shinestacker.algorithms.align_auto.os.cpu_count')
     def test_begin_auto_mode_memory_intensive(
             self, mock_cpu_count, mock_align_parallel,
-            mock_get_metadata, mock_read_img,
+            mock_read_img,
             mock_get_first_image):
         mock_cpu_count.return_value = 8
         mock_process = Mock()
@@ -90,7 +89,6 @@ class TestAlignFramesAuto(unittest.TestCase):
         mock_get_first_image.return_value = 'test.jpg'
         mock_img = np.ones((1000, 1000, 3), dtype=np.uint8)
         mock_read_img.return_value = mock_img
-        mock_get_metadata.return_value = (mock_img.shape, mock_img.dtype)
         align_auto = AlignFramesAuto(
             mode='auto',
             feature_config={
@@ -137,12 +135,11 @@ class TestAlignFramesAuto(unittest.TestCase):
 
     @patch('shinestacker.algorithms.align_auto.get_first_image_file')
     @patch('shinestacker.algorithms.align_auto.read_img')
-    @patch('shinestacker.algorithms.align_auto.get_img_metadata')
     @patch('shinestacker.algorithms.align_auto.AlignFramesParallel')
     @patch('shinestacker.algorithms.align_auto.os.cpu_count')
     def test_begin_auto_mode_memory_intensive_akaze(
             self, mock_cpu_count, mock_align_parallel,
-            mock_get_metadata, mock_read_img,
+            mock_read_img,
             mock_get_first_image):
         mock_cpu_count.return_value = 8
         mock_process = Mock()
@@ -150,7 +147,6 @@ class TestAlignFramesAuto(unittest.TestCase):
         mock_get_first_image.return_value = 'test.jpg'
         mock_img = np.ones((1000, 1000, 3), dtype=np.uint8)
         mock_read_img.return_value = mock_img
-        mock_get_metadata.return_value = (mock_img.shape, mock_img.dtype)
         align_auto = AlignFramesAuto(
             mode='auto',
             feature_config={
@@ -164,12 +160,11 @@ class TestAlignFramesAuto(unittest.TestCase):
 
     @patch('shinestacker.algorithms.align_auto.get_first_image_file')
     @patch('shinestacker.algorithms.align_auto.read_img')
-    @patch('shinestacker.algorithms.align_auto.get_img_metadata')
     @patch('shinestacker.algorithms.align_auto.AlignFramesParallel')
     @patch('shinestacker.algorithms.align_auto.os.cpu_count')
     def test_begin_auto_mode_memory_calculation(
             self, mock_cpu_count, mock_align_parallel,
-            mock_get_metadata, mock_read_img,
+            mock_read_img,
             mock_get_first_image):
         mock_cpu_count.return_value = 8
         mock_process = Mock()
@@ -177,7 +172,6 @@ class TestAlignFramesAuto(unittest.TestCase):
         mock_get_first_image.return_value = 'test.jpg'
         mock_img = np.ones((2000, 2000, 3), dtype=np.uint16)
         mock_read_img.return_value = mock_img
-        mock_get_metadata.return_value = (mock_img.shape, mock_img.dtype)
         align_auto = AlignFramesAuto(
             mode='auto',
             memory_limit=1,
@@ -275,3 +269,34 @@ class TestAlignFramesAuto(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class TestAlignFramesAutoSiftThreads(unittest.TestCase):
+    """SIFT used to be estimated at 0.1 GB per megapixel and byte (6.6 GB for a
+    33 MP 16-bit frame), which forced one thread with the default memory limit."""
+
+    def _threads(self, memory_limit, shape=(4680, 7020, 3)):
+        with patch('shinestacker.algorithms.align_auto.os.cpu_count', return_value=16), \
+                patch('shinestacker.algorithms.align_auto.get_first_image_file',
+                      return_value='a.tif'), \
+                patch('shinestacker.algorithms.align_auto.read_img',
+                      return_value=np.zeros(shape, dtype=np.uint16)), \
+                patch('shinestacker.algorithms.align_auto.AlignFramesParallel') as parallel, \
+                patch('shinestacker.algorithms.align_auto.AlignFrames') as sequential:
+            process = Mock()
+            process.input_filepaths.return_value = ['a.tif']
+            align_auto = AlignFramesAuto(mode='auto', memory_limit=memory_limit, max_threads=16,
+                                         detector=constants.DETECTOR_SIFT,
+                                         descriptor=constants.DESCRIPTOR_SIFT,
+                                         match_method=constants.MATCHING_KNN)
+            align_auto.begin(process)
+            if sequential.called:
+                return 1
+            return parallel.call_args.kwargs['max_threads']
+
+    def test_sift_33mp_runs_in_parallel(self):
+        self.assertEqual(self._threads(8), 16)
+
+    def test_sift_threads_bounded_by_memory(self):
+        self.assertEqual(self._threads(0.5), 2)        # 0.197 GB per frame
+        self.assertEqual(self._threads(0.1), 1)

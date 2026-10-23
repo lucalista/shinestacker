@@ -150,3 +150,29 @@ if __name__ == '__main__':
     test_parallel_sift()
     test_auto()
     test_jpg_quality_plots()
+
+
+def test_resolution_target_option_reaches_subsampling(monkeypatch):
+    """resolution_target used to be read from the defaults only: an option
+    given to AlignFrames / align_images had no effect."""
+    import numpy as np
+    from shinestacker.algorithms import align as align_module
+    seen = []
+
+    class StopMatcher:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def match_images_with_fallback(self, _img_ref, _img_0, subsample, warning_callback=None):
+            seen.append(subsample)
+            raise StopIteration
+
+    monkeypatch.setattr(align_module, "SubsamplingFeatureMatcher", StopMatcher)
+    img = np.zeros((4680, 7020, 3), dtype=np.uint8)
+    for target, factor in ((2, 4), (8, 2), (40, 1)):
+        try:
+            align_images(img, img, alignment_config={'resolution_target': target})
+        except StopIteration:
+            pass
+        assert seen[-1] == factor
+    assert AlignFrames(resolution_target=8).alignment_config['resolution_target'] == 8
