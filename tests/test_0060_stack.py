@@ -166,3 +166,23 @@ if __name__ == '__main__':
     test_bunches()
     test_jpg_template()
     test_bunches_template()
+
+
+def test_tif_icc_profile_without_exif(tmp_path):
+    import numpy as np
+    import tifffile
+    from PIL import ImageCms
+    profile = ImageCms.ImageCmsProfile(ImageCms.createProfile("sRGB")).tobytes()
+    (tmp_path / "input").mkdir()
+    rng = np.random.default_rng(1)
+    for i in range(3):
+        img = rng.integers(0, 65535, size=(64, 96, 3), dtype=np.uint16)
+        tifffile.imwrite(tmp_path / "input" / f"{i:04d}.tif", img, photometric='rgb',
+                         iccprofile=profile)
+    job = StackJob("job", str(tmp_path), input_path="input")
+    job.add_action(FocusStack("stack", DepthMapStack(), output_path="output", prefix='dm_'))
+    job.run()
+    outputs = list((tmp_path / "output").glob("*.tif"))
+    assert len(outputs) == 1
+    with tifffile.TiffFile(outputs[0]) as tif:
+        assert tif.pages[0].iccprofile == profile
