@@ -67,6 +67,7 @@ alignment_config = {
     'border_mode': constants.BORDER_REPLICATE_BLUR,
     'border_value': (0, 0, 0, 0),
     'border_blur': 50,
+    'interpolation': constants.INTER_LINEAR,
     'subsample': 0,
     'fast_subsampling': False,
     'min_good_matches': 100,
@@ -95,6 +96,10 @@ alignment_config = {
   * ```BORDER_REPLICATE_BLUR``` (default): same as above, but the border is blurred. The amount of blurring is specified by the parameter ```border_blur```.
 * ```border_value``` (optional, default: ```(0, 0, 0, 0)```): border value. See [Adding borders to your images](https://docs.opencv.org/3.4/dc/da3/tutorial_copyMakeBorder.html) for more details.
 * ```border_blur``` (optional, default: ```50```): amount of border blurring, in pixels. Only applied if ```border_mode``` is set to ```BORDER_REPLICATE_BLUR```, which is the default option.
+* ```interpolation``` (optional, default: ```INTER_LINEAR```): interpolation used to warp the frames onto the reference frame. Possible values are:
+  * ```INTER_LINEAR``` (default): bilinear. Fast, but a sub-pixel shift softens fine detail by up to a factor two at the highest frequencies.
+  * ```INTER_CUBIC```: bicubic. Keeps more fine detail; recommended for focus stacking.
+  * ```INTER_LANCZOS4```: Lanczos over 8x8 pixels. Slightly sharper than bicubic and slower.
 * ```plot_summary```  (optional, default: ```False```): if ```True```, plot a summary histogram with number of matches in each frame. May be useful for inspection and debugging.
 * ```plot_matches```  (optional, default: ```False```): if ```True```, for each image matches with reference frame are drawn. May be useful for inspection and debugging.
 * ```enabled``` (optional, default: ```True```): allows to switch on and off this module.
