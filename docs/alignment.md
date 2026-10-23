@@ -23,13 +23,13 @@ feature_config = {
 ```
 * ```name``` (optional, default: empty): only used in the GUI as identifier
 * ```enabled``` (optiona, default: ```True```): enable/disable sub-action
-* ```detector``` (optional, default: ```DETECTOR_SIFT```): the feature detector is used to find matches. See [Feature Detection and Description](https://docs.opencv.org/4.x/db/d27/tutorial_py_table_of_contents_feature2d.html) for more details. Possible values are:
-  * ```DETECTOR_SIFT``` (default): [Scale-Invariant Feature Transform](https://docs.opencv.org/4.x/da/df5/tutorial_py_sift_intro.html)]
-  * ```DETECTOR_ORB```: [Oriented FAST and Rotated BRIEF](https://docs.opencv.org/4.x/d1/d89/tutorial_py_orb.html)
+* ```detector``` (optional, default: ```DETECTOR_ORB```): the feature detector is used to find matches. See [Feature Detection and Description](https://docs.opencv.org/4.x/db/d27/tutorial_py_table_of_contents_feature2d.html) for more details. Possible values are:
+  * ```DETECTOR_SIFT```: [Scale-Invariant Feature Transform](https://docs.opencv.org/4.x/da/df5/tutorial_py_sift_intro.html)]
+  * ```DETECTOR_ORB``` (default): [Oriented FAST and Rotated BRIEF](https://docs.opencv.org/4.x/d1/d89/tutorial_py_orb.html)
   * ```DETECTOR_SURF```: [Speeded-Up Robust Features](https://docs.opencv.org/3.4/df/dd2/tutorial_py_surf_intro.html)
   * ```DETECTOR_AKAZE```: [AKAZE local features matching](https://docs.opencv.org/3.4/db/d70/tutorial_akaze_matching.html)
   * ```DETECTOR_BRISK```: [Binary Robust Invariant Scalable Keypoints](https://medium.com/analytics-vidhya/feature-matching-using-brisk-277c47539e8)
-* ```descriptor``` (optional, default: ```DESCRIPTOR_SIFT```): the feature descriptor is used to find matches. Possible values are:
+* ```descriptor``` (optional, default: ```DESCRIPTOR_ORB```): the feature descriptor is used to find matches. Possible values are:
   * ```DESCRIPTOR_SIFT``` (default)
   * ```DESCRIPTOR_ORB```
   * ```DESCRIPTOR_AKAZE```
