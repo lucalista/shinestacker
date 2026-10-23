@@ -22,8 +22,9 @@ class AlignFramesAuto(AlignFramesBase):
         self.bw_matching = kwargs.pop(
             'bw_matching', DEFAULTS['align_frames_params']['bw_matching'])
         self.kwargs = kwargs
-        super().__init__(name=name, enabled=enabled, feature_config=None, matching_config=None,
-                         alignment_config=None, **kwargs)
+        super().__init__(name=name, enabled=enabled, feature_config=feature_config,
+                         matching_config=matching_config, alignment_config=alignment_config,
+                         **kwargs)
         available_cores = os.cpu_count() or 1
         self.num_threads = min(self.max_threads, available_cores)
         self._implementation = None

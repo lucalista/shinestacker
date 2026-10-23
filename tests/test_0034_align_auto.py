@@ -94,7 +94,8 @@ class TestAlignFramesAuto(unittest.TestCase):
             feature_config={
                 'detector': constants.DETECTOR_SIFT,
                 'descriptor': constants.DESCRIPTOR_SIFT
-            }
+            },
+            matching_config={'match_method': constants.MATCHING_KNN}
         )
         align_auto.begin(mock_process)
         mock_align_parallel.assert_called_once()
@@ -174,11 +175,12 @@ class TestAlignFramesAuto(unittest.TestCase):
         mock_read_img.return_value = mock_img
         align_auto = AlignFramesAuto(
             mode='auto',
-            memory_limit=1,
+            memory_limit=4,  # enough for more than one SIFT thread on 4 MP 16-bit
             feature_config={
                 'detector': constants.DETECTOR_SIFT,
                 'descriptor': constants.DESCRIPTOR_SIFT
-            }
+            },
+            matching_config={'match_method': constants.MATCHING_KNN}
         )
         align_auto.begin(mock_process)
         mock_align_parallel.assert_called_once()
