@@ -31,11 +31,11 @@ def open_file(file_path, parent_widget=None):
         return
     try:
         if running_under_macos():
-            subprocess.call(('open', file_path))
+            subprocess.Popen(('open', file_path))
         elif running_under_windows():
             os.startfile(file_path)
         else:
-            subprocess.call(('xdg-open', file_path))
+            subprocess.Popen(('xdg-open', file_path))
     except Exception:
         webbrowser.open("file://" + file_path)
 
