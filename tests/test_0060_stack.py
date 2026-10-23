@@ -186,3 +186,38 @@ def test_tif_icc_profile_without_exif(tmp_path):
     assert len(outputs) == 1
     with tifffile.TiffFile(outputs[0]) as tif:
         assert tif.pages[0].iccprofile == profile
+
+
+def test_tif_icc_profile_through_intermediate_frames(tmp_path):
+    """Frames written by CombinedActions (alignment, balancing) keep the input's
+    profile, so a stack made from them in a second job still carries it."""
+    import numpy as np
+    import tifffile
+    from PIL import ImageCms
+    from shinestacker.algorithms.stack_framework import CombinedActions, SubAction
+
+    class Identity(SubAction):
+        def run_frame(self, _idx, _ref_idx, image):
+            return image
+
+    profile = ImageCms.ImageCmsProfile(ImageCms.createProfile("sRGB")).tobytes()
+    (tmp_path / "input").mkdir()
+    rng = np.random.default_rng(1)
+    for i in range(3):
+        img = rng.integers(0, 65535, size=(64, 96, 3), dtype=np.uint16)
+        tifffile.imwrite(tmp_path / "input" / f"{i:04d}.tif", img, photometric='rgb',
+                         iccprofile=profile)
+    job = StackJob("align", str(tmp_path), input_path="input")
+    job.add_action(CombinedActions("aligned", [Identity()]))
+    job.run()
+    for f in (tmp_path / "aligned").glob("*.tif"):
+        with tifffile.TiffFile(f) as tif:
+            assert tif.pages[0].iccprofile == profile
+        assert np.array_equal(tifffile.imread(f), tifffile.imread(tmp_path / "input" / f.name))
+    job = StackJob("stack", str(tmp_path), input_path="aligned")
+    job.add_action(FocusStack("stack", DepthMapStack(), output_path="output", prefix='dm_'))
+    job.run()
+    outputs = list((tmp_path / "output").glob("*.tif"))
+    assert len(outputs) == 1
+    with tifffile.TiffFile(outputs[0]) as tif:
+        assert tif.pages[0].iccprofile == profile
