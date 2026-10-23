@@ -110,6 +110,7 @@ Arguments for the constructor are:
    * ```energy_smooth_size``` (optional, default: 1): size of energy smoothing. Note: larger values require slower computation.
    * ```energy_sigma_color``` (optiona, default: 0.8): controls how much energy values can differ while still smoothing together for the energy map.
    * ```energy_sigma_space``` (optional, default: 2): controls the spatial distance for smoothing neighborhood. Larger values require slower computation.
+   * ```energy_gauss_sigma``` (optional, default: 0, i.e. off): standard deviation in pixels of a Gaussian smoothing of each frame's energy map, applied after the optional bilateral smoothing. In areas with little texture (a plain background, a mount) the per-pixel energy is dominated by sensor noise, and the frame with the highest energy is then close to random. Averaging the energy over a few pixels lets the real texture decide; values around 8 worked well on 33 MP frames. It is fast at any value, unlike a large ```energy_smooth_size```.
    * ```temperature``` (optional, default: 0): controls fusion transition. Lower value means sharper transitions. This correction is only applied if ```map_type=DM_MAP_MAX```.
    * ```plot_depth_map``` (optional, default: ```False```): produces a grayscale depth map and saves it in the ```plot_path``` folder.
 

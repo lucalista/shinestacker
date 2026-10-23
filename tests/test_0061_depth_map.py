@@ -367,3 +367,43 @@ def test_get_focus_map_from_disk_max(example_images):
     assert weights.shape == (2, *dms.shape)
     assert weights.dtype == dms.float_type
     assert np.all(np.isfinite(weights))
+
+
+def test_energy_gauss_sigma_default_off_and_validated():
+    assert DepthMapStack().energy_gauss_sigma == 0
+    with pytest.raises(InvalidOptionError):
+        DepthMapStack(energy_gauss_sigma=-1)
+
+
+def test_energy_gauss_sigma_finds_faint_texture(tmp_path):
+    # faint texture in focus in one frame, defocused in the others, all under sensor noise:
+    # the per-pixel energy maximum is mostly noise, its local average is not
+    rng = np.random.default_rng(0)
+    h, w = 256, 256
+    texture = cv2.GaussianBlur(rng.normal(0, 1, (h, w)).astype(np.float32), (0, 0), 2)
+    texture /= texture.std()
+    sharp = 0.6 + 0.003 * texture
+    soft = 0.6 + 0.003 * cv2.GaussianBlur(texture, (0, 0), 4)
+    paths = []
+    for i, base in enumerate([soft, soft, sharp, soft, soft]):
+        img = base + rng.normal(0, 0.006, (h, w)).astype(np.float32)
+        img = np.clip(img * 65535, 0, 65535).astype(np.uint16)
+        paths.append(str(tmp_path / f"frame_{i}.tif"))
+        cv2.imwrite(paths[-1], cv2.merge([img] * 3))
+
+    def band(a):
+        return (cv2.GaussianBlur(a, (0, 0), 1) - cv2.GaussianBlur(a, (0, 0), 4))[16:-16, 16:-16]
+
+    correlation = {}
+    for sigma in (0, 8):
+        dms = DepthMapStack(energy_gauss_sigma=sigma)
+        dms.process = MagicMock()
+        dms.process.callback.return_value = True
+        dms.print_message = MagicMock()
+        dms.after_step = MagicMock()
+        dms.check_running = MagicMock()
+        dms.init(paths)
+        result = dms.focus_stack()[..., 0].astype(np.float32) / 65535
+        correlation[sigma] = np.corrcoef(band(result).ravel(), band(sharp).ravel())[0, 1]
+    assert correlation[8] > correlation[0] + 0.15
+    assert correlation[8] > 0.65
