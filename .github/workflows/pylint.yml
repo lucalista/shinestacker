@@ -10,7 +10,7 @@ jobs:
   pylint:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
     steps:
     - uses: actions/checkout@v6
       with:
@@ -29,9 +29,15 @@ jobs:
     - name: Run pylint
       run: pylint --rcfile=.pylintrc src
 
-    - name: Update pylint badge
-      if: github.event_name == 'push'
-      uses: Silleellie/pylint-github-action@v3
+  badge:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v6
+
+    - uses: Silleellie/pylint-github-action@v3
       with:
         lint-path: src
         python-version: 3.14
