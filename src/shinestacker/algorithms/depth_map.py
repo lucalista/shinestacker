@@ -1,5 +1,8 @@
 # pylint: disable=C0114, C0115, C0116, E1101, R0902, R0913, R0917, R0914, R0912, R0915
 import os
+import itertools
+from collections import deque
+from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 import cv2
 from .. config.constants import constants
@@ -7,6 +10,29 @@ from .. config.defaults import DEFAULTS
 from .. core.exceptions import InvalidOptionError
 from .utils import read_img, write_img, read_and_validate_img, img_bw
 from .base_stack_algo import BaseStackAlgo, TempDirBase
+
+
+def ordered_parallel_map(executor, func, items, window):
+    """Apply func to items in executor threads and yield the results in input
+    order, with at most window items in flight (bounds the memory)."""
+    items = iter(items)
+    pending = deque(executor.submit(func, item) for item in itertools.islice(items, window))
+    try:
+        while pending:
+            result = pending.popleft().result()
+            for item in itertools.islice(items, 1):
+                pending.append(executor.submit(func, item))
+            yield result
+    finally:
+        # stopped early (user stop, error): do not start the frames still queued
+        for future in pending:
+            future.cancel()
+
+
+def row_chunks(n_rows, n_chunks):
+    """Split range(n_rows) into at most n_chunks contiguous slices."""
+    bounds = np.linspace(0, n_rows, max(1, min(n_chunks, n_rows)) + 1).astype(int)
+    return [slice(a, b) for a, b in zip(bounds[:-1], bounds[1:]) if b > a]
 
 
 class DepthMapStack(BaseStackAlgo, TempDirBase):
@@ -42,9 +68,21 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
         self.temperature = kwargs.get('temperature', default_params['temperature'])
         self.mode = kwargs.get('mode', default_params['mode'])
         self.memory_limit = kwargs.get('memory_limit', focus_stack_params['memory_limit'])
+        # Frames are read, analysed and decomposed in this many threads; OpenCV
+        # and NumPy release the GIL in the heavy calls. Results are combined in
+        # frame order, so the output does not depend on the number of threads.
+        max_threads = kwargs.get('max_threads', focus_stack_params['max_threads'])
+        self.max_threads = max(1, int(max_threads))
         self.steps_count = 0
         self.cv_float = cv2.CV_64F if self.float_type == np.float64 else cv2.CV_32F
         self.plot_depth_map = kwargs.get('plot_depth_map', default_params['plot_depth_map'])
+
+    def frames_in_flight(self, bytes_per_frame, resident_bytes=0):
+        """Frames processed at once: at most max_threads, and only as many
+        as the per-frame buffers fit into memory_limit (GB) next to the
+        arrays that are held anyway (resident_bytes). Always at least one."""
+        budget = self.memory_limit * 1024**3 - resident_bytes
+        return max(1, min(self.max_threads, int(budget // max(1, bytes_per_frame))))
 
     def get_sobel_map(self, gray_img):
         sobel_energy = np.abs(cv2.Sobel(gray_img, self.cv_float, 1, 0, ksize=3)) + \
@@ -80,9 +118,10 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
             self.energy_sigma_color, self.energy_sigma_space)
         return smoothed_32f.astype(energy_map.dtype)
 
-    def get_focus_map(self, energies):
+    def get_focus_map(self, energies, quiet=False):
         if self.map_type == constants.DM_MAP_AVERAGE:
-            self.print_message(": compute weight")
+            if not quiet:
+                self.print_message(": compute weight")
             sum_energies = np.sum(energies, axis=0, dtype=energies.dtype)
             mask = sum_energies != 0
             weights = np.zeros_like(energies)
@@ -90,12 +129,14 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
         elif self.map_type == constants.DM_MAP_MAX:
             max_energy = np.max(energies, axis=0)
             if self.temperature < 1e-4:
-                self.print_message(": counting maxima")
+                if not quiet:
+                    self.print_message(": counting maxima")
                 mask = energies == max_energy
                 num_max = np.sum(mask, axis=0, dtype=energies.dtype)
                 weights = mask / np.where(num_max == 0, 1, num_max)
             else:
-                self.print_message(": apply temperature")
+                if not quiet:
+                    self.print_message(": apply temperature")
                 relative = np.exp((energies - max_energy) / self.temperature)
                 sum_relative = np.sum(relative, axis=0)
                 weights = relative / np.where(sum_relative == 0, 1, sum_relative)
@@ -155,32 +196,47 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
                 f": using in-memory processing (estimated {energy_memory_gb:.1f} GB)")
         energies = None if use_disk else np.empty((n_images, *self.shape), dtype=self.float_type)
         step_count = [0]
-        for i, img_path in enumerate(self.filenames):
-            self.print_message(f": computing energy for {self.image_str(i)}")
-            self.process.callback(constants.CALLBACK_UPDATE_FRAME_STATUS,
-                                  self.process.input_path, img_path, 200)
+
+        def frame_energy(img_path):
             img = read_and_validate_img(img_path, self.shape, self.dtype)
             gray = img_bw(img).astype(self.float_type)
             energy_map = self.compute_energy_map(gray)
-            step_count[0] += 1
-            self.after_step(step_count[0])
-            self.check_running()
             if self.energy_smooth_size > 0:
-                self.print_message(f": smoothing energy for {self.image_str(i)}")
                 energy_map = self.smooth_energy(energy_map)
+            return energy_map
+
+        pixels = self.shape[0] * self.shape[1]
+        float_size = np.dtype(self.float_type).itemsize
+        # input frame, grey image, energy map and one filter temporary,
+        # next to the energy array (in memory) or the running sum/maximum (on disk)
+        energy_workers = self.frames_in_flight(
+            pixels * (np.dtype(self.dtype).itemsize * (4 if self.alpha_mode else 3) +
+                      3 * float_size),
+            pixels * float_size * (1 if use_disk else n_images))
+        with ThreadPoolExecutor(energy_workers) as executor:
+            frame_energies = ordered_parallel_map(executor, frame_energy, self.filenames,
+                                                  energy_workers)
+            for i, (img_path, energy_map) in enumerate(zip(self.filenames, frame_energies)):
+                self.print_message(f": computed energy for {self.image_str(i)}")
+                self.process.callback(constants.CALLBACK_UPDATE_FRAME_STATUS,
+                                      self.process.input_path, img_path, 200)
                 step_count[0] += 1
                 self.after_step(step_count[0])
                 self.check_running()
-            if use_disk:
-                temp_file = os.path.join(temp_dir, f"energy_{i:06d}.npy")
-                np.save(temp_file, energy_map)
-                energy_files.append(temp_file)
-                if self.map_type == constants.DM_MAP_AVERAGE:
-                    sum_energies += energy_map
+                if self.energy_smooth_size > 0:
+                    step_count[0] += 1
+                    self.after_step(step_count[0])
+                    self.check_running()
+                if use_disk:
+                    temp_file = os.path.join(temp_dir, f"energy_{i:06d}.npy")
+                    np.save(temp_file, energy_map)
+                    energy_files.append(temp_file)
+                    if self.map_type == constants.DM_MAP_AVERAGE:
+                        sum_energies += energy_map
+                    else:
+                        max_energy = np.maximum(max_energy, energy_map)
                 else:
-                    max_energy = np.maximum(max_energy, energy_map)
-            else:
-                energies[i] = energy_map
+                    energies[i] = energy_map
         self.steps_count += 1
         self.process.callback(constants.CALLBACK_UPDATE_FRAME_STATUS,
                               self.process.name, self.output_filename,
@@ -194,7 +250,14 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
             else:
                 weights = self.get_focus_map_from_disk_max(energy_files, max_energy, n_images)
         else:
-            weights = self.get_focus_map(energies)
+            # per-pixel arithmetic: row bands in threads give the same weights
+            self.print_message(f": compute weights ({self.map_type})")
+            weights = np.empty_like(energies)
+            bands = row_chunks(self.shape[0], self.max_threads)
+            with ThreadPoolExecutor(self.max_threads) as executor:
+                for rows, band in zip(bands, executor.map(
+                        lambda r: self.get_focus_map(energies[:, r], quiet=True), bands)):
+                    weights[:, rows] = band
             del energies
         if self.weight_power != 1.0:
             self.print_message(": apply weights power correction")
@@ -277,17 +340,15 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
                            for shape in pyramid_shapes_c2f]
         weight_pyramid_accum = [np.zeros(shape, dtype=self.float_type)
                                 for shape in pyramid_shapes_c2f]
-        temp_laplacian = [np.zeros_like(level_arr) for level_arr in blended_pyramid]
-        for i, img_path in enumerate(self.filenames):
-            self.print_message(f": pyramid blending {self.image_str(i)}")
-            filename = os.path.basename(img_path)
+
+        def frame_contribution(i):
             weight = weights[i]
             if self.pyramid_smooth_size > 0:
                 ksize = self.pyramid_smooth_size
                 if ksize % 2 == 0:
                     ksize += 1
                 weight = cv2.GaussianBlur(weight, (ksize, ksize), 0)
-            img = read_img(img_path)
+            img = read_img(self.filenames[i])
             if img.dtype == np.uint8:
                 img_float = img.astype(self.float_type) / 255.0
             elif img.dtype == np.uint16:
@@ -303,23 +364,56 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
             for level in range(self.pyramid_levels):
                 np.multiply(lp_img[level],
                             gp_weight[self.pyramid_levels - 1 - level][..., np.newaxis],
-                            out=temp_laplacian[level])
-                blended_pyramid[level] += temp_laplacian[level]
-                weight_pyramid_accum[level] += gp_weight[self.pyramid_levels - 1 - level]
-            step_count[0] += 1
-            self.after_step(step_count[0])
-            self.check_running()
-            self.process.callback(constants.CALLBACK_UPDATE_FRAME_STATUS,
-                                  self.process.input_path, filename, 201)
-            self.check_running()
+                            out=lp_img[level])
+            return lp_img, gp_weight
+
+        def add_rows(dst, src, rows):
+            dst[rows] += src[rows]
+
+        pixels = self.shape[0] * self.shape[1]
+        float_size = np.dtype(self.float_type).itemsize
+        # input frame, float frame, its Laplacian pyramid (4/3) and the weight pyramid (4/3),
+        # next to the weights of all frames and the blended pyramids
+        blend_workers = self.frames_in_flight(
+            pixels * (np.dtype(self.dtype).itemsize * n_ch +
+                      float_size * (n_ch + (4 * n_ch + 4) // 3)),
+            weights.nbytes + pixels * float_size * (4 * (n_ch + 1)) // 3)
+        with ThreadPoolExecutor(blend_workers) as executor, \
+                ThreadPoolExecutor(self.max_threads) as adder:
+            contributions = ordered_parallel_map(executor, frame_contribution,
+                                                 range(len(self.filenames)), blend_workers)
+            for i, (lp_img, gp_weight) in enumerate(contributions):
+                self.print_message(f": pyramid blending {self.image_str(i)}")
+                filename = os.path.basename(self.filenames[i])
+                # added in frame order, rows split over threads: the same sums as serially
+                additions = []
+                for level in range(self.pyramid_levels):
+                    gpw = gp_weight[self.pyramid_levels - 1 - level]
+                    for rows in row_chunks(gpw.shape[0], self.max_threads):
+                        additions.append(adder.submit(add_rows, blended_pyramid[level],
+                                                      lp_img[level], rows))
+                        additions.append(adder.submit(add_rows, weight_pyramid_accum[level],
+                                                      gpw, rows))
+                for addition in additions:
+                    addition.result()
+                del lp_img, gp_weight, additions
+                step_count[0] += 1
+                self.after_step(step_count[0])
+                self.check_running()
+                self.process.callback(constants.CALLBACK_UPDATE_FRAME_STATUS,
+                                      self.process.input_path, filename, 201)
+                self.check_running()
         for level in range(self.pyramid_levels):
             mask = weight_pyramid_accum[level] > 1e-8
             if np.any(mask):
                 if len(blended_pyramid[level].shape) == 3:
                     weight_expanded = weight_pyramid_accum[level][:, :, np.newaxis]
+                    where = mask[:, :, np.newaxis]
                 else:
                     weight_expanded = weight_pyramid_accum[level]
-                blended_pyramid[level][mask] = blended_pyramid[level][mask] / weight_expanded[mask]
+                    where = mask
+                np.divide(blended_pyramid[level], weight_expanded,
+                          out=blended_pyramid[level], where=where)
         self.print_message(': reconstructing pyramid')
         result = blended_pyramid[0]
         for level in range(1, self.pyramid_levels):

@@ -367,3 +367,54 @@ def test_get_focus_map_from_disk_max(example_images):
     assert weights.shape == (2, *dms.shape)
     assert weights.dtype == dms.float_type
     assert np.all(np.isfinite(weights))
+
+
+@pytest.mark.parametrize("params", [
+    {'map_type': 'max'},
+    {'map_type': 'average'},
+    {'map_type': 'average', 'weight_power': 2.0},
+])
+def test_focus_stack_threads_identical(example_images, params):
+    results = []
+    for max_threads in (1, 4):
+        dms = DepthMapStack(max_threads=max_threads, **params)
+        dms.process = MagicMock()
+        dms.process.callback.return_value = True
+        dms.print_message = MagicMock()
+        dms.after_step = MagicMock()
+        dms.check_running = MagicMock()
+        dms.init(example_images[:4])
+        results.append(dms.focus_stack())
+    assert np.array_equal(results[0], results[1])
+
+
+def test_frames_in_flight_respects_memory_limit():
+    dms = DepthMapStack(max_threads=8, memory_limit=1)
+    assert dms.frames_in_flight(300 * 1024**2) == 3
+    assert dms.frames_in_flight(4 * 1024**3) == 1
+    assert dms.frames_in_flight(1) == 8
+    assert dms.frames_in_flight(300 * 1024**2, resident_bytes=512 * 1024**2) == 1
+    assert dms.frames_in_flight(300 * 1024**2, resident_bytes=2 * 1024**3) == 1
+
+
+def test_ordered_parallel_map_order_and_early_stop():
+    import threading
+    from concurrent.futures import ThreadPoolExecutor
+    from shinestacker.algorithms.depth_map import ordered_parallel_map
+    started = []
+    lock = threading.Lock()
+
+    def work(i):
+        with lock:
+            started.append(i)
+        time.sleep(0.01 * (5 - i % 5))
+        return i * i
+
+    with ThreadPoolExecutor(4) as executor:
+        results = list(ordered_parallel_map(executor, work, range(12), 3))
+        assert results == [i * i for i in range(12)]
+        started.clear()
+        results = ordered_parallel_map(executor, work, range(100), 3)
+        assert next(results) == 0
+        results.close()
+    assert len(started) <= 5
