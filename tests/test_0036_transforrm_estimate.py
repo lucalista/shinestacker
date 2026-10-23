@@ -423,3 +423,33 @@ def test_check_homography_distortion_complex():
     assert reason is not None
     if result is not None:
         assert len(result) == 3
+
+
+def test_apply_alignment_transform_interpolation():
+    rng = np.random.default_rng(0)
+    img = rng.integers(0, 65536, (64, 64, 3), dtype=np.uint16)
+    m = np.float32([[1, 0, 0.5], [0, 1, 0.5]])
+    detail = {}
+    for interpolation in constants.VALID_INTERPOLATIONS:
+        align_config = {
+            'border_mode': constants.BORDER_REPLICATE,
+            'transform': constants.ALIGN_RIGID,
+            'border_value': 0,
+            'interpolation': interpolation
+        }
+        extractor = TransformationExtractor(align_config, None, None)
+        result = extractor.apply_alignment_transform(img, img, m)
+        assert result.shape == img.shape and result.dtype == img.dtype
+        gray = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY).astype(np.float64)
+        detail[interpolation] = np.abs(cv2.Laplacian(gray, cv2.CV_64F))[8:-8, 8:-8].mean()
+    assert detail[constants.INTER_CUBIC] > 1.2 * detail[constants.INTER_LINEAR]
+    assert detail[constants.INTER_LANCZOS4] > detail[constants.INTER_CUBIC]
+
+
+def test_apply_alignment_transform_invalid_interpolation():
+    align_config = {'border_mode': constants.BORDER_CONSTANT, 'transform': constants.ALIGN_RIGID,
+                    'border_value': 0, 'interpolation': 'INVALID'}
+    extractor = TransformationExtractor(align_config, None, None)
+    img = np.ones((10, 10, 3), dtype=np.uint8)
+    with pytest.raises(InvalidOptionError):
+        extractor.apply_alignment_transform(img, img, np.float32([[1, 0, 0], [0, 1, 0]]))

@@ -503,6 +503,12 @@ class FocusStackBaseConfigurator(DefaultActionConfigurator):
             expert=True,
             required=False, default=AppConfig.get('depth_map_params')['energy_sigma_space'],
             min_val=0, max_val=256)
+        self.add_field_to_layout(
+            q_depthmap.layout(), 'depthmap_energy_gauss_sigma', FIELD_FLOAT,
+            'Energy Gaussian σ (px, 0 = off)',
+            expert=True,
+            required=False, default=AppConfig.get('depth_map_params')['energy_gauss_sigma'],
+            min_val=0, max_val=64, step=0.5)
 
         def change_depthmap_energy_smooth_size():
             enabled = self.depthmap_energy_smooth_size.value() > 0
@@ -837,6 +843,7 @@ class AlignFramesConfigBase:
 
 class AlignFramesConfigurator(SubsampleActionConfigurator, AlignFramesConfigBase):
     BORDER_MODE_OPTIONS = ['Constant', 'Replicate', 'Replicate and blur']
+    INTERPOLATION_OPTIONS = ['Bilinear', 'Bicubic', 'Lanczos (8x8)']
     METHOD_OPTIONS = ['Random Sample Consensus (RANSAC)', 'Least Median (LMEDS)']
     MODE_OPTIONS = ['Auto', 'Sequential', 'Parallel']
 
@@ -1006,6 +1013,12 @@ class AlignFramesConfigurator(SubsampleActionConfigurator, AlignFramesConfigBase
             expert=True,
             default=AppConfig.get('align_frames_params')['border_blur'],
             min_val=0, max_val=1000, step=1)
+        self.add_field_to_layout(
+            layout, 'interpolation', FIELD_COMBO, 'Interpolation', required=False,
+            expert=True,
+            options=self.INTERPOLATION_OPTIONS,
+            values=constants.VALID_INTERPOLATIONS,
+            default=AppConfig.get('align_frames_params')['interpolation'])
 
     def create_miscellanea_tab(self, layout):
         self.add_bold_label_to_layout(layout, "Miscellanea:")
