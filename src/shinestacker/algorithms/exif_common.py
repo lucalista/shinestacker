@@ -2,6 +2,7 @@
 import os
 import re
 import tifffile
+import tifftools
 from PIL.TiffImagePlugin import IFDRational
 from ..config.constants import constants
 from . import exif_constants as ec
@@ -82,11 +83,63 @@ def write_tiff_with_metadata(filename, image, exif, exif_extra_tags):
         "description": f"image generated with {constants.APP_STRING} package"
     }
     extra_tags, exif_tags = exif_extra_tags(exif)
-    tifffile.imwrite(
+    write_tiff_with_exif(
         filename,
         image,
+        extra_tags,
         metadata=metadata,
         compression="adobe_deflate",
-        extratags=extra_tags,
         **exif_tags,
     )
+
+
+# Tags of the Exif private IFD (Exif 2.32, section 4.6.5). In a TIFF file they
+# belong in the IFD that tag 34665 points to, not in the image's own IFD, where
+# libtiff (and so OpenCV) reports them as unknown fields.
+EXIF_IFD_TAG_RANGES = ((33434, 33437), (34850, 34867), (36864, 37530), (40960, 42240))
+
+
+def is_exif_ifd_tag(tag_id):
+    return any(lo <= tag_id <= hi for lo, hi in EXIF_IFD_TAG_RANGES)
+
+
+def split_exif_ifd_tags(extra_tags):
+    """tifffile extratags -> (tags for the image IFD, tags for the Exif IFD)."""
+    image_tags = [t for t in extra_tags if not is_exif_ifd_tag(t[0]) and t[0] != ec.EXIFIFD]
+    exif_tags = [t for t in extra_tags if is_exif_ifd_tag(t[0])]
+    return image_tags, exif_tags
+
+
+def _tifftools_entry(dtype, value):
+    """A tifffile extratags value as a tifftools tag entry."""
+    if dtype == 2:
+        data = value.decode("latin-1") if isinstance(value, bytes) else str(value)
+    elif dtype == 7:
+        data = value if isinstance(value, bytes) else str(value).encode("latin-1", "replace")
+    elif dtype in (5, 10):
+        pairs = value if isinstance(value[0], (tuple, list)) else [value]
+        data = [int(v) for pair in pairs for v in pair]
+    else:
+        data = list(value) if isinstance(value, (tuple, list)) else [value]
+    return {"datatype": tifftools.Datatype[dtype], "data": data}
+
+
+def write_tiff_with_exif(filename, image, extra_tags, **kwargs):
+    """tifffile.imwrite() with the Exif tags in an Exif IFD (tag 34665), which
+    tifffile cannot write: tifftools rewrites the file with that IFD added,
+    copying the image data unchanged."""
+    image_tags, exif_tags = split_exif_ifd_tags(extra_tags)
+    if not exif_tags:
+        tifffile.imwrite(filename, image, extratags=image_tags, **kwargs)
+        return
+    plain = filename + ".noexif"
+    tifffile.imwrite(plain, image, extratags=image_tags, **kwargs)
+    try:
+        info = tifftools.read_tiff(plain)
+        info["ifds"][0]["tags"][tifftools.Tag.EXIFIFD.value] = {
+            "datatype": tifftools.Datatype.IFD,
+            "ifds": [[{"tags": {tag_id: _tifftools_entry(dtype, value)
+                                for tag_id, dtype, _count, value, _ in exif_tags}}]]}
+        tifftools.write_tiff(info, filename, allowExisting=True)
+    finally:
+        os.remove(plain)

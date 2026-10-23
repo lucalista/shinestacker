@@ -298,7 +298,8 @@ def test_write_image_with_exif_data_tiff():
             305,    # Software - changed to constants.APP_TITLE
             IMAGERESOURCES,
             INTERCOLORPROFILE,
-            XMLPACKET
+            XMLPACKET,
+            34665,  # ExifIFD: an offset within the file
         ]
 
         def values_equal(v1, v2):
@@ -2643,3 +2644,29 @@ if __name__ == '__main__':
     test_print_exif_none()
     test_exif_round_trip_tiff_to_png()
     test_exif_jpg_icc_profile()
+
+
+def test_tiff_exif_tags_in_exif_ifd(tmp_path):
+    """Exif-only tags (exposure, f-number, ISO, lens, ...) are written to the
+    Exif IFD that tag 34665 points to, not to the image IFD, where libtiff and
+    OpenCV report them as unknown fields."""
+    import numpy as np
+    import tifffile
+    from PIL.TiffImagePlugin import IFDRational
+    from shinestacker.algorithms.exif_tiff import write_image_with_exif_data_tif
+    exif = {271: "Sony", 272: "ILCE-7RM5", 306: "2026:10:19 16:06:49",
+            33434: IFDRational(1, 20), 33437: IFDRational(90, 10), 34855: 100,
+            36867: "2026:10:19 16:06:49", 37386: IFDRational(1000, 10),
+            42036: "FE 100mm F2.8 Macro GM OSS"}
+    img = np.random.default_rng(0).integers(0, 65535, (32, 48, 3), dtype=np.uint16)
+    out = str(tmp_path / "out.tif")
+    write_image_with_exif_data_tif(exif, img, out)
+    with tifffile.TiffFile(out) as tif:
+        page = tif.pages[0]
+        assert not any(33434 <= t <= 33437 or 34850 <= t <= 34867 or t >= 36864 and t != 34675
+                       for t in page.tags.keys() if t != 34665 and t != 34675)
+        sub = page.tags[34665].value
+        assert sub["ExposureTime"] == (1, 20) and sub["FNumber"] == (90, 10)
+        assert sub["ISOSpeedRatings"] == 100 and sub["LensModel"] == "FE 100mm F2.8 Macro GM OSS"
+        assert page.tags[271].value == "Sony"
+        assert np.array_equal(page.asarray()[..., ::-1], img)

@@ -17,6 +17,7 @@ from .utils import (
     EXTENSIONS_TIF, EXTENSIONS_JPG, EXTENSIONS_PNG, EXTENSIONS_RAW, EXTENSIONS_SUPPORTED_IN)
 from .stack_framework import ImageSequenceManager
 from .exif import exif_extra_tags_for_tif, get_exif
+from .exif_common import write_tiff_with_exif
 
 
 def read_multilayer_tiff(input_file):
@@ -160,8 +161,9 @@ def write_multilayer_tiff_from_images(image_dict, output_file, exif_path='', cal
         *((np.concatenate((image, np.expand_dims(transp, axis=-1)),
           axis=-1), (0, 0)) for image in image_dict.values()), shape=shape
     )
-    tifffile.imwrite(output_file, overlayed_images,
-                     compression=compression, metadata=None, **tiff_tags)
+    extra_tags = tiff_tags.pop('extratags', [])
+    write_tiff_with_exif(output_file, overlayed_images, extra_tags,
+                         compression=compression, metadata=None, **tiff_tags)
 
 
 class MultiLayer(TaskBase, ImageSequenceManager):
