@@ -8,6 +8,7 @@
 - Fixed some default parameter values in documentation (#78)
 - Aligment retries using SIFT detector and descriptor methods in case ORB fails (#77)
 - TIFF output: write Exif tags into the Exif IFD (#84)
+- Spawn child processes in the background (#85)
 
 ### Changed
 - FocusStack: keep the source colour profile without EXIF copying (#79)
