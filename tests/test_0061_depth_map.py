@@ -378,6 +378,16 @@ def test_focus_stack_threads_identical(example_images, params):
     results = []
     for max_threads in (1, 4):
         dms = DepthMapStack(max_threads=max_threads, **params)
+        dms.process = MagicMock()
+        dms.process.callback.return_value = True
+        dms.print_message = MagicMock()
+        dms.after_step = MagicMock()
+        dms.check_running = MagicMock()
+        dms.init(example_images[:4])
+        results.append(dms.focus_stack())
+    assert np.array_equal(results[0], results[1])
+
+
 def test_energy_gauss_sigma_default_off_and_validated():
     assert DepthMapStack().energy_gauss_sigma == 0
     with pytest.raises(InvalidOptionError):
@@ -411,9 +421,11 @@ def test_energy_gauss_sigma_finds_faint_texture(tmp_path):
         dms.print_message = MagicMock()
         dms.after_step = MagicMock()
         dms.check_running = MagicMock()
-        dms.init(example_images[:4])
-        results.append(dms.focus_stack())
-    assert np.array_equal(results[0], results[1])
+        dms.init(paths)
+        result = dms.focus_stack()[..., 0].astype(np.float32) / 65535
+        correlation[sigma] = np.corrcoef(band(result).ravel(), band(sharp).ravel())[0, 1]
+    assert correlation[8] > correlation[0] + 0.15
+    assert correlation[8] > 0.65
 
 
 def test_frames_in_flight_respects_memory_limit():
@@ -446,8 +458,3 @@ def test_ordered_parallel_map_order_and_early_stop():
         assert next(results) == 0
         results.close()
     assert len(started) <= 5
-        dms.init(paths)
-        result = dms.focus_stack()[..., 0].astype(np.float32) / 65535
-        correlation[sigma] = np.corrcoef(band(result).ravel(), band(sharp).ravel())[0, 1]
-    assert correlation[8] > correlation[0] + 0.15
-    assert correlation[8] > 0.65

@@ -13,8 +13,6 @@ from .base_stack_algo import BaseStackAlgo, TempDirBase
 
 
 def ordered_parallel_map(executor, func, items, window):
-    """Apply func to items in executor threads and yield the results in input
-    order, with at most window items in flight (bounds the memory)."""
     items = iter(items)
     pending = deque(executor.submit(func, item) for item in itertools.islice(items, window))
     try:
@@ -24,13 +22,11 @@ def ordered_parallel_map(executor, func, items, window):
                 pending.append(executor.submit(func, item))
             yield result
     finally:
-        # stopped early (user stop, error): do not start the frames still queued
         for future in pending:
             future.cancel()
 
 
 def row_chunks(n_rows, n_chunks):
-    """Split range(n_rows) into at most n_chunks contiguous slices."""
     bounds = np.linspace(0, n_rows, max(1, min(n_chunks, n_rows)) + 1).astype(int)
     return [slice(a, b) for a, b in zip(bounds[:-1], bounds[1:]) if b > a]
 
@@ -206,14 +202,15 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
             img = read_and_validate_img(img_path, self.shape, self.dtype)
             gray = img_bw(img).astype(self.float_type)
             energy_map = self.compute_energy_map(gray)
+            if self.energy_gauss_sigma > 0:
+                energy_map = cv2.GaussianBlur(
+                    energy_map, (0, 0), self.energy_gauss_sigma).astype(self.float_type)
             if self.energy_smooth_size > 0:
                 energy_map = self.smooth_energy(energy_map)
             return energy_map
 
         pixels = self.shape[0] * self.shape[1]
         float_size = np.dtype(self.float_type).itemsize
-        # input frame, grey image, energy map and one filter temporary,
-        # next to the energy array (in memory) or the running sum/maximum (on disk)
         energy_workers = self.frames_in_flight(
             pixels * (np.dtype(self.dtype).itemsize * (4 if self.alpha_mode else 3) +
                       3 * float_size),
@@ -240,14 +237,6 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
                         sum_energies += energy_map
                     else:
                         max_energy = np.maximum(max_energy, energy_map)
-            if self.energy_gauss_sigma > 0:
-                energy_map = cv2.GaussianBlur(energy_map, (0, 0), self.energy_gauss_sigma)
-            if use_disk:
-                temp_file = os.path.join(temp_dir, f"energy_{i:06d}.npy")
-                np.save(temp_file, energy_map)
-                energy_files.append(temp_file)
-                if self.map_type == constants.DM_MAP_AVERAGE:
-                    sum_energies += energy_map
                 else:
                     energies[i] = energy_map
         self.steps_count += 1
@@ -263,7 +252,6 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
             else:
                 weights = self.get_focus_map_from_disk_max(energy_files, max_energy, n_images)
         else:
-            # per-pixel arithmetic: row bands in threads give the same weights
             self.print_message(f": compute weights ({self.map_type})")
             weights = np.empty_like(energies)
             bands = row_chunks(self.shape[0], self.max_threads)
