@@ -242,6 +242,20 @@ class TestUtils(unittest.TestCase):
         diff2 = np.max(np.abs(bgr_16bit_scaled.astype(float) - bgr_from_8bit_hls.astype(float)))
         self.assertLess(diff2, 7)
 
+    def test_color_conversions_16bit_unbiased(self):
+        rng = np.random.default_rng(0)
+        img = rng.integers(0, 65536, (64, 64, 3), dtype=np.uint16)
+        for to_space, to_bgr in ((bgr_to_hsv, hsv_to_bgr), (bgr_to_hls, hls_to_bgr),
+                                 (bgr_to_lab, lab_to_bgr)):
+            diff = to_bgr(to_space(img)).astype(np.float64) - img
+            self.assertLess(abs(diff.mean()), 0.1, f"{to_space.__name__} round trip is biased")
+
+    def test_hue_close_to_360_wraps_to_0(self):
+        img = np.array([[[1, 0, 65535]]], dtype=np.uint16)
+        self.assertEqual(bgr_to_hsv(img)[0, 0, 0], 0)
+        self.assertEqual(bgr_to_hls(img)[0, 0, 0], 0)
+        self.assertEqual(hsv_to_bgr(bgr_to_hsv(img))[0, 0, 2], 65535)
+
 
 if __name__ == '__main__':
     loader = unittest.TestLoader()

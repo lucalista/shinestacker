@@ -7,7 +7,7 @@ from ..config.constants import constants
 def gamma_correction(img, gamma):
     max_px_val = constants.MAX_UINT8 if img.dtype == np.uint8 else constants.MAX_UINT16
     ar = np.arange(0, max_px_val + 1, dtype=np.float64)
-    lut = (((ar / max_px_val) ** (1.0 / gamma)) * max_px_val).astype(img.dtype)
+    lut = np.rint(((ar / max_px_val) ** (1.0 / gamma)) * max_px_val).astype(img.dtype)
     return cv2.LUT(img, lut) if img.dtype == np.uint8 else np.take(lut, img)
 
 
@@ -22,5 +22,5 @@ def contrast_correction(img, k):
     denominator = 1 + (exp_k - 1) * np.abs(x)
     corrected = numerator / denominator
     corrected = (corrected + 1.0) * 0.5 * max_px_val
-    lut = np.clip(corrected, 0, max_px_val).astype(img.dtype)
+    lut = np.clip(np.rint(corrected), 0, max_px_val).astype(img.dtype)
     return cv2.LUT(img, lut) if img.dtype == np.uint8 else np.take(lut, img)

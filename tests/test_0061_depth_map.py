@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 from shinestacker.config.constants import constants
 from shinestacker.config.defaults import DEFAULTS
 from shinestacker.core.exceptions import InvalidOptionError
-from shinestacker.algorithms.utils import read_and_validate_img, img_bw
+from shinestacker.algorithms.utils import read_img, read_and_validate_img, img_bw
 from shinestacker.algorithms.depth_map import DepthMapStack
 
 n_images = 6
@@ -367,3 +367,23 @@ def test_get_focus_map_from_disk_max(example_images):
     assert weights.shape == (2, *dms.shape)
     assert weights.dtype == dms.float_type
     assert np.all(np.isfinite(weights))
+
+
+@pytest.mark.parametrize("path", ["examples/input/img-jpg/0000.jpg",
+                                  "examples/input/img-tif/0000.tif"])
+def test_focus_stack_identical_frames_not_darkened(path):
+    if not os.path.exists(path):
+        pytest.skip(f"Test image {path} not found")
+    source = read_img(path).astype(np.float64)
+    for map_type in (constants.DM_MAP_MAX, constants.DM_MAP_AVERAGE):
+        dms = DepthMapStack(map_type=map_type)
+        dms.process = MagicMock()
+        dms.process.callback.return_value = True
+        dms.print_message = MagicMock()
+        dms.after_step = MagicMock()
+        dms.check_running = MagicMock()
+        dms.init([path] * 3)
+        diff = dms.focus_stack().astype(np.float64) - source
+        assert abs(diff.mean()) < 0.001
+        if map_type == constants.DM_MAP_MAX:
+            assert not diff.any()

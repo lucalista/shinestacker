@@ -108,11 +108,11 @@ class BrushTool:
         max_px_value = constants.MAX_UINT16 if dtype == np.uint16 else constants.MAX_UINT8
         lumi_scale = 1.0 + float(self.brush.luminosity) / 100.0
         if master_area.ndim == 3:
-            dest_area[:] = np.clip(
+            dest_area[:] = np.clip(np.rint(
                 master_area * (1 - effective_mask[..., np.newaxis]) +
-                source_area * effective_mask[..., np.newaxis] * lumi_scale,
+                source_area * effective_mask[..., np.newaxis] * lumi_scale),
                 0, max_px_value).astype(dtype)
         else:
-            dest_area[:] = np.clip(
-                master_area * (1 - effective_mask) + source_area * effective_mask * lumi_scale, 0,
-                max_px_value).astype(dtype)
+            dest_area[:] = np.clip(np.rint(
+                master_area * (1 - effective_mask) + source_area * effective_mask * lumi_scale),
+                0, max_px_value).astype(dtype)

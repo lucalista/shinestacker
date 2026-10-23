@@ -477,7 +477,8 @@ class PyramidTilesStack(PyramidBase, TempDirBase):
             try:
                 fused_pyramid = self.fuse_pyramids(all_level_counts)
                 stacked_image = self.collapse(fused_pyramid)
-                stacked_image = self.unpremultiply_alpha(stacked_image).astype(self.dtype)
+                stacked_image = np.rint(
+                    self.unpremultiply_alpha(stacked_image)).astype(self.dtype)
             except Exception as e:
                 traceback.print_exc()
                 self.process.sub_message_r(color_str(

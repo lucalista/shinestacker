@@ -2,6 +2,7 @@
 import os
 import math
 import cv2
+import numpy as np
 
 print(f"OpenCV version: {cv2.__version__}")
 
@@ -113,6 +114,13 @@ def test_saturation_16():
         assert True
     except Exception:
         assert False
+
+
+def test_identity_corrections_keep_values():
+    for dtype, max_value in ((np.uint8, 255), (np.uint16, 65535)):
+        ramp = np.arange(max_value + 1, dtype=dtype).reshape(1, -1)
+        assert np.array_equal(gamma_correction(ramp, 1.0), ramp)
+        assert np.array_equal(contrast_correction(ramp, 0.0), ramp)
 
 
 if __name__ == '__main__':

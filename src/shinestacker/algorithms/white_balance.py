@@ -10,5 +10,5 @@ def white_balance_from_rgb(img, target_rgb):
     for c in range(3):
         img_float[..., c] *= scales[c]
     max_val = np.iinfo(img.dtype).max
-    img_float = np.clip(img_float, 0, max_val)
+    img_float = np.clip(np.rint(img_float), 0, max_val)
     return img_float.astype(img.dtype)
