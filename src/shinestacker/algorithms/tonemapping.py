@@ -18,9 +18,10 @@ def local_tonemapping(img, amount, clip_limit, tile_size):
     if l_channel.dtype == np.uint8:
         l_enhanced = clahe.apply(l_channel)
     else:
-        l_scaled = (l_channel.astype(np.float32) / 65535.0 * 255.0).astype(np.uint8)
+        l_scaled = np.rint(l_channel.astype(np.float32) / 65535.0 * 255.0).astype(np.uint8)
         l_enhanced_8bit = clahe.apply(l_scaled)
-        l_enhanced = (l_enhanced_8bit.astype(np.float32) / 255.0 * 65535.0).astype(np.uint16)
+        l_enhanced = np.rint(
+            l_enhanced_8bit.astype(np.float32) / 255.0 * 65535.0).astype(np.uint16)
     if amount <= 0:
         return img
     if amount >= 1.0:

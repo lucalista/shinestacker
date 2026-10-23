@@ -227,4 +227,4 @@ class PyramidStack(PyramidBase):
             self.check_running()
         stacked_image = self.collapse(self.fuse_pyramids(all_laplacians))
         stacked_image = self.unpremultiply_alpha(stacked_image)
-        return stacked_image.astype(self.dtype)
+        return np.rint(stacked_image).astype(self.dtype)

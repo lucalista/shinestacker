@@ -50,7 +50,7 @@ def mean_image(file_paths, max_frames=-1, message_callback=None, progress_callba
             progress_callback(i)
     if mean_img is None:
         return None
-    mean_img = mean_img / counter
+    mean_img = np.rint(mean_img / counter)
     if metadata[1] == np.uint16:
         return mean_img.astype(np.uint16)
     return mean_img.astype(np.uint8)

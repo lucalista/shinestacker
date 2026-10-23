@@ -119,7 +119,7 @@ def correct_vignetting(
         vignette[np.min(image, axis=2) < threshold, :] = 1
     else:
         vignette[image < black_threshold] = 1
-    return np.clip(image / vignette, 0, 255
+    return np.clip(np.rint(image / vignette), 0, 255
                    if image.dtype == np.uint8 else 65535).astype(image.dtype)
 
 

@@ -270,7 +270,7 @@ class MatchHist(CorrectionMapBase):
                 (i1 - self.max_pixel_value) * \
                 (self.max_pixel_value - l_max) / \
                 float(i1.size) if i1.size > 0 else self.max_pixel_value
-        return lut.astype(self.dtype)
+        return np.clip(np.rint(lut), 0, self.max_pixel_value).astype(self.dtype)
 
     def correction(self, hist):
         return self.cumsum(hist)
@@ -297,13 +297,13 @@ class GammaMap(CorrectionMap):
         gamma_inv = 1.0 / correction
         ar = np.arange(0, self.num_pixel_values)
         corr_lut = ((ar / self.max_pixel_value) ** gamma_inv) * self.max_pixel_value
-        return corr_lut.astype(self.dtype)
+        return np.rint(corr_lut).astype(self.dtype)
 
 
 class LinearMap(CorrectionMap):
     def lut(self, correction, _reference=None):
         ar = np.arange(0, self.num_pixel_values)
-        return np.clip(ar * correction, 0, self.max_pixel_value).astype(self.dtype)
+        return np.clip(np.rint(ar * correction), 0, self.max_pixel_value).astype(self.dtype)
 
     def correction(self, hist):
         return [r / self.mid_val(self.id_lut, h) for h, r in zip(hist, self.reference)]

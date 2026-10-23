@@ -291,9 +291,9 @@ def bgr_to_hsv(bgr_img):
     b_is_max = (v == b) & nonzero_delta
     h[b_is_max] = (60 * (r[b_is_max] - g[b_is_max]) / delta[b_is_max] + 240) % 360
     h[h < 0] += 360
-    h_16bit = (h / 360 * 65535).astype(np.uint16)
-    s_16bit = (s * 65535).astype(np.uint16)
-    v_16bit = (v * 65535).astype(np.uint16)
+    h_16bit = (np.rint(h / 360 * 65535) % 65535).astype(np.uint16)
+    s_16bit = np.rint(s * 65535).astype(np.uint16)
+    v_16bit = np.rint(v * 65535).astype(np.uint16)
     return cv2.merge([h_16bit, s_16bit, v_16bit])
 
 
@@ -320,9 +320,9 @@ def hsv_to_bgr(hsv_img):
     r[mask], g[mask], b[mask] = x[mask], 0, c[mask]
     mask = (h >= 300) & (h < 360)
     r[mask], g[mask], b[mask] = c[mask], 0, x[mask]
-    r = np.clip((r + m) * 65535, 0, 65535).astype(np.uint16)
-    g = np.clip((g + m) * 65535, 0, 65535).astype(np.uint16)
-    b = np.clip((b + m) * 65535, 0, 65535).astype(np.uint16)
+    r = np.clip(np.rint((r + m) * 65535), 0, 65535).astype(np.uint16)
+    g = np.clip(np.rint((g + m) * 65535), 0, 65535).astype(np.uint16)
+    b = np.clip(np.rint((b + m) * 65535), 0, 65535).astype(np.uint16)
     return cv2.merge([b, g, r])
 
 
@@ -348,9 +348,9 @@ def bgr_to_hls(bgr_img):
     h[r_is_max] = (60 * (g[r_is_max] - b[r_is_max]) / delta[r_is_max]) % 360
     h[g_is_max] = (60 * (b[g_is_max] - r[g_is_max]) / delta[g_is_max] + 120) % 360
     h[b_is_max] = (60 * (r[b_is_max] - g[b_is_max]) / delta[b_is_max] + 240) % 360
-    h_16bit = (h * 65535 / 360).astype(np.uint16)
-    l_16bit = (l * 65535).astype(np.uint16)
-    s_16bit = (s * 65535).astype(np.uint16)
+    h_16bit = (np.rint(h * 65535 / 360) % 65535).astype(np.uint16)
+    l_16bit = np.rint(l * 65535).astype(np.uint16)
+    s_16bit = np.rint(s * 65535).astype(np.uint16)
     return cv2.merge([h_16bit, l_16bit, s_16bit])
 
 
@@ -382,9 +382,9 @@ def hls_to_bgr(hls_img):
     r += m
     g += m
     b += m
-    r = np.clip(r * 65535, 0, 65535).astype(np.uint16)
-    g = np.clip(g * 65535, 0, 65535).astype(np.uint16)
-    b = np.clip(b * 65535, 0, 65535).astype(np.uint16)
+    r = np.clip(np.rint(r * 65535), 0, 65535).astype(np.uint16)
+    g = np.clip(np.rint(g * 65535), 0, 65535).astype(np.uint16)
+    b = np.clip(np.rint(b * 65535), 0, 65535).astype(np.uint16)
     return cv2.merge([b, g, r])
 
 
@@ -429,9 +429,9 @@ def bgr_to_lab(bgr_img):
     fZ = f_xyz_to_lab(Z)
     a = 500.0 * (fX - fY)
     b = 200.0 * (fY - fZ)
-    L_scaled = np.clip(L * 652.80, 0, 65280).astype(np.uint16)
-    a_scaled = np.clip((a + 128.0) * 256.0, 0, 65535).astype(np.uint16)
-    b_scaled = np.clip((b + 128.0) * 256.0, 0, 65535).astype(np.uint16)
+    L_scaled = np.clip(np.rint(L * 652.80), 0, 65280).astype(np.uint16)
+    a_scaled = np.clip(np.rint((a + 128.0) * 256.0), 0, 65535).astype(np.uint16)
+    b_scaled = np.clip(np.rint((b + 128.0) * 256.0), 0, 65535).astype(np.uint16)
     return np.stack([L_scaled, a_scaled, b_scaled], axis=-1)
 
 
@@ -487,5 +487,5 @@ def lab_to_bgr(lab_img):
     G = compand(G_lin)
     B = compand(B_lin)
     bgr_float = np.stack([B, G, R], axis=-1)
-    bgr_16bit = np.clip(bgr_float * 65535.0, 0, 65535).astype(np.uint16)
+    bgr_16bit = np.clip(np.rint(bgr_float * 65535.0), 0, 65535).astype(np.uint16)
     return bgr_16bit

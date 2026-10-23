@@ -426,9 +426,9 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
             color = np.where(alpha > floor, result[..., :3] / np.maximum(alpha, floor), 0.0)
             result = np.concatenate([np.clip(color, 0.0, 1.0), alpha], axis=2)
         if self.dtype == np.uint8:
-            result = np.clip(result * 255.0, 0, 255).astype(np.uint8)
+            result = np.clip(np.rint(result * 255.0), 0, 255).astype(np.uint8)
         elif self.dtype == np.uint16:
-            result = np.clip(result * 65535.0, 0, 65535).astype(np.uint16)
+            result = np.clip(np.rint(result * 65535.0), 0, 65535).astype(np.uint16)
         else:
             result = np.clip(result, 0, 1.0).astype(self.dtype)
         step_count[0] += 1
@@ -475,7 +475,7 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
         if np.any(mask):
             depth_map[mask] = (weighted_sum[mask] / sum_weights[mask]) / i_max * 255.0
         depth_map = np.nan_to_num(depth_map, nan=0.0, posinf=255.0, neginf=0.0)
-        img = np.clip(depth_map, 0, 255).astype(np.uint8)
+        img = np.clip(np.rint(depth_map), 0, 255).astype(np.uint8)
         self.print_message(": writing depth map")
         write_img(filepath, img)
         self.process.callback(
