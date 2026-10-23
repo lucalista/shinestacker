@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0115, C0116, E1101, R0902, R0913, R0917, R0914, R0912, R0915
+# pylint: disable=C0114, C0115, C0116, E1101, R0902, R0913, R0917, R0914, R0912, R0915, W0631
 import os
 import itertools
 from collections import deque
