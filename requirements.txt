@@ -11,5 +11,6 @@ PySide6
 rawpy
 scipy
 tifffile
+tifftools
 tqdm
 setuptools-scm
