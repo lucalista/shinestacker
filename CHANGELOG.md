@@ -13,6 +13,7 @@
 - DepthMapStack: optional Gaussian smoothing of the energy maps (#81)
 - Alignment: make the warp interpolation selectable (#82)
 - Default alignment interpolation method changed to cubic (#82)
+- Alignment: SIFT/AKAZE threads in auto mode, and a working resolution_target option (#83)
 
 ---
 
