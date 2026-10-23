@@ -113,5 +113,7 @@ Arguments for the constructor are:
    * ```energy_gauss_sigma``` (optional, default: 0, i.e. off): standard deviation in pixels of a Gaussian smoothing of each frame's energy map, applied after the optional bilateral smoothing. In areas with little texture (a plain background, a mount) the per-pixel energy is dominated by sensor noise, and the frame with the highest energy is then close to random. Averaging the energy over a few pixels lets the real texture decide; values around 8 worked well on 33 MP frames. It is fast at any value, unlike a large ```energy_smooth_size```.
    * ```temperature``` (optional, default: 0): controls fusion transition. Lower value means sharper transitions. This correction is only applied if ```map_type=DM_MAP_MAX```.
    * ```plot_depth_map``` (optional, default: ```False```): produces a grayscale depth map and saves it in the ```plot_path``` folder.
+   * ```max_threads``` (optional, default: number of cores): number of threads that read and process frames in parallel. Frames are still combined in frame order, so the result does not depend on this number. Fewer frames are processed at once when their buffers would not fit into ```memory_limit```.
+   * ```memory_limit``` (optional, default: 8, in GB): memory budget; above it the energy maps are kept on disk (```mode='auto'```), and it limits how many frames are processed in parallel.
 
 For more details about bilateral filters applied to energy and weights map, see [Bilateral Filtering](https://www.geeksforgeeks.org/python/python-bilateral-filtering/).
