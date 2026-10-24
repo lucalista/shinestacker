@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.17.x] - 2026-10-24
+## [v1.17.2] - 2026-10-24
 **User pull requests and more fixes**
 
 ### Fixed
