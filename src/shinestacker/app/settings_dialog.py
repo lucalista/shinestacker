@@ -322,7 +322,44 @@ class SettingsDialog(ConfigDialog, AlignFramesConfigBase):
                         DEFAULTS['raw_formats']['auto_bright']),
                     NestedDoubleSpinBoxParameter(
                         'raw_formats', 'auto_bright_thr', 'Auto-brightness threshold (%)',
-                        DEFAULTS['raw_formats']['auto_bright'], 0.0, 100.0, 0.1)
+                        DEFAULTS['raw_formats']['auto_bright_thr'], 0.0, 100.0, 0.1),
+                    NestedComboBoxParameter(
+                        'raw_formats', 'output_colorspace', 'Output color space:',
+                        DEFAULTS['raw_formats']['output_colorspace'],
+                        [
+                            ("sRGB", "sRGB"),
+                            ("Rec.2020", "Rec2020"),
+                            ("ACES", "ACES"),
+                            ("ProPhoto", "ProPhoto"),
+                        ],
+                        tooltip="Color space used when demosaicing RAW files.\n"
+                                "Use Rec.2020 for wide-gamut workflows (e.g. darktable)."),
+                    NestedComboBoxParameter(
+                        'raw_formats', 'output_gamma', 'Output gamma:',
+                        DEFAULTS['raw_formats']['output_gamma'],
+                        [
+                            ("sRGB (display)", "sRGB"),
+                            ("Linear", "linear"),
+                        ],
+                        tooltip="Linear gamma keeps RAW data in linear light;\n"
+                                "recommended together with Rec.2020 for darktable round-trip."),
+                    NestedComboBoxParameter(
+                        'raw_formats', 'demosaic_algorithm', 'Demosaic algorithm:',
+                        DEFAULTS['raw_formats']['demosaic_algorithm'],
+                        [
+                            ("AHD", "AHD"),
+                            ("DCB", "DCB"),
+                            ("VNG", "VNG"),
+                            ("PPG", "PPG"),
+                            ("AAHC", "AAHC"),
+                            ("AFD", "AFD"),
+                            ("VCD", "VCD"),
+                            ("VCD + AHD", "VCD_AHD"),
+                            ("LMMSE", "LMMSE"),
+                            ("AMAZE", "AMAZE"),
+                        ],
+                        tooltip="Demosaicing algorithm used for RAW files.\n"
+                                "AHD is a good default; AMAZE is slower but often sharper."),
                 ]),
                 ("Combined Actions", [
                     NestedSpinBoxParameter(

@@ -118,11 +118,27 @@ def read_img(file_path):
         raise RuntimeError("File does not exist: " + file_path)
     img = None
     if extension_raw(file_path):
+        raw_cfg = AppConfig.get('raw_formats')
+        colorspace_map = {
+            'sRGB': rawpy.ColorSpace.sRGB,
+            'Rec2020': rawpy.ColorSpace.Rec2020,
+            'ACES': rawpy.ColorSpace.ACES,
+            'ProPhoto': rawpy.ColorSpace.ProPhoto,
+        }
+        gamma_map = {
+            'sRGB': (2.4, 12.92, 0.055, 0.0031308),
+            'linear': (1.0, 1.0, 0.0, 0.0),
+        }
         with rawpy.imread(file_path) as raw:
             rgb = raw.postprocess(
-                output_bps=16, output_color=rawpy.ColorSpace.sRGB, use_camera_wb=True,
-                no_auto_bright=not AppConfig.get('raw_formats')['auto_bright'],
-                auto_bright_thr=AppConfig.get('raw_formats')['auto_bright_thr'] / 100.0)
+                output_bps=16,
+                output_color=colorspace_map[raw_cfg['output_colorspace']],
+                gamma=gamma_map[raw_cfg['output_gamma']],
+                demosaic_algorithm=getattr(rawpy.DemosaicAlgorithm,
+                                           raw_cfg['demosaic_algorithm']),
+                use_camera_wb=True,
+                no_auto_bright=not raw_cfg['auto_bright'],
+                auto_bright_thr=raw_cfg['auto_bright_thr'] / 100.0)
             img = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
     elif extension_jpg(file_path):
         img = cv2.imread(file_path)

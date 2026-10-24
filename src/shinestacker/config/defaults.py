@@ -22,6 +22,10 @@ DEFAULTS = {
     'raw_formats': {
         'auto_bright': True,
         'auto_bright_thr': 1.0,  # %
+        'output_colorspace': 'sRGB',    # 'sRGB' | 'Rec2020' | 'ACES' | 'ProPhoto'
+        'output_gamma': 'sRGB',         # 'sRGB' | 'linear'
+        'demosaic_algorithm': 'AHD',
+        # 'AHD' | 'DCB' | 'VNG' | 'PPG' | 'AAHC' | 'AFD' | 'VCD' | 'VCD+AHD' | 'LMMSE' | 'AMAZE'
     },
     'sequential_task': {
         'max_threads': 8,

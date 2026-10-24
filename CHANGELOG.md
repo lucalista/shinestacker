@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.17.x] - 2026-10-23
+## [v1.17.x] - 2026-10-24
 **User pull requests and more fixes**
 
 ### Fixed
@@ -17,6 +17,7 @@
 - Alignment: make the warp interpolation selectable (#82)
 - Default alignment interpolation method changed to cubic (#82)
 - Alignment: SIFT/AKAZE threads in auto mode, and a working resolution_target option (#83)
+- Enhanced RAW formats configurable settings (#86)
 
 ---
 
