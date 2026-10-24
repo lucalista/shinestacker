@@ -264,10 +264,8 @@ class SettingsDialog(ConfigDialog, AlignFramesConfigBase):
     update_project_config_requested = Signal()
     update_retouch_config_requested = Signal()
 
-    def __init__(self, parent=None, project_settings=True, retouch_settings=True):
+    def __init__(self, parent=None):
         AlignFramesConfigBase.__init__(self)
-        self.project_settings = project_settings
-        self.retouch_settings = retouch_settings
         self.settings = Settings.instance()
         self.project_parameters = []
         self.retouch_parameters = []
@@ -275,221 +273,229 @@ class SettingsDialog(ConfigDialog, AlignFramesConfigBase):
         super().__init__("Settings", parent)
 
     def _init_parameters(self):
-        if self.project_settings:
-            self.project_parameters = [
-                ("General", [
-                    CheckBoxParameter(
-                        'check_for_updates', 'Check for updates:',
-                        DEFAULTS['check_for_updates']),
-                    ComboBoxParameter(
-                        'project_view_strategy', 'View strategy:',
-                        DEFAULTS['project_view_strategy'],
-                        [
-                            ("Modern Horizontal", "modern_horizontal"),
-                            ("Modern Vertical", "modern_vertical"),
-                            ("Classic", "classic"),
-                        ]),
-                    CheckBoxParameter(
-                        'expert_options', 'Expert options:',
-                        DEFAULTS['expert_options']),
-                    ComboBoxParameter(
-                        'plots_format', 'Plots format:',
-                        DEFAULTS['plots_format'],
-                        [
-                            ("PNG", "png"),
-                            ("JPEG", "jpg"),
-                            ("PDF", "pdf")
-                        ]
-                    ),
-                    FolderParameter(
-                        'input_folder_path', 'Input folder path:',
-                        DEFAULTS['input_folder_path'],
-                        'Path of the folder that is opened by default '
-                        'when a new project is created.'),
-                    FolderParameter(
-                        'temp_folder_path', 'Scratch disk folder:',
-                        DEFAULTS['temp_folder_path'],
-                        'Temporary folder for processing files.\n'
-                        'Using a fast drive (SSD recommended) \n'
-                        'with ample free space will improve\nperformance.'),
-                    CheckBoxParameter(
-                        'retouch_after_run', 'Run retouch after run',
-                        DEFAULTS['retouch_after_run'])
-                ]),
-                ("Raw Formats", [
-                    NestedCheckBoxParameter(
-                        'raw_formats', 'auto_bright', 'Automatic brightness:',
-                        DEFAULTS['raw_formats']['auto_bright']),
-                    NestedDoubleSpinBoxParameter(
-                        'raw_formats', 'auto_bright_thr', 'Auto-brightness threshold (%)',
-                        DEFAULTS['raw_formats']['auto_bright_thr'], 0.0, 100.0, 0.1),
-                    NestedComboBoxParameter(
-                        'raw_formats', 'output_colorspace', 'Output color space:',
-                        DEFAULTS['raw_formats']['output_colorspace'],
-                        [
-                            ("sRGB", "sRGB"),
-                            ("Rec.2020", "Rec2020"),
-                            ("ACES", "ACES"),
-                            ("ProPhoto", "ProPhoto"),
-                        ],
-                        tooltip="Color space used when demosaicing RAW files.\n"
-                                "Use Rec.2020 for wide-gamut workflows (e.g. darktable)."),
-                    NestedComboBoxParameter(
-                        'raw_formats', 'output_gamma', 'Output gamma:',
-                        DEFAULTS['raw_formats']['output_gamma'],
-                        [
-                            ("sRGB (display)", "sRGB"),
-                            ("Linear", "linear"),
-                        ],
-                        tooltip="Linear gamma keeps RAW data in linear light;\n"
-                                "recommended together with Rec.2020 for darktable round-trip."),
-                    NestedComboBoxParameter(
-                        'raw_formats', 'demosaic_algorithm', 'Demosaic algorithm:',
-                        DEFAULTS['raw_formats']['demosaic_algorithm'],
-                        [
-                            ("AHD", "AHD"),
-                            ("DCB", "DCB"),
-                            ("VNG", "VNG"),
-                            ("PPG", "PPG"),
-                            ("AAHC", "AAHC"),
-                            ("AFD", "AFD"),
-                            ("VCD", "VCD"),
-                            ("VCD + AHD", "VCD_AHD"),
-                            ("LMMSE", "LMMSE"),
-                            ("AMAZE", "AMAZE"),
-                        ],
-                        tooltip="Demosaicing algorithm used for RAW files.\n"
-                                "AHD is a good default; AMAZE is slower but often sharper."),
-                ]),
-                ("Combined Actions", [
-                    NestedSpinBoxParameter(
-                        'combined_actions_params', 'max_threads',
-                        'Max num. of cores:',
-                        DEFAULTS['combined_actions_params']['max_threads'], 0, 256)
-                ]),
-                ("Align Frames", [
-                    NestedDoubleSpinBoxParameter(
-                        'align_frames_params', 'memory_limit',
-                        'Mem. limit (approx., GBytes):',
-                        DEFAULTS['align_frames_params']['memory_limit'], 1.0, 1024.0, 1.0),
-                    NestedSpinBoxParameter(
-                        'align_frames_params', 'max_threads',
-                        'Max num. of cores:',
-                        DEFAULTS['align_frames_params']['max_threads'], 0, 256),
-                    NestedCallbackComboBoxParameter(
-                        'align_frames_params', 'transform', 'Transform:',
-                        DEFAULTS['align_frames_params']['transform'],
-                        list(zip(self.TRANSFORM_OPTIONS, constants.VALID_TRANSFORMS))),
-                    NestedCallbackComboBoxParameter(
-                        'align_frames_params', 'detector', 'Detector:',
-                        DEFAULTS['align_frames_params']['detector'],
-                        [(d, d) for d in constants.VALID_DETECTORS],
-                        tooltip=self.DETECTOR_DESCRIPTOR_TOOLTIPS['detector'],
-                        on_change=self.change_match_config_settings),
-                    NestedCallbackComboBoxParameter(
-                        'align_frames_params', 'descriptor', 'Descriptor:',
-                        DEFAULTS['align_frames_params']['descriptor'],
-                        [(d, d) for d in constants.VALID_DESCRIPTORS],
-                        tooltip=self.DETECTOR_DESCRIPTOR_TOOLTIPS['descriptor'],
-                        on_change=self.change_match_config_settings),
-                    NestedCallbackComboBoxParameter(
-                        'align_frames_params', 'match_method', 'Match method:',
-                        DEFAULTS['align_frames_params']['match_method'],
-                        list(zip(self.MATCHING_METHOD_OPTIONS, constants.VALID_MATCHING_METHODS)),
-                        tooltip=self.DETECTOR_DESCRIPTOR_TOOLTIPS['match_method']),
-                    NestedCallbackComboBoxParameter(
-                        'align_frames_params', 'subsample', 'Subsample:',
-                        DEFAULTS['align_frames_params']['subsample'],
-                        list(zip(constants.FIELD_SUBSAMPLE_OPTIONS,
-                                 constants.FIELD_SUBSAMPLE_VALUES)))
-                ]),
-                ("Focus Stacking - Common", [
-                    NestedDoubleSpinBoxParameter(
-                        'focus_stack_params', 'memory_limit',
-                        'Mem. limit (approx., GBytes):',
-                        DEFAULTS['focus_stack_params']['memory_limit'], 1.0, 1024.0, 1.0),
-                    NestedSpinBoxParameter(
-                        'focus_stack_params', 'max_threads', 'Max. num. of cores:',
-                        DEFAULTS['focus_stack_params']['max_threads'], 0, 256),
-                ]),
-                ("Focus Stacking - Naming", [
-                    NestedComboBoxParameter(
-                        'focus_stack_params', 'naming_mode', 'Default filename mode:',
-                        DEFAULTS['focus_stack_params']['naming_mode'],
-                        [
-                            ("Prefix", "PREFIX"),
-                            ("Template", "TEMPLATE")
-                        ]),
-                    NestedTextParameter(
-                        'focus_stack_params', 'prefix', 'Default prefix:',
-                        DEFAULTS['focus_stack_params']['prefix']),
-                    NestedTextParameter(
-                        'focus_stack_params', 'output_file_template', 'Default template:',
-                        DEFAULTS['focus_stack_params']['output_file_template'])
-                ]),
-                ("Focus Stacking Bunches - Naming", [
-                    NestedComboBoxParameter(
-                        'focus_stack_bunch_params', 'naming_mode', 'Default filename mode:',
-                        DEFAULTS['focus_stack_bunch_params']['naming_mode'],
-                        [
-                            ("Prefix", "PREFIX"),
-                            ("Template", "TEMPLATE")
-                        ]),
-                    NestedTextParameter(
-                        'focus_stack_bunch_params', 'prefix', 'Default prefix:',
-                        DEFAULTS['focus_stack_bunch_params']['prefix']),
-                    NestedTextParameter(
-                        'focus_stack_bunch_params', 'output_file_template', 'Default template:',
-                        DEFAULTS['focus_stack_bunch_params']['output_file_template'])
-                ]),
-            ]
-        if self.retouch_settings:
-            self.retouch_parameters = [
-                ("General", [
-                    ComboBoxParameter(
-                        'retouch_view_strategy', 'View strategy:',
-                        DEFAULTS['retouch_view_strategy'],
-                        [
-                            ("Overlaid", "overlaid"),
-                            ("Side by side", "sidebyside"),
-                            ("Top-Bottom", "topbottom")
-                        ])
-                ]),
-                ("Brush Options", [
-                    SpinBoxParameter(
-                        'brush_size', 'Brush initial size:',
-                        DEFAULTS['brush_size'],
-                        gui_constants.BRUSH_SIZES['min'], gui_constants.BRUSH_SIZES['max']),
-                    DoubleSpinBoxParameter(
-                        'min_mouse_step_brush_fraction', 'Min. mouse step in brush units:',
-                        DEFAULTS['min_mouse_step_brush_fraction'], 0, 1, 0.02)
-                ]),
-                ("Refresh Times", [
-                    SpinBoxParameter(
-                        'paint_refresh_time', 'Paint refresh time:',
-                        DEFAULTS['paint_refresh_time'], 0, 1000),
-                    SpinBoxParameter(
-                        'display_refresh_time', 'Display refresh time:',
-                        DEFAULTS['display_refresh_time'], 0, 200),
-                    SpinBoxParameter(
-                        'cursor_update_time', 'Cursor refresh time:',
-                        DEFAULTS['cursor_update_time'], 0, 50)
-                ])
-            ]
+        self.project_parameters = [
+            ("General", [
+                CheckBoxParameter(
+                    'check_for_updates', 'Check for updates:',
+                    DEFAULTS['check_for_updates']),
+                ComboBoxParameter(
+                    'project_view_strategy', 'View strategy:',
+                    DEFAULTS['project_view_strategy'],
+                    [
+                        ("Modern Horizontal", "modern_horizontal"),
+                        ("Modern Vertical", "modern_vertical"),
+                        ("Classic", "classic"),
+                    ]),
+                CheckBoxParameter(
+                    'expert_options', 'Expert options:',
+                    DEFAULTS['expert_options']),
+                ComboBoxParameter(
+                    'plots_format', 'Plots format:',
+                    DEFAULTS['plots_format'],
+                    [
+                        ("PNG", "png"),
+                        ("JPEG", "jpg"),
+                        ("PDF", "pdf")
+                    ]
+                ),
+                FolderParameter(
+                    'input_folder_path', 'Input folder path:',
+                    DEFAULTS['input_folder_path'],
+                    'Path of the folder that is opened by default '
+                    'when a new project is created.'),
+                FolderParameter(
+                    'temp_folder_path', 'Scratch disk folder:',
+                    DEFAULTS['temp_folder_path'],
+                    'Temporary folder for processing files.\n'
+                    'Using a fast drive (SSD recommended) \n'
+                    'with ample free space will improve\nperformance.'),
+                CheckBoxParameter(
+                    'retouch_after_run', 'Run retouch after run',
+                    DEFAULTS['retouch_after_run'])
+            ]),
+            ("Raw Formats", [
+                NestedCheckBoxParameter(
+                    'raw_formats', 'auto_bright', 'Automatic brightness:',
+                    DEFAULTS['raw_formats']['auto_bright']),
+                NestedDoubleSpinBoxParameter(
+                    'raw_formats', 'auto_bright_thr', 'Auto-brightness threshold (%)',
+                    DEFAULTS['raw_formats']['auto_bright_thr'], 0.0, 100.0, 0.1),
+                NestedComboBoxParameter(
+                    'raw_formats', 'output_colorspace', 'Output color space:',
+                    DEFAULTS['raw_formats']['output_colorspace'],
+                    [
+                        ("sRGB", "sRGB"),
+                        ("Rec.2020", "Rec2020"),
+                        ("ACES", "ACES"),
+                        ("ProPhoto", "ProPhoto"),
+                    ],
+                    tooltip="Color space used when demosaicing RAW files.\n"
+                            "Use Rec.2020 for wide-gamut workflows (e.g. darktable)."),
+                NestedComboBoxParameter(
+                    'raw_formats', 'output_gamma', 'Output gamma:',
+                    DEFAULTS['raw_formats']['output_gamma'],
+                    [
+                        ("sRGB (display)", "sRGB"),
+                        ("Linear", "linear"),
+                    ],
+                    tooltip="Linear gamma keeps RAW data in linear light;\n"
+                            "recommended together with Rec.2020 for darktable round-trip."),
+                NestedComboBoxParameter(
+                    'raw_formats', 'demosaic_algorithm', 'Demosaic algorithm:',
+                    DEFAULTS['raw_formats']['demosaic_algorithm'],
+                    [
+                        ("AHD", "AHD"),
+                        ("DCB", "DCB"),
+                        ("VNG", "VNG"),
+                        ("PPG", "PPG"),
+                        ("AAHC", "AAHC"),
+                        ("AFD", "AFD"),
+                        ("VCD", "VCD"),
+                        ("VCD + AHD", "VCD_AHD"),
+                        ("LMMSE", "LMMSE"),
+                        ("AMAZE", "AMAZE"),
+                    ],
+                    tooltip="Demosaicing algorithm used for RAW files.\n"
+                            "AHD is a good default; AMAZE is slower but often sharper."),
+            ]),
+            ("Combined Actions", [
+                NestedSpinBoxParameter(
+                    'combined_actions_params', 'max_threads',
+                    'Max num. of cores:',
+                    DEFAULTS['combined_actions_params']['max_threads'], 0, 256)
+            ]),
+            ("Align Frames", [
+                NestedDoubleSpinBoxParameter(
+                    'align_frames_params', 'memory_limit',
+                    'Mem. limit (approx., GBytes):',
+                    DEFAULTS['align_frames_params']['memory_limit'], 1.0, 1024.0, 1.0),
+                NestedSpinBoxParameter(
+                    'align_frames_params', 'max_threads',
+                    'Max num. of cores:',
+                    DEFAULTS['align_frames_params']['max_threads'], 0, 256),
+                NestedCallbackComboBoxParameter(
+                    'align_frames_params', 'transform', 'Transform:',
+                    DEFAULTS['align_frames_params']['transform'],
+                    list(zip(self.TRANSFORM_OPTIONS, constants.VALID_TRANSFORMS))),
+                NestedCallbackComboBoxParameter(
+                    'align_frames_params', 'detector', 'Detector:',
+                    DEFAULTS['align_frames_params']['detector'],
+                    [(d, d) for d in constants.VALID_DETECTORS],
+                    tooltip=self.DETECTOR_DESCRIPTOR_TOOLTIPS['detector'],
+                    on_change=self.change_match_config_settings),
+                NestedCallbackComboBoxParameter(
+                    'align_frames_params', 'descriptor', 'Descriptor:',
+                    DEFAULTS['align_frames_params']['descriptor'],
+                    [(d, d) for d in constants.VALID_DESCRIPTORS],
+                    tooltip=self.DETECTOR_DESCRIPTOR_TOOLTIPS['descriptor'],
+                    on_change=self.change_match_config_settings),
+                NestedCallbackComboBoxParameter(
+                    'align_frames_params', 'match_method', 'Match method:',
+                    DEFAULTS['align_frames_params']['match_method'],
+                    list(zip(self.MATCHING_METHOD_OPTIONS, constants.VALID_MATCHING_METHODS)),
+                    tooltip=self.DETECTOR_DESCRIPTOR_TOOLTIPS['match_method']),
+                NestedCallbackComboBoxParameter(
+                    'align_frames_params', 'subsample', 'Subsample:',
+                    DEFAULTS['align_frames_params']['subsample'],
+                    list(zip(constants.FIELD_SUBSAMPLE_OPTIONS,
+                             constants.FIELD_SUBSAMPLE_VALUES)))
+            ]),
+            ("Focus Stacking - Common", [
+                NestedDoubleSpinBoxParameter(
+                    'focus_stack_params', 'memory_limit',
+                    'Mem. limit (approx., GBytes):',
+                    DEFAULTS['focus_stack_params']['memory_limit'], 1.0, 1024.0, 1.0),
+                NestedSpinBoxParameter(
+                    'focus_stack_params', 'max_threads', 'Max. num. of cores:',
+                    DEFAULTS['focus_stack_params']['max_threads'], 0, 256),
+            ]),
+            ("Focus Stacking - Naming", [
+                NestedComboBoxParameter(
+                    'focus_stack_params', 'naming_mode', 'Default filename mode:',
+                    DEFAULTS['focus_stack_params']['naming_mode'],
+                    [
+                        ("Prefix", "PREFIX"),
+                        ("Template", "TEMPLATE")
+                    ]),
+                NestedTextParameter(
+                    'focus_stack_params', 'prefix', 'Default prefix:',
+                    DEFAULTS['focus_stack_params']['prefix']),
+                NestedTextParameter(
+                    'focus_stack_params', 'output_file_template', 'Default template:',
+                    DEFAULTS['focus_stack_params']['output_file_template'])
+            ]),
+            ("Focus Stacking Bunches - Naming", [
+                NestedComboBoxParameter(
+                    'focus_stack_bunch_params', 'naming_mode', 'Default filename mode:',
+                    DEFAULTS['focus_stack_bunch_params']['naming_mode'],
+                    [
+                        ("Prefix", "PREFIX"),
+                        ("Template", "TEMPLATE")
+                    ]),
+                NestedTextParameter(
+                    'focus_stack_bunch_params', 'prefix', 'Default prefix:',
+                    DEFAULTS['focus_stack_bunch_params']['prefix']),
+                NestedTextParameter(
+                    'focus_stack_bunch_params', 'output_file_template', 'Default template:',
+                    DEFAULTS['focus_stack_bunch_params']['output_file_template'])
+            ]),
+        ]
+        self.retouch_parameters = [
+            ("View", [
+                ComboBoxParameter(
+                    'retouch_view_strategy', 'Stacked / frame view:',
+                    DEFAULTS['retouch_view_strategy'],
+                    [
+                        ("Overlaid", "overlaid"),
+                        ("Side by side", "sidebyside"),
+                        ("Top-Bottom", "topbottom")
+                    ])
+            ]),
+            ("Brush Options", [
+                SpinBoxParameter(
+                    'brush_size', 'Brush initial size:',
+                    DEFAULTS['brush_size'],
+                    gui_constants.BRUSH_SIZES['min'], gui_constants.BRUSH_SIZES['max']),
+                DoubleSpinBoxParameter(
+                    'min_mouse_step_brush_fraction', 'Min. mouse step in brush units:',
+                    DEFAULTS['min_mouse_step_brush_fraction'], 0, 1, 0.02)
+            ]),
+            ("Refresh Times", [
+                SpinBoxParameter(
+                    'paint_refresh_time', 'Paint refresh time:',
+                    DEFAULTS['paint_refresh_time'], 0, 1000),
+                SpinBoxParameter(
+                    'display_refresh_time', 'Display refresh time:',
+                    DEFAULTS['display_refresh_time'], 0, 200),
+                SpinBoxParameter(
+                    'cursor_update_time', 'Cursor refresh time:',
+                    DEFAULTS['cursor_update_time'], 0, 50)
+            ])
+        ]
 
     def create_form_content(self):
         self.tab_widget = create_tab_widget(self.container_layout)
-        if self.project_settings:
-            project_tab_layout = add_tab(self.tab_widget, "Project Settings")
-            self.create_project_settings(project_tab_layout)
-        if self.retouch_settings:
-            retouch_tab_layout = add_tab(self.tab_widget, "Retouch Settings")
-            self.create_retouch_settings(retouch_tab_layout)
+        general_tab_layout = add_tab(self.tab_widget, "General")
+        self.create_project_settings(general_tab_layout, groups=['General'])
+        raw_tab_layout = add_tab(self.tab_widget, "Raw Formats")
+        self.create_project_settings(raw_tab_layout, groups=['Raw Formats'])
+        project_tab_layout = add_tab(self.tab_widget, "Project Settings")
+        self.create_project_settings(project_tab_layout, groups=[
+            "Combined Actions",
+            "Align Frames",
+            "Focus Stacking - Common",
+            "Focus Stacking - Naming",
+            "Focus Stacking Bunches - Naming",
+        ])
+        retouch_tab_layout = add_tab(self.tab_widget, "Retouch Settings")
+        self.create_retouch_settings(retouch_tab_layout)
 
-    def create_project_settings(self, layout=None):
+    def create_project_settings(self, layout=None, groups=None):
         if layout is None:
             layout = self.container_layout
         for group_name, parameters in self.project_parameters:
+            if groups is not None and group_name not in groups:
+                continue
             label = QLabel(group_name + ":")
             label.setStyleSheet("font-weight: bold; margin-top: 10px;")
             layout.addRow(label)
@@ -497,9 +503,10 @@ class SettingsDialog(ConfigDialog, AlignFramesConfigBase):
                 widget = param.create_widget(self)
                 param.set_value(self._get_current_value(param))
                 layout.addRow(param.label, widget)
-        self.info_label = QLabel()
-        self.info_label.setStyleSheet("color: orange; font-style: italic;")
-        layout.addRow(self.info_label)
+        if groups is None or "General" in groups:
+            self.info_label = QLabel()
+            self.info_label.setStyleSheet("color: orange; font-style: italic;")
+            layout.addRow(self.info_label)
 
     def create_retouch_settings(self, layout=None):
         if layout is None:
@@ -550,10 +557,8 @@ class SettingsDialog(ConfigDialog, AlignFramesConfigBase):
             for param in parameters:
                 self._set_current_value(param, param.get_value())
         self.settings.update()
-        if self.project_settings:
-            self.update_project_config_requested.emit()
-        if self.retouch_settings:
-            self.update_retouch_config_requested.emit()
+        self.update_project_config_requested.emit()
+        self.update_retouch_config_requested.emit()
         super().accept()
 
     def reset_to_defaults(self):
@@ -566,8 +571,8 @@ class SettingsDialog(ConfigDialog, AlignFramesConfigBase):
 
 
 def show_settings_dialog(
-        parent, project_settings, retouch_settings, handle_project_config, handle_retouch_config):
-    dialog = SettingsDialog(parent, project_settings, retouch_settings)
+        parent, handle_project_config, handle_retouch_config):
+    dialog = SettingsDialog(parent)
     dialog.update_project_config_requested.connect(handle_project_config)
     dialog.update_retouch_config_requested.connect(handle_retouch_config)
     dialog.exec()

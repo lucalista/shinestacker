@@ -158,7 +158,7 @@ class MainApp(QMainWindow):
         app_menu.addAction(self.switch_to_project_action)
         app_menu.addAction(self.switch_to_retouch_action)
         app_menu.addSeparator()
-        fill_app_menu(self, app_menu, True, True,
+        fill_app_menu(self, app_menu,
                       self.project_window.handle_config,
                       self.retouch_window.handle_config)
         return app_menu
