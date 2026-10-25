@@ -1,6 +1,14 @@
 # Changelog
 
-## [v1.17.2] - 2026-10-24
+## [v1.17.3] - 2026-10-25
+**Fixed external package metadata**
+
+## Fixed
+- Fixed tifftools metadata for build. The previous release crashed at startup due to this build problem (#87, #89)
+
+---
+
+## [v1.17.2] - 2026-10-24 (⚠️ DEPRECATED — use 1.17.3)
 **User pull requests and more fixes**
 
 ### Fixed

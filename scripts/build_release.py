@@ -32,6 +32,7 @@ def build_pyinstaller_command(sys_name, dist_dir, project_name, app_name, hooks_
             "--collect-data=imagecodecs",
             "--collect-submodules=imagecodecs",
             "--copy-metadata=imagecodecs",
+            "--copy-metadata=tifftools",
             "src/shinestacker/app/main.py"
         ]
     elif sys_name == 'windows':
