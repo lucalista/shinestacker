@@ -3,7 +3,7 @@
 ## [v1.17.5] - 2026-10-26
 **Fixed raw file input**
 
-## Fixed
+### Fixed
 - Crash while reading raw file input (#91)
 - Suppress console warnings
 
@@ -12,7 +12,7 @@
 ## [v1.17.4] - 2026-10-26
 **Fixed external package metadata**
 
-## Fixed
+### Fixed
 - Fixed tifftools metadata for Linux and Windows build. The previous release only fixed macOS build (#89, #90)
 
 ---
@@ -23,7 +23,7 @@
 ### ⚠️ DEPRECATED on Windows and Linux
 — **use 1.17.4**
 
-## Fixed
+### Fixed
 - Fixed tifftools metadata for build. The previous release crashed at startup due to this build problem (#87, #89)
 
 ---
