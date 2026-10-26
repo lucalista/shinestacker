@@ -44,7 +44,9 @@ def build_pyinstaller_command(sys_name, dist_dir, project_name, app_name, hooks_
             "--icon=src/shinestacker/gui/ico/shinestacker.ico",
             f"--collect-all={project_name}",
             "--collect-data=imagecodecs", "--collect-submodules=imagecodecs",
-            "--copy-metadata=imagecodecs", f"--additional-hooks-dir={hooks_dir}",
+            "--copy-metadata=imagecodecs",
+            "--copy-metadata=tifftools",
+            f"--additional-hooks-dir={hooks_dir}",
             "src/shinestacker/app/main.py"
         ]
     else:
@@ -55,7 +57,9 @@ def build_pyinstaller_command(sys_name, dist_dir, project_name, app_name, hooks_
             "--paths=src",
             f"--collect-all={project_name}",
             "--collect-data=imagecodecs", "--collect-submodules=imagecodecs",
-            "--copy-metadata=imagecodecs", f"--additional-hooks-dir={hooks_dir}",
+            "--copy-metadata=imagecodecs",
+            "--copy-metadata=tifftools",
+            f"--additional-hooks-dir={hooks_dir}",
             "src/shinestacker/app/main.py"
         ]
 
