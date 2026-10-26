@@ -126,8 +126,8 @@ def read_img(file_path):
             'ProPhoto': rawpy.ColorSpace.ProPhoto,
         }
         gamma_map = {
-            'sRGB': (2.4, 12.92, 0.055, 0.0031308),
-            'linear': (1.0, 1.0, 0.0, 0.0),
+            'sRGB': (2.4, 12.92),
+            'linear': (1.0, 1.0),
         }
         with rawpy.imread(file_path) as raw:
             rgb = raw.postprocess(

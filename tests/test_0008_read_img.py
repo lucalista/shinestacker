@@ -1,6 +1,9 @@
+import os
+import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 import numpy as np
+import rawpy
 from shinestacker.algorithms.utils import read_img
 
 test_path_tif = 'examples/input/img-tif/0000.tif'
@@ -63,6 +66,43 @@ class TestReadImgFallback(unittest.TestCase):
         mock_cv2.return_value = None
         img = read_img(test_path_png)
         assert img is None
+
+
+class TestReadImgRaw(unittest.TestCase):
+    """Regression test: rawpy's Params() asserts len(gamma) == 2."""
+
+    def _read_raw_with_gamma(self, gamma_name):
+        raw_cfg = {
+            'auto_bright': True,
+            'auto_bright_thr': 1.0,
+            'output_colorspace': 'sRGB',
+            'output_gamma': gamma_name,
+            'demosaic_algorithm': 'AHD',
+        }
+
+        def fake_postprocess(**kwargs):
+            # Builds the same Params object rawpy.RawPy.postprocess() builds,
+            # so invalid arguments fail exactly as with a real RAW file.
+            rawpy.Params(**kwargs)
+            return np.zeros((10, 10, 3), dtype=np.uint16)
+
+        fake_raw = MagicMock()
+        fake_raw.__enter__.return_value.postprocess.side_effect = fake_postprocess
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = os.path.join(tmp_dir, 'test.ARW')
+            with open(path, 'wb') as f:
+                f.write(b'')
+            with patch('shinestacker.algorithms.utils.AppConfig.get', return_value=raw_cfg), \
+                    patch('rawpy.imread', return_value=fake_raw):
+                return read_img(path)
+
+    def test_raw_gamma_srgb(self):
+        img = self._read_raw_with_gamma('sRGB')
+        assert img.shape == (10, 10, 3)
+
+    def test_raw_gamma_linear(self):
+        img = self._read_raw_with_gamma('linear')
+        assert img.shape == (10, 10, 3)
 
 
 if __name__ == '__main__':
