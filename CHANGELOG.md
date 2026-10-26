@@ -1,5 +1,14 @@
 # Changelog
 
+## [v1.17.5] - 2026-10-26
+**Fixed raw file input**
+
+## Fixed
+- Crash while reading raw file input (#91)
+- Suppress console warnings
+
+---
+
 ## [v1.17.4] - 2026-10-26
 **Fixed external package metadata**
 
