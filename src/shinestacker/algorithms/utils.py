@@ -126,8 +126,8 @@ def read_img(file_path):
             'ProPhoto': rawpy.ColorSpace.ProPhoto,
         }
         gamma_map = {
-            'sRGB': (2.4, 12.92, 0.055, 0.0031308),
-            'linear': (1.0, 1.0, 0.0, 0.0),
+            'sRGB': (2.4, 12.92),
+            'linear': (1.0, 1.0),
         }
         with rawpy.imread(file_path) as raw:
             rgb = raw.postprocess(
@@ -164,7 +164,6 @@ def read_img(file_path):
 
 
 def read_icc_profile(file_path):
-    """ICC profile embedded in an image file (bytes), or None."""
     try:
         with Image.open(file_path) as image:
             icc = image.info.get('icc_profile')
@@ -174,8 +173,6 @@ def read_icc_profile(file_path):
 
 
 def write_img(file_path, img, icc_profile=None):
-    """Write an image (BGR/BGRA channel order). icc_profile (bytes) is embedded
-    in TIFF output; the other formats ignore it."""
     if img is None:
         raise RuntimeError("Trying to write null image.")
     check_windows_path(file_path)
@@ -216,7 +213,6 @@ def split_alpha(img):
 
 
 def merge_alpha(color, alpha):
-    """Re-attach an alpha channel; alpha may be (h, w) or (h, w, 1)."""
     if alpha is None:
         return color
     if alpha.ndim == 2:

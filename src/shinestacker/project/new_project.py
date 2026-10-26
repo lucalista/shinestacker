@@ -1,5 +1,6 @@
 # pylint: disable=C0114, C0115, C0116, E0611, R0915, R0902, R0914, R0911, R0912, R0904, W0718
 import os
+import traceback
 import numpy as np
 from PySide6.QtWidgets import (QHBoxLayout, QLabel, QCheckBox, QSpinBox, QDialog,
                                QMessageBox, QGroupBox, QVBoxLayout, QFormLayout, QSizePolicy)
@@ -300,8 +301,9 @@ class NewProjectDialog(BaseFormDialog):
         try:
             img = read_img(file_path)
         except Exception as e:
+            traceback.print_exc()
             QMessageBox.warning(
-                self, "Invalid input", f"Could not read images file {file_path}:\n{str(e)}")
+                self, "Invalid input", f"Invalid images file {file_path}:\n{str(e)}")
             return 0, 0, 0, 0
         if img is None:
             QMessageBox.warning(

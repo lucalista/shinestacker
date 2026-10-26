@@ -160,9 +160,11 @@ class FrameStatusBox(QWidget):
         self.setMouseTracking(True)
         self.setAttribute(Qt.WA_Hover, True)
 
-    def set_total_actions(self, total_actions):
-        self.total_actions = total_actions
-        self._update_tooltip_content()
+    def set_total_actions(self, filename, total_actions):
+        key = os.path.basename(filename)
+        widget = self.frame_widgets.get(key)
+        if widget is not None:
+            widget.set_total_actions(total_actions)
 
     def update_status(self, status_id):
         pending_color = (200, 200, 200)
@@ -306,17 +308,17 @@ class PreprocessingStatusWidget(QWidget):
 
     def set_total_actions(self, filename, total_actions):
         key = os.path.basename(filename)
-        if key in self.frame_widgets:
-            self.frame_widgets[key].set_total_actions(total_actions)
+        widget = self.frame_widgets.get(key)
+        if widget is not None:
+            widget.set_total_actions(total_actions)
         else:
             raise RuntimeError(f"Unknown filename {key}")
 
     def update_frame_status(self, filename, status_id):
         key = os.path.basename(filename)
-        if key in self.frame_widgets:
-            self.frame_widgets[key].update_status(status_id)
-        else:
-            raise RuntimeError(f"Unknown filename {key}")
+        widget = self.frame_widgets.get(key)
+        if widget is not None:
+            widget.update_status(status_id)
 
     def resizeEvent(self, event):
         new_size = event.size()
