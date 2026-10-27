@@ -81,6 +81,7 @@ class PyramidAutoStack(BaseStackAlgo):
     def init_implementation(self, impl):
         impl.init(self.filenames)
         impl.set_do_step_callback(self.do_step_callback)
+        impl.set_output_filename(self.output_filename)
         if self.process is not None:
             impl.set_process(self.process)
         else:
@@ -116,7 +117,9 @@ class PyramidAutoStack(BaseStackAlgo):
         return {'tile_size': tile_size, 'n_tiled_layers': n_tiled_layers}
 
     def set_output_filename(self, filename):
-        self._implementation.set_output_filename(filename)
+        super().set_output_filename(filename)
+        if self._implementation is not None:
+            self._implementation.set_output_filename(filename)
 
     def set_process(self, process):
         super().set_process(process)

@@ -351,3 +351,30 @@ def test_safe_cleanup_with_retry():
         pts._safe_cleanup()
         assert pts.cleanup_temp_files.call_count == 2
         mock_sleep.assert_called_once_with(1)
+
+
+def test_auto_fallback_keeps_output_filename(example_images):
+    from shinestacker.config.constants import constants
+    from shinestacker.algorithms.pyramid_auto import PyramidAutoStack
+    from shinestacker.core.exceptions import RunStopException
+    calls = []
+
+    def callback(name, *args):
+        if name in (constants.CALLBACKS_SET_TOTAL_ACTIONS,
+                    constants.CALLBACK_UPDATE_FRAME_STATUS):
+            calls.append((args[0], args[1]))
+        return True
+
+    process = MagicMock()
+    process.callback = callback
+    process.name = 'stack-action'
+    process.output_path = 'stack-output'
+    process.input_path = 'input'
+    stack = PyramidAutoStack(mode='auto', memory_limit=0.1, max_threads=1)
+    stack.set_process(process)
+    stack.init(example_images)
+    stack.set_output_filename('stack_0000_pyram.jpg')
+    stack._implementation.focus_stack = MagicMock(side_effect=RunStopException('test'))
+    stack.focus_stack()
+    output_keys = {filename for module, filename in calls if module == 'stack-output'}
+    assert output_keys == {'stack_0000_pyram.jpg'}

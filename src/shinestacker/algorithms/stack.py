@@ -94,7 +94,7 @@ class FocusStackBase(TaskBase, ImageSequenceManager):
         resolved_filename = self.resolve_output_filename(base_output)
         output_filename = os.path.join(self.output_full_path(), resolved_filename)
         filename = os.path.basename(output_filename)
-        self.callback(constants.CALLBACK_UPDATE_FRAME_STATUS, self.name, filename, 0)
+        self.callback(constants.CALLBACK_UPDATE_FRAME_STATUS, self.output_path, filename, 0)
         n_frames = len(filenames)
         if n_frames > 1:
             self.sub_message_r(
