@@ -412,11 +412,11 @@ class MainWindow(ProjectHandler, QMainWindow):
             self.set_enabled_file_open_close_actions(True)
             self.show_status_message("New project created.")
 
-    def new_project_silent(self, path):
+    def new_project_silent(self, path, bunch_params=None):
         os.chdir(get_app_base_path())
         self.reset_project()
         self.update_title()
-        self._create_default_project(path)
+        self._create_default_project(path, bunch_params)
         self.element_action.mark_as_modified()
         for view in self.views.values():
             view.clear_project()
@@ -425,7 +425,7 @@ class MainWindow(ProjectHandler, QMainWindow):
         self.set_enabled_file_open_close_actions(True)
         self.show_status_message(f"New project created from {path}")
 
-    def _create_default_project(self, path):
+    def _create_default_project(self, path, bunch_params=None):
         working_path, input_path = os.path.split(os.path.normpath(path))
         base_name = input_path if input_path else 'shinestacker'
         job_params = {
@@ -444,6 +444,11 @@ class MainWindow(ProjectHandler, QMainWindow):
             constants.ACTION_BALANCEFRAMES, {'name': 'balance'})
         combo_action.add_sub_action(balance)
         job.add_sub_action(combo_action)
+        if bunch_params is not None:
+            bunch_stack = ActionConfig(
+                constants.ACTION_FOCUSSTACKBUNCH,
+                {'name': f'{base_name}-bunches', **bunch_params})
+            job.add_sub_action(bunch_stack)
         focus_stack = ActionConfig(
             constants.ACTION_FOCUSSTACK,
             {'name': f'{base_name}-focus-stack-pyramid',
@@ -453,8 +458,8 @@ class MainWindow(ProjectHandler, QMainWindow):
         job.add_sub_action(focus_stack)
         self.project().jobs.append(job)
 
-    def new_project_silent_and_run(self, path):
-        self.new_project_silent(path)
+    def new_project_silent_and_run(self, path, bunch_params=None):
+        self.new_project_silent(path, bunch_params)
         self.run_all_jobs()
 
     def close_project(self):

@@ -1,5 +1,7 @@
 # pylint: disable=C0114, C0116
 import sys
+from shinestacker.config.defaults import DEFAULTS
+from shinestacker.config.gui_constants import gui_constants
 
 
 def add_project_arguments(parser):
@@ -16,6 +18,16 @@ input folder path for new project.
     parser.add_argument('-s', '--start', action='store_true', help='''
 Automatically run scheduled jobs at startup.
 ''')
+    parser.add_argument('-b', '--bunches', action='store_true', help='''
+with --path and --start: add a focus stack bunch step to the new project
+(stack groups of frames first, then stack the resulting bunches).
+''')
+    parser.add_argument('--bunch-frames', type=int, default=None, help='''
+frames per bunch (implies --bunches).
+''')
+    parser.add_argument('--bunch-overlap', type=int, default=None, help='''
+overlap between bunches (implies --bunches).
+''')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-e', '--enable-auto-retouch', action='store_true',
                        dest='auto_retouch', help='''
@@ -24,6 +36,26 @@ Enable retouch after run at startup''')
                        dest='auto_retouch', help='''
 Disable retouch after run at startup''')
     parser.set_defaults(auto_retouch=None)
+
+
+def get_bunch_params(args):
+    if not (args.bunches or args.bunch_frames is not None or args.bunch_overlap is not None):
+        return None
+    defaults = DEFAULTS['focus_stack_bunch_params']
+    params = {
+        'frames': defaults['frames'] if args.bunch_frames is None else args.bunch_frames,
+        'overlap': defaults['overlap'] if args.bunch_overlap is None else args.bunch_overlap
+    }
+    for key, limits in (('frames', gui_constants.NEW_PROJECT_BUNCH_FRAMES),
+                        ('overlap', gui_constants.NEW_PROJECT_BUNCH_OVERLAP)):
+        if not limits['min'] <= params[key] <= limits['max']:
+            print(f"--bunch-{key} must be between {limits['min']} and {limits['max']}",
+                  file=sys.stderr)
+            sys.exit(1)
+    if params['overlap'] >= params['frames']:
+        print("--bunch-overlap must be smaller than --bunch-frames", file=sys.stderr)
+        sys.exit(1)
+    return params
 
 
 def add_retouch_arguments(parser):
@@ -46,7 +78,8 @@ set top-bottom view.
 def extract_positional_filename():
     positional_filename = None
     filtered_args = []
-    value_flags = {'-p', '--path', '-i', '--image-folder', '-f', '--filename'}
+    value_flags = {'-p', '--path', '-i', '--image-folder', '-f', '--filename',
+                   '--bunch-frames', '--bunch-overlap'}
     consume_next = False
     for arg in sys.argv[1:]:
         if consume_next:
