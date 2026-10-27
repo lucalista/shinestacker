@@ -160,11 +160,9 @@ class FrameStatusBox(QWidget):
         self.setMouseTracking(True)
         self.setAttribute(Qt.WA_Hover, True)
 
-    def set_total_actions(self, filename, total_actions):
-        key = os.path.basename(filename)
-        widget = self.frame_widgets.get(key)
-        if widget is not None:
-            widget.set_total_actions(total_actions)
+    def set_total_actions(self, total_actions):
+        self.total_actions = total_actions
+        self._update_tooltip_content()
 
     def update_status(self, status_id):
         pending_color = (200, 200, 200)
