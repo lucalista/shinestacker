@@ -14,7 +14,7 @@ from .. config.app_config import AppConfig
 from .. core.exceptions import RunStopException
 from .. core.colors import color_str
 from .. core.core_utils import make_chunks
-from .utils import read_img, img_bw
+from .utils import read_img, img_bw, get_output_filename
 from .align import AlignFramesBase
 from .transform_estimate import check_transform
 
@@ -69,6 +69,13 @@ class AlignFramesParallel(AlignFramesBase):
                     self._img_shapes[idx] = img.shape
             return self._img_cache[idx]
 
+    @staticmethod
+    def frame_status_name(input_filepath):
+        # frame status boxes are registered under the output file name
+        # (see CombinedActions.begin), which differs from the input name
+        # for RAW input files (e.g. DSC00001.ARW -> DSC00001.tif)
+        return os.path.basename(get_output_filename(input_filepath))
+
     def submit_threads(self, idxs, imgs):
         with ThreadPoolExecutor(max_workers=len(imgs)) as executor:
             future_to_index = {}
@@ -77,12 +84,12 @@ class AlignFramesParallel(AlignFramesBase):
                     f"submit alignment matches, {self.image_str(idx)}")
                 future = executor.submit(self.find_transform, idx)
                 future_to_index[future] = idx
-                filename = os.path.basename(self.process.input_filepath(idx))
+                filename = self.frame_status_name(self.process.input_filepath(idx))
                 self.process.callback(constants.CALLBACK_UPDATE_FRAME_STATUS,
-                                      self.process.name, filename, 100)
+                                      self.process.output_path, filename, 100)
             for future in as_completed(future_to_index):
                 idx = future_to_index[future]
-                filename = os.path.basename(self.process.input_filepath(idx))
+                filename = self.frame_status_name(self.process.input_filepath(idx))
                 try:
                     info_messages, warning_messages = future.result()
                     message = f"{self.image_str(idx)}: " \
@@ -146,9 +153,9 @@ class AlignFramesParallel(AlignFramesBase):
         sub_img_filepaths = copy.deepcopy(input_filepaths)
         ref_filepath = input_filepaths[ref_idx]
         sub_img_filepaths.remove(ref_filepath)
-        filename = os.path.basename(ref_filepath)
+        filename = self.frame_status_name(ref_filepath)
         self.process.callback(constants.CALLBACK_UPDATE_FRAME_STATUS,
-                              self.process.name, filename, 101)
+                              self.process.output_path, filename, 101)
         self.step_counter = 0
         if self.chunk_submit:
             img_chunks = make_chunks(sub_img_filepaths, max_chunk_size)

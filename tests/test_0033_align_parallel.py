@@ -580,3 +580,10 @@ if __name__ == '__main__':
     test_find_transform_max_delta_reached()
     test_find_transform_phase_correlation_fallback()
     test_find_transform_invalid_transform_abort()
+
+
+def test_frame_status_name_matches_output_file():
+    # status boxes are keyed by output file name; RAW inputs are written as .tif
+    assert AlignFramesParallel.frame_status_name("/in/DSC00196.ARW") == "DSC00196.tif"
+    assert AlignFramesParallel.frame_status_name("/in/img.JPG") == "img.jpg"
+    assert AlignFramesParallel.frame_status_name("/in/img.tif") == "img.tif"
