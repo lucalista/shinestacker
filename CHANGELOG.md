@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.17.x] - 2026-10-29
+**Linux fix**
+
+## Fixed
+- Launch external viewer/file manager with a clean environment (#95)
+
+---
+
 ## [v1.17.5] - 2026-10-29
 **Fixes, including RAW format input, and new CLI options**
 

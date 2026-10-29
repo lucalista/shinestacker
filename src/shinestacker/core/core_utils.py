@@ -44,15 +44,6 @@ def running_under_linux() -> bool:
 
 
 def external_process_env():
-    """Environment for launching external programs (image viewer, file manager).
-
-    A PyInstaller bundle points LD_LIBRARY_PATH (DYLD_LIBRARY_PATH on macOS)
-    and some Qt variables at its own _internal directory. Child processes
-    inherit them, so e.g. a KDE/GNOME image viewer started via xdg-open loads
-    the bundled Qt libraries and plugins instead of the system ones and fails.
-    Restore the values PyInstaller saved in *_ORIG and drop every other
-    variable that points into the bundle.
-    """
     env = dict(os.environ)
     if not getattr(sys, 'frozen', False):
         return env
