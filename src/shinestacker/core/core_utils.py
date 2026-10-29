@@ -43,6 +43,33 @@ def running_under_linux() -> bool:
     return platform.system().lower() == 'linux'
 
 
+def external_process_env():
+    """Environment for launching external programs (image viewer, file manager).
+
+    A PyInstaller bundle points LD_LIBRARY_PATH (DYLD_LIBRARY_PATH on macOS)
+    and some Qt variables at its own _internal directory. Child processes
+    inherit them, so e.g. a KDE/GNOME image viewer started via xdg-open loads
+    the bundled Qt libraries and plugins instead of the system ones and fails.
+    Restore the values PyInstaller saved in *_ORIG and drop every other
+    variable that points into the bundle.
+    """
+    env = dict(os.environ)
+    if not getattr(sys, 'frozen', False):
+        return env
+    for var in ('LD_LIBRARY_PATH', 'DYLD_LIBRARY_PATH'):
+        orig = env.pop(var + '_ORIG', None)
+        if orig is not None:
+            env[var] = orig
+        else:
+            env.pop(var, None)
+    bundle_dir = getattr(sys, '_MEIPASS', None)
+    if bundle_dir:
+        for key in list(env):
+            if key != 'PATH' and bundle_dir in env[key]:
+                del env[key]
+    return env
+
+
 def make_chunks(ll, max_size):
     return [ll[i:i + max_size] for i in range(0, len(ll), max_size)]
 

@@ -5,7 +5,7 @@ import traceback
 from PySide6.QtCore import Signal, Qt
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QWidget, QMenu, QMessageBox
-from .. core.core_utils import running_under_windows, running_under_macos
+from .. core.core_utils import running_under_windows, running_under_macos, external_process_env
 from .. config.app_config import AppConfig
 from .. config.constants import constants
 from .. gui.gui_logging import LogManager
@@ -83,6 +83,7 @@ class ProjectView(QWidget, LogManager, ProjectHandler):
                         # pylint: disable-next=consider-using-with
                         subprocess.Popen(
                             [cmd, os.path.normpath(p)],
+                            env=external_process_env(),
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.DEVNULL,
                             start_new_session=True,
