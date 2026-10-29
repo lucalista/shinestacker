@@ -11,7 +11,7 @@ from PySide6.QtPdfWidgets import QPdfView
 from PySide6.QtCore import Qt, QMargins
 from PySide6.QtGui import QPixmap, QImage
 from .. config.gui_constants import gui_constants
-from .. core.core_utils import running_under_windows, running_under_macos
+from .. core.core_utils import running_under_windows, running_under_macos, external_process_env
 from .. algorithms.utils import read_img
 
 
@@ -28,14 +28,23 @@ def open_file(file_path, parent_widget=None):
             QMessageBox.StandardButton.Ok
         )
         return
-    if running_under_macos():
-        with subprocess.Popen(['open', file_path]):
-            pass
-    elif running_under_windows():
+    if running_under_windows():
         os.startfile(file_path)
-    else:
-        with subprocess.Popen(['xdg-open', file_path]):
-            pass
+        return
+    cmd = 'open' if running_under_macos() else 'xdg-open'
+    try:
+        # pylint: disable-next=consider-using-with
+        subprocess.Popen(
+            [cmd, file_path],
+            env=external_process_env(),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    except OSError as e:
+        QMessageBox.warning(
+            parent_widget, "Cannot Open File",
+            f"Failed to open '{file_path}' with '{cmd}'.\n\n{e}")
 
 
 class GuiPdfView(QPdfView):

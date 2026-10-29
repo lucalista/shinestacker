@@ -102,3 +102,42 @@ class TestCoreUtils(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class TestExternalProcessEnv(unittest.TestCase):
+
+    def test_not_frozen_returns_unchanged_copy(self):
+        from shinestacker.core.core_utils import external_process_env
+        with patch.dict('os.environ', {'LD_LIBRARY_PATH': '/x'}, clear=False), \
+                patch('sys.frozen', False, create=True):
+            env = external_process_env()
+            self.assertEqual(env['LD_LIBRARY_PATH'], '/x')
+
+    def test_frozen_restores_orig_and_drops_bundle_vars(self):
+        from shinestacker.core.core_utils import external_process_env
+        bundle = '/opt/shinestacker/_internal'
+        fake_env = {
+            'LD_LIBRARY_PATH': bundle,
+            'LD_LIBRARY_PATH_ORIG': '/usr/local/lib',
+            'QT_PLUGIN_PATH': bundle + '/PySide6/Qt/plugins',
+            'PATH': '/usr/bin',
+            'HOME': '/home/u',
+        }
+        with patch.dict('os.environ', fake_env, clear=True), \
+                patch('sys.frozen', True, create=True), \
+                patch('sys._MEIPASS', bundle, create=True):
+            env = external_process_env()
+        self.assertEqual(env['LD_LIBRARY_PATH'], '/usr/local/lib')
+        self.assertNotIn('LD_LIBRARY_PATH_ORIG', env)
+        self.assertNotIn('QT_PLUGIN_PATH', env)
+        self.assertEqual(env['PATH'], '/usr/bin')
+        self.assertEqual(env['HOME'], '/home/u')
+
+    def test_frozen_without_orig_removes_ld_library_path(self):
+        from shinestacker.core.core_utils import external_process_env
+        bundle = '/opt/shinestacker/_internal'
+        with patch.dict('os.environ', {'LD_LIBRARY_PATH': bundle}, clear=True), \
+                patch('sys.frozen', True, create=True), \
+                patch('sys._MEIPASS', bundle, create=True):
+            env = external_process_env()
+        self.assertNotIn('LD_LIBRARY_PATH', env)
