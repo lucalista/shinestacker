@@ -1,7 +1,7 @@
 # Changelog
 
 ## [v1.17.5] - 2026-10-29
-**Fixes and new CLI options**
+**Fixes, including RAW format input, and new CLI options**
 
 ### Fixed
 - crash while reading raw file input (#91)
