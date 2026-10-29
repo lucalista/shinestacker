@@ -1,11 +1,17 @@
 # Changelog
 
-## [v1.17.5] - 2026-10-26
-**Fixed raw file input**
+## [v1.17.5] - 2026-10-29
+**Fixes and new CLI options**
 
 ### Fixed
-- Crash while reading raw file input (#91)
-- Suppress console warnings
+- crash while reading raw file input (#91)
+- suppress console warnings
+- unknown filename undefined in CLI project start (```-p <path> --start```) (#94)
+
+### Added
+- new CLI options (default behaviour unchanged) (#94):
+    - ```-b/--bunches```: insert a "focus stack bunch" step between align/balance and the final pyramid stack, using the new-project dialog defaults (10 frames, overlap 2)
+    - ```--bunch-frames N``` (1–20) and ```--bunch-overlap N``` (0–10): override the defaults; either one enables bunches implicitly; overlap must be smaller than frames
 
 ---
 
@@ -13,7 +19,7 @@
 **Fixed external package metadata**
 
 ### Fixed
-- Fixed tifftools metadata for Linux and Windows build. The previous release only fixed macOS build (#89, #90)
+- fixed ```tifftools``` metadata for Linux and Windows build. The previous release only fixed macOS build (#89, #90)
 
 ---
 
@@ -24,7 +30,7 @@
 — **use 1.17.4**
 
 ### Fixed
-- Fixed tifftools metadata for build. The previous release crashed at startup due to this build problem (#87, #89)
+- fixed ```tifftools``` metadata for build. The previous release crashed at startup due to this build problem (#87, #89)
 
 ---
 
@@ -35,11 +41,11 @@
 — **use 1.17.4**
 
 ### Fixed
-- Pylint CI script fixed for pull requests, and updated to python 3.14
-- Fixed some default parameter values in documentation (#78)
-- Aligment retries using SIFT detector and descriptor methods in case ORB fails (#77)
+- pylint CI script fixed for pull requests, and updated to python 3.14
+- fixed some default parameter values in documentation (#78)
+- aligment retries using SIFT detector and descriptor methods in case ORB fails (#77)
 - TIFF output: write Exif tags into the Exif IFD (#84)
-- Spawn child processes in the background (#85)
+- spawn child processes in the background (#85)
 
 ### Changed
 - FocusStack: keep the source colour profile without EXIF copying (#79)
