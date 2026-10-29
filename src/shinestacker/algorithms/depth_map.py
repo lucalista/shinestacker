@@ -241,7 +241,7 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
                     energies[i] = energy_map
         self.steps_count += 1
         self.process.callback(constants.CALLBACK_UPDATE_FRAME_STATUS,
-                              self.process.name, self.output_filename,
+                              self.process.output_path, self.output_filename,
                               self.steps_count)
         self.print_message(": create focus map")
         step_count[0] += 1
@@ -277,7 +277,7 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
             self.save_depth_map_plot(weights)
         result = self.weighted_pyramid_blend(weights, step_count)
         self.process.callback(constants.CALLBACK_UPDATE_FRAME_STATUS,
-                              self.process.name, self.output_filename,
+                              self.process.output_path, self.output_filename,
                               self.steps_count)
         return result
 

@@ -20,7 +20,7 @@ from shinestacker.app.help_menu import add_help_action
 from shinestacker.app.open_frames import open_frames
 from shinestacker.app.args_parser_opts import (
     add_project_arguments, add_retouch_arguments, extract_positional_filename,
-    setup_filename_argument, process_filename_argument
+    setup_filename_argument, process_filename_argument, get_bunch_params
 )
 from shinestacker.app.gui_utils import make_app
 from shinestacker.app.about_dialog import show_update_dialog
@@ -250,6 +250,11 @@ open retouch window at startup instead of project window.
     if args.path and args.image_folder:
         print("can't specify both arguments --path and --image-folder", file=sys.stderr)
         sys.exit(1)
+    bunch_params = get_bunch_params(args)
+    if bunch_params is not None and not (args.path and args.start):
+        print("--bunches, --bunch-frames and --bunch-overlap require --path and --start",
+              file=sys.stderr)
+        sys.exit(1)
     app = make_app(Application)
     main_app = MainApp()
     app.main_app = main_app
@@ -283,7 +288,8 @@ open retouch window at startup instead of project window.
         main_app.switch_to_project()
         if args.start:
             QTimer.singleShot(
-                100, lambda: main_app.project_window.new_project_silent_and_run(args.path))
+                100, lambda: main_app.project_window.new_project_silent_and_run(
+                    args.path, bunch_params))
         else:
             QTimer.singleShot(
                 100, lambda: main_app.project_window.new_project(args.path))
