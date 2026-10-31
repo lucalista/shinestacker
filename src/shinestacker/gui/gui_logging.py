@@ -1,4 +1,4 @@
-# pylint: disable=E0611, W0212, R0903
+# pylint: disable=W0212, R0903
 import logging
 from PySide6.QtWidgets import QWidget, QTextEdit, QMessageBox, QStatusBar
 from PySide6.QtGui import QTextCursor, QTextOption, QFont

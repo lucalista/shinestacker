@@ -1,4 +1,4 @@
-# pylint: disable=E1101, E0606
+# pylint: disable=E0606
 import numpy as np
 import cv2
 from .utils import bgr_to_lab, lab_to_bgr

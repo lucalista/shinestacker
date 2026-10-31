@@ -1,4 +1,4 @@
-# pylint: disable=E0611, R0913, R0917, E1121, W0223
+# pylint: disable=R0913, R0917, E1121, W0223
 import os
 from abc import ABC, abstractmethod
 from PySide6.QtCore import Signal

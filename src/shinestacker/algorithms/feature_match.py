@@ -1,4 +1,4 @@
-# pylint: disable=R0913, R0903, E1101, W0718, R0914, R0917
+# pylint: disable=R0913, R0903, W0718, R0914, R0917
 import numpy as np
 import cv2
 from .. config.constants import constants

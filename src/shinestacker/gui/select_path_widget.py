@@ -1,4 +1,3 @@
-# pylint: disable=E0611
 from PySide6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QSizePolicy, QLineEdit
 
 

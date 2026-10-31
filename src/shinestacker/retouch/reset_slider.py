@@ -1,4 +1,4 @@
-# pylint: disable=E0611, R0903
+# pylint: disable=R0903
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QSlider
 

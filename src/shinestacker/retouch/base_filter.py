@@ -1,4 +1,4 @@
-# pylint: disable=E0611, W0718, R0915, R0903, R0913, R0917, R0902, R0914
+# pylint: disable=W0718, R0915, R0903, R0913, R0917, R0902, R0914
 import traceback
 from abc import abstractmethod
 import numpy as np

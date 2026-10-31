@@ -1,4 +1,3 @@
-# pylint: disable=E0611
 import psutil
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QProgressBar, QSizePolicy
 from PySide6.QtCore import QTimer, Qt

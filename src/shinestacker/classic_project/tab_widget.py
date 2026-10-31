@@ -1,4 +1,3 @@
-# pylint: disable=E0611
 import os
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPixmap

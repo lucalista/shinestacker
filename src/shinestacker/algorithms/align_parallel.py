@@ -1,4 +1,4 @@
-# pylint: disable=W0718, R0912, R0915, E1101, R0914, R0911, E0606, R0801, R0902
+# pylint: disable=W0718, R0912, R0915, R0914, R0911, E0606, R0801, R0902
 # pylint: disable=R0913, R0917
 import gc
 import os

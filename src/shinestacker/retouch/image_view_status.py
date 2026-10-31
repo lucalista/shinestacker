@@ -1,4 +1,4 @@
-# pylint: disable=E0611, R0902
+# pylint: disable=R0902
 from PySide6.QtCore import QObject, QRectF, Signal
 from PySide6.QtGui import QPixmap
 

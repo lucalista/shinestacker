@@ -1,4 +1,4 @@
-# pylint: disable=E0611, W0718, R0903, E0611, R0911
+# pylint: disable=W0718, R0903, R0911
 import os
 import json
 import traceback

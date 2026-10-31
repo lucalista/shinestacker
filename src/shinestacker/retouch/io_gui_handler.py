@@ -1,4 +1,4 @@
-# pylint: disable=E0611, R0902, W0718, R0904, E1101, R0914, R0915
+# pylint: disable=R0902, W0718, R0904, R0914, R0915
 import os
 import traceback
 import numpy as np

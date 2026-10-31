@@ -1,4 +1,4 @@
-# pylint: disable=E0611, C0103, R0914
+# pylint: disable=C0103, R0914
 from PySide6.QtWidgets import QLayout
 from PySide6.QtCore import Qt, QRect, QSize, QPoint
 

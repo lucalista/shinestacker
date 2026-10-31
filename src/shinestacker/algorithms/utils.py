@@ -1,4 +1,4 @@
-# pylint: disable=E1101, R0914, W0718, C0103
+# pylint: disable=R0914, W0718, C0103
 import os
 import sys
 import numpy as np

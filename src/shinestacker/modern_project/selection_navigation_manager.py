@@ -1,4 +1,4 @@
-# pylint: disable=E0611, R0912
+# pylint: disable=R0912
 from PySide6.QtCore import QObject
 from .. common_project.project_handler import ProjectHandler
 

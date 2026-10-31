@@ -1,4 +1,4 @@
-# pylint: disable=C0302, W0718, R0911, R0912, E1101
+# pylint: disable=C0302, W0718, R0911, R0912
 import numpy as np
 import cv2
 from PIL import Image

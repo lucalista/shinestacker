@@ -1,4 +1,3 @@
-# pylint: disable=E0611
 import os
 from PySide6.QtGui import QIcon
 
