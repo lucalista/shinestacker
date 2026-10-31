@@ -1,4 +1,3 @@
-# pylint: disable=C0114, C0116
 import sys
 from shinestacker.config.defaults import DEFAULTS
 from shinestacker.config.gui_constants import gui_constants

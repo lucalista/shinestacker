@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0115, C0116, R0904, E0611, R0914, R1702, W0718
+# pylint: disable=R0904, E0611, R0914, R1702, W0718
 from PySide6.QtWidgets import QLabel, QLineEdit, QGroupBox, QHBoxLayout, QVBoxLayout
 from ..gui.base_form_dialog import BaseFormDialog
 

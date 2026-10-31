@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0116, E0611
+# pylint: disable=E0611
 import os
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QMessageBox, QApplication

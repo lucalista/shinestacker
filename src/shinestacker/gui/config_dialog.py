@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0115, C0116, E0611
+# pylint: disable=E0611
 from abc import abstractmethod
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QScrollArea, QFormLayout, QDialog

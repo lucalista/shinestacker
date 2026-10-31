@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0115, C0116, E0611, R0903, R0915, R0914, R0917, R0913, R0902, R0904
+# pylint: disable=E0611, R0903, R0915, R0914, R0917, R0913, R0902, R0904
 import os
 import traceback
 from PySide6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QSplitter,

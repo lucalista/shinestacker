@@ -1,4 +1,3 @@
-# pylint: disable=C0114, C0116
 COLORS = {
     "black": 30,
     "red": 31,

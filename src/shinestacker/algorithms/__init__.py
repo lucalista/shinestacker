@@ -1,5 +1,4 @@
 # flake8: noqa F401
-# pylint: disable=C0114
 import logging
 from .. config.constants import constants
 from .stack_framework import StackJob, CombinedActions

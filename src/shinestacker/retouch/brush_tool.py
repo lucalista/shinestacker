@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0115, C0116, E0611, R0902, R0913, R0917, R0914
+# pylint: disable=E0611, R0902, R0913, R0917, R0914
 import numpy as np
 from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush
 from PySide6.QtCore import Qt, QPoint

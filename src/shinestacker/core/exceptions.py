@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0115, C0301
+# pylint: disable=C0301
 class FocusStackError(Exception):
     pass
 

@@ -1,4 +1,3 @@
-# pylint: disable=C0114, C0115, C0116
 import os
 from .. gui.project_model import get_action_output_path
 from .. common_project.selection_state import SelectionState

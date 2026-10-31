@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0115, C0116, R0904, R0917, R0913, R0903, W0212
+# pylint: disable=R0904, R0917, R0913, R0903, W0212
 class ProjectHandler:
     def __init__(self, project):
         self._project = project

@@ -1,4 +1,3 @@
-# pylint: disable=C0114, C0115, C0116
 from .. config.gui_constants import gui_constants
 
 

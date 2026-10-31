@@ -1,3 +1,9 @@
+[MESSAGES CONTROL]
+disable =
+    missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring
+
 [MASTER]
 ignore-patterns = 
     _version\.py,

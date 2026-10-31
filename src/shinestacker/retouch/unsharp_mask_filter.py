@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0115, C0116, E0611, W0221, R0902, R0914, R0913, R0917
+# pylint: disable=E0611, W0221, R0902, R0914, R0913, R0917
 from .. algorithms.sharpen import unsharp_mask
 from .base_filter import BaseFilter
 

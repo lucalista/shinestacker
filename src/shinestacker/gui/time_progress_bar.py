@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0115, C0116, E0611
+# pylint: disable=E0611
 import time
 from PySide6.QtWidgets import QProgressBar
 from .colors import (
