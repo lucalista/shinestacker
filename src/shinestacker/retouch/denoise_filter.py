@@ -1,4 +1,4 @@
-# pylint: disable=E0611, W0221, R0913, R0917
+# pylint: disable=W0221, R0913, R0917
 from .base_filter import OneSliderBaseFilter
 from .. algorithms.denoise import denoise
 

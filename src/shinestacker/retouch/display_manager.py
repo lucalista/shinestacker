@@ -1,4 +1,4 @@
-# pylint: disable=E0611, R0903, R0913, R0917, E1121, R0902, R0914
+# pylint: disable=R0903, R0913, R0917, E1121, R0902, R0914
 import numpy as np
 from PySide6.QtWidgets import (QWidget, QListWidgetItem, QVBoxLayout, QLabel, QInputDialog,
                                QAbstractItemView)

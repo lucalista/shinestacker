@@ -1,4 +1,4 @@
-# pylint: disable=C0413, E0611, R0903, E1121, W0201, R0915, R0912
+# pylint: disable=C0413, R0903, E1121, W0201, R0915, R0912
 import os
 import sys
 import argparse

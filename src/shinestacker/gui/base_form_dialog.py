@@ -1,4 +1,4 @@
-# pylint: disable=R0903, E0611
+# pylint: disable=R0903
 from PySide6.QtWidgets import QFormLayout, QDialog, QHBoxLayout, QPushButton
 from PySide6.QtCore import Qt
 

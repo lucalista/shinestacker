@@ -4,7 +4,17 @@ disable =
     missing-class-docstring,
     missing-function-docstring
 
+[TYPECHECK]
+generated-members =
+    cv2.*,
+    connect,
+    emit,
+    disconnect
+
 [MASTER]
+extension-pkg-allow-list =
+    PySide6,
+    cv2
 ignore-patterns = 
     _version\.py,
 ignore-paths = 

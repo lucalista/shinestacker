@@ -1,4 +1,4 @@
-# pylint: disable=R0904, E0611, R0902, W0201, R0913, R0917
+# pylint: disable=R0904, R0902, W0201, R0913, R0917
 from functools import partial
 from PySide6.QtCore import Signal, QObject
 from PySide6.QtGui import QAction, QKeySequence, QActionGroup

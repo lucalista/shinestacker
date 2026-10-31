@@ -1,4 +1,3 @@
-# pylint: disable=E0611
 import webbrowser
 from PySide6.QtWidgets import QMenu
 from PySide6.QtGui import QAction

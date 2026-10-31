@@ -1,4 +1,4 @@
-# pylint: disable=E1101, R0914, R0913, E1128, C3001
+# pylint: disable=R0914, R0913, E1128, C3001
 # pylint: disable=R0917, R0912, R0915, R0902, E1121, W0102, W0718
 import os
 import math

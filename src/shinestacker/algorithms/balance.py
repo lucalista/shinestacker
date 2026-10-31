@@ -1,4 +1,4 @@
-# pylint: disable=E1101, R0902, E1128, E0606, W0640, R0913, R0917, R0914
+# pylint: disable=R0902, E1128, E0606, W0640, R0913, R0917, R0914
 import math
 import numpy as np
 import cv2

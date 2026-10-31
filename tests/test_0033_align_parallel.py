@@ -1,4 +1,4 @@
-# pylint: disable=W0212, E1101
+# pylint: disable=W0212
 import threading
 import logging
 import pytest

@@ -1,4 +1,4 @@
-# pylint: disable=E1101, W0718
+# pylint: disable=W0718
 import traceback
 import cv2
 from .. config.gui_constants import gui_constants

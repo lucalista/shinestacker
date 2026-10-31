@@ -1,4 +1,3 @@
-# pylint: disable=E0611
 from PySide6.QtCore import QObject, Signal
 from .. config.gui_constants import gui_constants
 

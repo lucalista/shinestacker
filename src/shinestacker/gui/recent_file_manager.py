@@ -1,4 +1,3 @@
-# pylint: disable=E0611
 import os
 from .. config.settings import StdPathFile
 

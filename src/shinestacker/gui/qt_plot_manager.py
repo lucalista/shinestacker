@@ -1,4 +1,4 @@
-# pylint: disable=R0903, R0903, E0611
+# pylint: disable=R0903, R0903
 from PySide6.QtCore import Signal, QObject
 
 

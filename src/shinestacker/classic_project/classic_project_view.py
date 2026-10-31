@@ -1,4 +1,4 @@
-# pylint: disable=E0611, R0902, R0904, R0913, R0914, R0917
+# pylint: disable=R0902, R0904, R0913, R0914, R0917
 # pylint: disable=R0912, R0915, E1101, R0911, W0613
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSplitter, QApplication

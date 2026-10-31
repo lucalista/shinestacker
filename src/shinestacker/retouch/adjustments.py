@@ -1,4 +1,4 @@
-# pylint: disable=E0611, W0221, R0913, R0917, R0902, R0914, E1101
+# pylint: disable=W0221, R0913, R0917, R0902, R0914
 from abc import abstractmethod
 import math
 import cv2

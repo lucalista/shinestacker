@@ -1,4 +1,4 @@
-# pylint: disable=E0611, E1101, R0904, R0912, R0914, R0902, E0202, R0913, R0917
+# pylint: disable=R0901, R0904, R0912, R0914, R0902, E0202, R0913, R0917
 from PySide6.QtCore import Qt, QPointF, QEvent, QRectF
 from .view_strategy import ViewStrategy, ImageGraphicsViewBase, ViewSignals
 

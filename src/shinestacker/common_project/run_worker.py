@@ -1,4 +1,4 @@
-# pylint: disable=E0611, R0913, R0917
+# pylint: disable=R0913, R0917
 from PySide6.QtCore import Signal
 from .. config.constants import constants
 from .. gui.qt_plot_manager import QtPlotManager

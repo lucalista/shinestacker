@@ -1,4 +1,4 @@
-# pylint: disable=E0611, R0903
+# pylint: disable=R0903
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QSizePolicy
 from .base_widget import ImgBaseWidget
 

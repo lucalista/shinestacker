@@ -1,4 +1,4 @@
-# pylint: disable=R0902, E1101, W0718, W0640, R0913, R0917, R0914
+# pylint: disable=R0902, W0718, W0640, R0913, R0917, R0914
 import math
 import traceback
 import logging

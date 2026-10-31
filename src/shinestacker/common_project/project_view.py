@@ -1,4 +1,4 @@
-# pylint: disable=E0611, R0902, E1101, W0718, R0904, E1121, R0911
+# pylint: disable=R0902, E1101, W0718, R0904, E1121, R0911
 import os
 import subprocess
 import traceback
