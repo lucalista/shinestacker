@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0115, C0116, E0611, R0903
+# pylint: disable=E0611, R0903
 import os
 from PySide6.QtCore import QObject, Slot
 from ..algorithms.utils import extension_supported_output, extension_pdf

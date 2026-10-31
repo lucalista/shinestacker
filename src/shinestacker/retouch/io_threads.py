@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0115, C0116, E0611, E1101, W0718, R0903, R0914
+# pylint: disable=E0611, E1101, W0718, R0903, R0914
 
 # import time
 import os

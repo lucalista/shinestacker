@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0115, C0116, E0611, R0913, R0917, R0914, W0718, R0915
+# pylint: disable=E0611, R0913, R0917, R0914, W0718, R0915
 import traceback
 import numpy as np
 from PySide6.QtWidgets import QGraphicsPixmapItem

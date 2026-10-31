@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0115, R0903
+# pylint: disable=R0903
 from .. config.app_config import AppConfig
 
 

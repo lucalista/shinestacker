@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0115, C0116, E0611, W0718, R0912, R0911
+# pylint: disable=E0611, W0718, R0912, R0911
 import re
 from fractions import Fraction
 from xml.dom import minidom

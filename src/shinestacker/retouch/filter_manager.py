@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0115, C0116, R0913, R0917
+# pylint: disable=R0913, R0917
 class FilterManager:
     def __init__(self, editor):
         self.editor = editor

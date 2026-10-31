@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0115, C0116, E0611, R0903, R0913, R0917
+# pylint: disable=E0611, R0903, R0913, R0917
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QPushButton
 from ..gui.project_model import get_action_input_path

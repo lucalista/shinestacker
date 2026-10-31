@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0115, C0116, R0903, E0611
+# pylint: disable=R0903, E0611
 class ColorEntry:
     def __init__(self, r, g, b):
         self.r = r

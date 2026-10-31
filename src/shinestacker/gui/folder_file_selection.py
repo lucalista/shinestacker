@@ -1,4 +1,4 @@
-# pylint: disable=C0114, C0115, C0116, E0611, R0902
+# pylint: disable=E0611, R0902
 import os
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QWidget, QRadioButton, QButtonGroup, QLineEdit,
