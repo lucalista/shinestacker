@@ -621,7 +621,8 @@ class FocusStackConfigurator(FocusStackBaseConfigurator):
         self.set_naming_defaults(
             naming_mode,
             action.params.get('prefix', focus_defaults['prefix']),
-            action.params.get('output_file_template', focus_defaults['output_file_template'])
+            action.params.get('output_file_template',
+                              focus_defaults.get('output_file_template', ''))
         )
         self.add_field_to_layout(
             self.general_tab_layout, 'exif_path', FIELD_REL_PATH,

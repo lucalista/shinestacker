@@ -4,8 +4,9 @@
 **Linux fix**
 
 ## Fixed
-- Launch external viewer/file manager with a clean environment (#95)
-- Fixed error due to GPS exif data in TIFF format (#96)
+- launch external viewer/file manager with a clean environment (#95)
+- fixed error due to GPS exif data in TIFF format (#96)
+- dialog crash when adding FocusStack manually (#97)
 
 ---
 
