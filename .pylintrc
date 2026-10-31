@@ -2,7 +2,8 @@
 disable =
     missing-module-docstring,
     missing-class-docstring,
-    missing-function-docstring
+    missing-function-docstring,
+    no-name-in-module
 
 [TYPECHECK]
 generated-members =
@@ -12,9 +13,7 @@ generated-members =
     disconnect
 
 [MASTER]
-extension-pkg-allow-list =
-    PySide6,
-    cv2
+extension-pkg-allow-list = cv2
 ignore-patterns = 
     _version\.py,
 ignore-paths = 
