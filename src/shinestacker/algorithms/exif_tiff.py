@@ -26,6 +26,7 @@ NO_COPY_TIFF_TAGS_ID = [
     ec.STRIPBYTECOUNTS,
     ec.TILEOFFSETS,
     ec.TILEBYTECOUNTS,
+    ec.GPSIFD
 ]
 
 NO_COPY_TIFF_TAGS = ["Compression", "StripOffsets", "RowsPerStrip", "StripByteCounts"]

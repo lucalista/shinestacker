@@ -1,10 +1,11 @@
 # Changelog
 
-## [v1.17.x] - 2026-10-29
+## [v1.17.x] - 2026-10-31
 **Linux fix**
 
 ## Fixed
 - Launch external viewer/file manager with a clean environment (#95)
+- Fixed error due to GPS exif data in TIFF format (#96)
 
 ---
 
