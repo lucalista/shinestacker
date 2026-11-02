@@ -453,3 +453,139 @@ def test_apply_alignment_transform_invalid_interpolation():
     img = np.ones((10, 10, 3), dtype=np.uint8)
     with pytest.raises(InvalidOptionError):
         extractor.apply_alignment_transform(img, img, np.float32([[1, 0, 0], [0, 1, 0]]))
+
+
+def _rigid_matches(seed, n=400):
+    rng = np.random.default_rng(seed)
+    m_true = cv2.getRotationMatrix2D((250, 200), 0.2, 1.001)
+    m_true[:, 2] += (1.3, -0.7)
+    src = rng.uniform(0, [500, 400], (n, 2))
+    dst = src @ m_true[:, :2].T + m_true[:, 2] + rng.normal(0, 0.15, (n, 2))
+    poor = rng.random(n) < 0.25          # poor matches, mostly inside the RANSAC threshold
+    dst[poor] += rng.normal(0, 1.2, (poor.sum(), 2))
+    wrong = rng.random(n) < 0.15
+    dst[wrong] += rng.uniform(-40, 40, (wrong.sum(), 2))
+    return (src.astype(np.float32).reshape(-1, 1, 2), dst.astype(np.float32).reshape(-1, 1, 2),
+            m_true)
+
+
+def _corner_error(m, m_true, w=500, h=400):
+    pts = np.array([[0, 0, 1], [w, 0, 1], [0, h, 1], [w, h, 1], [w / 2, h / 2, 1]]).T
+    return np.abs(m @ pts - m_true @ pts).max()
+
+
+def test_find_transform_irls_refit_lowers_error():
+    errors = {constants.REFIT_NONE: [], constants.REFIT_IRLS: []}
+    for seed in range(5):
+        src, dst, m_true = _rigid_matches(seed)
+        for refit, err in errors.items():
+            cv2.setRNGSeed(seed)
+            m, _, _ = find_transform(src, dst, 1, constants.ALIGN_RIGID, refit=refit)
+            err.append(_corner_error(m, m_true))
+    assert np.mean(errors[constants.REFIT_IRLS]) < 0.5 * np.mean(errors[constants.REFIT_NONE])
+
+
+def test_find_transform_refit_none_is_default():
+    src, dst, _ = _rigid_matches(0)
+    cv2.setRNGSeed(0)
+    m_default, _, _ = find_transform(src, dst, 1, constants.ALIGN_RIGID)
+    cv2.setRNGSeed(0)
+    m_none, _, _ = find_transform(src, dst, 1, constants.ALIGN_RIGID, refit=constants.REFIT_NONE)
+    np.testing.assert_array_equal(m_default, m_none)
+
+
+def test_refit_irls_keeps_estimate_with_few_matches():
+    from shinestacker.algorithms.transform_estimate import refit_irls
+    src, dst, m_true = _rigid_matches(0, n=8)
+    m = m_true + 0.01
+    assert refit_irls(src, dst, m, 1.0) is m
+
+
+def test_refit_irls_keeps_estimate_on_degenerate_points():
+    from shinestacker.algorithms.transform_estimate import refit_irls
+    src = np.tile([[100.0, 50.0]], (12, 1))
+    m = np.array([[1.0, 0.0, 2.0], [0.0, 1.0, -1.0]])
+    assert refit_irls(src, src + (2.0, -1.0), m, 1.5, max_iters=1) is m
+
+
+def test_refit_irls_keeps_estimate_on_non_finite_points():
+    from shinestacker.algorithms.transform_estimate import refit_irls
+    src, dst, m_true = _rigid_matches(0)
+    src = np.array(src, dtype=np.float64).reshape(-1, 2)
+    src[0] = np.nan
+    assert refit_irls(src, dst, m_true, 1.5) is m_true
+
+
+@pytest.mark.parametrize('threshold', [0.0, -1.0, float('nan'), float('inf')])
+def test_find_transform_invalid_refit_threshold(threshold):
+    src, dst, _ = _rigid_matches(0)
+    with pytest.raises(InvalidOptionError):
+        find_transform(src, dst, 1, constants.ALIGN_RIGID, refit=constants.REFIT_IRLS,
+                       refit_threshold=threshold)
+
+
+def test_find_transform_refit_rejected_by_validator_keeps_estimate():
+    src, dst, _ = _rigid_matches(0)
+    cv2.setRNGSeed(0)
+    m_none, _, _ = find_transform(src, dst, 1, constants.ALIGN_RIGID, refit=constants.REFIT_NONE)
+    cv2.setRNGSeed(0)
+    m, _, _ = find_transform(src, dst, 1, constants.ALIGN_RIGID, refit=constants.REFIT_IRLS,
+                             refit_validate=lambda m: False)
+    np.testing.assert_array_equal(m, m_none)
+
+
+def test_extract_transformation_keeps_estimate_if_refit_is_invalid():
+    src, dst, _ = _rigid_matches(0)
+    alignment_config = {
+        'transform': constants.ALIGN_RIGID, 'min_good_matches': 10, 'phase_corr_fallback': False,
+        'abort_abnormal': False, 'align_method': 'RANSAC', 'rans_threshold': 3.0,
+        'max_iters': 2000, 'align_confidence': 99.9, 'refine_iters': 100,
+        'compute_rans_quality': False, 'rans_inlier_fraction_threshold': 0.75,
+        'rans_avg_error_threshold': 1.0, 'rans_max_error_threshold': 30,
+        'refit': constants.REFIT_IRLS, 'refit_threshold': 1.5}
+    extractor = TransformationExtractor(alignment_config, AFFINE_THRESHOLDS, HOMOGRAPHY_THRESHOLDS)
+    match_result = MagicMock()
+    match_result.has_sufficient_matches.return_value = True
+    match_result.n_good_matches.return_value = len(src)
+    match_result.get_src_points.return_value = src
+    match_result.get_dst_points.return_value = dst
+    img_sub = np.ones((400, 500, 3), dtype=np.uint8)
+    invalid = np.array([[3.0, 0.0, 0.0], [0.0, 3.0, 0.0]])     # scale far beyond the limits
+    cv2.setRNGSeed(0)
+    m_none, _, _ = find_transform(src, dst, 1, constants.ALIGN_RIGID)
+    with patch('shinestacker.algorithms.transform_estimate.refit_irls', return_value=invalid):
+        cv2.setRNGSeed(0)
+        m, _, _, _ = extractor.extract_transformation(match_result, img_sub, img_sub, 1, (400, 500))
+    assert m is not None
+    np.testing.assert_allclose(m, m_none)
+
+
+def test_refit_irls_keeps_estimate_if_cluster_tilts_frame():
+    # 12 near-exact matches in a 20 px cluster agree with a 0.5 deg rotation about the cluster;
+    # the other matches, spread over 2000 px, are 2-4 px off and get no weight
+    rng = np.random.default_rng(0)
+    centre = np.array([1000.0, 1000.0])
+    rot = cv2.getRotationMatrix2D(tuple(centre), 0.5, 1.0)
+    cluster = centre + rng.uniform(-10, 10, (12, 2))
+    spread = rng.uniform(0, 2000, (200, 2))
+    angle = rng.uniform(0, 2 * np.pi, 200)
+    src = np.vstack([cluster, spread])
+    dst = np.vstack([cluster @ rot[:, :2].T + rot[:, 2],
+                     spread + rng.uniform(2, 4, (200, 1)) * np.c_[np.cos(angle), np.sin(angle)]])
+    m = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+    from shinestacker.algorithms.transform_estimate import refit_irls
+    assert np.abs(refit_irls(src, dst, m, 1.5) - m).max() > 1e-3     # without the bound it tilts
+    assert refit_irls(src, dst, m, 1.5, max_move=3.0) is m
+
+
+def test_find_transform_homography_ignores_refit_settings():
+    src, dst, _ = _rigid_matches(0)
+    m, _, _ = find_transform(src, dst, 1, constants.ALIGN_HOMOGRAPHY, refit=constants.REFIT_IRLS,
+                             refit_threshold=0)
+    assert m is not None and m.shape == (3, 3)
+
+
+def test_find_transform_invalid_refit():
+    src, dst, _ = _rigid_matches(0)
+    with pytest.raises(InvalidOptionError):
+        find_transform(src, dst, 1, constants.ALIGN_RIGID, refit='INVALID_REFIT')

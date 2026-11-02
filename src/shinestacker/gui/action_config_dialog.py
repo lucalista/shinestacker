@@ -847,6 +847,7 @@ class AlignFramesConfigurator(SubsampleActionConfigurator, AlignFramesConfigBase
     BORDER_MODE_OPTIONS = ['Constant', 'Replicate', 'Replicate and blur']
     INTERPOLATION_OPTIONS = ['Bilinear', 'Bicubic', 'Lanczos (8x8)']
     METHOD_OPTIONS = ['Random Sample Consensus (RANSAC)', 'Least Median (LMEDS)']
+    REFIT_OPTIONS = ['None', 'Robust least squares (IRLS)']
     MODE_OPTIONS = ['Auto', 'Sequential', 'Parallel']
 
     def __init__(self, expert, current_wd):
@@ -966,6 +967,23 @@ class AlignFramesConfigurator(SubsampleActionConfigurator, AlignFramesConfigBase
             layout, 'refine_iters', FIELD_INT, 'Refinement iterations (Rigid)', required=False,
             expert=True,
             default=AppConfig.get('align_frames_params')['refine_iters'], min_val=0, max_val=1000)
+        refit = self.add_field_to_layout(
+            layout, 'refit', FIELD_COMBO, 'Robust refit (Rigid)', required=False,
+            expert=True,
+            options=self.REFIT_OPTIONS, values=constants.VALID_REFIT_METHODS,
+            default=dict(zip(constants.VALID_REFIT_METHODS,
+                             self.REFIT_OPTIONS))[AppConfig.get('align_frames_params')['refit']])
+        refit.setToolTip(
+            "Re-estimate the transformation from all matches, weighted by\n"
+            "their residuals (Tukey biweight), after RANSAC")
+        refit_threshold = self.add_field_to_layout(
+            layout, 'refit_threshold', FIELD_FLOAT, 'Refit threshold (px)', required=False,
+            expert=True,
+            default=AppConfig.get('align_frames_params')['refit_threshold'],
+            min_val=0.1, max_val=10, step=0.1)
+        refit_threshold.setToolTip(
+            "Residual beyond which a match gets no weight in the refit,\n"
+            "in pixels of the subsampled matching image (as the RANSAC threshold)")
         max_iters = self.add_field_to_layout(
             layout, 'max_iters', FIELD_INT, 'Max. iterations (Homography)', required=False,
             expert=True,
@@ -975,9 +993,13 @@ class AlignFramesConfigurator(SubsampleActionConfigurator, AlignFramesConfigBase
             text = transform.currentText()
             if text == self.TRANSFORM_OPTIONS[0]:
                 refine_iters.setEnabled(True)
+                refit.setEnabled(True)
+                refit_threshold.setEnabled(True)
                 max_iters.setEnabled(False)
             elif text == self.TRANSFORM_OPTIONS[1]:
                 refine_iters.setEnabled(False)
+                refit.setEnabled(False)
+                refit_threshold.setEnabled(False)
                 max_iters.setEnabled(True)
 
         transform.currentIndexChanged.connect(change_transform)
