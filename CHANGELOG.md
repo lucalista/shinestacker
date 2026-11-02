@@ -1,12 +1,13 @@
 # Changelog
 
-## [v1.17.x] - 2026-11-01
+## [v1.17.x] - 2026-11-02
 **Linux fix**
 
 ## Fixed
 - launch external viewer/file manager with a clean environment (#95)
 - fixed error due to GPS exif data in TIFF format (#96)
 - dialog crash when adding FocusStack manually (#97)
+- crash when using ```-x``` option (#100)
 
 ### Changed
 - minor code cleanup
