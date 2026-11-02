@@ -11,8 +11,6 @@ generated-members =
     connect,
     emit,
     disconnect
-ignored-modules =
-    silx,
 
 [MASTER]
 extension-pkg-allow-list = cv2
