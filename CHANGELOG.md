@@ -3,6 +3,9 @@
 ## [v1.17.x] - 2026-11-01
 **Linux fix**
 
+### Added
+- optional OpenCL SIFT implementation (silx) for alignment: `sift_backend` option, `pip install shinestacker[opencl]`
+
 ## Fixed
 - launch external viewer/file manager with a clean environment (#95)
 - fixed error due to GPS exif data in TIFF format (#96)

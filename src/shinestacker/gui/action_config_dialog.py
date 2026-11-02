@@ -793,9 +793,18 @@ class SubsampleActionConfigurator(DefaultActionConfigurator):
 class AlignFramesConfigBase:
     TRANSFORM_OPTIONS = ['Rigid', 'Homography']
     MATCHING_METHOD_OPTIONS = ['K-nearest neighbors', 'Hamming distance']
+    # detector menu entries: (label, detector, SIFT backend)
+    DETECTOR_CHOICES = [
+        ('SIFT (OpenCV)', constants.DETECTOR_SIFT, constants.SIFT_BACKEND_OPENCV),
+        ('SIFT (silx)', constants.DETECTOR_SIFT, constants.SIFT_BACKEND_SILX)
+    ] + [(d, d, constants.SIFT_BACKEND_OPENCV)
+         for d in constants.VALID_DETECTORS if d != constants.DETECTOR_SIFT]
     DETECTOR_DESCRIPTOR_TOOLTIPS = {
         'detector':
             "SIFT: Requires SIFT descriptor and K-NN matching\n"
+            "SIFT (silx): OpenCL implementation on the GPU, or on the CPU without one; faster\n"
+            "on large images. Needs the optional packages silx and pyopencl\n"
+            "(pip install shinestacker[opencl]), else OpenCV is used\n"
             "ORB/AKAZE: Work best with Hamming distance",
         'descriptor':
             "SIFT: Requires K-NN matching\n"
@@ -814,9 +823,23 @@ class AlignFramesConfigBase:
         timer.timeout.connect(lambda: self.info_label.setText(''))
         timer.start(timeout)
 
+    @classmethod
+    def detector_value(cls, text):
+        return next((d for label, d, _ in cls.DETECTOR_CHOICES if label == text), text)
+
+    @classmethod
+    def sift_backend_value(cls, text):
+        return next((b for label, _, b in cls.DETECTOR_CHOICES if label == text),
+                    constants.SIFT_BACKEND_OPENCV)
+
+    @classmethod
+    def detector_label(cls, detector, backend):
+        return next((label for label, d, b in cls.DETECTOR_CHOICES
+                     if (d, b) == (detector, backend)), detector)
+
     def change_match_config(
             self, detector_field, descriptor_field, matching_method_field, show_info):
-        detector = detector_field.currentText()
+        detector = self.detector_value(detector_field.currentText())
         descriptor = descriptor_field.currentText()
         match_method = dict(
             zip(self.MATCHING_METHOD_OPTIONS,
@@ -881,9 +904,19 @@ class AlignFramesConfigurator(SubsampleActionConfigurator, AlignFramesConfigBase
                 self.detector_field, self.descriptor_field,
                 self. matching_method_field, self.show_info)
         self.add_bold_label_to_layout(layout, "Feature identification:")
+        # two entries share the value SIFT, so the default and the current entry are set
+        # from (detector, sift_backend); sift_backend has no widget of its own
+        default_detector = AppConfig.get('detector')
         self.detector_field = self.add_field_to_layout(
             layout, 'detector', FIELD_COMBO, 'Detector', required=False,
-            options=constants.VALID_DETECTORS, default=AppConfig.get('detector'))
+            options=[c[0] for c in self.DETECTOR_CHOICES],
+            values=[c[1] for c in self.DETECTOR_CHOICES],
+            default=None if default_detector is None else self.detector_label(
+                default_detector, AppConfig.get('align_frames_params')['sift_backend']))
+        params = self.builder.action.params
+        if 'detector' in params:
+            self.detector_field.setCurrentText(self.detector_label(
+                params['detector'], params.get('sift_backend', constants.SIFT_BACKEND_OPENCV)))
         self.descriptor_field = self.add_field_to_layout(
             layout, 'descriptor', FIELD_COMBO, 'Descriptor', required=False,
             options=constants.VALID_DESCRIPTORS, default=AppConfig.get('descriptor'))
@@ -1073,14 +1106,18 @@ class AlignFramesConfigurator(SubsampleActionConfigurator, AlignFramesConfigBase
     def update_params(self, params):
         if self.detector_field and self.descriptor_field and self.matching_method_field:
             try:
-                detector = self.detector_field.currentText()
+                detector = self.detector_value(self.detector_field.currentText())
                 descriptor = self.descriptor_field.currentText()
                 match_method = dict(
                     zip(self.MATCHING_METHOD_OPTIONS,
                         constants.VALID_MATCHING_METHODS))[
                             self.matching_method_field.currentText()]
                 validate_align_config(detector, descriptor, match_method)
-                return super().update_params(params)
+                if not super().update_params(params):
+                    return False
+                params['sift_backend'] = self.sift_backend_value(
+                    self.detector_field.currentText())
+                return True
             except Exception as e:
                 traceback.print_exc()
                 QMessageBox.warning(None, "Error", f"{str(e)}")

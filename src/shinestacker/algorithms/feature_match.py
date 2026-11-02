@@ -1,14 +1,18 @@
-# pylint: disable=R0913, R0903, W0718, R0914, R0917
+# pylint: disable=R0913, R0903, W0718, R0914, R0917, R0902
+import logging
+import threading
 import numpy as np
 import cv2
 from .. config.constants import constants
 from .. config.defaults import DEFAULTS
 from .. core.exceptions import InvalidOptionError
 from .utils import img_bw_8bit, img_subsample
+from . import silx_sift
 
 DEFAULT_FEATURE_CONFIG = {
     'detector': DEFAULTS['align_frames_params']['detector'],
-    'descriptor': DEFAULTS['align_frames_params']['descriptor']
+    'descriptor': DEFAULTS['align_frames_params']['descriptor'],
+    'sift_backend': DEFAULTS['align_frames_params']['sift_backend']
 }
 
 DEFAULT_MATCHING_CONFIG = {
@@ -95,6 +99,10 @@ class FeatureMatcher:
         descriptor = self.feature_config['descriptor']
         match_method = self.matching_config['match_method']
         validate_align_config(detector, descriptor, match_method)
+        self._lock = threading.Lock()
+        self._pending_warning = None
+        self._silx_sift = self._select_silx_sift(detector, descriptor)
+        self._silx_plans = silx_sift.SiftPlans() if self._silx_sift else None
         self.detector = {
             constants.DETECTOR_SIFT: cv2.SIFT_create,
             constants.DETECTOR_ORB: cv2.ORB_create,
@@ -114,8 +122,65 @@ class FeatureMatcher:
                 constants.DETECTOR_BRISK: cv2.BRISK_create
             }[descriptor]()
 
-    def detect_and_compute(self, image):
+    def _select_silx_sift(self, detector, descriptor):
+        backend = self.feature_config['sift_backend']
+        if backend not in constants.VALID_SIFT_BACKENDS:
+            raise InvalidOptionError(
+                'sift_backend', backend,
+                f". Valid options are: {', '.join(constants.VALID_SIFT_BACKENDS)}")
+        if backend == constants.SIFT_BACKEND_OPENCV or \
+                (detector, descriptor) != (constants.DETECTOR_SIFT, constants.DESCRIPTOR_SIFT):
+            return False
+        usable = silx_sift.silx_sift_usable()
+        if not usable:
+            # issued on first use: the align actions build their matcher before they can log
+            self._pending_warning = "silx SIFT requested but silx/pyopencl or an OpenCL" \
+                                    " device is not available, using OpenCV SIFT"
+        return usable
+
+    def _warning(self, msg, warning_callback=None):
+        callback = warning_callback or self.callbacks.get('warning')
+        if callback:
+            callback(msg)
+        else:
+            logging.getLogger(__name__).warning(msg)
+
+    def release_resources(self):
+        if self._silx_plans is not None:
+            self._silx_plans.release()
+
+    def sift_implementation(self):
+        """The SIFT implementation in use, for the log; None for other detectors."""
+        if (self.feature_config['detector'], self.feature_config['descriptor']) != \
+                (constants.DETECTOR_SIFT, constants.DESCRIPTOR_SIFT):
+            return None
+        if not self._silx_sift:
+            return "SIFT (OpenCV)"
+        try:
+            return f"SIFT (silx, OpenCL: {silx_sift.device_name()})"
+        except Exception:
+            return "SIFT (silx, OpenCL)"
+
+    def detect_and_compute(self, image, warning_callback=None):
+        kp, des, _silx = self._detect_and_compute(image, warning_callback)
+        return kp, des
+
+    def _detect_and_compute(self, image, warning_callback=None, allow_silx=True):
+        # also returns whether silx computed the features
         img_bw = img_bw_8bit(image)
+        with self._lock:
+            msg, self._pending_warning = self._pending_warning, None
+        if msg:
+            self._warning(msg, warning_callback)
+        if allow_silx and self._silx_sift:
+            try:
+                return (*self._silx_plans.detect_and_compute(img_bw), True)
+            except Exception as e:
+                with self._lock:
+                    first_failure, self._silx_sift = self._silx_sift, False
+                if first_failure:
+                    self._warning(f"silx SIFT failed ({e}), using OpenCV SIFT",
+                                  warning_callback)
         detector_name = self.feature_config['detector']
         descriptor_name = self.feature_config['descriptor']
         if (detector_name == descriptor_name and detector_name in
@@ -127,11 +192,15 @@ class FeatureMatcher:
                 kp, des = self.descriptor.compute(img_bw, kp)
             else:
                 des = None
-        return kp, des
+        return kp, des, False
 
-    def match_images(self, img_ref, img_0):
-        kp_0, des_0 = self.detect_and_compute(img_0)
-        kp_ref, des_ref = self.detect_and_compute(img_ref)
+    def match_images(self, img_ref, img_0, warning_callback=None):
+        kp_0, des_0, silx_0 = self._detect_and_compute(img_0, warning_callback)
+        kp_ref, des_ref, silx_ref = self._detect_and_compute(img_ref, warning_callback)
+        if silx_0 and not silx_ref:
+            # silx failed in between (possibly in another thread): do not match silx
+            # features against OpenCV ones
+            kp_0, des_0, _silx = self._detect_and_compute(img_0, allow_silx=False)
         if des_0 is None or des_ref is None or len(des_0) == 0 or len(des_ref) == 0:
             return MatchResult(kp_0, kp_ref, [])
         good_matches = self.match_features(des_0, des_ref)
@@ -185,7 +254,8 @@ class SubsamplingFeatureMatcher:
             else:
                 img_0_sub, img_ref_sub = img_0, img_ref
             self._last_subsampled_images = (img_ref_sub, img_0_sub)
-            match_result = self.feature_matcher.match_images(img_ref_sub, img_0_sub)
+            match_result = self.feature_matcher.match_images(
+                img_ref_sub, img_0_sub, warning_callback)
             n_good_matches = match_result.n_good_matches()
             if n_good_matches >= min_good_matches or final_subsample == 1:
                 break
@@ -199,3 +269,9 @@ class SubsamplingFeatureMatcher:
 
     def get_last_subsampled_images(self):
         return self._last_subsampled_images
+
+    def release_resources(self):
+        self.feature_matcher.release_resources()
+
+    def sift_implementation(self):
+        return self.feature_matcher.sift_implementation()

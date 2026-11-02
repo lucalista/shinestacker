@@ -157,13 +157,17 @@ class AlignFramesParallel(AlignFramesBase):
         self.process.callback(constants.CALLBACK_UPDATE_FRAME_STATUS,
                               self.process.output_path, filename, 101)
         self.step_counter = 0
-        if self.chunk_submit:
-            img_chunks = make_chunks(sub_img_filepaths, max_chunk_size)
-            idx_chunks = make_chunks(sub_indices, max_chunk_size)
-            for idxs, imgs in zip(idx_chunks, img_chunks):
-                self.submit_threads(idxs, imgs)
-        else:
-            self.submit_threads(sub_indices, sub_img_filepaths)
+        try:
+            if self.chunk_submit:
+                img_chunks = make_chunks(sub_img_filepaths, max_chunk_size)
+                idx_chunks = make_chunks(sub_indices, max_chunk_size)
+                for idxs, imgs in zip(idx_chunks, img_chunks):
+                    self.submit_threads(idxs, imgs)
+            else:
+                self.submit_threads(sub_indices, sub_img_filepaths)
+        finally:
+            # all features are extracted here, also free the OpenCL plans when stopped
+            self.feature_matcher.release_resources()
         for idx in range(n_frames):
             if self._img_cache[idx] is not None:
                 self._img_cache[idx] = None

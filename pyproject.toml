@@ -44,6 +44,10 @@ Documentation = "https://shinestacker.readthedocs.io/"
 dev = [
     "pytest",
 ]
+opencl = [
+    "silx",
+    "pyopencl",
+]
 
 [project.scripts]
 shinestacker = "shinestacker.app.main:main"

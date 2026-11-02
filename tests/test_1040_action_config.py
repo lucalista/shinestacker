@@ -123,3 +123,75 @@ def test_field_builder_required_fields(form_layout, mock_action, qapp):
     assert result is False
     assert params == {}
     mock_warning.assert_called_once()
+
+
+def _align_dialog(mock_action, params):
+    mock_action.type_name = "AlignFrames"
+    mock_action.params = {'border_value': [0, 0, 0, 0], **params}
+    with patch('shinestacker.gui.config_dialog.ConfigDialog.adjust_dialog_size'):
+        return ActionConfigDialog(mock_action, '.')
+
+
+def _collect(dialog):
+    params = {}
+    with patch('PySide6.QtWidgets.QMessageBox.warning'):
+        assert dialog.configurator.update_params(params)
+    return params
+
+
+def test_align_detector_menu_sets_sift_backend(mock_action, qapp):
+    dialog = _align_dialog(mock_action, {})
+    menu = dialog.configurator.detector_field
+    labels = [menu.itemText(i) for i in range(menu.count())]
+    assert labels[:2] == ['SIFT (OpenCV)', 'SIFT (silx)']
+    assert 'ORB' in labels
+    params = _collect(dialog)
+    assert (params['detector'], params['sift_backend']) == ('SIFT', 'opencv')
+    for label, backend in (('SIFT (silx)', 'silx'), ('ORB', 'opencv')):
+        menu.setCurrentText(label)
+        params = _collect(dialog)
+        assert params['detector'] == label.split(' ')[0]
+        assert params['sift_backend'] == backend
+
+
+def test_align_detector_menu_from_params(mock_action, qapp):
+    dialog = _align_dialog(mock_action, {'detector': 'SIFT', 'sift_backend': 'silx'})
+    assert dialog.configurator.detector_field.currentText() == 'SIFT (silx)'
+    dialog = _align_dialog(mock_action, {'detector': 'ORB', 'sift_backend': 'opencv'})
+    assert dialog.configurator.detector_field.currentText() == 'ORB'
+
+
+def test_align_detector_menu_validates_sift_entries(mock_action, qapp):
+    dialog = _align_dialog(mock_action, {'detector': 'SIFT', 'sift_backend': 'silx'})
+    descriptor = dialog.configurator.descriptor_field
+    descriptor.blockSignals(True)
+    descriptor.setCurrentText('ORB')
+    descriptor.blockSignals(False)
+    with patch('shinestacker.gui.action_config_dialog.QMessageBox.warning') as warning:
+        assert not dialog.configurator.update_params({})
+    warning.assert_called_once()
+
+
+def _default_detector(detector):
+    from shinestacker.config.app_config import AppConfig
+    get = AppConfig.get
+    return patch.object(AppConfig, 'get', side_effect=lambda key, default=None:
+                        detector if key == 'detector' else get(key, default))
+
+
+def test_align_detector_menu_sift_default_is_opencv(mock_action, qapp):
+    with _default_detector('SIFT'):
+        dialog = _align_dialog(mock_action, {})
+    menu = dialog.configurator.detector_field
+    assert menu.currentText() == 'SIFT (OpenCV)'
+    menu.setCurrentText('SIFT (silx)')
+    # the reset of FieldBuilder.reset_to_defaults() for this combo; the whole dialog reset
+    # stops earlier, at border_value (its default is the border mode on main)
+    menu.setCurrentText(str(dialog.configurator.builder.fields['detector']['default_value']))
+    assert menu.currentText() == 'SIFT (OpenCV)'
+
+
+def test_align_detector_menu_old_project_is_opencv(mock_action, qapp):
+    dialog = _align_dialog(mock_action, {'detector': 'SIFT'})
+    assert dialog.configurator.detector_field.currentText() == 'SIFT (OpenCV)'
+    assert _collect(dialog)['sift_backend'] == 'opencv'
