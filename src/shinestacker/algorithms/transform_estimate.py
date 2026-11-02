@@ -121,14 +121,10 @@ def check_transform(m, img_shape, transform_type, affine_thresholds, homography_
     return False, f'invalid transfrom option {transform_type}', None
 
 
-# fewer matches than this within the refit threshold: the refit keeps the RANSAC estimate
 MIN_REFIT_MATCHES = 10
 
 
 def similarity_lsq(src, dst, w):
-    """Weighted least-squares similarity transform (rotation, uniform scale, translation)
-    mapping src onto dst, in closed form (Umeyama 1991). None if the weighted source
-    points have no spread (all at one place) or the result is not finite."""
     w_sum = w.sum()
     if not np.isfinite(w_sum) or w_sum <= 0:
         return None
@@ -151,23 +147,12 @@ def _refit_support(src, dst, m, threshold):
 
 
 def _max_move(m_a, m_b, pts):
-    """Largest difference between the predictions of two transforms at the corners of the
-    bounding box of pts."""
     (x0, y0), (x1, y1) = pts.min(axis=0), pts.max(axis=0)
     corners = np.array([[x0, x1, x0, x1], [y0, y0, y1, y1], [1, 1, 1, 1]], dtype=np.float64)
     return float(np.abs(m_a @ corners - m_b @ corners).max())
 
 
 def refit_irls(src_pts, dst_pts, m, threshold, max_iters=10, max_move=None):
-    """Refine a rigid transform by iteratively reweighted least squares with Tukey's
-    biweight: every match within threshold contributes, weighted down as its residual
-    grows. RANSAC's refinement weighs all its inliers (up to rans_threshold) equally.
-    threshold is in the units of the points (feature-matching scale, as rans_threshold).
-    Returns m itself if the refit cannot be trusted: non-finite input, degenerate geometry,
-    fewer than MIN_REFIT_MATCHES matches within threshold of the fitted or the final
-    transform, or (with max_move) predictions moved by more than max_move anywhere in the
-    area covered by the matches - e.g. a fit to a small cluster that tilts the frame.
-    max_iters bounds the cost; on real stacks the fit converged in about 10 iterations."""
     src = np.asarray(src_pts, dtype=np.float64).reshape(-1, 2)
     dst = np.asarray(dst_pts, dtype=np.float64).reshape(-1, 2)
     m_fit = np.asarray(m, dtype=np.float64)
@@ -235,14 +220,9 @@ def find_transform(src_pts, dst_pts, subsample,
                                               confidence=align_confidence / 100.0,
                                               refineIters=refine_iters)
         if refit == constants.REFIT_IRLS and m is not None:
-            # The refit can move the estimate beyond refit_threshold (support is recomputed each
-            # iteration), so refit_validate(m) may reject it: the RANSAC/LMEDS estimate is kept.
-            # a refinement should not move any prediction by more than RANSAC's own tolerance
             m_refit = refit_irls(src_pts, dst_pts, m, refit_threshold, max_move=rans_threshold)
             if m_refit is not m and (refit_validate is None or refit_validate(m_refit)):
                 m = m_refit
-            # Preserve the RANSAC/LMEDS inlier mask. Quality residuals below
-            # evaluate the returned transform on that original inlier set.
     else:
         raise InvalidOptionError(
             'transform', method,

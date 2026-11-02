@@ -10,6 +10,9 @@
 - crash when using ```-x``` option (#100)
 - reset of border value in align module dialog (#100)
 
+### Added
+- optional robust refit of the rigid transform after RANSAC (#101)
+
 ### Changed
 - minor code cleanup
 
