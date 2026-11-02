@@ -506,6 +506,8 @@ def test_variance_map_is_not_negative():
     rng = np.random.default_rng(0)
     img = (0.7 + 0.001 * rng.random((256, 256))).astype(np.float32)   # rounds below 0 without clamp
     assert DepthMapStack().get_variance_map(img).min() >= 0
+
+
 def test_modified_laplacian_is_second_derivatives():
     dms = DepthMapStack()
     y, x = np.mgrid[0:32, 0:32].astype(np.float32)

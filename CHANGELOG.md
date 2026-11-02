@@ -10,6 +10,9 @@
 - crash when using ```-x``` option (#100)
 - reset of border value in align module dialog (#100)
 - action dialogs: eeset restores combo-box defaults (#102)
+- depth map:
+    - ```mod_laplacian``` uses second derivatives (#103)
+    - average weights where no frame has energy (#104)
 
 ### Added
 - optional robust refit of the rigid transform after RANSAC (#101)
