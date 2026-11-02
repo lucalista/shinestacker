@@ -28,6 +28,8 @@ DEFAULT_ALIGNMENT_CONFIG = {
     'align_method': DEFAULTS['align_frames_params']['align_method'],
     'rans_threshold': DEFAULTS['align_frames_params']['rans_threshold'],
     'refine_iters': DEFAULTS['align_frames_params']['refine_iters'],
+    'refit': DEFAULTS['align_frames_params']['refit'],
+    'refit_threshold': DEFAULTS['align_frames_params']['refit_threshold'],
     'align_confidence': DEFAULTS['align_frames_params']['align_confidence'],
     'max_iters': DEFAULTS['align_frames_params']['max_iters'],
     'border_mode': DEFAULTS['align_frames_params']['border_mode'],

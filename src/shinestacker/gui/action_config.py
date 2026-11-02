@@ -129,6 +129,9 @@ class FieldBuilder:
                         spinbox = widget.layout().itemAt(1 + i * 2).widget()
                         spinbox.setValue(default[i])
                 elif field['type'] == FIELD_COMBO:
+                    values, options = field.get('values'), field.get('options')
+                    if values is not None and options:
+                        default = dict(zip(values, options)).get(default, default)
                     widget.setCurrentText(str(default))
 
     def get_path_widget(self, widget):

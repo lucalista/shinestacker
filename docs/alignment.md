@@ -69,6 +69,8 @@ alignment_config = {
     'align_methid': constants.RANSAC,
     'rans_threshold': 5.0,
     'refine_iters': 100,
+    'refit': constants.REFIT_NONE,
+    'refit_threshold': 1.5,
     'align_confidence': 99.9,
     'max_iters': 2000,
     'border_mode': constants.BORDER_REPLICATE_BLUR,
@@ -90,6 +92,10 @@ alignment_config = {
   * ```LMEDS``` (*Least Medians of Squares*)
 * ```rans_threshold``` (optional, default: 5.0): parameter used if ```ALIGN_HOMOGRAPHY``` is choosen as tansformation, see [Feature Matching + Homography to find Objects](https://docs.opencv.org/3.4/d1/de0/tutorial_py_feature_homography.html) for more details.
 * ```refine_iters``` (optional, default: 100): refinement iterations. Used only if ```transform=ALIGN_RIGID```.
+* ```refit``` (optional, default: ```REFIT_NONE```): re-estimation of the transformation after RANSAC or LMEDS. Used only if ```transform=ALIGN_RIGID```. Possible values are:
+  * ```REFIT_NONE``` (default): the estimate of ```align_method``` is used as it is.
+  * ```REFIT_IRLS```: iteratively reweighted least squares with Tukey's biweight. Every match closer than ```refit_threshold``` contributes, weighted down as its residual grows, so matches that are only just inliers count less than with RANSAC's refinement. Lowers the sub-pixel error of the transformation. The estimate of ```align_method``` is kept if fewer than 10 matches are within the threshold, if the refit moves any prediction in the area covered by the matches by more than ```rans_threshold```, or if the refined transformation fails the usual geometric check.
+* ```refit_threshold``` (optional, default: 1.5): residual in pixels, at the feature-matching scale (as ```rans_threshold```), beyond which a match gets no weight in the refit. Used only if ```refit=REFIT_IRLS```.
 * ```align_confidence``` (optional, default: 99.9): alignment algorithm confidence (%). Used only if ```transform=ALIGN_RIGID```. 
 * ```max_iters``` (optional, default: 2000): maximum number of iterations. Used only if ```transform=ALIGN_HOMOGRAPHY```. 
 * ```subsample``` (optional, default: 0=automatic): subsample image for faster alignment. Faster, but alignment could be less accurate if only a small portion of the image is focused. It can save time, in particular for large images.

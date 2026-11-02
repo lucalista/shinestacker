@@ -55,6 +55,8 @@ DEFAULTS = {
         'align_method': 'RANSAC',
         'rans_threshold': 3.0,  # px
         'refine_iters': 100,
+        'refit': 'NONE',
+        'refit_threshold': 1.5,  # px
         'align_confidence': 99.9,
         'max_iters': 2000,
         'border_mode': 'BORDER_REPLICATE_BLUR',

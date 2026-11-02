@@ -125,10 +125,26 @@ def test_field_builder_required_fields(form_layout, mock_action, qapp):
     mock_warning.assert_called_once()
 
 
-def _align_dialog(mock_action, params):
+SIFT_DEFAULTS = {'detector': 'SIFT', 'descriptor': 'SIFT', 'match_method': 'KNN',
+                 'sift_backend': 'opencv'}
+
+
+def _default_params(**overrides):
+    # AppConfig reads the user's settings file, and the built-in detector is ORB, so the
+    # dialog gets fixed defaults: the built-in ones with a SIFT setup, unless overridden
+    from shinestacker.config.app_config import AppConfig
+    from shinestacker.config.defaults import DEFAULTS
+    get = AppConfig.get
+    defaults = {**DEFAULTS['align_frames_params'], **SIFT_DEFAULTS, **overrides}
+    return patch.object(AppConfig, 'get', side_effect=lambda key, default=None: (
+        defaults if key == 'align_frames_params' else get(key, default)))
+
+
+def _align_dialog(mock_action, params, **defaults):
     mock_action.type_name = "AlignFrames"
     mock_action.params = {'border_value': [0, 0, 0, 0], **params}
-    with patch('shinestacker.gui.config_dialog.ConfigDialog.adjust_dialog_size'):
+    with patch('shinestacker.gui.config_dialog.ConfigDialog.adjust_dialog_size'), \
+            _default_params(**defaults):
         return ActionConfigDialog(mock_action, '.')
 
 
@@ -172,23 +188,22 @@ def test_align_detector_menu_validates_sift_entries(mock_action, qapp):
     warning.assert_called_once()
 
 
-def _default_detector(detector):
-    from shinestacker.config.app_config import AppConfig
-    get = AppConfig.get
-    return patch.object(AppConfig, 'get', side_effect=lambda key, default=None:
-                        detector if key == 'detector' else get(key, default))
-
-
 def test_align_detector_menu_sift_default_is_opencv(mock_action, qapp):
-    with _default_detector('SIFT'):
-        dialog = _align_dialog(mock_action, {})
+    dialog = _align_dialog(mock_action, {})
     menu = dialog.configurator.detector_field
     assert menu.currentText() == 'SIFT (OpenCV)'
     menu.setCurrentText('SIFT (silx)')
-    # the reset of FieldBuilder.reset_to_defaults() for this combo; the whole dialog reset
-    # stops earlier, at border_value (its default is the border mode on main)
-    menu.setCurrentText(str(dialog.configurator.builder.fields['detector']['default_value']))
+    dialog.configurator.builder.reset_to_defaults()
     assert menu.currentText() == 'SIFT (OpenCV)'
+
+
+def test_align_detector_menu_silx_default(mock_action, qapp):
+    dialog = _align_dialog(mock_action, {}, detector='SIFT', sift_backend='silx')
+    menu = dialog.configurator.detector_field
+    assert menu.currentText() == 'SIFT (silx)'
+    menu.setCurrentText('ORB')
+    dialog.configurator.builder.reset_to_defaults()
+    assert menu.currentText() == 'SIFT (silx)'
 
 
 def test_align_detector_menu_old_project_is_opencv(mock_action, qapp):

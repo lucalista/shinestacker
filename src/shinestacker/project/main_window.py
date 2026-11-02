@@ -520,7 +520,10 @@ class MainWindow(ProjectHandler, QMainWindow):
             AppConfig.get('retouch_after_run'))
 
     def toggle_expert_options(self):
-        AppConfig.set('expert_options', self.menu_manager.expert_options_action.isChecked())
+        self.set_expert_options(self.menu_manager.expert_options_action.isChecked())
+
+    def set_expert_options(self, value=True):
+        AppConfig.set('expert_options', value)
 
     def before_thread_begins(self):
         self.menu_manager.run_job_action.setEnabled(False)

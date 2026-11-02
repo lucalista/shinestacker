@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.17.x] - 2026-11-01
+## [v1.17.x] - 2026-11-02
 **Linux fix**
 
 ### Added
@@ -10,6 +10,15 @@
 - launch external viewer/file manager with a clean environment (#95)
 - fixed error due to GPS exif data in TIFF format (#96)
 - dialog crash when adding FocusStack manually (#97)
+- crash when using ```-x``` option (#100)
+- reset of border value in align module dialog (#100)
+- action dialogs: eeset restores combo-box defaults (#102)
+- depth map:
+    - ```mod_laplacian``` uses second derivatives (#103)
+    - average weights where no frame has energy (#104)
+
+### Added
+- optional robust refit of the rigid transform after RANSAC (#101)
 
 ### Changed
 - minor code cleanup

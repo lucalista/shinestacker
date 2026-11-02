@@ -96,15 +96,19 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
         return np.abs(lap_result)
 
     def get_modified_laplacian(self, gray_img):
-        dx = cv2.Sobel(gray_img, self.cv_float, 1, 0, ksize=3)
-        dy = cv2.Sobel(gray_img, self.cv_float, 0, 1, ksize=3)
-        mod_laplacian = np.abs(dx) + np.abs(dy)
+        # Nayar and Nakagawa (1994), eq. 13 with step 1: |2I - I(x-1) - I(x+1)| + the same in y.
+        # ksize=1 is the bare [1, -2, 1]; ksize=3 would also smooth across the derivative and
+        # cancel one-pixel texture
+        d2x = cv2.Sobel(gray_img, self.cv_float, 2, 0, ksize=1)
+        d2y = cv2.Sobel(gray_img, self.cv_float, 0, 2, ksize=1)
+        mod_laplacian = np.abs(d2x) + np.abs(d2y)
         return mod_laplacian.astype(self.float_type)
 
     def get_variance_map(self, gray_img, window_size=5):
         mean = cv2.boxFilter(gray_img, -1, (window_size, window_size))
         mean_sq = cv2.boxFilter(gray_img**2, -1, (window_size, window_size))
-        return mean_sq - mean**2
+        # E[x^2] - E[x]^2 can round below zero; energies must be >= 0 (zero sum = no energy)
+        return np.maximum(mean_sq - mean**2, 0)
 
     def get_tenengrad(self, gray_img, threshold=5):
         gx = cv2.Sobel(gray_img, self.cv_float, 1, 0, ksize=3)
@@ -127,6 +131,8 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
             mask = sum_energies != 0
             weights = np.zeros_like(energies)
             weights[:, mask] = energies[:, mask] / sum_energies[mask]
+            # no energy in any frame (flat or clipped area): share the weight, do not drop the pixel
+            weights[:, ~mask] = 1.0 / energies.shape[0]
         elif self.map_type == constants.DM_MAP_MAX:
             max_energy = np.max(energies, axis=0)
             if self.temperature < 1e-4:
@@ -282,12 +288,14 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
         return result
 
     def get_focus_map_from_disk_average(self, energy_files, sum_energies, n_images):
-        sum_energies = np.where(sum_energies == 0, np.finfo(self.float_type).eps, sum_energies)
+        zero = sum_energies == 0
+        sum_energies = np.where(zero, self.float_type(1.0), sum_energies)
         weights = np.empty((n_images, *self.shape), dtype=self.float_type)
         for i, energy_file in enumerate(energy_files):
             self.print_message(f": compute weight, {self.image_str(i)}")
             energy_map = np.load(energy_file)
-            weights[i] = energy_map / sum_energies
+            # no energy in any frame: share the weight, as in get_focus_map
+            weights[i] = np.where(zero, self.float_type(1.0 / n_images), energy_map / sum_energies)
             self.check_running()
         self.cleanup_temp_files(energy_files)
         return weights
