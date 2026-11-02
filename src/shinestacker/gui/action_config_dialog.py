@@ -620,7 +620,8 @@ class FocusStackConfigurator(FocusStackBaseConfigurator):
         naming_mode = action.params.get('naming_mode', focus_defaults.get('naming_mode', 'PREFIX'))
         self.set_naming_defaults(
             naming_mode,
-            action.params.get('prefix', focus_defaults['prefix']),
+            action.params.get('prefix',
+                              focus_defaults.get('prefix', '')),
             action.params.get('output_file_template',
                               focus_defaults.get('output_file_template', ''))
         )
