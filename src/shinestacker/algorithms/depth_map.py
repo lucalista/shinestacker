@@ -96,9 +96,12 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
         return np.abs(lap_result)
 
     def get_modified_laplacian(self, gray_img):
-        dx = cv2.Sobel(gray_img, self.cv_float, 1, 0, ksize=3)
-        dy = cv2.Sobel(gray_img, self.cv_float, 0, 1, ksize=3)
-        mod_laplacian = np.abs(dx) + np.abs(dy)
+        # Nayar and Nakagawa (1994), eq. 13 with step 1: |2I - I(x-1) - I(x+1)| + the same in y.
+        # ksize=1 is the bare [1, -2, 1]; ksize=3 would also smooth across the derivative and
+        # cancel one-pixel texture
+        d2x = cv2.Sobel(gray_img, self.cv_float, 2, 0, ksize=1)
+        d2y = cv2.Sobel(gray_img, self.cv_float, 0, 2, ksize=1)
+        mod_laplacian = np.abs(d2x) + np.abs(d2y)
         return mod_laplacian.astype(self.float_type)
 
     def get_variance_map(self, gray_img, window_size=5):

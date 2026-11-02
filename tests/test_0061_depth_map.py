@@ -506,3 +506,13 @@ def test_variance_map_is_not_negative():
     rng = np.random.default_rng(0)
     img = (0.7 + 0.001 * rng.random((256, 256))).astype(np.float32)   # rounds below 0 without clamp
     assert DepthMapStack().get_variance_map(img).min() >= 0
+def test_modified_laplacian_is_second_derivatives():
+    dms = DepthMapStack()
+    y, x = np.mgrid[0:32, 0:32].astype(np.float32)
+    ramp = 3 * x + 2 * y      # only first derivatives: Sobel sees it, the second ones do not
+    assert dms.get_sobel_map(ramp)[8:24, 8:24].min() > 0
+    assert np.allclose(dms.get_modified_laplacian(ramp)[8:24, 8:24], 0)
+    bowl = x ** 2 + y ** 2              # d2/dx2 = d2/dy2 = 2
+    assert np.allclose(dms.get_modified_laplacian(bowl)[8:24, 8:24], 4)
+    checkerboard = ((x + y) % 2) * 255  # finest texture: |2I - I(x-1) - I(x+1)| = 510 in x and y
+    assert np.allclose(dms.get_modified_laplacian(checkerboard)[8:24, 8:24], 1020)

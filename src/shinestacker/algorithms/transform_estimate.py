@@ -121,6 +121,61 @@ def check_transform(m, img_shape, transform_type, affine_thresholds, homography_
     return False, f'invalid transfrom option {transform_type}', None
 
 
+MIN_REFIT_MATCHES = 10
+
+
+def similarity_lsq(src, dst, w):
+    w_sum = w.sum()
+    if not np.isfinite(w_sum) or w_sum <= 0:
+        return None
+    mean_src = (w[:, None] * src).sum(axis=0) / w_sum
+    mean_dst = (w[:, None] * dst).sum(axis=0) / w_sum
+    sc, dc = src - mean_src, dst - mean_dst
+    den = (w * (sc ** 2).sum(axis=1)).sum()
+    if not den > 1e-9 * w_sum:     # weighted mean square spread below ~3e-5 px
+        return None
+    a = (w * (sc[:, 0] * dc[:, 0] + sc[:, 1] * dc[:, 1])).sum() / den
+    b = (w * (sc[:, 0] * dc[:, 1] - sc[:, 1] * dc[:, 0])).sum() / den
+    rot = np.array([[a, -b], [b, a]])
+    m = np.hstack([rot, (mean_dst - rot @ mean_src)[:, None]])
+    return m if np.isfinite(m).all() else None
+
+
+def _refit_support(src, dst, m, threshold):
+    u = np.linalg.norm(src @ m[:, :2].T + m[:, 2] - dst, axis=1) / threshold
+    return np.where(u < 1, (1 - u ** 2) ** 2, 0.0)
+
+
+def _max_move(m_a, m_b, pts):
+    (x0, y0), (x1, y1) = pts.min(axis=0), pts.max(axis=0)
+    corners = np.array([[x0, x1, x0, x1], [y0, y0, y1, y1], [1, 1, 1, 1]], dtype=np.float64)
+    return float(np.abs(m_a @ corners - m_b @ corners).max())
+
+
+def refit_irls(src_pts, dst_pts, m, threshold, max_iters=10, max_move=None):
+    src = np.asarray(src_pts, dtype=np.float64).reshape(-1, 2)
+    dst = np.asarray(dst_pts, dtype=np.float64).reshape(-1, 2)
+    m_fit = np.asarray(m, dtype=np.float64)
+    if not (np.isfinite(src).all() and np.isfinite(dst).all() and np.isfinite(m_fit).all()):
+        return m
+    for _ in range(max_iters):
+        w = _refit_support(src, dst, m_fit, threshold)
+        if np.count_nonzero(w) < MIN_REFIT_MATCHES:
+            return m
+        m_new = similarity_lsq(src, dst, w)
+        if m_new is None:
+            return m
+        converged = np.allclose(m_new, m_fit, rtol=0, atol=1e-9)
+        m_fit = m_new
+        if converged:
+            break
+    if np.count_nonzero(_refit_support(src, dst, m_fit, threshold)) < MIN_REFIT_MATCHES:
+        return m
+    if max_move is not None and _max_move(m_fit, np.asarray(m, dtype=np.float64), src) > max_move:
+        return m
+    return m_fit
+
+
 def find_transform(src_pts, dst_pts, subsample,
                    transform=DEFAULTS['align_frames_params']['transform'],
                    method=DEFAULTS['align_frames_params']['align_method'],
@@ -135,7 +190,10 @@ def find_transform(src_pts, dst_pts, subsample,
                    rans_avg_error_threshold=DEFAULTS[
                        'align_frames_params']['rans_avg_error_threshold'],
                    rans_max_error_threshold=DEFAULTS[
-                       'align_frames_params']['rans_max_error_threshold']):
+                       'align_frames_params']['rans_max_error_threshold'],
+                   refit=DEFAULTS['align_frames_params']['refit'],
+                   refit_threshold=DEFAULTS['align_frames_params']['refit_threshold'],
+                   refit_validate=None):
     if method == 'RANSAC':
         cv2_method = cv2.RANSAC
     elif method == 'LMEDS':
@@ -145,6 +203,13 @@ def find_transform(src_pts, dst_pts, subsample,
             'align_method', method,
             f". Valid options are: {constants.ALIGN_RANSAC}, {constants.ALIGN_LMEDS}"
         )
+    if refit not in constants.VALID_REFIT_METHODS:
+        raise InvalidOptionError(
+            'refit', refit,
+            f". Valid options are: {constants.REFIT_NONE}, {constants.REFIT_IRLS}")
+    if transform == constants.ALIGN_RIGID and refit == constants.REFIT_IRLS and \
+            not (np.isfinite(refit_threshold) and refit_threshold > 0):
+        raise InvalidOptionError('refit_threshold', refit_threshold, ". Must be positive")
     if transform == constants.ALIGN_HOMOGRAPHY:
         m, mask = cv2.findHomography(src_pts, dst_pts, method=cv2_method,
                                      ransacReprojThreshold=rans_threshold,
@@ -154,6 +219,10 @@ def find_transform(src_pts, dst_pts, subsample,
                                               ransacReprojThreshold=rans_threshold,
                                               confidence=align_confidence / 100.0,
                                               refineIters=refine_iters)
+        if refit == constants.REFIT_IRLS and m is not None:
+            m_refit = refit_irls(src_pts, dst_pts, m, refit_threshold, max_move=rans_threshold)
+            if m_refit is not m and (refit_validate is None or refit_validate(m_refit)):
+                m = m_refit
     else:
         raise InvalidOptionError(
             'transform', method,
@@ -340,6 +409,16 @@ class TransformationExtractor:
         msk = None
         quality = None
         phase_corr_called = False
+
+        def refit_validate(m_refit):
+            if subsample > 1:
+                m_refit = rescale_transform(m_refit, original_shape[1], original_shape[0],
+                                            img_0_sub.shape[1], img_0_sub.shape[0],
+                                            subsample, transform_type)
+            return m_refit is not None and check_transform(
+                m_refit, original_shape, transform_type,
+                self.affine_thresholds, self.homography_thresholds)[0]
+
         if match_result.has_sufficient_matches(min_good_matches):
             src_pts = match_result.get_src_points()
             dst_pts = match_result.get_dst_points()
@@ -351,7 +430,11 @@ class TransformationExtractor:
                             'compute_rans_quality',
                             'rans_inlier_fraction_threshold',
                             'rans_avg_error_threshold',
-                            'rans_max_error_threshold']))
+                            'rans_max_error_threshold']),
+                refit=self.alignment_config.get('refit', constants.REFIT_NONE),
+                refit_threshold=self.alignment_config.get(
+                    'refit_threshold', DEFAULTS['align_frames_params']['refit_threshold']),
+                refit_validate=refit_validate)
             if m is not None and plot_path is not None and plot_manager is not None:
                 plot_matches(msk, img_ref_sub, img_0_sub, match_result.kp_ref, match_result.kp_0,
                              match_result.good_matches, plot_path, plot_manager)
