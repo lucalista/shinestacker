@@ -8,6 +8,7 @@
 - fixed error due to GPS exif data in TIFF format (#96)
 - dialog crash when adding FocusStack manually (#97)
 - crash when using ```-x``` option (#100)
+- reset of border value in align module dialog (#100)
 
 ### Changed
 - minor code cleanup

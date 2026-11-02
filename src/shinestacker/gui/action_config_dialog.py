@@ -1007,7 +1007,7 @@ class AlignFramesConfigurator(SubsampleActionConfigurator, AlignFramesConfigBase
             layout, 'border_value', FIELD_INT_TUPLE,
             'Border value (if constant)', required=False, size=4,
             expert=True,
-            default=AppConfig.get('align_frames_params')['border_mode'],
+            default=AppConfig.get('align_frames_params')['border_value'],
             labels=constants.RGBA_LABELS,
             min_val=[0] * 4, max_val=[255] * 4)
         self.add_field_to_layout(
