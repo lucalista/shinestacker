@@ -478,3 +478,31 @@ def test_ordered_parallel_map_order_and_early_stop():
         assert next(results) == 0
         results.close()
     assert len(started) <= 5
+
+
+def test_average_shares_weight_where_no_frame_has_energy(tmp_path):
+    dms = DepthMapStack(map_type=constants.DM_MAP_AVERAGE)
+    dms.print_message = MagicMock()
+    energies = np.zeros((3, 4, 4), dtype=np.float32)
+    energies[:, 0, 0] = (1, 2, 1)
+    weights = dms.get_focus_map(energies, quiet=True)
+    np.testing.assert_allclose(weights.sum(axis=0), 1)
+    np.testing.assert_allclose(weights[:, 1, 1], 1 / 3)
+    np.testing.assert_allclose(weights[:, 0, 0], (0.25, 0.5, 0.25))
+    dms = DepthMapStack(mode='i/o', map_type=constants.DM_MAP_AVERAGE)
+    dms.print_message = MagicMock()
+    dms.check_running = MagicMock()
+    dms.shape = (4, 4)
+    dms.filenames = ['a.tif', 'b.tif', 'c.tif']
+    files = []
+    for i, energy in enumerate(energies):
+        files.append(str(tmp_path / f'energy_{i}.npy'))
+        np.save(files[-1], energy)
+    disk = dms.get_focus_map_from_disk_average(files, energies.sum(axis=0), 3)
+    np.testing.assert_allclose(disk, weights)
+
+
+def test_variance_map_is_not_negative():
+    rng = np.random.default_rng(0)
+    img = (0.7 + 0.001 * rng.random((256, 256))).astype(np.float32)   # rounds below 0 without clamp
+    assert DepthMapStack().get_variance_map(img).min() >= 0

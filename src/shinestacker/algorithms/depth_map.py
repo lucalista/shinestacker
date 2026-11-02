@@ -104,7 +104,8 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
     def get_variance_map(self, gray_img, window_size=5):
         mean = cv2.boxFilter(gray_img, -1, (window_size, window_size))
         mean_sq = cv2.boxFilter(gray_img**2, -1, (window_size, window_size))
-        return mean_sq - mean**2
+        # E[x^2] - E[x]^2 can round below zero; energies must be >= 0 (zero sum = no energy)
+        return np.maximum(mean_sq - mean**2, 0)
 
     def get_tenengrad(self, gray_img, threshold=5):
         gx = cv2.Sobel(gray_img, self.cv_float, 1, 0, ksize=3)
@@ -127,6 +128,8 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
             mask = sum_energies != 0
             weights = np.zeros_like(energies)
             weights[:, mask] = energies[:, mask] / sum_energies[mask]
+            # no energy in any frame (flat or clipped area): share the weight, do not drop the pixel
+            weights[:, ~mask] = 1.0 / energies.shape[0]
         elif self.map_type == constants.DM_MAP_MAX:
             max_energy = np.max(energies, axis=0)
             if self.temperature < 1e-4:
@@ -282,12 +285,14 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
         return result
 
     def get_focus_map_from_disk_average(self, energy_files, sum_energies, n_images):
-        sum_energies = np.where(sum_energies == 0, np.finfo(self.float_type).eps, sum_energies)
+        zero = sum_energies == 0
+        sum_energies = np.where(zero, self.float_type(1.0), sum_energies)
         weights = np.empty((n_images, *self.shape), dtype=self.float_type)
         for i, energy_file in enumerate(energy_files):
             self.print_message(f": compute weight, {self.image_str(i)}")
             energy_map = np.load(energy_file)
-            weights[i] = energy_map / sum_energies
+            # no energy in any frame: share the weight, as in get_focus_map
+            weights[i] = np.where(zero, self.float_type(1.0 / n_images), energy_map / sum_energies)
             self.check_running()
         self.cleanup_temp_files(energy_files)
         return weights
