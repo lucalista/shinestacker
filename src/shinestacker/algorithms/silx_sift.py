@@ -3,7 +3,7 @@
 
 It returns the same objects as cv2.SIFT.detectAndCompute (cv2.KeyPoint list and
 float32 descriptors), so matching and transform estimation are unchanged.
-Requires the optional packages silx and pyopencl (pip install shinestacker[opencl]).
+Needs an OpenCL driver (GPU, or a CPU runtime); without one OpenCV SIFT is used.
 """
 import atexit
 import importlib

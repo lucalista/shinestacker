@@ -4,7 +4,7 @@
 **Linux fix**
 
 ### Added
-- optional OpenCL SIFT implementation (silx) for alignment: `sift_backend` option, `pip install shinestacker[opencl]`
+- optional OpenCL SIFT implementation (silx) for alignment: `sift_backend` option; silx and pyopencl are dependencies and are included in the executables
 
 ## Fixed
 - launch external viewer/file manager with a clean environment (#95)

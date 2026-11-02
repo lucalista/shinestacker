@@ -29,6 +29,7 @@ def build_pyinstaller_command(sys_name, dist_dir, project_name, app_name, hooks_
             "--argv-emulation",
             f"--additional-hooks-dir={hooks_dir}",
             f"--collect-all={project_name}",
+            "--collect-data=silx",  # OpenCL kernels of the silx SIFT
             "--collect-data=imagecodecs",
             "--collect-submodules=imagecodecs",
             "--copy-metadata=imagecodecs",
@@ -43,6 +44,7 @@ def build_pyinstaller_command(sys_name, dist_dir, project_name, app_name, hooks_
             "--paths=src",
             "--icon=src/shinestacker/gui/ico/shinestacker.ico",
             f"--collect-all={project_name}",
+            "--collect-data=silx",  # OpenCL kernels of the silx SIFT
             "--collect-data=imagecodecs", "--collect-submodules=imagecodecs",
             "--copy-metadata=imagecodecs",
             "--copy-metadata=tifftools",
@@ -56,6 +58,7 @@ def build_pyinstaller_command(sys_name, dist_dir, project_name, app_name, hooks_
             f"--distpath={dist_dir}",
             "--paths=src",
             f"--collect-all={project_name}",
+            "--collect-data=silx",  # OpenCL kernels of the silx SIFT
             "--collect-data=imagecodecs", "--collect-submodules=imagecodecs",
             "--copy-metadata=imagecodecs",
             "--copy-metadata=tifftools",

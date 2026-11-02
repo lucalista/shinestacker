@@ -803,8 +803,8 @@ class AlignFramesConfigBase:
         'detector':
             "SIFT: Requires SIFT descriptor and K-NN matching\n"
             "SIFT (silx): OpenCL implementation on the GPU, or on the CPU without one; faster\n"
-            "on large images. Needs the optional packages silx and pyopencl\n"
-            "(pip install shinestacker[opencl]), else OpenCV is used\n"
+            "on large images. Needs an OpenCL driver (GPU, or a CPU runtime),\n"
+            "else OpenCV is used\n"
             "ORB/AKAZE: Work best with Hamming distance",
         'descriptor':
             "SIFT: Requires K-NN matching\n"
