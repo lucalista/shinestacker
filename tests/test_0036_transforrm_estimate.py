@@ -589,3 +589,68 @@ def test_find_transform_invalid_refit():
     src, dst, _ = _rigid_matches(0)
     with pytest.raises(InvalidOptionError):
         find_transform(src, dst, 1, constants.ALIGN_RIGID, refit='INVALID_REFIT')
+
+
+def _reference_warp_with_blurred_border(img, img_ref, m, config):
+    """The border-blur warp with a mask of the image's shape (three or four identical channels),
+    converted to gray, as apply_alignment_transform did before it used a one-channel mask."""
+    homography = config['transform'] == constants.ALIGN_HOMOGRAPHY
+    warp = cv2.warpPerspective if homography else cv2.warpAffine
+    size = (img_ref.shape[1], img_ref.shape[0])
+    interpolation = {constants.INTER_LINEAR: cv2.INTER_LINEAR,
+                     constants.INTER_CUBIC: cv2.INTER_CUBIC}[config['interpolation']]
+    out = warp(img, m, size, flags=interpolation, borderMode=cv2.BORDER_REPLICATE,
+               borderValue=config['border_value'])
+    mask = warp(np.ones_like(img, dtype=np.uint8), m, size, borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+    mask = cv2.cvtColor(mask[..., :3], cv2.COLOR_BGR2GRAY)
+    blurred = cv2.GaussianBlur(out, (21, 21), sigmaX=config['border_blur'])
+    out[mask == 0] = blurred[mask == 0]
+    if out.shape[2] == 4:
+        coverage = warp(np.ones(img.shape[:2], dtype=np.uint8), m, size, borderMode=cv2.BORDER_CONSTANT,
+                        borderValue=0)
+        out[..., 3][coverage == 0] = 0
+    return out
+
+
+@pytest.mark.parametrize('dtype', [np.uint8, np.uint16])
+@pytest.mark.parametrize('channels', [3, 4])
+@pytest.mark.parametrize('interpolation', [constants.INTER_LINEAR, constants.INTER_CUBIC])
+@pytest.mark.parametrize('transform', [constants.ALIGN_RIGID, constants.ALIGN_HOMOGRAPHY])
+def test_apply_alignment_transform_blurred_border_matches_full_mask(dtype, channels, interpolation, transform):
+    rng = np.random.default_rng(7)
+    img = rng.integers(0, np.iinfo(dtype).max, (60, 80, channels), dtype=dtype)
+    img_ref = np.zeros((50, 90, channels), dtype=dtype)       # another size: part of the output is not covered
+    m = cv2.getRotationMatrix2D((40, 30), 1.5, 1.0)
+    m[:, 2] += (6.5, -4.5)
+    if transform == constants.ALIGN_HOMOGRAPHY:
+        m = np.vstack([m, [1e-5, 2e-5, 1.0]])
+    config = {'border_mode': constants.BORDER_REPLICATE_BLUR, 'transform': transform,
+              'interpolation': interpolation, 'border_value': [0] * 4, 'border_blur': 20}
+    try:
+        expected = _reference_warp_with_blurred_border(img.copy(), img_ref, m, config)
+    except cv2.error:
+        pytest.skip('OpenCV cannot make this warp')
+    result = TransformationExtractor(config, None, None).apply_alignment_transform(img.copy(), img_ref, m)
+    assert result.shape == img_ref.shape and result.dtype == dtype
+    np.testing.assert_array_equal(result, expected)
+
+
+@pytest.mark.parametrize('transform', [constants.ALIGN_RIGID, constants.ALIGN_HOMOGRAPHY])
+def test_apply_alignment_transform_blurred_border_grayscale(transform):
+    img = np.random.default_rng(7).integers(0, 65535, (60, 80), dtype=np.uint16)
+    img_ref = np.zeros((50, 90), dtype=np.uint16)
+    m = cv2.getRotationMatrix2D((40, 30), 1.5, 1.0)
+    m[:, 2] += (6.5, -4.5)
+    warp = cv2.warpAffine
+    if transform == constants.ALIGN_HOMOGRAPHY:
+        m = np.vstack([m, [1e-5, 2e-5, 1.0]])
+        warp = cv2.warpPerspective
+    config = {'border_mode': constants.BORDER_REPLICATE_BLUR, 'transform': transform,
+              'interpolation': constants.INTER_LINEAR, 'border_value': 0, 'border_blur': 20}
+    result = TransformationExtractor(config, None, None).apply_alignment_transform(img.copy(), img_ref, m)
+    expected = warp(img, m, (90, 50), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
+    outside = warp(np.ones_like(img, dtype=np.uint8), m, (90, 50), borderMode=cv2.BORDER_CONSTANT, borderValue=0) == 0
+    blurred = cv2.GaussianBlur(expected, (21, 21), sigmaX=20)
+    expected[outside] = blurred[outside]
+    assert outside.any()
+    np.testing.assert_array_equal(result, expected)

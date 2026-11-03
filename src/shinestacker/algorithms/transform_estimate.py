@@ -516,9 +516,10 @@ class TransformationExtractor:
             if callbacks and 'warning' in callbacks:
                 callbacks['warning'](f"invalid matrix shape for homography: {m.shape}")
             return None
-        img_mask = np.ones_like(img_0, dtype=np.uint8)
+        img_mask = np.ones(img_0.shape[:2], dtype=np.uint8)
         h_ref, w_ref = img_ref.shape[:2]
         img_warp = None
+        mask = None
         if transform_type == constants.ALIGN_HOMOGRAPHY:
             img_warp = cv2.warpPerspective(
                 img_0, m, (w_ref, h_ref), flags=cv2_interpolation,
@@ -536,7 +537,6 @@ class TransformationExtractor:
         if self.alignment_config['border_mode'] == constants.BORDER_REPLICATE_BLUR:
             if callbacks and 'blur_message' in callbacks:
                 callbacks['blur_message']()
-            mask = cv2.cvtColor(mask[..., :3], cv2.COLOR_BGR2GRAY)
             blurred_warp = cv2.GaussianBlur(
                 img_warp, (21, 21), sigmaX=self.alignment_config['border_blur'])
             img_warp[mask == 0] = blurred_warp[mask == 0]
