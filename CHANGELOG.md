@@ -13,6 +13,7 @@
 - depth map:
     - ```mod_laplacian``` uses second derivatives (#103)
     - average weights where no frame has energy (#104)
+    - the weights replace the energy cube band by band (#106)
 
 ### Added
 - optional robust refit of the rigid transform after RANSAC (#101)
