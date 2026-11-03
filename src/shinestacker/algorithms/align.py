@@ -448,10 +448,11 @@ class AlignFramesBase(SubAction):
         self._max_errors[idx] = quality.get('max_error_px', 0)
 
     def _attempt(self, matcher, img_ref, img_0, subsample, callbacks,
-                 plot_path, warning_callback):
+                 plot_path, warning_callback, frame_keys=None):
+        kwargs = {} if frame_keys is None else {'frame_keys': frame_keys}
         match_result, final_subsample = matcher.match_images_with_fallback(
             img_ref, img_0, subsample=subsample,
-            warning_callback=warning_callback)
+            warning_callback=warning_callback, **kwargs)
         n_good_matches = match_result.n_good_matches()
         img_ref_sub, img_0_sub = matcher.get_last_subsampled_images()
         m, phase_corr_called, _msk, quality = \
@@ -460,10 +461,11 @@ class AlignFramesBase(SubAction):
                 plot_path, self.process.plot_manager)
         return m, phase_corr_called, quality, n_good_matches
 
-    def _run_with_subsample(self, matcher, idx, img_ref, img_0, callbacks, plot_path):
+    def _run_with_subsample(self, matcher, idx, img_ref, img_0, callbacks, plot_path,
+                            frame_keys=None):
         def run_with_subsample(subsample_val):
             return self._attempt(matcher, img_ref, img_0, subsample_val, callbacks,
-                                 plot_path, warning_callback)
+                                 plot_path, warning_callback, frame_keys)
 
         h0, w0 = img_0.shape[:2]
         subsample = self.alignment_config['subsample']
@@ -489,9 +491,9 @@ class AlignFramesBase(SubAction):
             self.save_quality_metrics(idx, quality)
         return m, phase_corr_called, quality, n_good_matches
 
-    def compute_transformation(self, idx, img_ref, img_0, callbacks, plot_path):
+    def compute_transformation(self, idx, img_ref, img_0, callbacks, plot_path, frame_keys=None):
         m, phase_corr_called, quality, n_good_matches = self._run_with_subsample(
-            self.feature_matcher, idx, img_ref, img_0, callbacks, plot_path)
+            self.feature_matcher, idx, img_ref, img_0, callbacks, plot_path, frame_keys)
 
         if m is not None or self._fallback_pair is None:
             return m, phase_corr_called, quality, n_good_matches
