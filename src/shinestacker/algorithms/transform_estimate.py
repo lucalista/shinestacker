@@ -392,6 +392,28 @@ def plot_matches(msk, img_ref_sub, img_0_sub, kp_ref, kp_0, good_matches,
     plt.close(fig)
 
 
+def warp_perspective_channelwise(img, m, size, flags, border_mode, border_value):
+    channels = []
+    for c in range(img.shape[2]):
+        value = border_value[c] if np.ndim(border_value) else border_value
+        channels.append(cv2.warpPerspective(
+            np.ascontiguousarray(img[..., c]), m, size, flags=flags,
+            borderMode=border_mode, borderValue=value))
+    return cv2.merge(channels)
+
+
+def warp_perspective(img, m, size, flags, border_mode, border_value):
+    """cv2.warpPerspective, except for 4-channel uint16 images with linear interpolation:
+    OpenCV 4.14 fails on them (an access violation, reported as an unknown C++ exception).
+    They are warped channel by channel, which gives the same values to within a rounding
+    step."""
+    if img.ndim == 3 and img.shape[2] == 4 and img.dtype == np.uint16 \
+            and flags == cv2.INTER_LINEAR:
+        return warp_perspective_channelwise(img, m, size, flags, border_mode, border_value)
+    return cv2.warpPerspective(img, m, size, flags=flags, borderMode=border_mode,
+                               borderValue=border_value)
+
+
 class TransformationExtractor:
     def __init__(self, alignment_config, affine_thresholds, homography_thresholds):
         self.alignment_config = alignment_config
@@ -521,9 +543,9 @@ class TransformationExtractor:
         img_warp = None
         mask = None
         if transform_type == constants.ALIGN_HOMOGRAPHY:
-            img_warp = cv2.warpPerspective(
-                img_0, m, (w_ref, h_ref), flags=cv2_interpolation,
-                borderMode=cv2_border_mode, borderValue=self.alignment_config['border_value'])
+            img_warp = warp_perspective(
+                img_0, m, (w_ref, h_ref), cv2_interpolation,
+                cv2_border_mode, self.alignment_config['border_value'])
             if self.alignment_config['border_mode'] == constants.BORDER_REPLICATE_BLUR:
                 mask = cv2.warpPerspective(img_mask, m, (w_ref, h_ref),
                                            borderMode=cv2.BORDER_CONSTANT, borderValue=0)

@@ -6,6 +6,7 @@ from shinestacker.config.constants import constants
 from shinestacker.core.exceptions import InvalidOptionError
 from shinestacker.algorithms.transform_estimate import (
     find_transform, rescale_transform, TransformationExtractor,
+    warp_perspective, warp_perspective_channelwise,
     find_transform_phase_correlation, plot_matches,
     check_homography_distortion, decompose_affine_matrix,
     AFFINE_THRESHOLDS, HOMOGRAPHY_THRESHOLDS)
@@ -599,15 +600,22 @@ def _reference_warp_with_blurred_border(img, img_ref, m, config):
     size = (img_ref.shape[1], img_ref.shape[0])
     interpolation = {constants.INTER_LINEAR: cv2.INTER_LINEAR,
                      constants.INTER_CUBIC: cv2.INTER_CUBIC}[config['interpolation']]
-    out = warp(img, m, size, flags=interpolation, borderMode=cv2.BORDER_REPLICATE,
-               borderValue=config['border_value'])
-    mask = warp(np.ones_like(img, dtype=np.uint8), m, size, borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+    if homography and img.dtype == np.uint16 and img.shape[2] == 4 \
+            and interpolation == cv2.INTER_LINEAR:
+        # OpenCV 4.14 fails on this combination: one channel at a time
+        out = cv2.merge([warp(np.ascontiguousarray(img[..., c]), m, size, flags=interpolation,
+                              borderMode=cv2.BORDER_REPLICATE) for c in range(4)])
+    else:
+        out = warp(img, m, size, flags=interpolation, borderMode=cv2.BORDER_REPLICATE,
+                   borderValue=config['border_value'])
+    mask = warp(np.ones_like(img, dtype=np.uint8), m, size,
+                borderMode=cv2.BORDER_CONSTANT, borderValue=0)
     mask = cv2.cvtColor(mask[..., :3], cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(out, (21, 21), sigmaX=config['border_blur'])
     out[mask == 0] = blurred[mask == 0]
     if out.shape[2] == 4:
-        coverage = warp(np.ones(img.shape[:2], dtype=np.uint8), m, size, borderMode=cv2.BORDER_CONSTANT,
-                        borderValue=0)
+        coverage = warp(np.ones(img.shape[:2], dtype=np.uint8), m, size,
+                        borderMode=cv2.BORDER_CONSTANT, borderValue=0)
         out[..., 3][coverage == 0] = 0
     return out
 
@@ -616,21 +624,20 @@ def _reference_warp_with_blurred_border(img, img_ref, m, config):
 @pytest.mark.parametrize('channels', [3, 4])
 @pytest.mark.parametrize('interpolation', [constants.INTER_LINEAR, constants.INTER_CUBIC])
 @pytest.mark.parametrize('transform', [constants.ALIGN_RIGID, constants.ALIGN_HOMOGRAPHY])
-def test_apply_alignment_transform_blurred_border_matches_full_mask(dtype, channels, interpolation, transform):
+def test_apply_alignment_transform_blurred_border_matches_full_mask(
+        dtype, channels, interpolation, transform):
     rng = np.random.default_rng(7)
     img = rng.integers(0, np.iinfo(dtype).max, (60, 80, channels), dtype=dtype)
-    img_ref = np.zeros((50, 90, channels), dtype=dtype)       # another size: part of the output is not covered
+    img_ref = np.zeros((50, 90, channels), dtype=dtype)   # another size: part is not covered
     m = cv2.getRotationMatrix2D((40, 30), 1.5, 1.0)
     m[:, 2] += (6.5, -4.5)
     if transform == constants.ALIGN_HOMOGRAPHY:
         m = np.vstack([m, [1e-5, 2e-5, 1.0]])
     config = {'border_mode': constants.BORDER_REPLICATE_BLUR, 'transform': transform,
               'interpolation': interpolation, 'border_value': [0] * 4, 'border_blur': 20}
-    try:
-        expected = _reference_warp_with_blurred_border(img.copy(), img_ref, m, config)
-    except cv2.error:
-        pytest.skip('OpenCV cannot make this warp')
-    result = TransformationExtractor(config, None, None).apply_alignment_transform(img.copy(), img_ref, m)
+    expected = _reference_warp_with_blurred_border(img.copy(), img_ref, m, config)
+    extractor = TransformationExtractor(config, None, None)
+    result = extractor.apply_alignment_transform(img.copy(), img_ref, m)
     assert result.shape == img_ref.shape and result.dtype == dtype
     np.testing.assert_array_equal(result, expected)
 
@@ -647,10 +654,53 @@ def test_apply_alignment_transform_blurred_border_grayscale(transform):
         warp = cv2.warpPerspective
     config = {'border_mode': constants.BORDER_REPLICATE_BLUR, 'transform': transform,
               'interpolation': constants.INTER_LINEAR, 'border_value': 0, 'border_blur': 20}
-    result = TransformationExtractor(config, None, None).apply_alignment_transform(img.copy(), img_ref, m)
+    extractor = TransformationExtractor(config, None, None)
+    result = extractor.apply_alignment_transform(img.copy(), img_ref, m)
     expected = warp(img, m, (90, 50), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
-    outside = warp(np.ones_like(img, dtype=np.uint8), m, (90, 50), borderMode=cv2.BORDER_CONSTANT, borderValue=0) == 0
+    outside = warp(np.ones_like(img, dtype=np.uint8), m, (90, 50),
+                   borderMode=cv2.BORDER_CONSTANT, borderValue=0) == 0
     blurred = cv2.GaussianBlur(expected, (21, 21), sigmaX=20)
     expected[outside] = blurred[outside]
     assert outside.any()
     np.testing.assert_array_equal(result, expected)
+
+
+def _homography(dx=6.5, dy=-4.5):
+    m = np.vstack([cv2.getRotationMatrix2D((40, 30), 1.5, 1.0), [1e-5, 2e-5, 1.0]])
+    m[:2, 2] += (dx, dy)
+    return m
+
+
+@pytest.mark.parametrize('dtype, channels', [(np.uint8, 4), (np.uint16, 3), (np.uint16, 4)])
+def test_warp_perspective_channelwise_is_close_to_the_multichannel_warp(dtype, channels):
+    img = np.random.default_rng(3).integers(0, np.iinfo(dtype).max, (60, 80, channels), dtype=dtype)
+    args = ((90, 50), cv2.INTER_CUBIC, cv2.BORDER_CONSTANT, [7, 20, 33, 41])
+    native = cv2.warpPerspective(img, _homography(), args[0], flags=args[1], borderMode=args[2],
+                                 borderValue=args[3])
+    channelwise = warp_perspective_channelwise(img, _homography(), *args)
+    assert channelwise.shape == native.shape and channelwise.dtype == native.dtype
+    assert np.abs(channelwise.astype(np.int64) - native).max() <= 1
+
+
+def test_warp_perspective_uint16_rgba_linear():
+    # OpenCV 4.14 raises for this combination; it is warped channel by channel then
+    img = np.random.default_rng(3).integers(0, 65535, (60, 80, 4), dtype=np.uint16)
+    m = _homography()
+    args = ((90, 50), cv2.INTER_LINEAR, cv2.BORDER_REPLICATE, [0] * 4)
+    result = warp_perspective(img, m, *args)
+    assert result.shape == (50, 90, 4) and result.dtype == np.uint16
+    rgb = cv2.warpPerspective(img[..., :3].copy(), m, args[0], flags=args[1], borderMode=args[2])
+    alpha = cv2.warpPerspective(img[..., 3].copy(), m, args[0], flags=args[1], borderMode=args[2])
+    assert np.abs(result[..., :3].astype(np.int64) - rgb).max() <= 1
+    assert np.abs(result[..., 3].astype(np.int64) - alpha).max() <= 1
+
+
+@pytest.mark.parametrize('dtype, channels, interpolation', [
+    (np.uint8, 4, cv2.INTER_LINEAR), (np.uint16, 3, cv2.INTER_LINEAR),
+    (np.uint16, 4, cv2.INTER_CUBIC), (np.float32, 4, cv2.INTER_LINEAR)])
+def test_warp_perspective_is_cv2_for_the_other_images(dtype, channels, interpolation):
+    img = np.random.default_rng(3).integers(0, 255, (60, 80, channels)).astype(dtype)
+    args = ((90, 50), interpolation, cv2.BORDER_REPLICATE, [0] * 4)
+    expected = cv2.warpPerspective(img, _homography(), args[0], flags=args[1], borderMode=args[2],
+                                   borderValue=args[3])
+    np.testing.assert_array_equal(warp_perspective(img, _homography(), *args), expected)
