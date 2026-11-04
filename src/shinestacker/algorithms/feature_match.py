@@ -1,4 +1,5 @@
 # pylint: disable=R0913, R0903, W0718, R0914, R0917
+import threading
 import numpy as np
 import cv2
 from .. config.constants import constants
@@ -88,8 +89,56 @@ def validate_align_config(detector, descriptor, match_method):
                          " require matching method Hamming distance")
 
 
+class FeatureCache:
+    """Keypoints and descriptors by key. Each is computed once, also when several threads ask
+    for the same key at the same time (the frames of a chain are matched in pairs, so each
+    frame is needed twice).
+
+    The key is (frame, subsample) only: a cache belongs to one FeatureMatcher, with one fixed
+    detector and descriptor, for one run (a matcher with another configuration, such as the
+    fallback detector, needs its own cache or a configuration in the key). The cached keypoints
+    and descriptors are shared by the matches and must not be modified.
+
+    drop() and clear() do not wait for computations in progress, and a computation that finishes
+    after them stores its result: call them only when no thread uses the frame (drop) or the
+    cache (clear) any more.
+    """
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._items = {}
+        self._key_locks = {}
+
+    def get_or_compute(self, key, compute):
+        with self._lock:
+            if key in self._items:
+                return self._items[key]
+            key_lock = self._key_locks.setdefault(key, threading.Lock())
+        with key_lock:
+            with self._lock:
+                if key in self._items:
+                    return self._items[key]
+            result = compute()
+            with self._lock:
+                self._items[key] = result
+            return result
+
+    def drop(self, frame):
+        """Forget all entries of a frame; keys are (frame, subsample)."""
+        with self._lock:
+            for key in [k for k in self._items if k[0] == frame]:
+                del self._items[key]
+                self._key_locks.pop(key, None)
+
+    def clear(self):
+        with self._lock:
+            self._items.clear()
+            self._key_locks.clear()
+
+
 class FeatureMatcher:
     def __init__(self, feature_config, matching_config, callbacks=None):
+        self.cache = None       # a FeatureCache that only this matcher uses, set by the caller
         self.feature_config = {**DEFAULT_FEATURE_CONFIG, **(feature_config or {})}
         self.matching_config = {**DEFAULT_MATCHING_CONFIG, **(matching_config or {})}
         self.callbacks = callbacks or {}
@@ -116,7 +165,21 @@ class FeatureMatcher:
                 constants.DETECTOR_BRISK: cv2.BRISK_create
             }[descriptor]()
 
-    def detect_and_compute(self, image):
+    def detect_and_compute(self, image, key=None):
+        """key: (frame, subsample) of the image; with a cache set, the features of a key are
+        computed once."""
+        if key is None or self.cache is None:
+            return self._detect_and_compute(image)
+        return self.cache.get_or_compute(key, lambda: self._detect_and_compute_shared(image))
+
+    def _detect_and_compute_shared(self, image):
+        """Features that several matches use: the descriptors are read-only."""
+        kp, des = self._detect_and_compute(image)
+        if des is not None:
+            des.setflags(write=False)
+        return kp, des
+
+    def _detect_and_compute(self, image):
         img_bw = img_bw_8bit(image)
         detector_name = self.feature_config['detector']
         descriptor_name = self.feature_config['descriptor']
@@ -131,9 +194,9 @@ class FeatureMatcher:
                 des = None
         return kp, des
 
-    def match_images(self, img_ref, img_0):
-        kp_0, des_0 = self.detect_and_compute(img_0)
-        kp_ref, des_ref = self.detect_and_compute(img_ref)
+    def match_images(self, img_ref, img_0, keys=(None, None)):
+        kp_0, des_0 = self.detect_and_compute(img_0, keys[1])
+        kp_ref, des_ref = self.detect_and_compute(img_ref, keys[0])
         if des_0 is None or des_ref is None or len(des_0) == 0 or len(des_ref) == 0:
             return MatchResult(kp_0, kp_ref, [])
         good_matches = self.match_features(des_0, des_ref)
@@ -176,7 +239,9 @@ class SubsamplingFeatureMatcher:
         self.callbacks = callbacks or {}
         self._last_subsampled_images = (None, None)
 
-    def match_images_with_fallback(self, img_ref, img_0, subsample=1, warning_callback=None):
+    def match_images_with_fallback(self, img_ref, img_0, subsample=1, warning_callback=None,
+                                   frame_keys=None):
+        """frame_keys: the frame numbers (ref, img_0), if the matcher has a feature cache."""
         final_subsample = subsample
         min_good_matches = self.alignment_config['min_good_matches']
         fast_subsampling = self.alignment_config['fast_subsampling']
@@ -187,7 +252,9 @@ class SubsamplingFeatureMatcher:
             else:
                 img_0_sub, img_ref_sub = img_0, img_ref
             self._last_subsampled_images = (img_ref_sub, img_0_sub)
-            match_result = self.feature_matcher.match_images(img_ref_sub, img_0_sub)
+            keys = (None, None) if frame_keys is None else \
+                ((frame_keys[0], final_subsample), (frame_keys[1], final_subsample))
+            match_result = self.feature_matcher.match_images(img_ref_sub, img_0_sub, keys)
             n_good_matches = match_result.n_good_matches()
             if n_good_matches >= min_good_matches or final_subsample == 1:
                 break
