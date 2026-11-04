@@ -9,7 +9,7 @@
 - dialog crash when adding FocusStack manually (#97)
 - crash when using ```-x``` option (#100)
 - reset of border value in align module dialog (#100)
-- action dialogs: eeset restores combo-box defaults (#102)
+- action dialogs: reset restores combo-box defaults (#102)
 - depth map:
     - ```mod_laplacian``` uses second derivatives (#103)
     - average weights where no frame has energy (#104)
@@ -19,7 +19,9 @@
 - optional robust refit of the rigid transform after RANSAC (#101)
 
 ### Changed
-- code speedup: compute the features of each frame once in parallel alignment (#107)
+- code speedup:
+    - compute the features of each frame once in parallel alignment (#107)
+    - alignment: use a single-channel coverage mask (#105)
 - minor code cleanup
 
 ---
