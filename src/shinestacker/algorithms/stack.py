@@ -14,6 +14,7 @@ from .utils import (
     read_icc_profile)
 from .stack_framework import ImageSequenceManager, SequentialTask
 from .exif import copy_exif_from_file_to_file
+from .exif_common import image_description
 from .denoise import denoise
 from .sharpen import unsharp_mask
 
@@ -179,7 +180,9 @@ class FocusStackBase(TaskBase, ImageSequenceManager):
                                 break
 
                     exif_filename = os.path.join(self.exif_path, exif_filename_only)
-                    copy_exif_from_file_to_file(exif_filename, output_filename)
+                    copy_exif_from_file_to_file(
+                        exif_filename, output_filename,
+                        description=image_description(len(filenames)))
                     self.sub_message_r(" " * 60)
                 except Exception as e:
                     traceback.print_exc()

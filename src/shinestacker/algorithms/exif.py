@@ -26,6 +26,7 @@ from .exif_png import (
     get_enhanced_exif_from_png,
 )
 from .exif_common import write_tiff_with_metadata
+from . import exif_constants as ec
 
 
 def get_exif(exif_filename, enhanced_png_parsing=True):
@@ -73,11 +74,13 @@ def write_image_with_exif_data(
     return exif
 
 
-def save_exif_data(exif, in_filename, out_filename=None, verbose=False):
+def save_exif_data(exif, in_filename, out_filename=None, verbose=False, description=None):
     if out_filename is None:
         out_filename = in_filename
     if exif is None:
         raise RuntimeError("No exif data provided.")
+    if description is not None:
+        exif[ec.IMAGEDESCRIPTION] = description
     use_temp = in_filename == out_filename
     temp_filename = out_filename + ".tmp" if use_temp else out_filename
     try:
@@ -115,14 +118,14 @@ def save_exif_data(exif, in_filename, out_filename=None, verbose=False):
 
 
 def copy_exif_from_file_to_file(
-    exif_filename, in_filename, out_filename=None, verbose=False
+    exif_filename, in_filename, out_filename=None, verbose=False, description=None
 ):
     if not os.path.isfile(exif_filename):
         raise RuntimeError(f"File does not exist: {exif_filename}")
     if not os.path.isfile(in_filename):
         raise RuntimeError(f"File does not exist: {in_filename}")
     exif = get_exif(exif_filename)
-    return save_exif_data(exif, in_filename, out_filename, verbose)
+    return save_exif_data(exif, in_filename, out_filename, verbose, description)
 
 
 def exif_dict(exif_data):
