@@ -19,6 +19,7 @@
 - optional robust refit of the rigid transform after RANSAC (#101)
 
 ### Changed
+- code speedup: compute the features of each frame once in parallel alignment (#107)
 - minor code cleanup
 
 ---
