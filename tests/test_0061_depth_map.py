@@ -524,9 +524,11 @@ def test_focus_stack_hard_max_ties_and_flat_areas_memory_vs_disk(tmp_path):
     rng = np.random.default_rng(3)
     frames = []
     for i in range(4):
-        img = np.full((64, 96, 3), 90, dtype=np.uint8)           # flat right part: equal energy in every frame
+        # flat right part: equal energy in every frame
+        img = np.full((64, 96, 3), 90, dtype=np.uint8)
         img[:, :48] = rng.integers(0, 255, (64, 48, 3), dtype=np.uint8)
-        img[:16] = img[0, 0]                                      # flat band at the top (a colour per frame)
+        # flat band at the top (a colour per frame)
+        img[:16] = img[0, 0]
         path = str(tmp_path / f"{i}.png")
         cv2.imwrite(path, img)
         frames.append(path)
