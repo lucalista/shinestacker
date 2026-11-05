@@ -92,8 +92,61 @@ def validate_align_config(detector, descriptor, match_method):
                          " require matching method Hamming distance")
 
 
+class FeatureCache:
+    """Keypoints and descriptors by key. Each is computed once, also when several threads ask
+    for the same key at the same time (the frames of a chain are matched in pairs, so each
+    frame is needed twice).
+
+    The key is (frame, subsample) only: a cache belongs to one FeatureMatcher, with one fixed
+    detector and descriptor, for one run (a matcher with another configuration, such as the
+    fallback detector, needs its own cache or a configuration in the key). The cached keypoints
+    and descriptors are shared by the matches and must not be modified.
+
+    drop() and clear() do not wait for computations in progress, and a computation that finishes
+    after them stores its result: call them only when no thread uses the frame (drop) or the
+    cache (clear) any more.
+    """
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._items = {}
+        self._key_locks = {}
+
+    def get_or_compute(self, key, compute):
+        with self._lock:
+            if key in self._items:
+                return self._items[key]
+            key_lock = self._key_locks.setdefault(key, threading.Lock())
+        with key_lock:
+            with self._lock:
+                if key in self._items:
+                    return self._items[key]
+            result = compute()
+            with self._lock:
+                self._items[key] = result
+            return result
+
+    def put(self, key, result):
+        """Replace the entry of a key."""
+        with self._lock:
+            self._items[key] = result
+
+    def drop(self, frame):
+        """Forget all entries of a frame; keys are (frame, subsample)."""
+        with self._lock:
+            for key in [k for k in self._items if k[0] == frame]:
+                del self._items[key]
+                self._key_locks.pop(key, None)
+
+    def clear(self):
+        with self._lock:
+            self._items.clear()
+            self._key_locks.clear()
+
+
 class FeatureMatcher:
     def __init__(self, feature_config, matching_config, callbacks=None):
+        self.cache = None       # a FeatureCache that only this matcher uses, set by the caller
         self.feature_config = {**DEFAULT_FEATURE_CONFIG, **(feature_config or {})}
         self.matching_config = {**DEFAULT_MATCHING_CONFIG, **(matching_config or {})}
         self.callbacks = callbacks or {}
@@ -163,9 +216,34 @@ class FeatureMatcher:
         except Exception:
             return "SIFT (silx, OpenCL)"
 
-    def detect_and_compute(self, image, warning_callback=None):
-        kp, des, _silx = self._detect_and_compute(image, warning_callback)
+    def detect_and_compute(self, image, key=None, warning_callback=None):
+        """key: (frame, subsample) of the image; with a cache set, the features of a key are
+        computed once."""
+        kp, des, _silx = self._features(image, key, warning_callback)
         return kp, des
+
+    def _features(self, image, key, warning_callback=None):
+        # (kp, des, computed with silx)
+        if key is None or self.cache is None:
+            return self._detect_and_compute(image, warning_callback)
+        return self.cache.get_or_compute(
+            key, lambda: self._shared(self._detect_and_compute(image, warning_callback)))
+
+    def _opencv_features(self, image, key):
+        """OpenCV features of an image whose features came from silx before silx failed."""
+        result = self._detect_and_compute(image, allow_silx=False)
+        if key is None or self.cache is None:
+            return result
+        result = self._shared(result)
+        self.cache.put(key, result)
+        return result
+
+    @staticmethod
+    def _shared(result):
+        """Features that several matches use: the descriptors are read-only."""
+        if result[1] is not None:
+            result[1].setflags(write=False)
+        return result
 
     def _detect_and_compute(self, image, warning_callback=None, allow_silx=True):
         # also returns whether silx computed the features
@@ -196,13 +274,15 @@ class FeatureMatcher:
                 des = None
         return kp, des, False
 
-    def match_images(self, img_ref, img_0, warning_callback=None):
-        kp_0, des_0, silx_0 = self._detect_and_compute(img_0, warning_callback)
-        kp_ref, des_ref, silx_ref = self._detect_and_compute(img_ref, warning_callback)
+    def match_images(self, img_ref, img_0, keys=(None, None), warning_callback=None):
+        kp_0, des_0, silx_0 = self._features(img_0, keys[1], warning_callback)
+        kp_ref, des_ref, silx_ref = self._features(img_ref, keys[0], warning_callback)
+        # silx failed in between (possibly in another thread, or after the features of a
+        # cached frame): do not match silx features against OpenCV ones
         if silx_0 and not silx_ref:
-            # silx failed in between (possibly in another thread): do not match silx
-            # features against OpenCV ones
-            kp_0, des_0, _silx = self._detect_and_compute(img_0, allow_silx=False)
+            kp_0, des_0, _silx = self._opencv_features(img_0, keys[1])
+        elif silx_ref and not silx_0:
+            kp_ref, des_ref, _silx = self._opencv_features(img_ref, keys[0])
         if des_0 is None or des_ref is None or len(des_0) == 0 or len(des_ref) == 0:
             return MatchResult(kp_0, kp_ref, [])
         good_matches = self.match_features(des_0, des_ref)
@@ -245,7 +325,9 @@ class SubsamplingFeatureMatcher:
         self.callbacks = callbacks or {}
         self._last_subsampled_images = (None, None)
 
-    def match_images_with_fallback(self, img_ref, img_0, subsample=1, warning_callback=None):
+    def match_images_with_fallback(self, img_ref, img_0, subsample=1, warning_callback=None,
+                                   frame_keys=None):
+        """frame_keys: the frame numbers (ref, img_0), if the matcher has a feature cache."""
         final_subsample = subsample
         min_good_matches = self.alignment_config['min_good_matches']
         fast_subsampling = self.alignment_config['fast_subsampling']
@@ -256,8 +338,10 @@ class SubsamplingFeatureMatcher:
             else:
                 img_0_sub, img_ref_sub = img_0, img_ref
             self._last_subsampled_images = (img_ref_sub, img_0_sub)
+            keys = (None, None) if frame_keys is None else \
+                ((frame_keys[0], final_subsample), (frame_keys[1], final_subsample))
             match_result = self.feature_matcher.match_images(
-                img_ref_sub, img_0_sub, warning_callback)
+                img_ref_sub, img_0_sub, keys, warning_callback)
             n_good_matches = match_result.n_good_matches()
             if n_good_matches >= min_good_matches or final_subsample == 1:
                 break

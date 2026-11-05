@@ -1,26 +1,30 @@
 # Changelog
 
-## [v1.17.x] - 2026-11-02
-**Linux fix**
+## [v1.17.6] - 2026-11-04
+**Fixes and performance improvements**
 
 ### Added
 - optional OpenCL SIFT implementation (silx) for alignment: `sift_backend` option; silx and pyopencl are dependencies and are included in the executables
 
 ## Fixed
 - launch external viewer/file manager with a clean environment (#95)
-- fixed error due to GPS exif data in TIFF format (#96)
+- GPS exif data in TIFF format (#96)
 - dialog crash when adding FocusStack manually (#97)
 - crash when using ```-x``` option (#100)
 - reset of border value in align module dialog (#100)
-- action dialogs: eeset restores combo-box defaults (#102)
+- action dialogs: reset restores combo-box defaults (#102)
 - depth map:
     - ```mod_laplacian``` uses second derivatives (#103)
     - average weights where no frame has energy (#104)
+    - the weights replace the energy cube band by band (#106)
 
 ### Added
 - optional robust refit of the rigid transform after RANSAC (#101)
 
 ### Changed
+- code speedup:
+    - compute the features of each frame once in parallel alignment (#107)
+    - alignment: use a single-channel coverage mask (#105)
 - minor code cleanup
 
 ---

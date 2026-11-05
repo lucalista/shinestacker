@@ -259,12 +259,14 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
                 weights = self.get_focus_map_from_disk_max(energy_files, max_energy, n_images)
         else:
             self.print_message(f": compute weights ({self.map_type})")
-            weights = np.empty_like(energies)
-            bands = row_chunks(self.shape[0], self.max_threads)
+            # the weights replace the energies band by band: a second cube is not allocated, and
+            # narrow bands keep the temporaries of get_focus_map() small
+            def fill_band(rows):
+                energies[:, rows] = self.get_focus_map(energies[:, rows], quiet=True)
+
             with ThreadPoolExecutor(self.max_threads) as executor:
-                for rows, band in zip(bands, executor.map(
-                        lambda r: self.get_focus_map(energies[:, r], quiet=True), bands)):
-                    weights[:, rows] = band
+                list(executor.map(fill_band, row_chunks(self.shape[0], 16 * self.max_threads)))
+            weights = energies
             del energies
         if self.weight_power != 1.0:
             self.print_message(": apply weights power correction")

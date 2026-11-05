@@ -16,6 +16,7 @@ from .. core.colors import color_str
 from .. core.core_utils import make_chunks
 from .utils import read_img, img_bw, get_output_filename
 from .align import AlignFramesBase
+from .feature_match import FeatureCache
 from .transform_estimate import check_transform
 
 
@@ -51,8 +52,7 @@ class AlignFramesParallel(AlignFramesBase):
         self._transforms = None
         self._cumulative_transforms = None
         self.step_counter = 0
-        self._kp = None
-        self._des = None
+        self._feature_cache = None
 
     def get_img_ref(self, ref_idx):
         return self.process.img_ref(ref_idx)
@@ -124,6 +124,8 @@ class AlignFramesParallel(AlignFramesBase):
                 if self._img_locks[i] >= 2:
                     self._img_cache[i] = None
                     self._img_locks[i] = 0
+                    if self._feature_cache is not None:
+                        self._feature_cache.drop(i)     # all workers of this batch have finished
         gc.collect()
 
     def begin(self, process):
@@ -143,8 +145,6 @@ class AlignFramesParallel(AlignFramesBase):
         self._n_good_matches = [0] * n_frames
         self._transforms = [None] * n_frames
         self._cumulative_transforms = [None] * n_frames
-        self._kp = [None] * n_frames
-        self._des = [None] * n_frames
         max_chunk_size = self.max_threads
         ref_idx = self.process.ref_idx
         self.print_message(f"reference: {self.image_str(ref_idx)}")
@@ -157,6 +157,9 @@ class AlignFramesParallel(AlignFramesBase):
         self.process.callback(constants.CALLBACK_UPDATE_FRAME_STATUS,
                               self.process.output_path, filename, 101)
         self.step_counter = 0
+        # a frame is matched with both its neighbours: its features are computed once
+        self._feature_cache = FeatureCache()
+        self.feature_matcher.feature_matcher.cache = self._feature_cache
         try:
             if self.chunk_submit:
                 img_chunks = make_chunks(sub_img_filepaths, max_chunk_size)
@@ -166,13 +169,14 @@ class AlignFramesParallel(AlignFramesBase):
             else:
                 self.submit_threads(sub_indices, sub_img_filepaths)
         finally:
+            self.feature_matcher.feature_matcher.cache = None
+            self._feature_cache.clear()
+            self._feature_cache = None
             # all features are extracted here, also free the OpenCL plans when stopped
             self.feature_matcher.release_resources()
         for idx in range(n_frames):
             if self._img_cache[idx] is not None:
                 self._img_cache[idx] = None
-                self._kp[idx] = None
-                self._des[idx] = None
         gc.collect()
         self.print_message("combining transformations")
         transform_type = self.alignment_config['transform']
@@ -272,7 +276,7 @@ class AlignFramesParallel(AlignFramesBase):
                 f"{self.process.name}: matches\nframe {idx_str}", plot_path, tag),
         }
         m, phase_corr_called, _quality, n_good_matches = self.compute_transformation(
-            idx, img_ref, img_0, callbacks, plot_path)
+            idx, img_ref, img_0, callbacks, plot_path, frame_keys=(target_idx, idx))
         self._n_good_matches[idx] = n_good_matches
         if m is None:
             if phase_corr_called:

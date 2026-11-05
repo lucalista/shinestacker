@@ -68,6 +68,7 @@ packages = [
     "shinestacker.common_project",
     "shinestacker.algorithms",
     "shinestacker.gui",
+    "shinestacker.gui.ico",
     "shinestacker.gui.img",
     "shinestacker.gui.img.dark",
     "shinestacker.gui.img.light",

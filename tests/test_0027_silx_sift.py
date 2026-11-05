@@ -9,7 +9,7 @@ from shinestacker.config.constants import constants
 from shinestacker.core.exceptions import InvalidOptionError
 from shinestacker.algorithms import silx_sift
 from shinestacker.algorithms.feature_match import (
-    FeatureMatcher, SubsamplingFeatureMatcher, DEFAULT_ALIGNMENT_CONFIG)
+    FeatureCache, FeatureMatcher, SubsamplingFeatureMatcher, DEFAULT_ALIGNMENT_CONFIG)
 
 SIFT = {'detector': constants.DETECTOR_SIFT, 'descriptor': constants.DESCRIPTOR_SIFT}
 KNN = {'match_method': constants.MATCHING_KNN}
@@ -133,6 +133,27 @@ def test_silx_failure_in_other_thread_does_not_mix_backends(monkeypatch):
     assert not matcher._silx_sift
     # A's silx result of the first image was recomputed with OpenCV, not matched as it is
     assert len(results[0].kp_0) > 0 and results[0].n_good_matches() > 0
+
+
+def test_silx_failure_replaces_cached_silx_features(monkeypatch):
+    # frame 1 is cached from the pair (0, 1) with silx; silx fails before the pair (1, 2)
+    calls = []
+
+    def fail_third(_self, _img):
+        calls.append(1)
+        if len(calls) > 2:
+            raise RuntimeError("out of device memory")
+        return [], None
+    matcher = _silx_matcher(monkeypatch, fail_third)
+    matcher.cache = FeatureCache()
+    img = _test_image()
+    matcher.match_images(img, img, keys=((0, 1), (1, 1)))
+    result = matcher.match_images(img, img, keys=((1, 1), (2, 1)))
+    assert not matcher._silx_sift
+    # the cached silx features of frame 1 were recomputed with OpenCV and replace the entry
+    assert len(result.kp_ref) > 0 and result.n_good_matches() > 0
+    kp, des, silx = matcher.cache._items[(1, 1)]
+    assert len(kp) > 0 and not silx and not des.flags.writeable
 
 
 class _FakePlan:

@@ -1,8 +1,11 @@
+import threading
+import time
+from unittest.mock import patch
 import numpy as np
 import cv2
 from shinestacker.config.constants import constants
 from shinestacker.algorithms.feature_match import (
-    FeatureMatcher, DEFAULT_FEATURE_CONFIG, DEFAULT_MATCHING_CONFIG)
+    FeatureCache, FeatureMatcher, DEFAULT_FEATURE_CONFIG, DEFAULT_MATCHING_CONFIG)
 
 
 def test_constructor_default():
@@ -242,6 +245,59 @@ def test_match_features_different_sizes():
     good_matches = matcher.match_features(des1, des2)
     assert good_matches is not None
     print(f"✓ Match features different sizes: {len(good_matches)} matches: PASS")
+
+
+def test_feature_cache_computes_once_per_key():
+    cache = FeatureCache()
+    calls = []
+    results = []
+
+    def compute():
+        calls.append(1)
+        time.sleep(0.05)
+        return object()
+
+    def ask():
+        results.append(cache.get_or_compute((3, 2), compute))
+
+    threads = [threading.Thread(target=ask) for _ in range(8)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert len(calls) == 1
+    assert all(r is results[0] for r in results)
+    assert cache.get_or_compute((4, 2), lambda: "other") == "other"
+
+
+def test_feature_cache_drop_and_clear():
+    cache = FeatureCache()
+    for key in [(0, 1), (0, 2), (1, 1)]:
+        cache.get_or_compute(key, lambda key=key: key)
+    cache.drop(0)
+    assert cache.get_or_compute((0, 1), lambda: "again") == "again"
+    assert cache.get_or_compute((1, 1), lambda: "again") == (1, 1)
+    cache.clear()
+    assert cache.get_or_compute((1, 1), lambda: "again") == "again"
+
+
+def test_detect_and_compute_with_cache_key():
+    img = np.zeros((200, 200, 3), dtype=np.uint8)
+    cv2.rectangle(img, (50, 50), (120, 120), (255, 255, 255), -1)
+    cv2.circle(img, (150, 150), 20, (180, 180, 180), -1)
+    matcher = FeatureMatcher(DEFAULT_FEATURE_CONFIG, DEFAULT_MATCHING_CONFIG)
+    kp_ref, des_ref = matcher.detect_and_compute(img)
+    matcher.cache = FeatureCache()
+    with patch.object(matcher, '_detect_and_compute', wraps=matcher._detect_and_compute) as spy:
+        kp_1, des_1 = matcher.detect_and_compute(img, (0, 1))
+        kp_2, des_2 = matcher.detect_and_compute(img, (0, 1))
+        assert spy.call_count == 1
+        matcher.detect_and_compute(img)                 # no key: not cached
+        matcher.detect_and_compute(img, (1, 1))         # another frame
+        assert spy.call_count == 3
+    assert kp_2 is kp_1 and des_2 is des_1
+    assert len(kp_1) == len(kp_ref)
+    assert np.array_equal(des_1, des_ref)
 
 
 if __name__ == "__main__":

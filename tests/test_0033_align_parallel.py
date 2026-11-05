@@ -1,5 +1,6 @@
 # pylint: disable=W0212
 import threading
+import time
 import logging
 import pytest
 from unittest.mock import Mock, patch
@@ -8,6 +9,7 @@ import numpy as np
 from shinestacker.config.constants import constants
 from shinestacker.core.exceptions import RunStopException
 from shinestacker.algorithms.align_parallel import AlignFramesParallel, compose_transforms
+from shinestacker.algorithms.feature_match import FeatureMatcher
 from shinestacker.algorithms.align import AlignFramesBase
 from shinestacker.algorithms.transform_estimate import (
     TransformationExtractor,
@@ -563,6 +565,107 @@ def test_find_transform_rescale_failure():
                     info, warnings = aligner.find_transform(1, delta=1)
                     assert len(warnings) > 0
                     assert aligner._transforms[1] is None
+
+
+class _NoCache:
+    def get_or_compute(self, _key, compute):
+        return compute()
+
+    def drop(self, _frame):
+        pass
+
+    def clear(self):
+        pass
+
+
+def _chain_frames(tmp_path, n_frames=4):
+    rng = np.random.default_rng(5)
+    base = cv2.GaussianBlur(rng.integers(0, 255, (400, 500), dtype=np.uint8), (0, 0), 2.0)
+    base = cv2.normalize(base, None, 0, 255, cv2.NORM_MINMAX)
+    paths = []
+    for i in range(n_frames):
+        m = np.float32([[1, 0, 3 * i], [0, 1, -2 * i]])
+        img = cv2.cvtColor(cv2.warpAffine(base, m, (500, 400), borderMode=cv2.BORDER_REFLECT),
+                           cv2.COLOR_GRAY2BGR)
+        path = str(tmp_path / f"frame{i}.png")
+        cv2.imwrite(path, img)
+        paths.append(path)
+    return paths
+
+
+def _align_chain(paths, no_cache, subsample=1):
+    aligner = AlignFramesParallel(max_threads=4, alignment_config={'subsample': subsample})
+    process = Mock()
+    process.num_input_filepaths = Mock(return_value=len(paths))
+    process.input_filepaths = Mock(return_value=list(paths))
+    process.input_filepath = Mock(side_effect=lambda idx: paths[idx])
+    process.ref_idx = 1
+    process.total_action_counts = len(paths)
+    aligner.print_message = Mock()
+    with patch.object(FeatureMatcher, '_detect_and_compute', autospec=True,
+                      side_effect=FeatureMatcher._detect_and_compute) as spy:
+        if no_cache:
+            with patch('shinestacker.algorithms.align_parallel.FeatureCache', _NoCache):
+                aligner.begin(process)
+        else:
+            aligner.begin(process)
+    return aligner._cumulative_transforms, spy.call_count    # pylint: disable=W0212
+
+
+@pytest.mark.parametrize('subsample', [1, 2])
+def test_begin_computes_the_features_of_each_frame_once(tmp_path, subsample):
+    paths = _chain_frames(tmp_path)
+    transforms, calls = _align_chain(paths, no_cache=False, subsample=subsample)
+    reference, reference_calls = _align_chain(paths, no_cache=True, subsample=subsample)
+    # the matches succeed at this resolution (no retry at full size, which would add extractions)
+    assert reference_calls == 2 * (len(paths) - 1)
+    assert calls == len(paths)
+    for t, r in zip(transforms, reference):
+        assert t is not None
+        np.testing.assert_array_equal(t, r)
+
+
+def test_begin_detaches_the_feature_cache_when_it_is_stopped(tmp_path):
+    paths = _chain_frames(tmp_path)
+    aligner = AlignFramesParallel(max_threads=4, alignment_config={'subsample': 1})
+    process = Mock()
+    process.num_input_filepaths = Mock(return_value=len(paths))
+    process.input_filepaths = Mock(return_value=list(paths))
+    process.input_filepath = Mock(side_effect=lambda idx: paths[idx])
+    process.ref_idx = 1
+    process.total_action_counts = len(paths)
+    aligner.print_message = Mock()
+    with patch.object(aligner, 'submit_threads', side_effect=RunStopException("stopped")):
+        with pytest.raises(RunStopException):
+            aligner.begin(process)
+    assert aligner.feature_matcher.feature_matcher.cache is None
+    assert aligner._feature_cache is None    # pylint: disable=W0212
+
+
+def test_submit_threads_waits_for_the_workers_when_it_stops():
+    aligner = AlignFramesParallel(max_threads=2)
+    process = Mock()
+    process.input_filepath = Mock(side_effect=lambda idx: f"img{idx}.jpg")
+    process.num_input_filepaths = Mock(return_value=3)
+    # stops the run after the first result
+    process.check_running = Mock(side_effect=RunStopException("stopped"))
+    aligner.process = process
+    aligner.print_message = Mock()
+    aligner._n_good_matches = [0] * 3                  # pylint: disable=W0212
+    aligner._img_locks = [0] * 3                       # pylint: disable=W0212
+    aligner._img_cache = [None] * 3                    # pylint: disable=W0212
+    finished = []
+
+    def find_transform(idx):
+        if idx == 2:
+            time.sleep(0.3)                    # still running when the other one stops the run
+        finished.append(idx)
+        return [], []
+
+    with patch.object(aligner, 'find_transform', side_effect=find_transform):
+        with pytest.raises(RunStopException):
+            aligner.submit_threads([1, 2], ["img1.jpg", "img2.jpg"])
+    assert sorted(finished) == [1, 2]                  # submit_threads returned only after both
 
 
 if __name__ == '__main__':

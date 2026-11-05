@@ -518,3 +518,41 @@ def test_modified_laplacian_is_second_derivatives():
     assert np.allclose(dms.get_modified_laplacian(bowl)[8:24, 8:24], 4)
     checkerboard = ((x + y) % 2) * 255  # finest texture: |2I - I(x-1) - I(x+1)| = 510 in x and y
     assert np.allclose(dms.get_modified_laplacian(checkerboard)[8:24, 8:24], 1020)
+
+
+def test_focus_stack_hard_max_ties_and_flat_areas_memory_vs_disk(tmp_path):
+    rng = np.random.default_rng(3)
+    frames = []
+    for i in range(4):
+        # flat right part: equal energy in every frame
+        img = np.full((64, 96, 3), 90, dtype=np.uint8)
+        img[:, :48] = rng.integers(0, 255, (64, 48, 3), dtype=np.uint8)
+        # flat band at the top (a colour per frame)
+        img[:16] = img[0, 0]
+        path = str(tmp_path / f"{i}.png")
+        cv2.imwrite(path, img)
+        frames.append(path)
+    results = []
+    for mode in ('memory', 'i/o'):
+        dms = DepthMapStack(mode=mode, map_type='max', temperature=0.0)
+        dms.process = MagicMock()
+        dms.process.callback.return_value = True
+        dms.print_message = MagicMock()
+        dms.after_step = MagicMock()
+        dms.check_running = MagicMock()
+        dms.init(frames)
+        results.append(dms.focus_stack())
+    assert np.array_equal(results[0], results[1])
+
+
+def test_focus_stack_memory_mode_weights_come_from_get_focus_map(example_images):
+    dms = DepthMapStack(mode='memory')
+    dms.process = MagicMock()
+    dms.process.callback.return_value = True
+    dms.print_message = MagicMock()
+    dms.after_step = MagicMock()
+    dms.check_running = MagicMock()
+    dms.init(example_images[:3])
+    dms.get_focus_map = MagicMock(wraps=dms.get_focus_map)
+    dms.focus_stack()
+    assert dms.get_focus_map.call_count > 0
