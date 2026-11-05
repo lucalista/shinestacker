@@ -10,6 +10,7 @@ from .utils import read_img, write_img
 from . import exif_constants as ec
 
 COMPATIBLE_TAGS = [
+    ec.IMAGEDESCRIPTION,
     ec.MAKE, ec.MODEL, ec.SOFTWARE, ec.DATETIME, ec.ARTIST, ec.COPYRIGHT,
     ec.EXPOSURETIME, ec.FNUMBER, ec.ISOSPEEDRATINGS, ec.EXPOSUREPROGRAM,
     ec.SHUTTERSPEEDVALUE, ec.APERTUREVALUE, ec.BRIGHTNESSVALUE, ec.EXPOSUREBIASVALUE,

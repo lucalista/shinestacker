@@ -2670,3 +2670,51 @@ def test_tiff_exif_tags_in_exif_ifd(tmp_path):
         assert sub["ISOSpeedRatings"] == 100 and sub["LensModel"] == "FE 100mm F2.8 Macro GM OSS"
         assert page.tags[271].value == "Sony"
         assert np.array_equal(page.asarray()[..., ::-1], img)
+
+
+def test_image_description_all_formats():
+    import tifffile
+    from shinestacker.algorithms.exif import copy_exif_from_file_to_file
+    from shinestacker.algorithms.exif_common import image_description
+    output_dir = "output/img-exif"
+    os.makedirs(output_dir, exist_ok=True)
+    description = image_description(5)
+    assert description == "Image generated with ShineStacker from 5 frames"
+    assert image_description(1) == "Image generated with ShineStacker from 1 frame"
+    img = (np.random.rand(32, 48, 3) * 255).astype(np.uint8)
+    source = output_dir + "/descr_source.jpg"
+    source_exif = Image.Exif()
+    source_exif[271] = "TestMake"
+    Image.fromarray(img).save(source, exif=source_exif)
+    for ext in ("tif", "jpg", "png"):
+        out = f"{output_dir}/descr_out.{ext}"
+        if ext == "tif":
+            tifffile.imwrite(out, img)
+        else:
+            cv2.imwrite(out, img)
+        copy_exif_from_file_to_file(source, out, description=description)
+        if ext == "tif":
+            with tifffile.TiffFile(out) as tif:
+                values = [tag.value for tag in tif.pages[0].tags.values() if tag.code == 270]
+            assert values == [description]
+        elif ext == "jpg":
+            assert Image.open(out).getexif().get(270) == description
+        else:
+            assert Image.open(out).text.get("ImageDescription") == description
+
+
+def test_tiff_old_shape_json_description_replaced():
+    import tifffile
+    from shinestacker.algorithms.exif import copy_exif_from_file_to_file
+    output_dir = "output/img-exif"
+    os.makedirs(output_dir, exist_ok=True)
+    img = (np.random.rand(32, 48, 3) * 255).astype(np.uint8)
+    old = output_dir + "/descr_old.tif"
+    tifffile.imwrite(old, img,
+                     metadata={"description": "image generated with ShineStacker package"})
+    out = output_dir + "/descr_resaved.tif"
+    tifffile.imwrite(out, img)
+    copy_exif_from_file_to_file(old, out)
+    with tifffile.TiffFile(out) as tif:
+        values = [tag.value for tag in tif.pages[0].tags.values() if tag.code == 270]
+    assert values == ["Image generated with ShineStacker"]

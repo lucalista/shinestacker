@@ -14,6 +14,7 @@ from .utils import (
     read_icc_profile)
 from .stack_framework import ImageSequenceManager, SequentialTask
 from .exif import copy_exif_from_file_to_file
+from .exif_common import image_description
 from .denoise import denoise
 from .sharpen import unsharp_mask
 
@@ -27,6 +28,7 @@ class FocusStackBase(TaskBase, ImageSequenceManager):
         self.apply_postifx = apply_postifx
         self.stack_algo = stack_algo
         self.exif_path = kwargs.pop("exif_path", "")
+        self.frame_sources = {}
         self.icc_source_path = ""
         self.naming_mode = kwargs.pop("naming_mode", specific_params.get("naming_mode", "PREFIX"))
 
@@ -95,6 +97,7 @@ class FocusStackBase(TaskBase, ImageSequenceManager):
         output_filename = os.path.join(self.output_full_path(), resolved_filename)
         filename = os.path.basename(output_filename)
         self.callback(constants.CALLBACK_UPDATE_FRAME_STATUS, self.output_path, filename, 0)
+        n_source_frames = self.register_source_frames(filenames, output_filename)
         n_frames = len(filenames)
         if n_frames > 1:
             self.sub_message_r(
@@ -179,7 +182,9 @@ class FocusStackBase(TaskBase, ImageSequenceManager):
                                 break
 
                     exif_filename = os.path.join(self.exif_path, exif_filename_only)
-                    copy_exif_from_file_to_file(exif_filename, output_filename)
+                    copy_exif_from_file_to_file(
+                        exif_filename, output_filename,
+                        description=image_description(n_source_frames))
                     self.sub_message_r(" " * 60)
                 except Exception as e:
                     traceback.print_exc()
@@ -225,9 +230,18 @@ class FocusStackBase(TaskBase, ImageSequenceManager):
                 return os.path.join(path, name)
         return os.path.join(path, fnames[0])
 
+    def register_source_frames(self, filenames, output_filename):
+        sources = set()
+        for filename in filenames:
+            key = os.path.realpath(filename)
+            sources |= self.frame_sources.get(key, {key})
+        self.frame_sources[os.path.realpath(output_filename)] = frozenset(sources)
+        return len(sources)
+
     def init(self, job, working_path=""):
         if working_path == "":
             working_path = job.working_path
+        self.frame_sources = getattr(job, "frame_sources", {})
         ImageSequenceManager.init(self, job)
         source_path = job.action_path(0)
         if source_path:
