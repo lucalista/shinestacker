@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.17.x] - 2026-11-05
+**Minor improvement**
+
+### Changed
+- write a readable ImageDescription for TIFF, JPEG and PNG output (#109)
+
+---
+
 ## [v1.17.6] - 2026-11-04
 **Fixes and performance improvements**
 
