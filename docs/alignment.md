@@ -183,7 +183,7 @@ give raise to an exception. This is automatically prevented if one works with th
 | 0.4397   |  SIFT    | SIFT       | KNN          |
 
 SIFT performances can be enhanced in presence of GPU using the optional
-```[silx](https://github.com/silx-kit/silx)``` implementation.
+[```silx```](https://github.com/silx-kit/silx) implementation.
 For performance comparison, see the conversation in [PR #100](https://github.com/lucalista/shinestacker/pull/100).
 
 ## References
