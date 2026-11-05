@@ -65,7 +65,7 @@ Note that, depending on your installation, you may need to use ```python3``` and
 ```python``` and ```pip```, respectively.
 
 
-If you wish to use the faster implementation of the ```SIFT``` alignment method based on ```[silx](https://github.com/silx-kit/silx)```, you need to install the extra package ```shinestacker[opencl]```:
+If you wish to use the faster implementation of the ```SIFT``` alignment method based on [```silx```](https://github.com/silx-kit/silx), you need to install the extra package ```shinestacker[opencl]```:
 
 ```bash
 pip install shinestacker[opencl]
