@@ -65,6 +65,14 @@ Note that, depending on your installation, you may need to use ```python3``` and
 ```python``` and ```pip```, respectively.
 
 
+If you wish to use the faster implementation of the ```SIFT``` alignment method based on ```[silx](https://github.com/silx-kit/silx)```, you need to install the extra package ```shinestacker[opencl]```:
+
+```bash
+pip install shinestacker[opencl]
+```
+
+Note that on some shells, like ```zsh```, you have to use quotes in order to correctly interpret the square brackets (```pip install shinestacker[opencl]```)
+
 ## GUI Workflow
 Launch GUI
 
