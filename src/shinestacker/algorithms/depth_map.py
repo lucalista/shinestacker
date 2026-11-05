@@ -259,8 +259,7 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
                 weights = self.get_focus_map_from_disk_max(energy_files, max_energy, n_images)
         else:
             self.print_message(f": compute weights ({self.map_type})")
-            # the weights replace the energies band by band: a second cube is not allocated, and
-            # narrow bands keep the temporaries of get_focus_map() small
+
             def fill_band(rows):
                 energies[:, rows] = self.get_focus_map(energies[:, rows], quiet=True)
 
@@ -296,7 +295,6 @@ class DepthMapStack(BaseStackAlgo, TempDirBase):
         for i, energy_file in enumerate(energy_files):
             self.print_message(f": compute weight, {self.image_str(i)}")
             energy_map = np.load(energy_file)
-            # no energy in any frame: share the weight, as in get_focus_map
             weights[i] = np.where(zero, self.float_type(1.0 / n_images), energy_map / sum_energies)
             self.check_running()
         self.cleanup_temp_files(energy_files)
