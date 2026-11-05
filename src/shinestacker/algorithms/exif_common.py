@@ -78,16 +78,37 @@ def safe_write_with_temp(out_filename, write_func, fallback_func=None):
         raise
 
 
+def image_description(n_frames=None):
+    """Human-readable ImageDescription for images written by ShineStacker."""
+    description = f"Image generated with {constants.APP_STRING}"
+    if n_frames is not None:
+        description += f" from {n_frames} frame{'' if n_frames == 1 else 's'}"
+    return description
+
+
+def _is_tifffile_shape_json(value):
+    """True for the JSON tifffile writes into ImageDescription when given
+    metadata, e.g. '{"shape": [...], ...}' (written by older versions)."""
+    return isinstance(value, str) and value.lstrip().startswith('{"shape"')
+
+
 def write_tiff_with_metadata(filename, image, exif, exif_extra_tags):
-    metadata = {
-        "description": f"image generated with {constants.APP_STRING} package"
-    }
+    description = exif.get(ec.IMAGEDESCRIPTION) if hasattr(exif, 'get') else None
+    if isinstance(description, bytes):
+        description = description.decode('utf-8', errors='ignore')
+    if not isinstance(description, str) or not description.strip() \
+            or _is_tifffile_shape_json(description):
+        description = image_description()
     extra_tags, exif_tags = exif_extra_tags(exif)
+    # tifffile writes the description itself; avoid a duplicate tag 270
+    extra_tags = [tag for tag in extra_tags if tag[0] != ec.IMAGEDESCRIPTION]
+    # Plain-text ImageDescription instead of tifffile's shape JSON (metadata=None)
     write_tiff_with_exif(
         filename,
         image,
         extra_tags,
-        metadata=metadata,
+        description=description,
+        metadata=None,
         compression="adobe_deflate",
         **exif_tags,
     )

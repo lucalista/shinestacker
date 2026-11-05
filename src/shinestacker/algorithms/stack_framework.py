@@ -26,6 +26,9 @@ class StackJob(Job):
         if self._input_filepaths:
             self._input_filepaths.sort()
         self.plot_manager = plot_manager if plot_manager is not None else DirectPlotManager()
+        # maps stacked output files to the original frames they were made of,
+        # so that a stack of bunches can report the number of original frames
+        self.frame_sources = {}
         Job.__init__(self, name, **kwargs)
 
     def init(self, action):

@@ -221,3 +221,22 @@ def test_tif_icc_profile_through_intermediate_frames(tmp_path):
     assert len(outputs) == 1
     with tifffile.TiffFile(outputs[0]) as tif:
         assert tif.pages[0].iccprofile == profile
+
+
+def test_bunches_description_counts_original_frames():
+    import glob
+    from PIL import Image
+    job = StackJob("job", "examples", input_path="input/img-jpg")
+    job.add_action(FocusStackBunch("stack-pyramid-bunch", PyramidStack(),
+                                   output_path="output/img-jpg-bunches-descr",
+                                   frames=3, overlap=1))
+    job.add_action(FocusStack("stack-pyramid", PyramidStack(),
+                              output_path="output/img-jpg-stack-descr",
+                              exif_path="input/img-jpg", prefix="descr_"))
+    job.run()
+    n_input = len(glob.glob("examples/input/img-jpg/*.jpg"))
+    assert len(glob.glob("examples/output/img-jpg-bunches-descr/*.jpg")) < n_input
+    outputs = glob.glob("examples/output/img-jpg-stack-descr/descr_*.jpg")
+    assert len(outputs) == 1
+    description = Image.open(outputs[0]).getexif().get(270)
+    assert description == f"Image generated with ShineStacker from {n_input} frames"
