@@ -7,6 +7,7 @@ Needs an OpenCL driver (GPU, or a CPU runtime); without one OpenCV SIFT is used.
 """
 import atexit
 import importlib
+import importlib.util
 import threading
 import weakref
 import numpy as np
@@ -28,6 +29,11 @@ def _probe_device():
         except Exception:
             _probe.update(usable=False, has_gpu=False)
     return _probe
+
+
+def silx_installed():
+    """Whether the opencl extra is installed; unlike silx_sift_usable() it does not import silx."""
+    return all(importlib.util.find_spec(m) is not None for m in ('silx', 'pyopencl'))
 
 
 def silx_sift_usable():

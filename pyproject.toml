@@ -27,12 +27,9 @@ dependencies = [
     "psdtags",
     "psutil",
     "Pygments>=2.20.0",
-    "pyopencl",
     "PySide6",
     "rawpy",
     "scipy",
-    # silx also installs fabio, h5py and pydantic, which the OpenCL code does not use: https://github.com/silx-kit/silx/issues/4766
-    "silx",
     "tifffile",
     "tifftools",
     "tqdm",
@@ -46,6 +43,11 @@ Documentation = "https://shinestacker.readthedocs.io/"
 [project.optional-dependencies]
 dev = [
     "pytest",
+]
+# OpenCL SIFT; not in the installers, silx brings ~250 MB of dependencies on Linux
+opencl = [
+    "silx",
+    "pyopencl",
 ]
 
 [project.scripts]

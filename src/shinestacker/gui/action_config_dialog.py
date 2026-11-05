@@ -8,6 +8,7 @@ from .. config.constants import constants
 from .. config.app_config import AppConfig
 from .. algorithms.utils import EXTENSIONS_SUPPORTED_IN
 from .. algorithms.feature_match import validate_align_config
+from .. algorithms.silx_sift import silx_installed
 from . action_config import (
     DefaultActionConfigurator, add_tab, create_tab_layout, create_tab_widget,
     FIELD_TEXT, FIELD_ABS_PATH, FIELD_REL_PATH, FIELD_FLOAT,
@@ -802,9 +803,6 @@ class AlignFramesConfigBase:
     DETECTOR_DESCRIPTOR_TOOLTIPS = {
         'detector':
             "SIFT: Requires SIFT descriptor and K-NN matching\n"
-            "SIFT (silx): OpenCL implementation on the GPU, or on the CPU without one; faster\n"
-            "on large images. Needs an OpenCL driver (GPU, or a CPU runtime),\n"
-            "else OpenCV is used\n"
             "ORB/AKAZE: Work best with Hamming distance",
         'descriptor':
             "SIFT: Requires K-NN matching\n"
@@ -812,6 +810,9 @@ class AlignFramesConfigBase:
         'match_method':
             "Automatically selected based on detector/descriptor combination"
     }
+    SILX_TOOLTIP = \
+        "SIFT (silx): OpenCL implementation on the GPU, or on the CPU without one; faster\n" \
+        "on large images. Needs an OpenCL driver (GPU, or a CPU runtime), else OpenCV is used"
 
     def __init__(self):
         self.info_label = None
@@ -831,6 +832,14 @@ class AlignFramesConfigBase:
     def sift_backend_value(cls, text):
         return next((b for label, _, b in cls.DETECTOR_CHOICES if label == text),
                     constants.SIFT_BACKEND_OPENCV)
+
+    @classmethod
+    def detector_menu(cls, backend):
+        """Menu entries: SIFT (silx) only with the opencl extra installed, or if the action
+        already uses it (alignment then falls back to OpenCV with a warning)."""
+        show_silx = backend == constants.SIFT_BACKEND_SILX or silx_installed()
+        return [c for c in cls.DETECTOR_CHOICES
+                if show_silx or c[2] != constants.SIFT_BACKEND_SILX]
 
     @classmethod
     def detector_label(cls, detector, backend):
@@ -908,20 +917,27 @@ class AlignFramesConfigurator(SubsampleActionConfigurator, AlignFramesConfigBase
         # two entries share the value SIFT, so the default and the current entry are set
         # from (detector, sift_backend); sift_backend has no widget of its own
         defaults = AppConfig.get('align_frames_params')
+        params = self.builder.action.params
+        backend = params.get('sift_backend', constants.SIFT_BACKEND_OPENCV) \
+            if 'detector' in params else None
+        menu = self.detector_menu(backend)
+        default_label = self.detector_label(defaults['detector'], defaults['sift_backend'])
+        if default_label not in [c[0] for c in menu]:
+            default_label = self.detector_label(defaults['detector'],
+                                                constants.SIFT_BACKEND_OPENCV)
         self.detector_field = self.add_field_to_layout(
             layout, 'detector', FIELD_COMBO, 'Detector', required=False,
-            options=[c[0] for c in self.DETECTOR_CHOICES],
-            values=[c[1] for c in self.DETECTOR_CHOICES],
-            default=self.detector_label(defaults['detector'], defaults['sift_backend']))
-        params = self.builder.action.params
-        if 'detector' in params:
-            self.detector_field.setCurrentText(self.detector_label(
-                params['detector'], params.get('sift_backend', constants.SIFT_BACKEND_OPENCV)))
+            options=[c[0] for c in menu], values=[c[1] for c in menu], default=default_label)
+        if backend is not None:
+            self.detector_field.setCurrentText(self.detector_label(params['detector'], backend))
         self.descriptor_field = self.add_field_to_layout(
             layout, 'descriptor', FIELD_COMBO, 'Descriptor', required=False,
             options=constants.VALID_DESCRIPTORS,
             default=AppConfig.get('align_frames_params')['descriptor'])
-        self.detector_field.setToolTip(self.DETECTOR_DESCRIPTOR_TOOLTIPS['detector'])
+        detector_tooltip = self.DETECTOR_DESCRIPTOR_TOOLTIPS['detector']
+        if len(menu) > len(constants.VALID_DETECTORS):
+            detector_tooltip += "\n" + self.SILX_TOOLTIP
+        self.detector_field.setToolTip(detector_tooltip)
         self.descriptor_field.setToolTip(self.DETECTOR_DESCRIPTOR_TOOLTIPS['descriptor'])
         self.detector_field.currentIndexChanged.connect(change_match_config)
         self.descriptor_field.currentIndexChanged.connect(change_match_config)

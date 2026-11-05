@@ -189,8 +189,9 @@ class FeatureMatcher:
         usable = silx_sift.silx_sift_usable()
         if not usable:
             # issued on first use: the align actions build their matcher before they can log
-            self._pending_warning = "silx SIFT requested but silx/pyopencl or an OpenCL" \
-                                    " device is not available, using OpenCV SIFT"
+            self._pending_warning = "silx SIFT requested but silx/pyopencl" \
+                " (pip install shinestacker[opencl]) or an OpenCL device is not available," \
+                " using OpenCV SIFT"
         return usable
 
     def _warning(self, msg, warning_callback=None):
