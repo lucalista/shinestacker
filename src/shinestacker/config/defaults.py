@@ -45,6 +45,7 @@ DEFAULTS = {
         'max_threads': int(min(os.cpu_count() or 4, 256)),
         'detector': 'ORB',
         'descriptor': 'ORB',
+        'sift_backend': 'opencv',
         'match_method': 'NORM_HAMMING',
         'flann_idx_kdtree': 2,
         'flann_trees': 5,

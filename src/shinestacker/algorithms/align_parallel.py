@@ -172,6 +172,8 @@ class AlignFramesParallel(AlignFramesBase):
             self.feature_matcher.feature_matcher.cache = None
             self._feature_cache.clear()
             self._feature_cache = None
+            # all features are extracted here, also free the OpenCL plans when stopped
+            self.feature_matcher.release_resources()
         for idx in range(n_frames):
             if self._img_cache[idx] is not None:
                 self._img_cache[idx] = None

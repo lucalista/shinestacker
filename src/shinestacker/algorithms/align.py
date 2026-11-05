@@ -135,6 +135,9 @@ class AlignFramesBase(SubAction):
 
     def begin(self, process):
         self.process = process
+        sift_implementation = self.feature_matcher.sift_implementation()
+        if sift_implementation:
+            self.print_message(f"feature extraction: {sift_implementation}")
         self._subsamples = np.zeros(process.total_action_counts)
         self._n_good_matches = np.zeros(process.total_action_counts)
         self._area_ratio = np.ones(process.total_action_counts)
@@ -171,6 +174,8 @@ class AlignFramesBase(SubAction):
                f"{os.path.basename(self.process.input_filepath(idx))}"
 
     def end(self):
+        # a stopped run skips end(): the OpenCL plans are then freed with this action
+        self.feature_matcher.release_resources()
 
         def get_coordinates(items):
             x = np.arange(1, len(items) + 1, dtype=int)

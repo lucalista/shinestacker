@@ -153,13 +153,14 @@ def test_frame_keys_keep_an_entry_per_resolution_and_do_not_change_the_features(
         assert sub_first == 1                            # retried without subsampling
         assert spy.call_count == 4                       # two frames, two resolutions each
         items = feature_matcher.cache._items
-        snapshot = {key: ([k.pt for k in kp], des.tobytes()) for key, (kp, des) in items.items()}
+        snapshot = {key: ([k.pt for k in kp], des.tobytes())
+                    for key, (kp, des, _silx) in items.items()}
         assert sorted(snapshot) == [(0, 1), (0, 2), (1, 1), (1, 2)]
         second, _ = cached.match_images_with_fallback(
             img2, img3, subsample=2, frame_keys=(1, 2))
         assert spy.call_count == 6                       # only frame 2 is new, at both resolutions
     for key, (pts, des_bytes) in snapshot.items():       # the shared features are untouched
-        kp, des = feature_matcher.cache._items[key]
+        kp, des, _silx = feature_matcher.cache._items[key]
         assert [k.pt for k in kp] == pts and des.tobytes() == des_bytes
         assert not des.flags.writeable
     for result, (ref, other) in ((first, (img1, img2)), (second, (img2, img3))):
@@ -217,7 +218,7 @@ def test_frame_keys_subsampled_matches_reuse_the_interior_frame_unchanged(
             assert (abs(result.n_good_matches() - expected.n_good_matches())
                     <= 0.02 * expected.n_good_matches())
     for i, (kp_alone, des_alone) in enumerate(alone):    # cached features: those of the frame alone
-        kp, des = cache[(i, 2)]
+        kp, des, _silx = cache[(i, 2)]
         assert [k.pt for k in kp] == [k.pt for k in kp_alone]
         assert np.array_equal(des, des_alone)
 

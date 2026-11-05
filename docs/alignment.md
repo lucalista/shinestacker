@@ -18,7 +18,8 @@ Arguments for the constructor ```AlignFrames``` of are:
 ```python
 feature_config = {
     'detector': constants.DETECTOR_SIFT,
-    'descriptor': constants.DESCRIPTOR_SIFT
+    'descriptor': constants.DESCRIPTOR_SIFT,
+    'sift_backend': constants.SIFT_BACKEND_OPENCV
 }
 ```
 * ```name``` (optional, default: empty): only used in the GUI as identifier
@@ -34,6 +35,12 @@ feature_config = {
   * ```DESCRIPTOR_ORB```
   * ```DESCRIPTOR_AKAZE```
   * ```DESCRIPTPR_BRISK```
+
+* ```sift_backend``` (optional, default: ```SIFT_BACKEND_OPENCV```): the implementation of SIFT, used only with the SIFT detector and descriptor. Possible values are:
+  * ```SIFT_BACKEND_OPENCV``` (```'opencv'```, default): OpenCV on the CPU
+  * ```SIFT_BACKEND_SILX``` (```'silx'```): [silx](https://github.com/silx-kit/silx) on an OpenCL device: the GPU if one is found, the CPU otherwise
+
+  The OpenCL implementation needs the optional packages silx and pyopencl, installed with ```pip install shinestacker[opencl]``` (the installers and archives of the releases page include them), and an OpenCL driver: for the GPU, or a CPU OpenCL runtime. In the GUI, the detector menu offers *SIFT (silx)* only if the packages are installed. If they or the driver are missing, or the OpenCL run fails, a warning is issued and OpenCV is used. The log names the SIFT implementation at the start of the alignment, e.g. ```feature extraction: SIFT (silx, OpenCL: <device name>)```. It is much faster than OpenCV when features are extracted at full resolution (```subsample``` set to 1, or a large ```resolution_target```), and about the same overall with the default resolution target. Its results are not bit-reproducible from run to run, and the transformations it gives agree with OpenCV's to a fraction of a pixel.
 
   For a more quantitative comparison of performances of the different methods, consult the publication: [S. A. K. Tareen and Z. Saleem, "A comparative analysis of SIFT, SURF, KAZE, AKAZE, ORB, and BRISK", doi:10.1109/ICOMET.2018.8346440](https://ieeexplore.ieee.org/document/8346440)
 

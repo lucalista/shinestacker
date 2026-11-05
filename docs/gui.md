@@ -17,6 +17,11 @@ noisy pixel masking.
 ```console
 > pip install shinestacker
 ```
+ The optional OpenCL implementation of SIFT for the alignment (see [alignment](alignment.md)), which the app from the releases page already includes, is installed with:
+
+```console
+> pip install shinestacker[opencl]
+```
  Onace installed, the GUI app can start either from a console command line :
 
 ```console
