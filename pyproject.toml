@@ -44,7 +44,8 @@ Documentation = "https://shinestacker.readthedocs.io/"
 dev = [
     "pytest",
 ]
-# OpenCL SIFT; not in the installers, silx brings ~250 MB of dependencies on Linux
+# OpenCL SIFT, optional for pip: silx brings ~250 MB of dependencies on Linux; the
+# executables include it (build_release.py), without those dependencies
 opencl = [
     "silx",
     "pyopencl",

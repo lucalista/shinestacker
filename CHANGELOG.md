@@ -3,7 +3,7 @@
 ## [v1.17.x]
 
 ### Added
-- optional OpenCL SIFT implementation (silx) for alignment: `sift_backend` option, `pip install shinestacker[opencl]`; not in the executables
+- optional OpenCL SIFT implementation (silx) for alignment: `sift_backend` option, `pip install shinestacker[opencl]`; included in the executables
 
 ## [v1.17.6] - 2026-11-04
 **Fixes and performance improvements**
