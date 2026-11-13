@@ -12,26 +12,26 @@ noisy pixel masking.
 
 ## Starting
 
-* The python package can be installed from [PyPI](https://pypi.org/project/shinestacker/) using ```pip```:
+* The Python package can be installed from [PyPI](https://pypi.org/project/shinestacker/) using ```pip```:
 
 ```console
 > pip install shinestacker
 ```
- The optional OpenCL implementation of SIFT for the alignment (see [alignment](alignment.md)), which the app from the releases page already includes, is installed with:
+The release builds include the optional OpenCL implementation of SIFT for alignment (see [alignment](alignment.md)). To install it with the Python package, run:
 
 ```console
 > pip install shinestacker[opencl]
 ```
- Onace installed, the GUI app can start either from a console command line :
+Once installed, launch the GUI from the command line:
 
 ```console
 > shinestacker
 ```
 
-* The app can be dowloaded from the [releases page](https://github.com/lucalista/shinestacker/releases):
-   - Windows: as installer or  ```zip``` archive for local installation
-   - macOS: as ```dmg``` disk image, where the app can be dragged to the Application folder
-   - Linux: as ```tar.gz``` archive
+* The app can be downloaded from the [releases page](https://github.com/lucalista/shinestacker/releases):
+   - Windows: as an installer or ```zip``` archive for local installation
+   - macOS: as a ```dmg``` disk image; drag the app to the Applications folder
+   - Linux: as a ```tar.gz``` archive
 
 The GUI has two main working areas: 
 
@@ -42,7 +42,7 @@ Switching from *Project* to *Retouch* can be done from the *ShineStacker* main m
 
 ## Project area
 
-When the app starts, it proposes to create a new project.
+When the app starts, it prompts you to create a new project.
 
 <img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/img/gui-project-new.png' width="600" referrerpolicy="no-referrer">
 
@@ -62,13 +62,13 @@ When the app starts, it proposes to create a new project.
 > - Set number of overlapping frame from consecutive bunches
 > - Combine intermediate results later
 
-The newly created project consists of a single job that contains more actions.
-Each action produces a folder as output that has, by default, the action's name.
+The newly created project contains a single job with multiple actions.
+By default, each action writes its output to a folder named after the action.
 Some actions can be combined in order to produce a single intermediate output (alignment, balancing, etc.).
 
 > **Pro Tip**: Duplicate jobs when processing similar image sets to save configuration time. You can run multiple jobs in sequence.
 
-It is possible to run a single job, or all jobs within a project.
+You can run a single job or all jobs in a project.
 
 <img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/img/gui-project-run.png' width="600" referrerpolicy="no-referrer">
 
@@ -98,7 +98,7 @@ Adjust in the top toolbar:
 1. **Navigate**: 
    - Zoom/pan to defect area
    - Toggle between master/source (`X`)
-2. **Correct defects/artifacts**:**:
+2. **Correct defects/artifacts:**
    - Select source layer with clean area
    - Adjust brush properties (size/hardness/opacity)
    - Paint over defects
@@ -107,7 +107,7 @@ Adjust in the top toolbar:
    - Toggle master view (`M`) to check results
    - Compare before/after with `L`/`M` toggle
 4. **Filters**:
-   - Improve the final image with sharpening, denoise and color balance
+   - Improve the final image with sharpening, denoising, and color balancing
 5. **Export**:
    - ✅ Final image: Single TIFF/JPEG 
    - 🗂️ Editable: Multilayer TIFF (large)
@@ -131,6 +131,6 @@ See help menu for complete list of shortcuts.
 - Multilayer TIFF: Preserves all layers (large file)
 
 **EXIF metadata**:
-* EXIF data can be imported from source images and saved with final file.
+* EXIF data can be imported from source images and saved with the final file.
 
 

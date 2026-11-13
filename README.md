@@ -24,7 +24,7 @@ Shine Stacker provides multiple stacking algorithms and gives users detailed con
 - 🧩 **Modular Architecture:** Combine configurable modules for alignment, normalization, and blending to build custom workflows.
 - 🖌️ **Retouch Editor:** Interactively refine your stacked image by painting in details from individual frames and applying filters.
 - 📊 **Jupyter & Python Integration:** Use Shine Stacker as a library inside your Python or Jupyter workflows.
-- 🎞️ **Supported Formats:** TIFF 8–16 bits, PNG 8–16 bits, JPEG, including transparency layer, and most RAW formats via [`rawpy`](https://github.com/letmaik/rawpy).
+- 🎞️ **Supported Formats:** 8–16-bit TIFF and PNG, JPEG, and most RAW formats via [`rawpy`](https://github.com/letmaik/rawpy). RGBA input and output are supported for 16-bit TIFF and PNG.
 
 ## Interactive GUI
 

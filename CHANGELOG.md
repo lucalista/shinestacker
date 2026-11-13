@@ -57,7 +57,7 @@
 **Fixed external package metadata**
 
 ### Fixed
-- fixed ```tifftools``` metadata for Linux and Windows build. The previous release only fixed macOS build (#89, #90)
+- fixed ```tifftools``` metadata for the Linux and Windows builds. The previous release fixed it only for macOS (#89, #90)
 
 ---
 
@@ -81,7 +81,7 @@
 ### Fixed
 - pylint CI script fixed for pull requests, and updated to python 3.14
 - fixed some default parameter values in documentation (#78)
-- aligment retries using SIFT detector and descriptor methods in case ORB fails (#77)
+- alignment retries using SIFT detector and descriptor methods if ORB fails (#77)
 - TIFF output: write Exif tags into the Exif IFD (#84)
 - spawn child processes in the background (#85)
 
@@ -100,7 +100,7 @@
 **Security vulnerability fixed**
 
 ### Fixed
-- fixed potential vulnerability due to misuse of project metadata by disabling external retouch app. This feature was only used for internal purpposes and does not affect normal usage.
+- fixed a potential vulnerability caused by misuse of project metadata by disabling the external retouch app. This feature was only used for internal purposes and does not affect normal usage.
 
 ---
 
@@ -140,7 +140,7 @@
 - incorrect GUI widget creation when adding an action to a job in the modern project view (#68)
 
 ### Added
-- the user can spefify the stack output filename format using a template, for instance as: `{input_prefix}{input_min}-{input_max}_{input_count}-frames` (#66)
+- users can specify the stack output filename format using a template, for example: `{input_prefix}{input_min}-{input_max}_{input_count}-frames` (#66)
 
 ---
 
@@ -149,7 +149,7 @@
 
 ### Fixed
 - default zoom was mistakenly off (#60)
-- fixed scrollbar apparence (#61)
+- fixed scrollbar appearance (#61)
 - updated installation documentation using ```pip```
 
 ---
@@ -162,20 +162,20 @@
 - when the zoom is reset to actual size (Ctrl+R), the image is centered correctly, preventing jumps when changing layers (#58)
 - image centering issue when zooming with Ctrl++ (#58)
 - image panning (Space + drag or the new key P) works when the mouse is in either view in the side-by-side view mode
-- cured warning from unit test
+- fixed a warning in a unit test
 
 ### Changed
 - removed uv.lock file since uv is not supported and uv.lock is not updated in the development workflow
 
 ### Added
-- new configurable setting: aling transform, valid options are: rigid, homography (#55)
+- new configurable setting: alignment transform; valid options are rigid and homography (#55)
 - full screen view menu option added to project window
 - full screen shortcut is Ctrl + Cmd + F or F11 on Windows (#57)
 - more shortcuts added for zoom in/out: +, =, Ctrl-+ and Ctrl-= could all zoom in, -, Ctrl-- could all zoom out (#57)
-- added option to automatically run retouch after run. The option can be persisted in the settings. This option can be enabled at startup, regardless fo the default settings, using the command-line argument --enable-auto-retouch (-e) (#56)
-- command line option --start (-s) that automatially starts a specified project. It only works together with -f or -p options (#54)
-- in retouch mode, P toggles pan mode, as alternative for Space + Drag (#57) 
-- in retouch mode, when the menu action "Fit to Window" (Ctrl+0) is called, the image is automatically fit to window if the window is sesized. This is also the behavior the first time the image is opened for retouch (#58).
+- added an option to automatically open retouch mode after a job runs. The setting is saved and can be enabled at startup, regardless of the default settings, with the --enable-auto-retouch (-e) command-line argument (#56)
+- added the --start (-s) command-line option to automatically start a specified project. It works only with the -f or -p options (#54)
+- in retouch mode, P toggles pan mode as an alternative to Space + drag (#57)
+- in retouch mode, the "Fit to Window" action (Ctrl+0) automatically fits the image to the window when the window is resized. This also happens the first time an image is opened for retouch (#58).
 
 ----
 
@@ -191,7 +191,7 @@
 **Bug fixes**
 
 ### Fixed
-- input path no longer becomes empty when it contains a trailing "/" or "\" on Windows (#45, #46). Additional fix with respect to 1.15.3 release.
+- input paths no longer become empty when they contain a trailing "/" or "\" on Windows (#45, #46). Additional fix following release 1.15.3.
 - fixed job's input path selector in case of trailing "/" or "\" on Windows (#45, #46). 
 
 ---
@@ -210,7 +210,7 @@
 ---
 
 ## [v1.15.2] - 2026-05-03
-**Fixes, updates and clean up**
+**Fixes, updates, and cleanup**
 
 ### Fixed
 - updated release and pylint scripts with more recent external script versions to prevent warning messages
@@ -267,7 +267,7 @@
 **GUI improvements and fixes from pull requests**
 
 ### Fixed
-- support for uppercase file extensions (e.g., .JPG, .TIFF) in file loading and saving dialogues on case-sensitive systems on Linux (PR #26)
+- added support for uppercase file extensions (e.g., .JPG and .TIFF) in file dialogs on case-sensitive Linux systems (PR #26)
 - EXIF Metadata Handling and Resolve Qt Conflict (PR #27)
 - .gitignore ignores auto-generated files (PR #27)
 - resolution of Qt/xcb Conflict (PR #27)
@@ -278,31 +278,31 @@
 ---
 
 ## [v1.14.2] - 2026-02-18
-**fixes and GUI improvements**
+**Fixes and GUI improvements**
 
 ### Added
-- element rename in menu actions
+- renamed elements in menu actions
 - a "Run Job" icon in job GUI widgets
 
 ### Fixed
-- keep memory of the last opened path when opening or saving files
+- retained the last opened path when opening or saving files
 - no more keyboard shortcut conflicts
-- safe DepthMap implementation also when termperature exactly zero
-- failure of bunches algorithm in case a single frame is selected
+- safe DepthMap implementation when temperature is exactly zero
+- fixed a failure in the bunches algorithm when a single frame is selected
 - several GUI issues and minor usability glitches
 
 ### Changes
 - rationalized keyboard shortcuts and menu actions
-- elements copies now have a suffix " (copy)" after their name
-- final stack images have postfix according to algorith type: "_pyram", or "_depmp" (#24)
+- copied elements now have the suffix " (copy)" after their names
+- final stack images have a suffix indicating the algorithm type: "_pyram" or "_depmp" (#24)
 - cleaned up signal handling
-- DepthMap: minor algorithm optimization and improved defaults parameter values for sharper images
+- DepthMap: minor algorithm optimization and improved default parameter values for sharper images
 - visually improved GUI icons
 
 ---
 
 ## [v1.14.1] - 2026-02-11
-**improved DepthMap and user requests supported**
+**Improved DepthMap and requested features**
 
 ### Added
 - input folder path in the default settings (#15)
@@ -310,7 +310,7 @@
 - icon in the top bar to more easily start a retouch session
 
 ### Fixed
-- fixes and improvements related to RAW format support (#12)
+- fixes and improvements to RAW format support (#12)
 - improved default depth map settings for sharper fused images (#8)
 - support for opening multiple input files via the `-f` option (filenames separated by `;`)
 - several GUI issues and minor usability glitches
@@ -318,18 +318,18 @@
 ### Changes
 - trap `UnidentifiedImageError` from `PIL.Image.open` when loading images to retrieve EXIF data
 - file open/save dialogs now remember the last visited path during the current session
-- improved performance of the pyramid stacking algorithm
-- dropped support for macOS intel x64 architecture due to missing free build machines (#18)
+- improved the performance of the pyramid-stacking algorithm
+- dropped support for macOS on Intel x64 because free build machines are unavailable (#18)
 
 ---
 
 ## [v1.14.0] - 2026-02-04
-**Native RAW formats support, GUI improvements, and internal refactoring**
+**Native RAW format support, GUI improvements, and internal refactoring**
 
 ### Added
 - native RAW image formats support via rawpy (#12)
 - redo operation support in project GUI
-- support for multiple shortcuts key: redo, Ctrl + Shift + Z, Ctrl + Y; shift Ctrl + vertical or horizontal arrows for element shift
+- added keyboard shortcuts for redo (Ctrl + Shift + Z or Ctrl + Y) and for moving elements (Shift + Ctrl + arrow keys)
 
 ### Fixed
 - various GUI issues and usability glitches
@@ -354,7 +354,7 @@ This page reports the main releases only and the main changes therein.
 - support ICC profile in EXIF data
 
 ### Fixed
-- incorrect automatic subsampling factor causing in some cases poor alignment quality (#7)
+- fixed an automatic subsampling factor that could reduce alignment quality in some cases (#7)
 - added fault protection for depth map plot
 - input filepaths explicitly sorted alphabetically
 - minor GUI fixes and improvements
@@ -371,16 +371,16 @@ This page reports the main releases only and the main changes therein.
 
 ### Added
 - optional plot of the estimated depth map for focus stacking with the DepthMap algorithm
-- better navigation in the project classic GUI: arrow key navigation from job to actions, and edit triggered by enter/return key.
+- improved navigation in the classic project GUI: use the arrow keys to move from jobs to actions, and press Enter/Return to edit.
 - keyboard shortcuts for main project and retouch menu main entries
-- raw file extension is now tolerated but issues an error message in preparation for future support; the actual support will depend on next updates of rawpy package
+- RAW file extensions are now recognized, but a warning is issued because support depends on future updates to the rawpy package
 
 ### Fixed
-- various bugs in the project editing GUI
-- forced numpy vesion >=2.4.1 to prevent potential bugs in OpenCV due to inconsistent versions
+- fixed various bugs in the project-editing GUI
+- required NumPy >=2.4.1 to prevent potential bugs in OpenCV caused by inconsistent versions
 
 ### Changed
-- code refactoring and cleanup: removed duplicated code in classic and modern project GUI views
+- removed duplicate code from the classic and modern project GUI views
 - minor optimization of pyramid algorithm
 - allowed latest OpenCV version, 4.13.0.90
 
@@ -391,12 +391,12 @@ This page reports the main releases only and the main changes therein.
 **Implemented some GUI missing features**
 
 ### Fixed
-- undoing cut or delete in the modern view restures full run progress, with image thumbnails and progress bar
+- undoing a cut or delete in the modern view restores the full run progress, including image thumbnails and the progress bar
 - cut element in classic view now works as expected
 
 ### Changed
 - removed redundant stop button from classic run job window
-- code refactoring and cleanup of the project GUI components
+- refactored and cleaned up the project GUI components
 
 ---
 
@@ -406,10 +406,10 @@ This page reports the main releases only and the main changes therein.
 
 ### Fixed
 - correct and consistent GUI response with update of both views when the project is modified
-- refresh of GUI with minimal updates prevent accidental deletion of job run information
+- refreshed the GUI with minimal updates to prevent accidental deletion of job run information
 
 ### Changed
-- major code refactoring and cleanup of the project GUI components
+- extensively refactored and cleaned up the project GUI components
 
 ---
 
@@ -447,9 +447,9 @@ The classic project view is still available and can be enabled at any time from 
 - stop button available in the top bar
 
 ### Fixed
-- fixed LAB and HLHS colorspaces conversions for 16-bits 
-- fixed software version retrival if ssl fails in about dialog
-- forced open-cv version 4.11 to prevent bug in 16 bits hls color space conversion
+- fixed LAB and HLS color-space conversions for 16-bit images
+- fixed software version retrieval when SSL fails in the About dialog
+- pinned OpenCV to version 4.11 to prevent a bug in 16-bit HLS color-space conversion
 
 ---
 
@@ -458,10 +458,10 @@ The classic project view is still available and can be enabled at any time from 
 
 ### Fixed
 - multithread conflict in plot generation
-- prevents to save a noisy pixel map that contains too many pixels
+- prevented saving a noisy-pixel map that contains too many pixels
 - missing match plot in parallel alignment module
-- plot images are by default in png format to prevent a potential issue with too many pdf generation with matplotlib. PDF is optional in the settings
-- added more exeption protection to focus stacking algorithm
+- plot images are saved as PNG by default to avoid issues generating many PDF files with Matplotlib. PDF output can be enabled in the settings.
+- added more exception handling to the focus-stacking algorithm
 - minor logging printout fix
 
 ---
@@ -472,10 +472,10 @@ The classic project view is still available and can be enabled at any time from 
 ### Fixed
 - fixed threshold parameter for unsharp mask filter
 - fixed frames import in retouch mode
-- reverts to sequential pyramid focus stacking if temporary disk space is insufficient
-- prevent failure in case a single file is selected for parallel alignment
-- added protections against invalid file content
-- added protections against invalid paths on Windows
+- reverted to sequential pyramid focus stacking when temporary disk space is insufficient
+- prevented failure when a single file is selected for parallel alignment
+- added protection against invalid file content
+- added protection against invalid paths on Windows
 
 ### Changed
 - optimized temporary disk cache for parallel pyramid focus stacking
@@ -489,11 +489,11 @@ The classic project view is still available and can be enabled at any time from 
 - optional sharpen filter after focus stacking stage
 
 ### Fixed
-- fault-tolerant argument list in modules prevent potential issues when reading project files from older releases
+- fault-tolerant argument lists in modules prevent potential issues when reading project files from older releases
 
 ### Changed
-- fixed and improved DepthMap layer blending using pyramid method
-- depth map algirithm optimized and uses I/O buffering to prevent large memory requirements
+- improved DepthMap layer blending using the pyramid method
+- optimized the depth-map algorithm and added I/O buffering to reduce memory requirements
 
 ---
 
@@ -501,7 +501,7 @@ The classic project view is still available and can be enabled at any time from 
 **improved DepthMap algorithm**
 
 ### Added
-- optimized depth map algorith with more energy calculations and more blending modes
+- optimized the depth-map algorithm with additional energy calculations and blending modes
 - new customizable parameters for depth map algorithm
 - customizable temporary scratch disk area in settings
 
@@ -527,8 +527,8 @@ The classic project view is still available and can be enabled at any time from 
 ### Fixed
 - incorrect configuration parameters in the noise-masking module  
 - noisy-pixel detection now works correctly for 16-bit images  
-- warning is now shown when attempting to load more than 20 image frames  
-- pyramid stacking algorithm now protected against temporary-disk exhaustion  
+- a warning is now shown when attempting to load more than 20 image frames
+- protected the pyramid-stacking algorithm against temporary-disk exhaustion
 - various user-interface issues  
 - alignment warning messages restored
 
@@ -550,9 +550,9 @@ The classic project view is still available and can be enabled at any time from 
 **Fixed serious alignment bug from previous release**
 
 ### Fixed
-- fixed serious bug in alignment module introduced with code refactoring in releae 1.9.6
-- space bar + drag works now also when the master layer is not selected
-- live update of tooltips in processing colored box display, and fixed content
+- fixed a serious bug in the alignment module introduced during code refactoring in release 1.9.6
+- Space + drag now also works when the master layer is not selected
+- updated tooltips in the processing-status boxes and fixed their contents
 
 ---
 
@@ -570,7 +570,7 @@ The classic project view is still available and can be enabled at any time from 
 - fault tolerance for missing or invalid files
 
 ### Changed
-- mayor refactoring of alignment code, and cleanup
+- major refactoring and cleanup of the alignment code
 
 ---
 
@@ -578,7 +578,7 @@ The classic project view is still available and can be enabled at any time from 
 **Fixed possible crash in focus bunches**
 
 ### Fixed
-- fixed crash in focus bunches if only a subset of files in a folder is selected
+- fixed a crash in focus bunches when only a subset of files in a folder is selected
 
 ---
 
@@ -587,11 +587,11 @@ The classic project view is still available and can be enabled at any time from 
 
 ### Fixed
 - more consistent naming in EXIF data display
-- EXIF copy is now falut-tolerant
+- EXIF copying is now fault-tolerant
 - safer EXIF conversion prevents failure when invalid values are found
 
 ### Changed
-- improved save image dialog with more clear options and explanatory imformation
+- improved the save-image dialog with clearer options and explanatory information
 - improved EXIF data display
 - simplified name of noise detection job and module
 - when saving a 16-bit image, a dialog shows the possible options and warns about EXIF data loss for 16-bit PNG format.
@@ -602,32 +602,32 @@ The classic project view is still available and can be enabled at any time from 
 **Fixes to EXIF data and GUI**
 
 ### Fixed
-- fault tolerant copy of EXIF data prevents to write corrupted files
-- added missing 16 to 8 bit conversion when saving TIFF to JPEG in retouch mode
+- fault-tolerant EXIF copying prevents corrupted files from being written
+- added the missing 16-to-8-bit conversion when saving TIFF as JPEG in retouch mode
 - removed problematic EXIF tag MakerNote that may cause failure for some cameras
-- added more missing EXIF data, and exposure data written in legacy compatibility mode
+- added missing EXIF and exposure data in legacy compatibility mode
 - menu actions correctly enabled with a new project is created
 - minor fix to balance module log output
 
 ### Changed
 - code cleanup
-- better EXIF data display rather than original raw data
+- improved EXIF data display to make it clearer than the raw data
 
 ---
 
 ## [v1.9.2] - 2025-10-29
-**Fixes to EXIF data and alignment; GUI refinements**
+**Fixes to EXIF data and alignment, and GUI refinements**
 
 ### Added
 - new keyboard and mouse wheel shortcuts to control brush opacity and flow
-- more action shurtcuts in context menu under the project area
+- added more action shortcuts to the context menu in the project area
 
 ### Fixed
-- enlarged previously too tight validity tolerance thresholds for composite tansformations
+- increased the previously too-tight validity tolerance thresholds for composite transformations
 - skipping frames with missing alignment transformation
 - focus bunch processing order is now sequential
-- missing exposure data in JPEG EXIF data
-- conversion of EXIF data between formats JPEG, TIFF and PNG
+- added missing exposure data to JPEG EXIF data
+- converted EXIF data between JPEG, TIFF, and PNG formats
 
 ---
 
@@ -635,14 +635,14 @@ The classic project view is still available and can be enabled at any time from 
 **Improved EXIF data handling GUI refinements**
 
 ### Added
-- missing actions "Show EXIF Data" and "Delete EXIF Data"
+- added the missing "Show EXIF Data" and "Delete EXIF Data" actions
 
 ### Fixed
 - if saving EXIF data fails, a warning is issued instead of stopping the run
-- exif data correctly loaded when opening image files in retouch mode
-- removed duplicated parameter from config dialog (FocusStackBunch)
+- fixed EXIF data loading when opening image files in retouch mode
+- removed a duplicate parameter from the configuration dialog (FocusStackBunch)
 - fixed thread warning when the application quits
-- more robust EXIF data code for JPG format prevents possible errors
+- made EXIF handling for JPG files more robust to prevent errors
 
 ### Changed
 - improved EXIF GUI: more data displayed and improved selection logic
@@ -653,7 +653,7 @@ The classic project view is still available and can be enabled at any time from 
 **Added PNG format support and fixed EXIF failure**
 
 ### Added
-- support of images in PNG format, both in 8 bit and 16 bit depth. Note: EXIF data are not supported for 16 bit PNG because of limitations in the PIL and Open CV python libraries.
+- added support for 8-bit and 16-bit PNG images. Note: EXIF data are not supported for 16-bit PNGs because of limitations in the PIL and OpenCV libraries.
 
 ### Fixed
 - if saving EXIF data fails, a warning is issued instead of stopping the run
@@ -669,8 +669,8 @@ The classic project view is still available and can be enabled at any time from 
 - new configurable parameters in persistent default settings
 
 ### Fixed
-- reference frame indexing if sequential processing is applied as fallback from multithread run
-- job configuration dialog failure if input is aready selected
+- fixed reference-frame indexing when sequential processing is used as a fallback from a multithreaded run
+- fixed a failure in the job configuration dialog when input is already selected
 - preview thumbnail failure for very large images
 - minor inaccuracies in logger messages
 - minor GUI issues
@@ -681,7 +681,7 @@ The classic project view is still available and can be enabled at any time from 
 - better tuning of parallel frame alignment
 - consistent handling of noise map output folders
 - improved naming scheme for wizard-generated projects
-- more reliable default settings persistency
+- improved persistence of default settings
 - code refactoring and cleanup
 
 -----
@@ -693,23 +693,23 @@ The classic project view is still available and can be enabled at any time from 
 - temporary disk space can be cleaned up with a new option to scratch output files at the end of a job 
 
 ### Fixed
-- new project dialog displays well also with dark background settings
+- fixed the new-project dialog so it displays correctly with a dark background
 
 ### Changed
 - icons now adapt automatically to light or dark desktop theme
 - additional alignment parameters added to default settings
 - minor GUI stability fix
-- redundant macOS .tar.gz installer removed, replaced by .dmg image
+- removed the redundant macOS ```.tar.gz``` installer and replaced it with a ```.dmg``` image
 
 -----
 
 ## [v1.7.0] - 2025-10-04
-**New image adjustment actions and macOS dmg image installer**
+**New image-adjustment actions and macOS DMG installer**
 
 ### Added
 - luminosity and contrast adjustment action
 - saturation and vibrance adjustment action
-- macOS dmg installer
+- added a macOS DMG installer
 
 ### Changed
 - improved windows installer
@@ -759,13 +759,13 @@ The classic project view is still available and can be enabled at any time from 
 **Bug fixes**
 
 ### Fixed
-- fixed functionality of layer alphabetic sorting
+- fixed alphabetical sorting of layers
 - fixed image centering in zoom operations
 - fixed color picker reuse in white-balance filter
 - minor fixes and code cleanup
 
 ### Changed
-- menu actions that require a file are disabled when no file is open 
+- menu actions that require a file are disabled when no file is open
 
 ----
 
@@ -773,11 +773,11 @@ The classic project view is still available and can be enabled at any time from 
 **Bug fixes**
 
 ### Fixed
-- fixed a critical bug that caused crash at startup in distrubution package due to a relative import in main app scripts
+- fixed a critical startup crash in the distribution package caused by a relative import in the main application scripts
 - fixed relative import in main app scripts
 
 ### Changed
-- implemenrted cursor dynamic color based on background image luminosity
+- implemented dynamic cursor coloring based on background image luminosity
 
 ---
 
@@ -786,7 +786,7 @@ The classic project view is still available and can be enabled at any time from 
 
 ### Fixed
 - fixed white balance filter functionality
-- fixed brush preview visiblity in view mode transitions
+- fixed brush preview visibility during view-mode transitions
 
 ### Changed
 - code refactoring and cleanup
@@ -797,14 +797,14 @@ The classic project view is still available and can be enabled at any time from 
 **Several bug fixes**
 
 ### Added
-- new command-line arguments -v1, -v2, -v3, allow different view modes at startup
+- added the -v1, -v2, and -v3 command-line arguments to select the view mode at startup
 
 ### Fixed
 - consistent and restyled cursor for current layer view
 - fixed ghost cursors in side-by-side views
 - fixed cursor shift at startup
 - fixed brush preview at image borders
-- fixed lower/upper case GUI labels
+- fixed capitalization of GUI labels
 - improved help and description text
 
 ---
@@ -818,7 +818,7 @@ The classic project view is still available and can be enabled at any time from 
 ### Fixed
 - fixed zoom in wheel events for side-by-side views
 - restored standard cursor in empty retouch views
-- lower/upper case GUI labels
+- capitalization of GUI labels
 
 ### Changed
 - code refactoring and cleanup
@@ -830,15 +830,15 @@ The classic project view is still available and can be enabled at any time from 
 **GUI improvements**
 
 ### Added
-- added retouch view mode with master and frame side by side and top-bottom
+- added retouch view modes with the master and frame side by side or top and bottom
 - implemented "Open Recent" menu entry for both projects and retouch images
 - expert options can be shown with a checkbox in each dialog
 - optional summary plots for alignment transformation parameters
 
 ### Fixed
 - fixed bug in plot generation
-- fixes warning due to missing glyph in PDF generation on macOS
-- safer parallel plot generation using a thread locks
+- fixed a warning caused by a missing glyph when generating PDFs on macOS
+- made parallel plot generation safer by using a thread lock
 
 ### Changed
 - code refactoring in various areas
@@ -848,16 +848,16 @@ The classic project view is still available and can be enabled at any time from 
 **Fixes and optimizations**
 
 ### Fixed
-- fixed input folder widget in job configuration
-- better management of patological alignments
+- fixed the input-folder widget in job configuration
+- improved handling of pathological alignments
 - restored alignment match plots
 
 ### Changed
 - improved automatic parameters for parallel alignment
-- improved pyramid performances by combining two input steps
-- improved performances of ORB and SURF feature extraction with key points caching
+- improved pyramid performance by combining two input steps
+- improved ORB and SURF feature-extraction performance by caching keypoints
 - improved configuration GUI using tabs and other minor GUI improvements
-- code clean up and some fixes
+- code cleanup and fixes
 
 ---
 
@@ -875,7 +875,7 @@ The classic project view is still available and can be enabled at any time from 
 - Bug fix in config dialog
 
 ### Changed
-- Changes some default parameters for better performances
+- changed some default parameters for better performance
 - Some GUI restyling
 - Code cleanup
 
@@ -901,30 +901,30 @@ The classic project view is still available and can be enabled at any time from 
 ### Changes
 
 * Implemented parallel processing for pyramid stacking algorithm
-* optimized pyramid algorithm: selects automatically the best within the given memory budget to avoid memory issues in case many pictures are selected. Explicit configuration is also possible for specific needs.
-* Implemented automatic subsample option for alignment, balancing and vignetting, now default
-* HLS and HSV corrections now supported for 16 bit images
-* Added luminosity correction in the LAB color space
-* Alignment module skips frames if transformation parameters are out of a reasonable ranges
-* Multilayer modules sends a warning if the estimated output file size is > 1GB
-* "Run all jobs" action is enabled only if more than one job are present
-* Updated default module names in project genereated by "new project" dialog
-* Code refactoring
-* Some GUI fixes
+* optimized the pyramid algorithm to automatically select the best strategy within the memory budget, avoiding memory issues when processing many images. Explicit configuration is also available.
+* added an automatic subsampling option for alignment, balancing, and vignetting; it is now enabled by default
+* added HLS and HSV corrections for 16-bit images
+* added luminosity correction in the LAB color space
+* the alignment module skips frames if transformation parameters are outside a reasonable range
+* the multilayer module warns if the estimated output file size exceeds 1 GB
+* enabled the "Run all jobs" action only when more than one job is present
+* updated the default module names in projects generated by the "New Project" dialog
+* refactored code
+* fixed GUI issues
 
 ---
 
 ## [v1.1.0] - 2025-08-28
-**New Pyramids algorithm, some improvements and more fixes**
+**New pyramid algorithm, improvements, and fixes**
 
 ### Changes
 
-* added Pyramids Tiles, that requires less RAM by fusing images in tiles
-* the alignment module now tolerates images of different shapes
+* added pyramid tiling, which requires less RAM by fusing images in tiles
+* the alignment module now supports images with different dimensions
 * noisy pixel mask verifies that the mask has the same shape as input images
 * minor changes to default alignment parameters
-* some improvements to the GUI
-* some bug fixes
+* improved the GUI
+* fixed bugs
 ---
 
 ## [v1.0.4.pre2] - 2025-08-26
@@ -932,7 +932,7 @@ The classic project view is still available and can be enabled at any time from 
 
 ### Changes
 
-* fixed release build script changing format from zip to tar.gz for macOs and Linux
+* fixed the release build script to create ```.tar.gz``` archives instead of ZIP files for macOS and Linux
 
 ---
 
@@ -985,11 +985,11 @@ The classic project view is still available and can be enabled at any time from 
 * implemented vignetting correction filter
 * improved vignetting performance using subsampling
 * implemented fast subsample option in balance algorithms
-* implemented hex color line editin white balance filter
+* added hexadecimal color input to the white-balance filter
 * new application logo
 * interface improvements: implemented master/layer toggle
 * more informative GUI messages and colors
-* code refactoring and various cleanup 
+* refactored code and performed other cleanup
 * bug fixes
 
 Note
@@ -1003,7 +1003,7 @@ A source file was missing in this tag, and was added in v1.0.1
 
 ### Changes
 
-* layer selection highlightted with a blue border
+* layer selection highlighted with a blue border
 * improved font rendering in brush preview
 * fixed thumbnail spacing
 * fixed and improved save strategy for retouched images
@@ -1018,11 +1018,11 @@ A source file was missing in this tag, and was added in v1.0.1
 ### Changes
 
 * implemented touchpad image navigation (pan, zoom with pinch)
-* alignment robustness: retry without subsampling if number of bood matches is below a threshold parameter
+* improved alignment robustness: retry without subsampling if the number of good matches is below a threshold
 * added more robust path management in retouch area
 * added frame count display in "New Project" dialog
-* more unifrom color code in GUI run log
-* code clanup, removed remnants of obsolete code
+* more uniform colors in the GUI run log
+* cleaned up code and removed remnants of obsolete code
 * various fixes
 
 ---
@@ -1032,10 +1032,10 @@ A source file was missing in this tag, and was added in v1.0.1
 
 ### Changes
 
-* fixed a bug that prevented a complete clean up when "New Project" action is called
+* fixed a bug that prevented complete cleanup when the "New Project" action was called
 * fixed the management of project file path while loading and saving
-* removed duplicated code
-* some code clean up
+* removed duplicate code
+* code cleanup
 
 ---
 
@@ -1044,8 +1044,8 @@ A source file was missing in this tag, and was added in v1.0.1
 
 ### Changes
 
-* fixed a bug that prevented to add sub-actions
-* vignetting constrains model parameter in order to prevent searching for dark areas at the center of the image instead of at periphery
+* fixed a bug that prevented users from adding sub-actions
+* constrained the vignetting model to avoid searching for dark areas at the center of the image instead of near the periphery
 * updated sample images and documentation
 
 ---
@@ -1055,7 +1055,7 @@ A source file was missing in this tag, and was added in v1.0.1
 
 ### Changes
 
-* code consolidation with support of pylint code checking
+* consolidated code and added support for pylint checks
 * some bug fixes
 * new project dialog shows the number of bunches, if selected
 * updated sample images, examples and documentation
@@ -1081,7 +1081,7 @@ This release is equivalent to v0.3.2, but resolves a problem for PyPI distributi
 * fixed ```from shinestacker import *```
 * restored jupyter support and updated examples
 * several bug fixes
-* several code refactoring reduces interclass dependencies
+* refactored code to reduce interclass dependencies
 * updated documentation
 * added new sample images and project files
 * examples removed from PyPI distribution
@@ -1103,7 +1103,7 @@ This release is equivalent to v0.3.2, but resolves a problem for PyPI distributi
 
 ### Changes
 
-* added filters for sharpening, denoise and white balance
+* added sharpening, denoising, and white-balance filters
 * updated documentation
 * some bug fixes
 
@@ -1125,7 +1125,7 @@ This release is equivalent to v0.3.2, but resolves a problem for PyPI distributi
 
 ### Changes
 
-* icon location fixed, compatibly with PyPI and bundle release build
+* fixed the icon location for compatibility with PyPI and bundled releases
 
 ---
 
@@ -1149,8 +1149,8 @@ This release is equivalent to v0.3.2, but resolves a problem for PyPI distributi
 
 * fixed recently introduced bugs in the alignment module
 * disabled ECC refinement, too unstable
-* improvement rigid alignment with more precise matrix
-* some minor bug fixes
+* improved rigid alignment with a more precise matrix
+* fixed minor bugs
 * removed dependence on termcolor external module
 * some internal code cleanup
 
@@ -1161,8 +1161,8 @@ This release is equivalent to v0.3.2, but resolves a problem for PyPI distributi
 
 ### Changes
 
-* Faster alignment with image subsample enables
-* Alignment refinement via ECC transform enabled
+* sped up alignment with image subsampling
+* enabled alignment refinement using the ECC transform
 * GUI opens new project dialog at startup
 * fixed color logging for windowed app
 *  bug fixes

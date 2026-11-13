@@ -13,10 +13,10 @@ To allow Shine Stacker to run safely, please follow these steps:
 ```bash
 sudo xattr -cr /Applications/shinestacker.app
 ```
-5. You can now launch Shine Stacker normally from your Applications folder.
+5. You can now launch Shine Stacker from your Applications folder.
 
 > 💡 Tip: macOS might still show a security warning the first time you open the app.
 > If that happens, right-click the app and choose Open, then confirm.
 
 
-*Note that only macOS apple silicon (ARM processor) is supported. x64 intel platform is not supported due to missing free build machines on GitHub.*
+*Note that only macOS on Apple silicon (ARM) is supported. Intel x64 is not supported because GitHub does not provide free build machines for that platform.*

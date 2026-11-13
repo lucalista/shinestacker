@@ -1,6 +1,6 @@
 # Alignment and registration
 
-Automatically align, scale, tanslate and rotate or apply full perspective correction.
+Automatically align, scale, translate, and rotate images, or apply full perspective correction.
 
 All constants described below are contained in the object ```constants```, imported as:
 
@@ -13,7 +13,7 @@ Alignment actions can be added to a job as follows:
 ```python
 job.add_action(Actions("align", [AlignFrames(*options)])
 ```
-Arguments for the constructor ```AlignFrames``` of are:
+Arguments for the ```AlignFrames``` constructor are:
 * ```feature_config``` (optional, default: ```None```): a dictionary specifying the following parameters, with the corresponding default values:
 ```python
 feature_config = {
@@ -23,28 +23,28 @@ feature_config = {
 }
 ```
 * ```name``` (optional, default: empty): only used in the GUI as identifier
-* ```enabled``` (optiona, default: ```True```): enable/disable sub-action
-* ```detector``` (optional, default: ```DETECTOR_ORB```): the feature detector is used to find matches. See [Feature Detection and Description](https://docs.opencv.org/4.x/db/d27/tutorial_py_table_of_contents_feature2d.html) for more details. Possible values are:
-  * ```DETECTOR_SIFT```: [Scale-Invariant Feature Transform](https://docs.opencv.org/4.x/da/df5/tutorial_py_sift_intro.html)]
+* ```enabled``` (optional, default: ```True```): enable or disable the sub-action
+* ```detector``` (optional, default: ```DETECTOR_ORB```): the feature detector used to find matches. See [Feature Detection and Description](https://docs.opencv.org/4.x/db/d27/tutorial_py_table_of_contents_feature2d.html) for more details. Possible values are:
+  * ```DETECTOR_SIFT```: [Scale-Invariant Feature Transform](https://docs.opencv.org/4.x/da/df5/tutorial_py_sift_intro.html)
   * ```DETECTOR_ORB``` (default): [Oriented FAST and Rotated BRIEF](https://docs.opencv.org/4.x/d1/d89/tutorial_py_orb.html)
   * ```DETECTOR_SURF```: [Speeded-Up Robust Features](https://docs.opencv.org/3.4/df/dd2/tutorial_py_surf_intro.html)
   * ```DETECTOR_AKAZE```: [AKAZE local features matching](https://docs.opencv.org/3.4/db/d70/tutorial_akaze_matching.html)
   * ```DETECTOR_BRISK```: [Binary Robust Invariant Scalable Keypoints](https://medium.com/analytics-vidhya/feature-matching-using-brisk-277c47539e8)
-* ```descriptor``` (optional, default: ```DESCRIPTOR_ORB```): the feature descriptor is used to find matches. Possible values are:
+* ```descriptor``` (optional, default: ```DESCRIPTOR_ORB```): the feature descriptor used to find matches. Possible values are:
   * ```DESCRIPTOR_SIFT``` (default)
   * ```DESCRIPTOR_ORB```
   * ```DESCRIPTOR_AKAZE```
-  * ```DESCRIPTPR_BRISK```
+  * ```DESCRIPTOR_BRISK```
 
 * ```sift_backend``` (optional, default: ```SIFT_BACKEND_OPENCV```): the implementation of SIFT, used only with the SIFT detector and descriptor. Possible values are:
   * ```SIFT_BACKEND_OPENCV``` (```'opencv'```, default): OpenCV on the CPU
   * ```SIFT_BACKEND_SILX``` (```'silx'```): [silx](https://github.com/silx-kit/silx) on an OpenCL device: the GPU if one is found, the CPU otherwise
 
-  The OpenCL implementation needs the optional packages silx and pyopencl, installed with ```pip install shinestacker[opencl]``` (the installers and archives of the releases page include them), and an OpenCL driver: for the GPU, or a CPU OpenCL runtime. In the GUI, the detector menu offers *SIFT (silx)* only if the packages are installed. If they or the driver are missing, or the OpenCL run fails, a warning is issued and OpenCV is used. The log names the SIFT implementation at the start of the alignment, e.g. ```feature extraction: SIFT (silx, OpenCL: <device name>)```. It is much faster than OpenCV when features are extracted at full resolution (```subsample``` set to 1, or a large ```resolution_target```), and about the same overall with the default resolution target. Its results are not bit-reproducible from run to run, and the transformations it gives agree with OpenCV's to a fraction of a pixel.
+  The OpenCL implementation requires the optional ```silx``` and ```pyopencl``` packages, which can be installed with ```pip install shinestacker[opencl]``` (the release installers and archives include them), and an OpenCL driver for the GPU or a CPU OpenCL runtime. In the GUI, the detector menu offers *SIFT (silx)* only when the packages are installed. If the packages or driver are missing, or the OpenCL run fails, a warning is issued and OpenCV is used instead. The log identifies the SIFT implementation at the start of alignment, for example: ```feature extraction: SIFT (silx, OpenCL: <device name>)```. It is much faster than OpenCV when features are extracted at full resolution (```subsample``` is set to 1 or ```resolution_target``` is large), and has similar overall performance with the default resolution target. Its results are not bit-reproducible between runs, but its transformations agree with OpenCV's to within a fraction of a pixel.
 
-  For a more quantitative comparison of performances of the different methods, consult the publication: [S. A. K. Tareen and Z. Saleem, "A comparative analysis of SIFT, SURF, KAZE, AKAZE, ORB, and BRISK", doi:10.1109/ICOMET.2018.8346440](https://ieeexplore.ieee.org/document/8346440)
+  For a quantitative comparison of the different methods, see the publication [S. A. K. Tareen and Z. Saleem, "A comparative analysis of SIFT, SURF, KAZE, AKAZE, ORB, and BRISK", doi:10.1109/ICOMET.2018.8346440](https://ieeexplore.ieee.org/document/8346440).
 
-```matching_config``` (optional, default; ```None```): a dictionary specifying the following parameters, with the corresponding default values:
+```matching_config``` (optional, default: ```None```): a dictionary specifying the following parameters and their default values:
 ```python
 matching_config= {
     'match_method': constants.MATCHING_KNN,
@@ -58,7 +58,7 @@ matching_config= {
   * ```MATCHING_KNN``` (default): [Feature Matching with FLANN](https://docs.opencv.org/3.4/d5/d6f/tutorial_feature_flann_matcher.html)
   * ```MATCHING_NORM_HAMMING```: [Use Hamming distance](https://docs.opencv.org/4.x/d2/de8/group__core__array.html#ggad12cefbcb5291cf958a85b4b67b6149fa4b063afd04aebb8dd07085a1207da727)
 * ```flann_idx_kdtree``` (optional, default: 2): parameter used by the FLANN matching algorithm.
-* ```flann_tree``` (optional, default: 5): parameter used by the FLANN matching algorithm.
+* ```flann_trees``` (optional, default: 5): parameter used by the FLANN matching algorithm.
 * ```flann_checks``` (optional, default: 50): parameter used by the FLANN matching algorithm.
 * ```threshold``` (optional, default: 0.75): parameter used to select good matches. See [Feature Matching](https://docs.opencv.org/4.x/dc/dc3/tutorial_py_matcher.html) for more details. 
 
@@ -66,7 +66,7 @@ matching_config= {
 ```python
 alignment_config = {
     'transform': constants.ALIGN_RIGID,
-    'align_methid': constants.RANSAC,
+    'align_method': constants.RANSAC,
     'rans_threshold': 5.0,
     'refine_iters': 100,
     'refit': constants.REFIT_NONE,
@@ -85,25 +85,25 @@ alignment_config = {
 }
 ```
 * ```transform``` (optional, default: ```ALIGN_RIGID```): the transformation applied to register images. Possible values are:
-  * ```ALIGN_RIGID``` (default): allow scale, tanslation and rotation correction. This should be used for image acquired with tripode or microscope.
-  * ```ALIGN_HOMOGRAPHY```: allow full perspective correction. This should be used for images taken with hand camera.
+  * ```ALIGN_RIGID``` (default): allows scale, translation, and rotation correction. Use this for images acquired with a tripod or microscope.
+  * ```ALIGN_HOMOGRAPHY```: allows full perspective correction. Use this for images taken with a handheld camera.
 * ```align_method``` (optional, default: ```RANSAC```): the method used to find matches. Valid options are:
   * ```RANSAC``` (*Random Sample Consensus*, default)
   * ```LMEDS``` (*Least Medians of Squares*)
-* ```rans_threshold``` (optional, default: 5.0): parameter used if ```ALIGN_HOMOGRAPHY``` is choosen as tansformation, see [Feature Matching + Homography to find Objects](https://docs.opencv.org/3.4/d1/de0/tutorial_py_feature_homography.html) for more details.
+* ```rans_threshold``` (optional, default: 5.0): parameter used when ```ALIGN_HOMOGRAPHY``` is chosen as the transformation. See [Feature Matching + Homography to find Objects](https://docs.opencv.org/3.4/d1/de0/tutorial_py_feature_homography.html) for more details.
 * ```refine_iters``` (optional, default: 100): refinement iterations. Used only if ```transform=ALIGN_RIGID```.
 * ```refit``` (optional, default: ```REFIT_NONE```): re-estimation of the transformation after RANSAC or LMEDS. Used only if ```transform=ALIGN_RIGID```. Possible values are:
   * ```REFIT_NONE``` (default): the estimate of ```align_method``` is used as it is.
   * ```REFIT_IRLS```: iteratively reweighted least squares with Tukey's biweight. Every match closer than ```refit_threshold``` contributes, weighted down as its residual grows, so matches that are only just inliers count less than with RANSAC's refinement. Lowers the sub-pixel error of the transformation. The estimate of ```align_method``` is kept if fewer than 10 matches are within the threshold, if the refit moves any prediction in the area covered by the matches by more than ```rans_threshold```, or if the refined transformation fails the usual geometric check.
 * ```refit_threshold``` (optional, default: 1.5): residual in pixels, at the feature-matching scale (as ```rans_threshold```), beyond which a match gets no weight in the refit. Used only if ```refit=REFIT_IRLS```.
-* ```align_confidence``` (optional, default: 99.9): alignment algorithm confidence (%). Used only if ```transform=ALIGN_RIGID```. 
+* ```align_confidence``` (optional, default: 99.9): confidence level of the alignment algorithm, in percent. Used only if ```transform=ALIGN_RIGID```.
 * ```max_iters``` (optional, default: 2000): maximum number of iterations. Used only if ```transform=ALIGN_HOMOGRAPHY```. 
-* ```subsample``` (optional, default: 0=automatic): subsample image for faster alignment. Faster, but alignment could be less accurate if only a small portion of the image is focused. It can save time, in particular for large images.
+* ```subsample``` (optional, default: 0=automatic): subsamples the image for faster alignment. This can save time, especially for large images, but may reduce accuracy if only a small portion of the image is in focus.
 * ```resolution_target``` (optional, default: 2): with ```subsample=0```, the image is subsampled for feature matching to about this many megapixels. Larger values match finer detail and take longer.
 * ```fast_subsampling``` (optional, default: ```False```): perform fast image subsampling without interpolation. Used if ```subsample``` is set to ```True```.
-* ```min_good_matches``` (optional, default: 100): if ```subsample```>1 and the number of good matches is below ```min_good_matches```, the alignment is retried without subsampling. This improbes robustness in case a too large subsampling factor is specified. 
-* ```phase_corr_fallback``` (optional, default: ```False```): use phase correlation alignment in case the number of matches is too low to allow to estimate the transformation. This algorithm is not very precise, and may help only in case of blurred images.
-* ```abort_abnormal``` (optional, default: ```False```): abort in case of anormal tansformation. By default, frames where abnormal transformation is found are skipped, and processing continunes to next frame.
+* ```min_good_matches``` (optional, default: 100): if ```subsample```>1 and the number of good matches is below ```min_good_matches```, alignment is retried without subsampling. This improves robustness when the subsampling factor is too large.
+* ```phase_corr_fallback``` (optional, default: ```False```): use phase-correlation alignment when there are too few matches to estimate the transformation. This algorithm is not very precise and may help only with blurred images.
+* ```abort_abnormal``` (optional, default: ```False```): abort if an abnormal transformation is detected. By default, frames with abnormal transformations are skipped, and processing continues with the next frame.
 * ```border_mode``` (optional, default: ```BORDER_REPLICATE_BLUR```): border mode. See [Adding borders to your images](https://docs.opencv.org/3.4/dc/da3/tutorial_copyMakeBorder.html) for more details.  Possible values are:
   * ```BORDER_CONSTANT```: pad the image with a constant value. The border value is specified with the parameter ```border_value```.
   * ```BORDER_REPLICATE```: the rows and columns at the very edge of the original are replicated to the extra border.
@@ -115,8 +115,8 @@ alignment_config = {
   * ```INTER_CUBIC``` (default): bicubic. Keeps more fine detail; recommended for focus stacking.
   * ```INTER_LANCZOS4```: Lanczos over 8x8 pixels. Slightly sharper than bicubic and slower.
 * ```plot_summary```  (optional, default: ```False```): if ```True```, plot a summary histogram with number of matches in each frame. May be useful for inspection and debugging.
-* ```plot_matches```  (optional, default: ```False```): if ```True```, for each image matches with reference frame are drawn. May be useful for inspection and debugging.
-* ```enabled``` (optional, default: ```True```): allows to switch on and off this module.
+* ```plot_matches```  (optional, default: ```False```): if ```True```, draws the matches between each image and the reference frame. This may be useful for inspection and debugging.
+* ```enabled``` (optional, default: ```True```): enables or disables this module.
 
 ## Automatic fallback
 
@@ -143,9 +143,9 @@ A class ```AlignFramesParallel``` implements alignment using parallel processing
 This class has extra parameters, in addition to the above ones:
 
 * ```max_threads``` (optional, default: ```2```): number of parallel processes allowed. The number of actual threads will not be greater than the number of available CPU cores.
-* ```chunk_submit``` (optional, default: ```True```): submit at most ```max_threads``` parallel processes. If ```chunk_submit``` is greater than ```max_threads``` a moderate performance gain is achieved at the cost of a possibly large memory occupancy.
-* ```bw_matching``` (optional, default: ```False```): perform matches on black and white version of the images in order to save memory. Preliminary tests indicate that the gain with this option is marginal, and this option may be dropped in the future.
-* ```delta_max``` (optional, defaut: 2): maximum consecutive frames skipped in case of too few matches found.
+* ```chunk_submit``` (optional, default: ```True```): if enabled, submits images in chunks of at most ```max_threads```. If disabled, submits all images at once, which may improve performance at the cost of significantly higher memory use.
+* ```bw_matching``` (optional, default: ```False```): performs matching on grayscale images to save memory. Preliminary tests indicate that the memory savings are small, so this option may be removed in the future.
+* ```delta_max``` (optional, default: 2): maximum number of consecutive frames to skip when too few matches are found.
 
 ## Automatic selection of processing strategy
 
@@ -153,17 +153,16 @@ A class ```AlignFramesAuto``` implements alignment with either sequential or par
 This class has extra parameters, in addition to the above ones:
 
 * ```mode``` (optional, default: ```auto```): can be ```auto```, ```sequential``` or ```parallel```.
-* ```memory_limit``` (optional, default: 8×1024<sup>3</sup>sup>): memory limit to determine optimal running parameters
+* ```memory_limit``` (optional, default: 8 GiB): memory limit used to determine optimal processing parameters
 
 
 ## Allowed configurations
 
-⚠️ Not all combinations of detector, descriptor and match methods are allowed. Combinations that are not allowed
-give raise to an exception. This is automatically prevented if one works with the GUI, but may occur when using python scripting. Below the table of the allowed combination with a comparison of CPU performances.
+⚠️ Not all combinations of detectors, descriptors, and matching methods are allowed. An invalid combination raises an exception. The GUI prevents invalid combinations, but they may occur when using Python. The table below lists the allowed combinations and compares their CPU performance.
 
-## CPU performances
+## CPU performance
 
-⏳ Below the time performances for alignment of two of the sample images with 2000×1300 resolution for allowed configuration combinations, from fastest to slowest. Note that slower may be more precise.
+⏳ The table below shows alignment times for two sample images at 2000×1300 resolution, using the allowed configuration combinations, from fastest to slowest. Slower methods may be more precise.
 
 | Time (s) | Detector | Descriptor | Match method |
 |----------|----------|------------|--------------|
@@ -182,7 +181,7 @@ give raise to an exception. This is automatically prevented if one works with th
 | 0.4075   |  AKAZE   | SIFT       | KNN          |
 | 0.4397   |  SIFT    | SIFT       | KNN          |
 
-SIFT performances can be enhanced in presence of GPU using the optional
+SIFT performance can be improved by using a GPU with the optional
 [```silx```](https://github.com/silx-kit/silx) implementation.
 For performance comparison, see the conversation in [PR #100](https://github.com/lucalista/shinestacker/pull/100).
 

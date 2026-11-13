@@ -9,10 +9,10 @@
 > **Focus stacking** for microscopy, macro photography, and computational imaging
 
 ## Key Features
-- 📸 **Image Formats**: JPEG, 8 and 16 bits TIFF and PNG and most of RAW formats are supported as input; output can be JPEG, 8 and 16 bits TIFF and PNG. Alpha channel (RGBA) is also supported.
+- 📸 **Image Formats**: Supported input formats include JPEG, 8- and 16-bit TIFF and PNG, and most RAW formats. Output formats include JPEG and 8- and 16-bit TIFF and PNG. RGBA is supported for 16-bit TIFF and PNG.
 - 🚀 **Batch Processing**: Align, balance, and stack hundreds of images
 - 🧩 **Modular Architecture**: Mix-and-match processing modules
-- 🖌️ **Retouch Editing**: Final interactive retouch of stacked image from individual frames
+- 🖌️ **Retouch Editing**: Interactively retouch the stacked image using individual frames.
 - 📊 **Jupyter Integration**: Image processing python notebooks
 
 
@@ -43,7 +43,7 @@ You can start shinestacker with the command:
 shinestacker
 ```
 
-On Linux and other system that require extra protection level, you may need to use ```pip``` with avirtual environment:
+On Linux and other systems that require an extra level of protection, you may need to use ```pip``` in a virtual environment:
 
 ```bash
 git clone https://github.com/lucalista/shinestacker.git
@@ -71,7 +71,7 @@ If you wish to use the faster implementation of the ```SIFT``` alignment method 
 pip install shinestacker[opencl]
 ```
 
-Note that on some shells, like ```zsh```, you have to use quotes in order to correctly interpret the square brackets (```pip install shinestacker[opencl]```)
+On some shells, such as ```zsh```, you need to quote the command so the square brackets are interpreted correctly: ```pip install "shinestacker[opencl]"```.
 
 ## GUI Workflow
 Launch GUI
@@ -138,9 +138,9 @@ pip install ipywidgets
 
 ## Known Issues
 
-* EXIF data not supported for 16-bit PNG files and 16-bit TIFF.
-* EXIF data from RAW image may be incomplete, depending on the camera manifacturer
-* Not all EXIF exposure data in TIFF files may be correctly visible in Adobe PhotoShop. Export as JPEG for full Photoshop EXIF compatibility, if needed. Note that Shine Stacker allows to read a TIFF file, import EXIF from a JPEG, and save in JPEG format including the imported EXIF. This allows to preserve EXIF data in the final JPEG file.
+* EXIF data is not supported for 16-bit PNG or TIFF files.
+* EXIF data from RAW images may be incomplete, depending on the camera manufacturer.
+* Not all EXIF exposure data in TIFF files may display correctly in Adobe Photoshop. If needed, export as JPEG for full Photoshop EXIF compatibility. Shine Stacker can read a TIFF file, import EXIF data from a JPEG, and save the result as a JPEG with the imported EXIF data.
 * Windows with ARM64 architecture is not supported in a straightforward way due to missing builds of some of the used libraries
-* GUI tests are limited. Please, report any bugs as [GitHub issuse](https://github.com/lucalista/shinestacker/issues/).
+* GUI tests are limited. Please report any bugs as [GitHub issues](https://github.com/lucalista/shinestacker/issues/).
 
