@@ -1,3 +1,5 @@
+import numpy as np
+import pytest
 from shinestacker.algorithms.stack_framework import StackJob
 from shinestacker.algorithms.stack import FocusStack, FocusStackBunch
 from shinestacker.algorithms.pyramid import PyramidStack
@@ -240,3 +242,35 @@ def test_bunches_description_counts_original_frames():
     assert len(outputs) == 1
     description = Image.open(outputs[0]).getexif().get(270)
     assert description == f"Image generated with ShineStacker from {n_input} frames"
+
+
+def _reference_local_stats(image, probabilities, pad, float_type):
+    padded = np.pad(image, pad, mode='reflect')
+    entropy = np.zeros(image.shape, dtype=float_type)
+    deviation = np.zeros(image.shape, dtype=float_type)
+    for r in range(image.shape[0]):
+        for c in range(image.shape[1]):
+            area = padded[r:r + 2 * pad + 1, c:c + 2 * pad + 1]
+            levels = area.flatten()
+            entropy[r, c] = -(levels * np.log(probabilities[levels])).sum()
+            deviation[r, c] = np.square(area - np.average(area)).sum() / area.size
+    return entropy, deviation
+
+
+@pytest.mark.parametrize("dtype", [np.uint8, np.uint16])
+@pytest.mark.parametrize("float_type", ['float-32', 'float-64'])
+def test_pyramid_entropy_deviation_match_reference(dtype, float_type):
+    algo = PyramidStack(float_type=float_type)
+    algo.dtype = dtype
+    max_value = np.iinfo(dtype).max
+    rng = np.random.default_rng(0)
+    image = rng.integers(0, max_value // 8, (17, 23)).astype(dtype)
+    levels, counts = np.unique(image, return_counts=True)
+    probabilities = np.zeros(max_value + 1)
+    probabilities[levels] = counts / counts.sum()
+    ref_entropy, ref_deviation = _reference_local_stats(
+        image, probabilities, algo.pad_amount, algo.float_type)
+    rtol = 1e-4 if algo.float_type == np.float32 else 1e-9
+    assert algo.entropy(image).dtype == algo.float_type
+    np.testing.assert_allclose(algo.entropy(image), ref_entropy, rtol=rtol)
+    np.testing.assert_allclose(algo.deviation(image), ref_deviation, rtol=rtol, atol=1e-6)
