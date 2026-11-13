@@ -68,34 +68,23 @@ class PyramidBase(BaseStackAlgo):
             img = expanded + layer
         return np.clip(np.abs(img), 0, self.max_pixel_value)
 
+    def window_sum(self, image):
+        size = 2 * self.pad_amount + 1
+        return cv2.boxFilter(image, -1, (size, size), normalize=False,
+                             borderType=cv2.BORDER_REFLECT101)
+
     def entropy(self, image):
-        levels, counts = np.unique(image.astype(self.dtype), return_counts=True)
-        probabilities = np.zeros((self.num_pixel_values), dtype=self.float_type)
-        probabilities[levels] = counts.astype(self.float_type) / counts.sum()
-        padded_image = cv2.copyMakeBorder(image, self.pad_amount, self.pad_amount, self.pad_amount,
-                                          self.pad_amount, cv2.BORDER_REFLECT101)
-        return np.fromfunction(np.vectorize(lambda row, column: self.area_entropy(
-            self.get_pad(padded_image, row, column), probabilities)), image.shape[:2], dtype=int)
-
-    def area_entropy(self, area, probabilities):
-        levels = area.flatten()
-        return self.float_type(-1. * (levels * np.log(probabilities[levels])).sum())
-
-    def get_pad(self, padded_image, row, column):
-        return padded_image[row + self.pad_amount +
-                            self.offset[:, np.newaxis], column +
-                            self.pad_amount + self.offset]
-
-    def area_deviation(self, area):
-        return np.square(area - np.average(area).astype(self.float_type)).sum() / area.size
+        image = image.astype(self.dtype)
+        levels, inverse, counts = np.unique(image, return_inverse=True, return_counts=True)
+        weights = levels.astype(np.float64) * np.log(counts / counts.sum())
+        return (-self.window_sum(weights[inverse].reshape(image.shape))).astype(self.float_type)
 
     def deviation(self, image):
-        padded_image = cv2.copyMakeBorder(image, self.pad_amount, self.pad_amount, self.pad_amount,
-                                          self.pad_amount, cv2.BORDER_REFLECT101)
-        return np.fromfunction(
-            np.vectorize(lambda row, column:
-                         self.area_deviation(self.get_pad(padded_image, row, column))),
-            image.shape[:2], dtype=int)
+        image = image.astype(np.float64)
+        size = 2 * self.pad_amount + 1
+        mean = self.window_sum(image) / size ** 2
+        mean_sq = self.window_sum(image * image) / size ** 2
+        return np.maximum(mean_sq - mean * mean, 0).astype(self.float_type)
 
     def get_fused_base(self, laplacians):
         images = np.stack(laplacians, axis=0)
@@ -175,7 +164,6 @@ class PyramidStack(PyramidBase):
 
     def __init__(self, **kwargs):
         super().__init__("pyramid", **kwargs)
-        self.offset = np.arange(-self.pad_amount, self.pad_amount + 1)
 
     def process_single_image(self, img, levels):
         laplacian = self.single_image_laplacian(img, levels)

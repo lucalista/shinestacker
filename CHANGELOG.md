@@ -6,6 +6,7 @@
 - package the amber flies sample images as a downloadable release asset (#110)
 
 ### Changed
+- vectorised the local entropy and deviation used to fuse the coarsest pyramid level (`get_fused_base`): same output, ~200x faster for this step, no meaningful memory change
 - project and settings files are written with the standard `json` module (atomic write) instead of `jsonpickle`; project file version 2. Version 1 files are still readable, legacy `py/tuple` and `py/set` tags are converted to lists, files requiring object instantiation are rejected; `jsonpickle` dependency removed
 
 ## [v1.18.0] - 2026-11-13

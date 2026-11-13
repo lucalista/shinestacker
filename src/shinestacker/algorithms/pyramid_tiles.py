@@ -26,7 +26,6 @@ class PyramidTilesStack(PyramidBase, TempDirBase):
         TempDirBase.__init__(self)
         pyramid_default_params = DEFAULTS['pyramid_params']
         focus_stack_defaults_params = DEFAULTS['focus_stack_params']
-        self.offset = np.arange(-self.pad_amount, self.pad_amount + 1)
         self.dtype = None
         self.num_pixel_values = None
         self.max_pixel_value = None
