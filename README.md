@@ -56,6 +56,10 @@ Shine Stacker is designed for photographers, microscopists, and researchers who 
 - 🧠 [Python API reference](https://shinestacker.readthedocs.io/)
 - 🐛 [Report an issue](https://github.com/lucalista/shinestacker/issues)
 
+### Try it with sample images
+
+Download and extract the [amber flies sample images](https://github.com/lucalista/shinestacker/releases/latest/download/amber-flies.zip), then follow the [GUI guide](docs/gui.md) to create your first stack.
+
 ## Resources
 
 🌍 [Website](https://shinestacker.wordpress.com/) • 📖 [Documentation](https://shinestacker.readthedocs.io/) • 📝 [Changelog](https://github.com/lucalista/shinestacker/blob/main/CHANGELOG.md) • 💬 [Community & reviews](https://shinestacker.wordpress.com/community/)
