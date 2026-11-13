@@ -65,6 +65,9 @@ jobs:
     needs: publish-release
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+
       - name: Download all artifacts
         uses: actions/download-artifact@v8
         with:
@@ -73,6 +76,7 @@ jobs:
       - name: Prepare release assets
         run: |
           mkdir -p release_assets
+          python3 -c 'import shutil; shutil.make_archive("release_assets/amber-flies", "zip", "examples/input/amber-flies")'
           if [ -f "artifacts/shinestacker-linux/shinestacker-release.tar.gz" ]; then
             cp artifacts/shinestacker-linux/shinestacker-release.tar.gz release_assets/shinestacker-ubuntu.tar.gz
           fi

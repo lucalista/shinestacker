@@ -1,5 +1,10 @@
 # Changelog
 
+## [v1.18.x] - Unreleased
+
+### Added
+- package the amber flies sample images as a downloadable release asset (#110)
+
 ## [v1.18.0] - 2026-11-13
 **Performance improvement: OpenCL SIFT, and output metadata enhancement**
 
