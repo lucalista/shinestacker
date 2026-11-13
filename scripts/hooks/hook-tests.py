@@ -3,5 +3,4 @@ excludedimports = [
     'numpy.random._examples', 
     'scipy.tests',
     'PIL.tests',
-    'jsonpickle.tests',
 ]

@@ -19,7 +19,6 @@ classifiers = [
 dependencies = [
     "imagecodecs",
     "ipywidgets",
-    "jsonpickle",
     "matplotlib",
     "numpy>=2.4.1",
     "opencv-python-headless>=4.11,<5.0.0",

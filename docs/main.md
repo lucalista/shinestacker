@@ -128,7 +128,7 @@ pip install imagecodecs matplotlib numpy opencv-python pillow psdtags psutil raw
 ```
 ## GUI support
 ```bash
-pip install argparse PySide6 jsonpickle webbrowser
+pip install argparse PySide6 webbrowser
 ```
 
 ## Jupyter support

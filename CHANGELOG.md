@@ -5,6 +5,9 @@
 ### Added
 - package the amber flies sample images as a downloadable release asset (#110)
 
+### Changed
+- project and settings files are written with the standard `json` module (atomic write) instead of `jsonpickle`; project file version 2. Version 1 files are still readable, legacy `py/tuple` and `py/set` tags are converted to lists, files requiring object instantiation are rejected; `jsonpickle` dependency removed
+
 ## [v1.18.0] - 2026-11-13
 **Performance improvement: OpenCL SIFT, and output metadata enhancement**
 

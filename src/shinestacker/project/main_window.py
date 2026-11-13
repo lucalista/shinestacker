@@ -3,7 +3,6 @@
 import os
 import traceback
 import json
-import jsonpickle
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication, QAction, QPalette
 from PySide6.QtWidgets import (
@@ -13,6 +12,7 @@ from ..config.constants import constants
 from ..config.app_config import AppConfig
 from ..core.exceptions import InvalidProjectError
 from ..core.core_utils import get_app_base_path
+from ..core.serialization import migrate_data, write_json_atomic
 from ..gui.folder_file_selection import SessionFileDialog
 from ..gui.project_model import Project, get_retouch_path, ActionConfig
 from ..gui.sys_mon import StatusBarSystemMonitor
@@ -28,7 +28,7 @@ from .new_project import fill_new_project
 from .clear_images import clear_project_images
 
 
-CURRENT_PROJECT_FILE_VERSION = 1
+CURRENT_PROJECT_FILE_VERSION = 2
 
 
 class MainWindow(ProjectHandler, QMainWindow):
@@ -271,7 +271,12 @@ class MainWindow(ProjectHandler, QMainWindow):
         abs_file_path = os.path.abspath(file_path)
         with open(abs_file_path, 'r', encoding="utf-8") as file:
             json_obj = json.load(file)
-        project = Project.from_dict(json_obj['project'], json_obj['version'])
+        if not isinstance(json_obj, dict) or 'project' not in json_obj:
+            raise InvalidProjectError(file_path)
+        version = json_obj.get('version')
+        project_data = migrate_data(
+            json_obj['project'], version, CURRENT_PROJECT_FILE_VERSION, file_path)
+        project = Project.from_dict(project_data, version)
         if project is None:
             raise InvalidProjectError(file_path)
         self.set_project(project)
@@ -475,12 +480,10 @@ class MainWindow(ProjectHandler, QMainWindow):
             self.show_status_message("Project closed.")
 
     def do_save_core(self, file_path):
-        json_obj = jsonpickle.encode({
+        write_json_atomic(file_path, {
             'project': self.project().to_dict(),
             'version': CURRENT_PROJECT_FILE_VERSION
         })
-        with open(file_path, 'w', encoding="utf-8") as f:
-            f.write(json_obj)
         self.element_action.mark_as_not_modified()
 
     def do_save(self, file_path):
