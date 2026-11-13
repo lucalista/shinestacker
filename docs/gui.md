@@ -53,6 +53,8 @@ When the app starts, it proposes to create a new project.
    - Real-time logs & progress bar
    - Thumbnail previews for each stage
 
+> **Try it yourself:** Use the [amber-flies sample images](https://github.com/lucalista/shinestacker/releases/latest/download/amber-flies.zip) as your source folder. The [video tutorial](https://www.youtube.com/watch?v=Ut5tJw63_HU) shows the GUI workflow.
+
 <img src='https://raw.githubusercontent.com/lucalista/shinestacker/main/img/flow-diagram.png' width="900" alt="FocusStack workflow: Source images → Alignment → Balancing → Stacking" referrerpolicy="no-referrer">
 
 > **Large Set Tip**: For 100+ images:
