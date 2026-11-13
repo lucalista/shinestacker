@@ -5,9 +5,7 @@
 
 ### Added
 - optional OpenCL SIFT implementation (silx) for alignment: `sift_backend` option, `pip install shinestacker[opencl]`; included in the executables (#100)
-
-### Changed
-- write a readable ImageDescription for TIFF, JPEG and PNG output (#109)
+- write a readable ImageDescription for TIFF, JPEG and PNG output EXIF data (#109)
 
 ## [v1.17.6] - 2026-11-04
 **Fixes and performance improvements**
