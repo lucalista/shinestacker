@@ -16,11 +16,6 @@ License: BSD-3-Clause
 https://pypi.org/project/imagecodecs/
 
 -------------------------------------------------------------------------------
-jsonpickle
-License: BSD-3-Clause
-https://github.com/jsonpickle/jsonpickle
-
--------------------------------------------------------------------------------
 numpy
 License: BSD-3-Clause
 https://numpy.org/

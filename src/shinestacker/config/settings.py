@@ -3,10 +3,10 @@ import os
 import json
 import traceback
 import copy
-import jsonpickle
 import numpy as np
 from PySide6.QtCore import QStandardPaths
 from .. config.defaults import DEFAULTS
+from .. core.serialization import normalize_legacy, write_json_atomic
 
 CURRENT_SETTINGS_FILE_VERSION = 1
 
@@ -49,7 +49,7 @@ class Settings(StdPathFile):
             try:
                 with open(file_path, 'r', encoding="utf-8") as file:
                     json_data = json.load(file)
-                    file_settings = json_data['settings']
+                    file_settings = normalize_legacy(json_data['settings'])
                     self._deep_merge_settings(file_settings)
             except Exception:
                 traceback.print_exc()
@@ -129,9 +129,7 @@ class Settings(StdPathFile):
                 'version': CURRENT_SETTINGS_FILE_VERSION,
                 'settings': serializable_diff
             }
-            json_obj = jsonpickle.encode(json_data, keys=True)
-            with open(self.get_file_path(), 'w', encoding="utf-8") as f:
-                f.write(json_obj)
+            write_json_atomic(self.get_file_path(), json_data)
         except IOError as e:
             raise e
         for observer in Settings._observers:
