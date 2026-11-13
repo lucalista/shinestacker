@@ -1,7 +1,7 @@
 # Changelog
 
-## [v1.17.x] - 2026-11-05
-**Performance improvement: OpenCL SIFT, plus output metadata enhancement**
+## [v1.18.0] - 2026-11-13
+**Performance improvement: OpenCL SIFT, and output metadata enhancement**
 
 ### Added
 - optional OpenCL SIFT implementation (silx) for alignment: `sift_backend` option, `pip install shinestacker[opencl]`; included in the executables (#100)
