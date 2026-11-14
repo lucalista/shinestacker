@@ -2,7 +2,8 @@
 import os
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QWidget, QRadioButton, QButtonGroup, QLineEdit,
-                               QPushButton, QHBoxLayout, QVBoxLayout, QFileDialog, QMessageBox, QSizePolicy)
+                               QPushButton, QHBoxLayout, QVBoxLayout, QFileDialog,
+                               QMessageBox, QSizePolicy)
 from .. algorithms.utils import EXTENSIONS_GUI_STR_IN
 
 
