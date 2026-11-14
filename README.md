@@ -77,8 +77,7 @@ See the [main documentation](https://github.com/lucalista/shinestacker/blob/main
 
 The first version of the core focus stack algorithm was inspired by the 
 [Laplacian pyramids method](https://github.com/sjawhar/focus-stacking) implementation 
-by Sami Jawhar, used under permission. The implementation in the latest releases 
-was rewritten from the original code.
+by Sami Jawhar, used under permission.
 
 Key references:
 * [Pyramid Methods in Image Processing](https://www.researchgate.net/publication/246727904_Pyramid_Methods_in_Image_Processing), E. H. Adelson, C. H. Anderson,  J. R. Bergen, P. J. Burt, J. M. Ogden, RCA Engineer, 29-6, Nov/Dec 1984
