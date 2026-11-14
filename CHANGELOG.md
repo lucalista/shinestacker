@@ -10,6 +10,9 @@
 - reduced temporary memory during pyramid fusion by selecting focus-energy winners without stacking all frames at each level
 - project and settings files are written with the standard `json` module (atomic write) instead of `jsonpickle`; project file version 2. Version 1 files are still readable, legacy `py/tuple` and `py/set` tags are converted to lists, files requiring object instantiation are rejected; `jsonpickle` dependency removed
 
+### Fixed
+- abort tiled pyramid stacking on failed frames or missing tiles instead of producing an incomplete image; preserve cancellation and clean up temporary files after workers finish
+
 ## [v1.18.0] - 2026-11-13
 **Performance improvement: OpenCL SIFT, and output metadata enhancement**
 
