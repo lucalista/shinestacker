@@ -15,7 +15,7 @@
 - use overlapping tiles during pyramid fusion to avoid boundary artifacts; preserve full-image base fusion even when all pyramid levels are configured for tiling
 - abort tiled pyramid stacking on failed frames or missing tiles instead of producing an incomplete image; preserve cancellation and clean up temporary files after workers finish
 - report an actionable error when the pyramid memory limit is too small for a full floating-point image, instead of failing while calculating tile size
-- GUI tag text size with low resolution (#117)
+- fixed GUI dialog text size for low resolution screens (#117)
 
 ## [v1.18.0] - 2026-11-13
 **Performance improvement: OpenCL SIFT, and output metadata enhancement**
