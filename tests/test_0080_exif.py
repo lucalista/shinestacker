@@ -2,6 +2,7 @@ import os
 import logging
 import numpy as np
 import cv2
+import pytest
 from PIL import Image
 from PIL.ExifTags import TAGS
 from PIL.PngImagePlugin import PngInfo
@@ -15,7 +16,9 @@ from shinestacker.algorithms.exif_tiff import (
     clean_data_for_tiff, _process_tiff_data_safe, write_image_with_exif_data_tif,
     exif_extra_tags_for_tif, NO_COPY_TIFF_TAGS_ID)
 from shinestacker.algorithms.exif_jpeg import (
-    add_exif_data_to_jpg_file, _insert_xmp_into_jpeg, extract_enclosed_data_for_jpg)
+    add_exif_data_to_jpg_file, _insert_xmp_into_jpeg, extract_enclosed_data_for_jpg,
+    extract_icc_from_jpeg, get_exif_from_jpg)
+from shinestacker.algorithms import exif_constants as ec
 from shinestacker.algorithms.exif_png import (
     write_image_with_exif_data_png, get_enhanced_exif_from_png, get_exif_from_png,
     parse_typed_png_text)
@@ -26,6 +29,72 @@ NO_TEST_TIFF_TAGS = [
     "ImageResources", "ExifOffset", 34665, "IPTCNAA", 33723, "InterColorProfile"]
 
 NO_TEST_JPG_TAGS = [34665]
+
+
+@pytest.mark.parametrize(
+    "data",
+    [b'not a jpeg', b'\xff\xe2\x00\x20short', b'\xff\xda\x00\x02',
+     b'\xff\xd9\x00\x02', b'\xff\xe1\x00\x04xx\xff\xda\x00\x02'],
+)
+def test_extract_icc_without_complete_profile(data):
+    assert extract_icc_from_jpeg(data) is None
+
+
+def test_get_jpeg_exif_merges_subifd_removes_makernote_and_reads_xmp(tmp_path):
+    class FakeExif(dict):
+        def get_ifd(self, _tag):
+            return {ec.EXPOSURETIME: 0.25, ec.MODEL: 'subifd model'}
+
+    class FakeImage:
+        info = {'icc_profile': b'profile'}
+
+        def getexif(self):
+            return FakeExif({ec.MAKERNOTE: b'private', ec.MODEL: 'main model'})
+
+    packet = b'<?xpacket begin="x"?><xmp/><?xpacket end="w"?>'
+    source = tmp_path / "source.jpg"
+    source.write_bytes(b'prefix' + packet + b'suffix')
+    exif = get_exif_from_jpg(FakeImage(), str(source))
+    assert ec.MAKERNOTE not in exif
+    assert exif[ec.EXPOSURETIME] == 0.25
+    assert exif[ec.MODEL] == 'main model'
+    assert exif[ec.INTERCOLORPROFILE] == b'profile'
+    assert exif[ec.XMLPACKET] == packet
+
+
+def test_write_jpeg_converts_tags_and_preserves_source_icc(tmp_path):
+    source, dest = tmp_path / 'source.jpg', tmp_path / 'dest.jpg'
+    profile = b'p' * 128
+    Image.new('RGB', (8, 8)).save(source, icc_profile=profile)
+    exif = {ec.ORIENTATION: 3.0, ec.BITSPERSAMPLE: (16, 16, 16),
+            ec.XRESOLUTION: (72, 1), ec.EXIFVERSION: '0231',
+            ec.ARTIST: {'unsupported': 'value'}}
+    add_exif_data_to_jpg_file(exif, str(source), str(dest), verbose=True)
+    with Image.open(dest) as image:
+        saved = image.getexif()
+        assert saved[ec.ORIENTATION] == 3
+        assert saved[ec.BITSPERSAMPLE] == 8
+        assert saved[ec.XRESOLUTION] == 72
+        assert saved[ec.EXIFVERSION] == b'0231'
+        assert ec.ARTIST not in saved
+        assert image.info['icc_profile'] == profile
+
+
+def test_write_jpeg_failure_removes_partial_temp_and_preserves_original(tmp_path, monkeypatch):
+    source = tmp_path / 'source.jpg'
+    Image.new('RGB', (8, 8)).save(source)
+    original = source.read_bytes()
+
+    def fail_save(_image, filename, *_args, **_kwargs):
+        with open(filename, 'wb') as out:
+            out.write(b'partial')
+        raise OSError('disk full')
+
+    monkeypatch.setattr(Image.Image, 'save', fail_save)
+    with pytest.raises(OSError, match='disk full'):
+        add_exif_data_to_jpg_file({}, str(source), str(source))
+    assert source.read_bytes() == original
+    assert not (tmp_path / 'source.jpg.tmp').exists()
 
 
 def test_exif_jpg():

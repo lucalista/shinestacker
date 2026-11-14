@@ -2,6 +2,8 @@ import gc
 import threading
 import weakref
 import logging
+import sys
+from types import SimpleNamespace
 import numpy as np
 import cv2
 import pytest
@@ -158,6 +160,116 @@ def test_silx_failure_replaces_cached_silx_features(monkeypatch):
 
 class _FakePlan:
     pass
+
+
+@pytest.mark.parametrize(
+    "device_types, usable, has_gpu",
+    [([], False, False), (['CPU'], True, False), (['CPU', 'GPU'], True, True)],
+)
+def test_probe_devices_is_cached(monkeypatch, device_types, usable, has_gpu):
+    devices = [SimpleNamespace(type=device_type) for device_type in device_types]
+    ocl = SimpleNamespace(platforms=[SimpleNamespace(devices=devices)])
+    calls = []
+
+    def import_module(name):
+        calls.append(name)
+        return SimpleNamespace(ocl=ocl)
+
+    monkeypatch.setattr(silx_sift, '_probe', {})
+    monkeypatch.setattr(silx_sift.importlib, 'import_module', import_module)
+    assert silx_sift.silx_sift_usable() is usable
+    assert silx_sift._devicetype() == ('GPU' if has_gpu else 'ALL')
+    assert calls == ['silx.opencl', 'silx.opencl.sift']
+
+
+def test_probe_import_failure_is_cached(monkeypatch):
+    calls = []
+
+    def fail(name):
+        calls.append(name)
+        raise ImportError(name)
+
+    monkeypatch.setattr(silx_sift, '_probe', {})
+    monkeypatch.setattr(silx_sift.importlib, 'import_module', fail)
+    assert not silx_sift.silx_sift_usable()
+    assert not silx_sift.silx_sift_usable()
+    assert calls == ['silx.opencl']
+
+
+@pytest.mark.parametrize(
+    "installed, expected",
+    [({'silx', 'pyopencl'}, True), ({'silx'}, False), (set(), False)],
+)
+def test_silx_installed_checks_both_extras(monkeypatch, installed, expected):
+    monkeypatch.setattr(silx_sift.importlib.util, 'find_spec',
+                        lambda name: object() if name in installed else None)
+    assert silx_sift.silx_installed() is expected
+
+
+def test_device_name_selects_gpu_and_strips_whitespace(monkeypatch):
+    calls = []
+    ocl = SimpleNamespace(create_context=lambda **kwargs: (
+        calls.append(kwargs) or SimpleNamespace(devices=[SimpleNamespace(name=' Test GPU ')])))
+    monkeypatch.setattr(silx_sift, '_probe', {'usable': True, 'has_gpu': True})
+    monkeypatch.setattr(silx_sift.importlib, 'import_module', lambda _name: SimpleNamespace(ocl=ocl))
+    assert silx_sift.device_name() == 'Test GPU'
+    assert calls == [{'devicetype': 'GPU'}]
+
+
+def test_plans_cache_convert_keypoints_and_free_buffers(monkeypatch):
+    created = []
+    registered = []
+    dtype = [('x', 'f4'), ('y', 'f4'), ('scale', 'f4'), ('angle', 'f4'),
+             ('desc', 'u1', (128,))]
+    points = np.recarray(1, dtype=dtype)
+    points[0] = (2, 3, 1.5, -np.pi / 2, np.arange(128))
+
+    class FakeSiftPlan:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+            self.freed = False
+            created.append(self)
+
+        def keypoints(self, image):
+            assert image.flags.c_contiguous
+            return points
+
+        def free_buffers(self):
+            self.freed = True
+
+    monkeypatch.setitem(sys.modules, 'silx.opencl.sift', SimpleNamespace(SiftPlan=FakeSiftPlan))
+    monkeypatch.setattr(silx_sift, '_probe', {'usable': True, 'has_gpu': False})
+    monkeypatch.setattr(silx_sift, '_atexit_registered', [])
+    monkeypatch.setattr(silx_sift.atexit, 'register', registered.append)
+    plans = silx_sift.SiftPlans()
+    image = np.zeros((4, 8), dtype=np.uint8)[:, ::2]
+    keypoints, descriptors = plans.detect_and_compute(image)
+    assert created[0].kwargs == {'shape': (4, 4), 'dtype': np.uint8, 'devicetype': 'ALL'}
+    assert keypoints[0].pt == (2, 3)
+    assert keypoints[0].size == 3
+    assert keypoints[0].angle == pytest.approx(270)
+    np.testing.assert_array_equal(descriptors[0], np.arange(128))
+    assert descriptors.dtype == np.float32 and descriptors.flags.c_contiguous
+    assert plans._get_plan((4, 4)) is created[0]
+    plans._get_plan((2, 2))
+    assert len(registered) == 1
+    plans.free_buffers()
+    assert all(plan.freed for plan in created)
+    assert not plans._plans
+
+
+def test_empty_silx_keypoints_have_no_descriptors(monkeypatch):
+    plans = silx_sift.SiftPlans()
+    monkeypatch.setattr(plans, '_get_plan', lambda _shape: SimpleNamespace(keypoints=lambda _: []))
+    assert plans.detect_and_compute(np.zeros((2, 2), dtype=np.uint8)) == ([], None)
+
+
+def test_exit_handler_frees_registered_plans(monkeypatch):
+    freed = []
+    plans = [SimpleNamespace(free_buffers=lambda: freed.append(1)) for _ in range(2)]
+    monkeypatch.setattr(silx_sift, '_all_plans', plans)
+    silx_sift._free_all_plans()
+    assert len(freed) == 2
 
 
 def test_release_drops_the_last_plan_reference(monkeypatch):

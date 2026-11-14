@@ -1,7 +1,10 @@
 import numpy as np
 import pytest
 from shinestacker.algorithms.stack_framework import StackJob
-from shinestacker.algorithms.stack import FocusStack, FocusStackBunch
+from shinestacker.algorithms import stack as stack_module
+from shinestacker.algorithms.stack import (
+    FocusStack, FocusStackBunch, extract_frame_identifiers, get_bunches)
+from shinestacker.core.exceptions import InvalidOptionError
 from shinestacker.algorithms.pyramid import PyramidStack
 from shinestacker.algorithms.pyramid_tiles import PyramidTilesStack
 from shinestacker.algorithms.pyramid_auto import PyramidAutoStack
@@ -274,3 +277,132 @@ def test_pyramid_entropy_deviation_match_reference(dtype, float_type):
     assert algo.entropy(image).dtype == algo.float_type
     np.testing.assert_allclose(algo.entropy(image), ref_entropy, rtol=rtol)
     np.testing.assert_allclose(algo.deviation(image), ref_deviation, rtol=rtol, atol=1e-6)
+
+
+@pytest.mark.parametrize(
+    "names, expected",
+    [([], ("", "", [])),
+     (["a.jpg"], ("", "", ["a.jpg"])),
+     (["one-a.jpg", "two-a.jpg"], ("", "-a.jpg", ["one", "two"])),
+     (["frame-1.jpg", "frame-2.jpg"], ("frame-", ".jpg", ["1", "2"])),
+     (["frame-a", "frame-b"], ("frame-", "", ["a", "b"])),
+     (["one", "two"], ("", "", ["one", "two"]))],
+)
+def test_extract_frame_identifiers(names, expected):
+    assert extract_frame_identifiers(names) == expected
+
+
+def test_bunch_validation_and_partial_final_bunch():
+    assert get_bunches([1, 2], 3, 1) == [[1, 2]]
+    assert get_bunches([1, 2, 3, 4], 3, 1) == [[1, 2, 3], [3, 4]]
+    with pytest.raises(RuntimeError, match="equal"):
+        get_bunches([1, 2], 2, 2)
+    with pytest.raises(InvalidOptionError):
+        FocusStackBunch("stack", PyramidStack(), frames=2, overlap=2)
+
+
+def test_output_naming_and_bunch_indices():
+    action = FocusStack("stack", PyramidStack(), naming_mode="TEMPLATE",
+                        output_file_template="{method}_{input_prefix}{input_min}-{input_max}"
+                                             "_{input_count}")
+    action._input_filepaths = ["/input/img-01.jpg", "/input/img-02.jpg"]
+    assert action.resolve_output_filename("first.jpg") == "pyramid_img-01-2_2.jpg"
+    bunch = FocusStackBunch("bunch", PyramidStack(), naming_mode="TEMPLATE",
+                            output_file_template="stack_{bunch_index}")
+    bunch._input_filepaths = action._input_filepaths
+    bunch.bunch_index = 4
+    assert bunch.resolve_output_filename("frame.tif") == "stack_4.tif"
+    bunch.output_file_template = "stack_{bunch_index:03d}"
+    assert bunch.resolve_output_filename("frame.tif") == "stack_004.tif"
+
+
+@pytest.mark.parametrize(
+    "names, input_name, expected",
+    [([], "input.jpg", None),
+     (["a.nef", "b.tif", "c.jpg"], "input.jpg", "c.jpg"),
+     (["a.nef", "b.tif"], "input.jpg", "b.tif"),
+     (["a.nef", "b.nef"], "input.jpg", "a.nef")],
+)
+def test_first_source_file_selection(tmp_path, names, input_name, expected):
+    for name in names:
+        (tmp_path / name).touch()
+    result = FocusStack.first_source_file(str(tmp_path), [input_name])
+    assert result == (str(tmp_path / expected) if expected else None)
+    assert FocusStack.first_source_file(str(tmp_path / "missing"), [input_name]) is None
+
+
+@pytest.mark.parametrize(
+    "source_names, expected",
+    [(["a.nef", "b.tif", "c.jpg"], "c.jpg"),
+     (["a.nef", "b.tif"], "b.tif"),
+     (["a.nef", "b.nef"], "a.nef")],
+)
+def test_focus_stack_selects_exif_source(tmp_path, monkeypatch, source_names, expected):
+    from PIL import Image
+
+    input_file = tmp_path / "input.jpg"
+    Image.fromarray(np.zeros((8, 8, 3), dtype=np.uint8)).save(input_file)
+    exif_dir = tmp_path / "exif"
+    exif_dir.mkdir()
+    for name in source_names:
+        (exif_dir / name).touch()
+    copied = []
+    monkeypatch.setattr(stack_module, 'copy_exif_from_file_to_file',
+                        lambda *args, **kwargs: copied.append((args, kwargs)))
+    action = FocusStack("stack", PyramidStack(), working_path=str(tmp_path), output_path=".",
+                        exif_path=str(exif_dir), denoise_amount=0, sharpen_amount_percent=0)
+    action.focus_stack([str(input_file)])
+    assert len(copied) == 1
+    assert copied[0][0][0] == str(exif_dir / expected)
+    assert copied[0][1]['description'].endswith('1 frame')
+
+
+def test_focus_stack_16bit_png_skips_exif(tmp_path, monkeypatch):
+    input_file = tmp_path / "input.png"
+    monkeypatch.setattr(stack_module, 'read_img',
+                        lambda _: np.zeros((8, 8, 3), dtype=np.uint16))
+    output = []
+    monkeypatch.setattr(stack_module, 'write_img',
+                        lambda *args, **kwargs: output.append((args, kwargs)))
+    monkeypatch.setattr(stack_module, 'copy_exif_from_file_to_file',
+                        lambda *args, **kwargs: pytest.fail("EXIF should not be copied"))
+    action = FocusStack("stack", PyramidStack(), working_path=str(tmp_path), output_path=".",
+                        exif_path="unused", denoise_amount=0, sharpen_amount_percent=0)
+    messages = []
+    monkeypatch.setattr(action, 'sub_message_r',
+                        lambda message, **kwargs: messages.append(message))
+    action.focus_stack([str(input_file)])
+    assert output[0][0][1].dtype == np.uint16
+    assert any("exif not supported for 16-bit PNG" in message for message in messages)
+
+
+@pytest.mark.parametrize("exif_dir_exists", [False, True])
+def test_focus_stack_reports_missing_exif_sources(tmp_path, monkeypatch, exif_dir_exists):
+    input_file = tmp_path / "input.jpg"
+    exif_dir = tmp_path / "exif"
+    if exif_dir_exists:
+        exif_dir.mkdir()
+    monkeypatch.setattr(stack_module, 'read_img',
+                        lambda _: np.zeros((8, 8, 3), dtype=np.uint8))
+    monkeypatch.setattr(stack_module, 'write_img', lambda *args, **kwargs: None)
+    action = FocusStack("stack", PyramidStack(), working_path=str(tmp_path), output_path=".",
+                        exif_path=str(exif_dir), denoise_amount=0, sharpen_amount_percent=0)
+    messages = []
+    monkeypatch.setattr(action, 'sub_message_r',
+                        lambda message, **kwargs: messages.append(message))
+    if exif_dir_exists:
+        action.focus_stack([str(input_file)])
+        assert any("does not contain image files" in message for message in messages)
+    else:
+        with pytest.raises(RuntimeError, match="does not exist"):
+            action.focus_stack([str(input_file)])
+
+
+def test_register_source_frames_deduplicates_intermediate_inputs(tmp_path):
+    action = FocusStack("stack", PyramidStack())
+    source_a, source_b = str(tmp_path / "a.jpg"), str(tmp_path / "b.jpg")
+    intermediate = str(tmp_path / "intermediate.jpg")
+    output = str(tmp_path / "output.jpg")
+    assert action.register_source_frames([source_a, source_b], intermediate) == 2
+    assert action.register_source_frames([source_a, intermediate], output) == 2
+    assert action.frame_sources[output] == frozenset([source_a, source_b])
