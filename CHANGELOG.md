@@ -12,6 +12,7 @@
 
 ### Fixed
 - abort tiled pyramid stacking on failed frames or missing tiles instead of producing an incomplete image; preserve cancellation and clean up temporary files after workers finish
+- report an actionable error when the pyramid memory limit is too small for a full floating-point image, instead of failing while calculating tile size
 
 ## [v1.18.0] - 2026-11-13
 **Performance improvement: OpenCL SIFT, and output metadata enhancement**

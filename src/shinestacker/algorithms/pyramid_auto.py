@@ -5,6 +5,7 @@ import numpy as np
 from .. config.constants import constants
 from .. config.defaults import DEFAULTS
 from .. core.colors import color_str
+from .. core.exceptions import InvalidOptionError
 from .base_stack_algo import BaseStackAlgo
 from .pyramid import PyramidStack
 from .pyramid_tiles import PyramidTilesStack, InsufficientTileDiskSpaceError
@@ -98,6 +99,13 @@ class PyramidAutoStack(BaseStackAlgo):
         h, w = self.shape[:2]
         base_level_memory = h * w * self.bytes_per_pixel
         available_memory = self.memory_limit - base_level_memory
+        if available_memory <= 0:
+            base_gib = base_level_memory / constants.ONE_GIGA
+            raise InvalidOptionError(
+                'memory_limit', self.memory_limit / constants.ONE_GIGA,
+                f"tiled pyramid processing needs more than {base_gib:.6f} GiB "
+                "for one full floating-point image alone; increase the memory limit. "
+                "Additional memory is needed for processing.")
         available_memory /= self.overhead
         tile_size_max = int(np.sqrt(available_memory /
                             (self.num_threads * self.n_frames * self.bytes_per_pixel)))

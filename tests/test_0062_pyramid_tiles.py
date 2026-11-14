@@ -5,7 +5,7 @@ import threading
 from unittest.mock import MagicMock, patch
 from shinestacker.config.defaults import DEFAULTS
 from shinestacker.algorithms.pyramid_tiles import PyramidTilesStack, InsufficientTileDiskSpaceError
-from shinestacker.core.exceptions import RunStopException
+from shinestacker.core.exceptions import InvalidOptionError, RunStopException
 
 
 @pytest.fixture
@@ -495,6 +495,36 @@ def test_auto_propagates_cancellation(example_images):
     with pytest.raises(RunStopException):
         stack.focus_stack()
     assert stack._implementation is implementation
+
+
+@pytest.mark.parametrize("mode", ['auto', 'tiled'])
+@pytest.mark.parametrize("channels,float_type", [(3, 'float-32'), (4, 'float-64')])
+def test_auto_tiled_memory_limit_below_full_image(mode, channels, float_type):
+    from shinestacker.algorithms.pyramid_auto import PyramidAutoStack
+    image = np.zeros((100, 200, channels), dtype=np.uint8)
+    stack = PyramidAutoStack(mode=mode, memory_limit=0.00001, float_type=float_type)
+    with patch('shinestacker.algorithms.base_stack_algo.get_first_image_file',
+               return_value='first.jpg'), \
+         patch('shinestacker.algorithms.base_stack_algo.read_img', return_value=image), \
+            pytest.raises(InvalidOptionError, match=r"memory_limit.*increase the memory limit"):
+        stack.init(['first.jpg', 'second.jpg'])
+    assert stack._implementation is None
+
+
+@pytest.mark.parametrize("fraction", [0.5, 1.0, 1.01])
+def test_auto_tiled_memory_limit_at_image_boundary(fraction):
+    from shinestacker.algorithms.pyramid_auto import PyramidAutoStack
+    stack = PyramidAutoStack(memory_limit=1, max_threads=1)
+    stack.shape = (1000, 1000)
+    stack.n_levels = 4
+    stack.n_frames = 2
+    base_memory = np.prod(stack.shape) * stack.bytes_per_pixel
+    stack.memory_limit = fraction * base_memory
+    if fraction <= 1:
+        with pytest.raises(InvalidOptionError, match="one full floating-point image"):
+            stack._find_optimal_tile_params()
+    else:
+        assert stack._find_optimal_tile_params()['tile_size'] >= stack.min_tile_size
 
 
 def test_safe_cleanup_with_retry():
