@@ -81,8 +81,7 @@ Arguments for the constructor are:
 ```PyramidTilesStack```, a pyramid algorithm that uses I/O-buffered tile merging to optimize memory use for large files
 
 Tiles include overlapping pixels for focus-energy calculation so that internal tile boundaries
-are treated like the full-image pyramid. The overlap uses the convolution kernel's radius and
-requires slightly more temporary disk space.
+are treated like the full-image pyramid. The overlap uses the convolution kernel's radius.
 
 Arguments for the constructor are, in addition to the ones for ```PyramidStack```:
    * ```tile_size``` (optional, default: 512): size of each tile
