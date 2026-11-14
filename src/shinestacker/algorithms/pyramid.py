@@ -10,6 +10,8 @@ from .. core.colors import color_str
 from .utils import read_and_validate_img
 from .base_stack_algo import BaseStackAlgo
 
+FUSION_CHUNK_ROWS = 64
+
 
 class PyramidBase(BaseStackAlgo):
     def __init__(self, name, **kwargs):
@@ -141,21 +143,31 @@ class PyramidBase(BaseStackAlgo):
         color = np.clip(color, 0, self.max_pixel_value)
         return np.concatenate([color, a], axis=2)
 
-    def fuse_laplacian(self, laplacians_list):
-        laplacians = np.stack(laplacians_list, axis=0)
-        n_layers, h, w, _ = laplacians.shape
-        if laplacians.dtype != np.float32:
-            laplacians_32 = laplacians.astype(np.float32)
-        else:
-            laplacians_32 = laplacians
-        energies = np.empty((n_layers, h, w), dtype=np.float32)
-        for i in range(n_layers):
+    def _fuse_laplacian_chunk(self, laplacians_list, y, y_end):
+        shape = laplacians_list[0].shape
+        y_start = max(0, y - len(self.gen_kernel_1d) // 2)
+        y_stop = min(shape[0], y_end + len(self.gen_kernel_1d) // 2)
+        laplacians = np.stack(
+            [image[y_start:y_stop] for image in laplacians_list], axis=0)
+        laplacians_32 = laplacians.astype(np.float32, copy=False)
+        energies = np.empty(
+            (len(laplacians_list), y_stop - y_start, shape[1]), dtype=np.float32)
+        for i in range(len(laplacians_list)):
             gray = cv2.cvtColor(laplacians_32[i][..., :3], cv2.COLOR_BGR2GRAY)
             energies[i] = self.convolve(gray * gray)
+        crop = slice(y - y_start, y_end - y_start)
+        energies = energies[:, crop]
+        laplacians = laplacians[:, crop]
         best = np.argmax(energies, axis=0)
-        rows = np.arange(h)[:, None]
-        cols = np.arange(w)
-        fused = laplacians[best, rows, cols, :]
+        rows = np.arange(y_end - y)[:, None]
+        return laplacians[best, rows, np.arange(shape[1]), :]
+
+    def fuse_laplacian(self, laplacians_list):
+        h = laplacians_list[0].shape[0]
+        fused = np.empty_like(laplacians_list[0])
+        for y in range(0, h, FUSION_CHUNK_ROWS):
+            y_end = min(y + FUSION_CHUNK_ROWS, h)
+            fused[y:y_end] = self._fuse_laplacian_chunk(laplacians_list, y, y_end)
         return fused
 
 
