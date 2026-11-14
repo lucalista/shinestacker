@@ -285,7 +285,6 @@ def test_release_drops_the_last_plan_reference(monkeypatch):
 
 
 def test_plans_freed_with_their_matcher(monkeypatch):
-    # a stopped run skips end(): the plans go with the action that owns the matcher
     monkeypatch.setattr(silx_sift, 'silx_sift_usable', lambda: True)
     matcher = FeatureMatcher({**SIFT, 'sift_backend': constants.SIFT_BACKEND_SILX}, KNN)
     plan = _FakePlan()
