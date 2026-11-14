@@ -2,7 +2,8 @@
 import os
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QWidget, QRadioButton, QButtonGroup, QLineEdit,
-                               QPushButton, QHBoxLayout, QVBoxLayout, QFileDialog, QMessageBox)
+                               QPushButton, QHBoxLayout, QVBoxLayout, QFileDialog,
+                               QMessageBox, QSizePolicy)
 from .. algorithms.utils import EXTENSIONS_GUI_STR_IN
 
 
@@ -52,16 +53,16 @@ class FolderFileSelectionWidget(QWidget):
     def setup_ui(self):
         self.mode_group = QButtonGroup(self)
         self.folder_mode_radio = QRadioButton("Select Folder")
-        self.folder_mode_radio.setMaximumWidth(100)
+        self.folder_mode_radio.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
         self.files_mode_radio = QRadioButton("Select Files")
-        self.files_mode_radio.setMaximumWidth(100)
+        self.folder_mode_radio.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
         self.folder_mode_radio.setChecked(True)
         self.mode_group.addButton(self.folder_mode_radio)
         self.mode_group.addButton(self.files_mode_radio)
         self.path_edit = QLineEdit()
         self.path_edit.setPlaceholderText("input files folder")
         self.browse_button = QPushButton("Browse Folder...")
-        self.browse_button.setFixedWidth(120)
+        self.folder_mode_radio.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
         main_layout = QVBoxLayout()
         main_layout.setSpacing(10)
         main_layout.setAlignment(Qt.AlignLeft)
