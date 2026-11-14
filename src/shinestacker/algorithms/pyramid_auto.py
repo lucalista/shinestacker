@@ -4,11 +4,10 @@ import logging
 import numpy as np
 from .. config.constants import constants
 from .. config.defaults import DEFAULTS
-from .. core.exceptions import RunStopException
 from .. core.colors import color_str
 from .base_stack_algo import BaseStackAlgo
 from .pyramid import PyramidStack
-from .pyramid_tiles import PyramidTilesStack
+from .pyramid_tiles import PyramidTilesStack, InsufficientTileDiskSpaceError
 
 
 class PyramidAutoStack(BaseStackAlgo):
@@ -136,7 +135,7 @@ class PyramidAutoStack(BaseStackAlgo):
             raise RuntimeError("PyramidAutoStack not initialized")
         try:
             return self._implementation.focus_stack()
-        except RunStopException:
+        except InsufficientTileDiskSpaceError:
             self.print_message(
                 color_str(": reverting to sequential processing", constants.LOG_COLOR_WARNING),
                 level=logging.WARNING

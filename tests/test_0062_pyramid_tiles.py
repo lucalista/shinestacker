@@ -1,9 +1,11 @@
 import pytest
 import numpy as np
 import os
+import threading
 from unittest.mock import MagicMock, patch
 from shinestacker.config.defaults import DEFAULTS
-from shinestacker.algorithms.pyramid_tiles import PyramidTilesStack
+from shinestacker.algorithms.pyramid_tiles import PyramidTilesStack, InsufficientTileDiskSpaceError
+from shinestacker.core.exceptions import RunStopException
 
 
 @pytest.fixture
@@ -121,7 +123,7 @@ def test_process_tile_method():
     pts.fuse_laplacian = MagicMock(return_value=np.ones((10, 10, 3), dtype=np.float32))
     mock_tile = np.random.rand(10, 10, 3).astype(np.float32)
     with patch.object(pts, 'load_level_tile', return_value=mock_tile):
-        result = pts._process_tile(0, 3, [1, 1, 1], 0, 0, 100, 100)
+        result = pts._process_tile(0, 3, [1, 1, 1], 0, 0)
         assert result.shape == (10, 10, 3)
         assert result.dtype == np.float32
         pts.fuse_laplacian.assert_called_once()
@@ -151,10 +153,8 @@ def test_process_tile_no_laplacians():
     pts = PyramidTilesStack()
     pts.print_message = MagicMock()
     pts.fuse_laplacian = MagicMock()
-    result = pts._process_tile(0, 3, [0, 0, 0], 0, 0, 100, 100)
-    assert result.shape == (100, 100, 3)
-    assert result.dtype == np.float32
-    assert np.all(result == 0)
+    with pytest.raises(RuntimeError, match="no frames available"):
+        pts._process_tile(0, 3, [0, 0, 0], 0, 0)
     pts.fuse_laplacian.assert_not_called()
 
 
@@ -272,17 +272,19 @@ def test_cleanup_temp_files_with_exception():
         assert mock_remove.call_count == 2
 
 
-def test_fuse_level_tiles_serial_missing_tile():
+@pytest.mark.parametrize("parallel", [False, True])
+def test_fuse_level_tiles_missing_tile(parallel):
     pts = PyramidTilesStack()
     pts.print_message = MagicMock()
     pts.check_running = MagicMock()
     pts.after_step = MagicMock()
     pts.fuse_laplacian = MagicMock(return_value=np.ones((10, 10, 3), dtype=np.float32))
-    pts.load_level_tile = MagicMock(side_effect=FileNotFoundError("Tile not found"))
-    result, count = pts._fuse_level_tiles_serial(0, 3, [1, 1, 1], 100, 100, 0)
-    assert result.shape == (100, 100, 3)
-    assert np.all(result == 0)  # Should be zeros when no tiles are loaded
-    pts.fuse_laplacian.assert_not_called()  # Should not try to fuse empty list
+    tile = np.ones((10, 10, 3), dtype=np.float32)
+    pts.load_level_tile = MagicMock(side_effect=[tile, FileNotFoundError("Tile not found")])
+    method = pts._fuse_level_tiles_parallel if parallel else pts._fuse_level_tiles_serial
+    with pytest.raises(RuntimeError, match=r"tile \(0, 0\) at level 0.*frame 2"):
+        method(0, 3, [1, 1, 1], 10, 10, 0)
+    pts.fuse_laplacian.assert_not_called()
 
 
 def test_fuse_level_tiles_parallel_exception():
@@ -291,9 +293,8 @@ def test_fuse_level_tiles_parallel_exception():
     pts.check_running = MagicMock()
     pts.after_step = MagicMock()
     pts._process_tile = MagicMock(side_effect=Exception("Tile processing failed"))
-    result, count = pts._fuse_level_tiles_parallel(0, 3, [1, 1, 1], 100, 100, 0)
-    assert result.shape == (100, 100, 3)
-    assert np.all(result == 0)
+    with pytest.raises(RuntimeError, match=r"tile \(0, 0\) at level 0.*Tile processing failed"):
+        pts._fuse_level_tiles_parallel(0, 3, [1, 1, 1], 100, 100, 0)
 
 
 def test_temp_dir_manager_scenario():
@@ -337,10 +338,163 @@ def test_fuse_pyramids_empty_level():
     pts.process.callback.return_value = None
     pts.filenames = ['img1.jpg', 'img2.jpg']
     pts.level_shapes = {0: [(50, 50)], 1: [(50, 50)]}
+    pts.num_threads = 2
     all_level_counts = [1, 1]  # Both images only have level 0
-    with patch.object(pts, '_fuse_level_tiles_serial') as mock_serial:
+    with patch.object(pts, '_fuse_level_tiles_serial') as mock_serial, \
+         patch.object(pts, '_fuse_level_tiles_parallel') as mock_parallel:
+        mock_parallel.return_value = (np.zeros((50, 50, 3)), 0)
         pts.fuse_pyramids(all_level_counts)
         mock_serial.assert_not_called()
+        mock_parallel.assert_called_once()
+
+
+@pytest.mark.parametrize("threads", [1, 2])
+def test_focus_stack_frame_failure_stops_and_cleans_up(threads):
+    pts = PyramidTilesStack(max_threads=threads)
+    pts.num_threads = threads
+    pts.filenames = ['first.jpg', 'broken.jpg']
+    pts.shape = (10, 10, 3)
+    pts.dtype = np.uint8
+    pts.check_disk_space_before_processing = MagicMock()
+    pts.check_running = MagicMock()
+    pts.print_message = MagicMock()
+    pts.process = MagicMock()
+    pts.fuse_pyramids = MagicMock()
+    pts._safe_cleanup = MagicMock()
+    img = np.zeros(pts.shape, dtype=pts.dtype)
+
+    def read_frame(path, _shape, _dtype):
+        if path == 'broken.jpg':
+            raise OSError("read failed")
+        return img
+
+    pts.process_single_image = MagicMock(return_value=1)
+    with patch('shinestacker.algorithms.pyramid_tiles.read_and_validate_img',
+               side_effect=read_frame), \
+            pytest.raises(RuntimeError, match="broken.jpg.*read failed"):
+        pts.focus_stack()
+
+    pts.fuse_pyramids.assert_not_called()
+    pts._safe_cleanup.assert_called_once()
+
+
+def test_parallel_frame_failure_waits_for_workers_before_cleanup():
+    pts = PyramidTilesStack(max_threads=2)
+    pts.num_threads = 2
+    pts.filenames = ['first.jpg', 'broken.jpg']
+    pts.check_disk_space_before_processing = MagicMock()
+    pts.check_running = MagicMock()
+    pts.print_message = MagicMock()
+    pts.process = MagicMock()
+    started = threading.Event()
+    release = threading.Event()
+    finished = threading.Event()
+
+    def worker(args):
+        if args[1] == 0:
+            started.set()
+            if not release.wait(5):
+                raise TimeoutError("second worker did not run")
+            finished.set()
+            return 0, args[0], 1
+        if not started.wait(5):
+            raise TimeoutError("first worker did not start")
+        release.set()
+        raise OSError("read failed")
+
+    def assert_worker_finished():
+        assert finished.is_set()
+
+    pts._process_single_image_wrapper = MagicMock(side_effect=worker)
+    pts._safe_cleanup = MagicMock(side_effect=assert_worker_finished)
+
+    with pytest.raises(RuntimeError, match="broken.jpg.*read failed"):
+        pts.focus_stack()
+    pts._safe_cleanup.assert_called_once()
+
+
+@pytest.mark.parametrize("threads", [1, 2])
+def test_focus_stack_missing_tile_fails_and_cleans_up(threads):
+    pts = PyramidTilesStack(max_threads=threads, tile_size=10, n_tiled_layers=1)
+    pts.num_threads = threads
+    pts.filenames = ['first.jpg', 'second.jpg']
+    pts.shape = (10, 10, 3)
+    pts.dtype = np.uint8
+    pts.level_shapes = {0: [(10, 10, 3)], 1: [(10, 10, 3)]}
+    pts.check_disk_space_before_processing = MagicMock()
+    pts.check_running = MagicMock()
+    pts.print_message = MagicMock()
+    pts.process = MagicMock()
+    pts._safe_cleanup = MagicMock()
+    pts.collapse = MagicMock()
+    pts.process_single_image = MagicMock(return_value=1)
+    pts.load_level_tile = MagicMock(side_effect=FileNotFoundError("missing tile"))
+    with patch('shinestacker.algorithms.pyramid_tiles.read_and_validate_img',
+               return_value=np.zeros(pts.shape, dtype=pts.dtype)), \
+            pytest.raises(RuntimeError, match=r"tile \(0, 0\) at level 0.*frame 1"):
+        pts.focus_stack()
+
+    pts.collapse.assert_not_called()
+    pts._safe_cleanup.assert_called_once()
+
+
+def test_failed_tiled_stack_does_not_write_output(tmp_path):
+    from shinestacker.algorithms.stack import FocusStack
+    pts = PyramidTilesStack(max_threads=1)
+    pts.num_threads = 1
+    pts.filenames = ['first.jpg', 'second.jpg']
+    pts.shape = (10, 10, 3)
+    pts.dtype = np.uint8
+    pts.level_shapes = {0: [(10, 10, 3)], 1: [(10, 10, 3)]}
+    pts.check_disk_space_before_processing = MagicMock()
+    pts.check_running = MagicMock()
+    pts.print_message = MagicMock()
+    pts._safe_cleanup = MagicMock()
+    pts.process_single_image = MagicMock(return_value=1)
+    pts.load_level_tile = MagicMock(side_effect=FileNotFoundError("missing tile"))
+    action = FocusStack('stack', pts)
+    action.output_full_path = MagicMock(return_value=str(tmp_path))
+    action.sub_message_r = MagicMock()
+    action.register_source_frames = MagicMock(return_value=2)
+    with patch('shinestacker.algorithms.pyramid_tiles.read_and_validate_img',
+               return_value=np.zeros(pts.shape, dtype=pts.dtype)), \
+            patch('shinestacker.algorithms.stack.write_img') as write_img, \
+            pytest.raises(RuntimeError, match="missing tile"):
+        action.focus_stack(pts.filenames)
+    write_img.assert_not_called()
+    pts._safe_cleanup.assert_called_once()
+
+
+@pytest.mark.parametrize("threads", [1, 2])
+def test_focus_stack_cancellation_propagates_and_cleans_up(threads):
+    pts = PyramidTilesStack(max_threads=threads)
+    pts.num_threads = threads
+    pts.filenames = ['first.jpg', 'second.jpg']
+    pts.shape = (10, 10, 3)
+    pts.dtype = np.uint8
+    pts.check_disk_space_before_processing = MagicMock()
+    pts.print_message = MagicMock()
+    pts.process = MagicMock()
+    pts._safe_cleanup = MagicMock()
+    pts.process_single_image = MagicMock(return_value=1)
+    pts.check_running = MagicMock(side_effect=RunStopException('test'))
+    with patch('shinestacker.algorithms.pyramid_tiles.read_and_validate_img',
+               return_value=np.zeros(pts.shape, dtype=pts.dtype)), \
+            pytest.raises(RunStopException):
+        pts.focus_stack()
+    pts._safe_cleanup.assert_called_once()
+
+
+def test_auto_propagates_cancellation(example_images):
+    from shinestacker.algorithms.pyramid_auto import PyramidAutoStack
+    stack = PyramidAutoStack(mode='auto', memory_limit=0.1, max_threads=1)
+    stack.set_process(MagicMock())
+    stack.init(example_images)
+    implementation = stack._implementation
+    implementation.focus_stack = MagicMock(side_effect=RunStopException('test'))
+    with pytest.raises(RunStopException):
+        stack.focus_stack()
+    assert stack._implementation is implementation
 
 
 def test_safe_cleanup_with_retry():
@@ -356,7 +510,6 @@ def test_safe_cleanup_with_retry():
 def test_auto_fallback_keeps_output_filename(example_images):
     from shinestacker.config.constants import constants
     from shinestacker.algorithms.pyramid_auto import PyramidAutoStack
-    from shinestacker.core.exceptions import RunStopException
     calls = []
 
     def callback(name, *args):
@@ -374,7 +527,8 @@ def test_auto_fallback_keeps_output_filename(example_images):
     stack.set_process(process)
     stack.init(example_images)
     stack.set_output_filename('stack_0000_pyram.jpg')
-    stack._implementation.focus_stack = MagicMock(side_effect=RunStopException('test'))
+    stack._implementation.focus_stack = MagicMock(
+        side_effect=InsufficientTileDiskSpaceError('test'))
     stack.focus_stack()
     output_keys = {filename for module, filename in calls if module == 'stack-output'}
     assert output_keys == {'stack_0000_pyram.jpg'}

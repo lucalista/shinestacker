@@ -1,7 +1,6 @@
 # pylint: disable=R0914, R1702, R1732, R0913
 # pylint: disable=R0917, R0912, R0915, R0902, W0718, E1121
 import os
-import gc
 import time
 import traceback
 import glob
@@ -13,9 +12,13 @@ from .. config.constants import constants
 from .. config.defaults import DEFAULTS
 from .. core.exceptions import RunStopException
 from .. core.colors import color_str
-from .utils import read_img, read_and_validate_img
+from .utils import read_and_validate_img
 from .base_stack_algo import TempDirBase
 from .pyramid import PyramidBase
+
+
+class InsufficientTileDiskSpaceError(RuntimeError):
+    pass
 
 
 class PyramidTilesStack(PyramidBase, TempDirBase):
@@ -56,7 +59,7 @@ class PyramidTilesStack(PyramidBase, TempDirBase):
     def _process_single_image_wrapper(self, args):
         img_path, idx, _n = args
         img = read_and_validate_img(img_path, self.shape, self.dtype)
-        self.check_running(self.cleanup_temp_files)
+        self.check_running()
         level_count = self.process_single_image(img, self.n_levels, idx)
         return idx, img_path, level_count
 
@@ -126,19 +129,10 @@ class PyramidTilesStack(PyramidBase, TempDirBase):
             for x in range(0, w, self.tile_size):
                 y_end, x_end = min(y + self.tile_size, h), min(x + self.tile_size, w)
                 self.print_message(f': fusing tile [{x}, {x_end - 1}]×[{y}, {y_end - 1}]')
-                laplacians = []
-                for img_index in range(num_images):
-                    if level < all_level_counts[img_index]:
-                        try:
-                            tile = self.load_level_tile(img_index, level, y, x)
-                            laplacians.append(tile)
-                        except FileNotFoundError:
-                            continue
-                if laplacians:
-                    fused_tile = self.fuse_laplacian(laplacians)
-                    fused_level[y:y_end, x:x_end] = fused_tile
+                fused_tile = self._process_tile(level, num_images, all_level_counts, y, x)
+                fused_level[y:y_end, x:x_end] = fused_tile
                 self.after_step(count)
-                self.check_running(self.cleanup_temp_files)
+                self.check_running()
                 count += 1
         return fused_level, count
 
@@ -152,58 +146,51 @@ class PyramidTilesStack(PyramidBase, TempDirBase):
         with ThreadPoolExecutor(max_workers=self.num_threads) as executor:
             future_to_tile = {
                 executor.submit(
-                    self._process_tile, level, num_images, all_level_counts, y, x, h, w): (y, x)
+                    self._process_tile, level, num_images, all_level_counts, y, x): (y, x)
                 for y, x in tiles
             }
-            for future in as_completed(future_to_tile):
-                y, x = future_to_tile[future]
-                try:
-                    fused_tile = future.result()
-                    if fused_tile is not None:
-                        y_end, x_end = min(y + self.tile_size, h), min(x + self.tile_size, w)
-                        fused_level[y:y_end, x:x_end] = fused_tile
-                        self.print_message(f': fused tile [{x}, {x_end - 1}]×[{y}, {y_end - 1}]')
-                except RunStopException as e:
-                    self.print_message(
-                        color_str(f": error processing tile ({y}, {x}): {str(e)}",
-                                  constants.LOG_COLOR_ALERT),
-                        level=logging.ERROR)
-                    raise
-                except Exception as e:
-                    traceback.print_exc()
-                    self.print_message(f": error processing tile ({y}, {x}): {str(e)}")
-                self.after_step(count)
-                self.check_running(self.cleanup_temp_files)
-                count += 1
+            try:
+                for future in as_completed(future_to_tile):
+                    y, x = future_to_tile[future]
+                    try:
+                        fused_tile = future.result()
+                    except RunStopException:
+                        raise
+                    except Exception as e:
+                        raise RuntimeError(
+                            f"failed to process tile ({y}, {x}) at level {level}: {e}") from e
+                    y_end, x_end = min(y + self.tile_size, h), min(x + self.tile_size, w)
+                    fused_level[y:y_end, x:x_end] = fused_tile
+                    self.print_message(f': fused tile [{x}, {x_end - 1}]×[{y}, {y_end - 1}]')
+                    self.after_step(count)
+                    self.check_running()
+                    count += 1
+            except BaseException:
+                for future in future_to_tile:
+                    future.cancel()
+                raise
         return fused_level, count
 
-    def _process_tile(self, level, num_images, all_level_counts, y, x, h, w):
+    def _process_tile(self, level, num_images, all_level_counts, y, x):
         try:
             laplacians = []
-            tiles_loaded = []
             for img_index in range(num_images):
                 if level < all_level_counts[img_index]:
                     try:
                         tile = self.load_level_tile(img_index, level, y, x)
                         laplacians.append(tile)
-                    except FileNotFoundError:
-                        traceback.print_exc()
-                        continue
-            if laplacians:
-                result = self.fuse_laplacian(laplacians)
-                for img_index, tile_y, tile_x in tiles_loaded:
-                    self._delete_single_tile(img_index, level, tile_y, tile_x)
-                return result
-            y_end = min(y + self.tile_size, h)
-            x_end = min(x + self.tile_size, w)
-            gc.collect()
-            return np.zeros((y_end - y, x_end - x, self.n_ch), dtype=self.float_type)
-        except Exception:
-            traceback.print_exc()
-            self.print_message(color_str(
-                f": failed to process tile ({y},{x}) at level {level}: ",
-                constants.LOG_COLOR_ALERT), level=logging.ERROR)
+                    except RunStopException:
+                        raise
+                    except Exception as e:
+                        raise RuntimeError(
+                            f"failed to load tile for frame {img_index + 1}: {e}") from e
+            if not laplacians:
+                raise RuntimeError("no frames available")
+            return self.fuse_laplacian(laplacians)
+        except RunStopException:
             raise
+        except Exception as e:
+            raise RuntimeError(f"failed to process tile ({y}, {x}) at level {level}: {e}") from e
 
     def _delete_single_tile(self, img_index, level, y, x):
         tile_path = os.path.join(
@@ -370,7 +357,8 @@ class PyramidTilesStack(PyramidBase, TempDirBase):
                 ),
                 level=logging.ERROR
             )
-            raise RunStopException("insufficient temporary disk space for tile processing")
+            raise InsufficientTileDiskSpaceError(
+                "insufficient temporary disk space for tile processing")
 
     def _check_disk_space(self):
         _total, _used, free = shutil.disk_usage(self.temp_dir_path)
@@ -385,7 +373,7 @@ class PyramidTilesStack(PyramidBase, TempDirBase):
                 ),
                 level=logging.ERROR
             )
-            raise RunStopException("critically low disk space during operation")
+            raise InsufficientTileDiskSpaceError("critically low disk space during operation")
 
     def _safe_cleanup(self):
         try:
@@ -402,92 +390,65 @@ class PyramidTilesStack(PyramidBase, TempDirBase):
 
     def focus_stack(self):
         self.check_disk_space_before_processing()
-        all_level_counts = [0] * self.num_images()
-        if self.num_threads > 1:
-            self.print_message(f': starting parallel processing on {self.num_threads} cores')
-            args_list = [(file_path, i, self.num_images())
-                         for i, file_path in enumerate(self.filenames)]
-            executor = None
-            try:
-                executor = ThreadPoolExecutor(max_workers=self.num_threads)
-                future_to_index = {}
-                for i, args in enumerate(args_list):
-                    f = executor.submit(self._process_single_image_wrapper, args)
-                    future_to_index[f] = i
-                    filename = os.path.basename(args[0])
-                    self.process.callback(constants.CALLBACK_UPDATE_FRAME_STATUS,
-                                          self.process.input_path, filename, 200)
-                completed_count = 0
-                for future in as_completed(future_to_index):
-                    i = future_to_index[future]
+        try:
+            all_level_counts = [0] * self.num_images()
+            if self.num_threads > 1:
+                self.print_message(f': starting parallel processing on {self.num_threads} cores')
+                args_list = [(file_path, i, self.num_images())
+                             for i, file_path in enumerate(self.filenames)]
+                with ThreadPoolExecutor(max_workers=self.num_threads) as executor:
+                    future_to_index = {}
                     try:
-                        img_index, file_path, level_count = future.result()
-                        all_level_counts[img_index] = level_count
-                        completed_count += 1
-                        filename = os.path.basename(file_path)
-                        self.process.callback(constants.CALLBACK_UPDATE_FRAME_STATUS,
-                                              self.process.input_path, filename, 201)
-                        self.print_message(
-                            f": preprocessing completed, {self.image_str(completed_count - 1)}")
-                    except RunStopException as e:
-                        traceback.print_exc()
-                        self.print_message(
-                            color_str(f": error processing {self.image_str(i)}: {str(e)}",
-                                      constants.LOG_COLOR_ALERT),
-                            level=logging.ERROR)
+                        for i, args in enumerate(args_list):
+                            future = executor.submit(self._process_single_image_wrapper, args)
+                            future_to_index[future] = i
+                            filename = os.path.basename(args[0])
+                            self.process.callback(constants.CALLBACK_UPDATE_FRAME_STATUS,
+                                                  self.process.input_path, filename, 200)
+                        completed_count = 0
+                        for future in as_completed(future_to_index):
+                            i = future_to_index[future]
+                            try:
+                                img_index, file_path, level_count = future.result()
+                            except (RunStopException, InsufficientTileDiskSpaceError):
+                                raise
+                            except Exception as e:
+                                raise RuntimeError(
+                                    f"failed to process {self.image_str(i)}: {e}") from e
+                            all_level_counts[img_index] = level_count
+                            completed_count += 1
+                            filename = os.path.basename(file_path)
+                            self.process.callback(constants.CALLBACK_UPDATE_FRAME_STATUS,
+                                                  self.process.input_path, filename, 201)
+                            self.print_message(
+                                f": preprocessing completed, {self.image_str(completed_count - 1)}")
+                            self.after_step(completed_count)
+                            self.check_running()
+                    except BaseException:
+                        for future in future_to_index:
+                            future.cancel()
+                        raise
+            else:
+                for i, file_path in enumerate(self.filenames):
+                    self.print_message(f": processing {self.image_str(i)}")
+                    try:
+                        img = read_and_validate_img(file_path, self.shape, self.dtype)
+                        level_count = self.process_single_image(img, self.n_levels, i)
+                        all_level_counts[i] = level_count
+                    except (RunStopException, InsufficientTileDiskSpaceError):
                         raise
                     except Exception as e:
-                        traceback.print_exc()
-                        self.print_message(
-                            f": error processing {self.image_str(i)}: {str(e)}")
-                    self.after_step(completed_count)
-                    self.check_running(lambda: None)
-            except RunStopException:
-                self.print_message(color_str(": stopping parallel image processing...",
-                                             constants.LOG_COLOR_ALERT),
-                                   level=logging.ERROR)
-                if executor:
-                    executor.shutdown(wait=False, cancel_futures=True)
-                    time.sleep(0.5)
-                    self._safe_cleanup()
-                raise
-            finally:
-                if executor:
-                    executor.shutdown(wait=True)
-        else:
-            for i, file_path in enumerate(self.filenames):
-                self.print_message(
-                    f": processing {self.image_str(i)}")
-                img = read_img(file_path)
-                try:
-                    level_count = self.process_single_image(img, self.n_levels, i)
-                    all_level_counts[i] = level_count
-                except Exception as e:
-                    traceback.print_exc()
-                    self.process.sub_message_r(color_str(
-                        f": failed to process {self.image_str(i)}: ", constants.LOG_COLOR_ALERT),
-                        level=logging.ERROR)
-                    self._safe_cleanup()
-                    raise RuntimeError(f"failed to process {self.image_str(i)}: {str(e)}") from e
-                self.after_step(i + 1)
-                self.check_running(lambda: None)
-        try:
-            self.check_running(lambda: None)
+                        raise RuntimeError(f"failed to process {self.image_str(i)}: {e}") from e
+                    self.after_step(i + 1)
+                    self.check_running()
+            self.check_running()
             try:
                 fused_pyramid = self.fuse_pyramids(all_level_counts)
                 stacked_image = self.collapse(fused_pyramid)
-                stacked_image = np.rint(
-                    self.unpremultiply_alpha(stacked_image)).astype(self.dtype)
+                return np.rint(self.unpremultiply_alpha(stacked_image)).astype(self.dtype)
+            except RunStopException:
+                raise
             except Exception as e:
-                traceback.print_exc()
-                self.process.sub_message_r(color_str(
-                    f": failed to process {self.image_str(i)}: ", constants.LOG_COLOR_ALERT),
-                    level=logging.ERROR)
-                self._safe_cleanup()
-                raise RuntimeError(f"failed to process {self.image_str(i)}: {str(e)}") from e
-            return stacked_image
-        except RunStopException:
-            self.print_message(": stopping pyramid fusion...")
-            raise
+                raise RuntimeError(f"failed to fuse pyramids: {e}") from e
         finally:
             self._safe_cleanup()
