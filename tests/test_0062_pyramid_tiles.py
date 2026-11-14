@@ -615,6 +615,73 @@ def test_auto_tiled_memory_limit_at_image_boundary(fraction):
         assert stack._find_optimal_tile_params()['tile_size'] >= stack.min_tile_size
 
 
+@pytest.mark.parametrize("channels", [3, 4])
+@pytest.mark.parametrize("float_type", ['float-32', 'float-64'])
+@pytest.mark.parametrize("mode", ['auto', 'tiled'])
+def test_auto_memory_worker_limit_preserves_exact_output(
+        tmp_path, channels, float_type, mode):
+    from shinestacker.algorithms.pyramid_auto import PyramidAutoStack
+    rng = np.random.default_rng(42)
+    paths = []
+    for i in range(4):
+        image = rng.integers(0, 65536, (71, 83, channels), dtype=np.uint16)
+        path = str(tmp_path / f"frame{i}.tif")
+        assert cv2.imwrite(path, image)
+        paths.append(path)
+    bytes_per_value = 4 if float_type == 'float-32' else 8
+    budget = 71 * 83 * channels * bytes_per_value * 12 / 1024**3
+    outputs = []
+    stacks = []
+    with patch('shinestacker.algorithms.pyramid_auto.os.cpu_count', return_value=2):
+        for limit_workers in (False, True):
+            stack = PyramidAutoStack(
+                mode=mode, memory_limit=budget, float_type=float_type, min_size=16,
+                min_tile_size=16, max_tile_size=32, max_threads=2)
+            stack.process = MagicMock()
+            stack.print_message = MagicMock()
+            if not limit_workers:
+                stack._tile_worker_count = MagicMock(return_value=2)
+            stack.init(paths)
+            assert isinstance(stack._implementation, PyramidTilesStack)
+            tiled = stack._implementation
+            tiled.print_message = MagicMock()
+            tiled.check_running = MagicMock()
+            tiled.check_disk_space_before_processing = MagicMock()
+            tiled._check_disk_space = MagicMock()
+            outputs.append(stack.focus_stack())
+            stacks.append(tiled)
+    assert stacks[0].num_threads == 2
+    assert stacks[1].num_threads == 1
+    assert stacks[0].tile_size == stacks[1].tile_size
+    assert stacks[0].n_tiled_layers == stacks[1].n_tiled_layers
+    np.testing.assert_array_equal(outputs[0], outputs[1])
+
+
+def test_auto_insufficient_disk_does_not_fallback_over_memory_limit(example_images):
+    from shinestacker.algorithms.pyramid_auto import PyramidAutoStack
+    stack = PyramidAutoStack(mode='tiled', memory_limit=0.1, max_threads=1)
+    stack.set_process(MagicMock())
+    stack.init(example_images)
+    implementation = stack._implementation
+    implementation.focus_stack = MagicMock(side_effect=InsufficientTileDiskSpaceError('disk full'))
+    stack._estimate_memory_memory = MagicMock(return_value=stack.memory_limit + 1)
+    with pytest.raises(InsufficientTileDiskSpaceError, match="disk full.*memory"):
+        stack.focus_stack()
+    assert stack._implementation is implementation
+
+
+def test_auto_worker_count_warns_when_one_worker_exceeds_budget():
+    from shinestacker.algorithms.pyramid_auto import PyramidAutoStack
+    stack = PyramidAutoStack(memory_limit=1, max_threads=2)
+    stack.shape = (1000, 1000)
+    stack.n_frames = 4
+    stack.num_threads = 2
+    stack.memory_limit = 1000 * 1000 * stack.bytes_per_pixel * 2
+    stack.print_message = MagicMock()
+    assert stack._tile_worker_count() == 1
+    assert "may still exceed the limit" in stack.print_message.call_args.args[0]
+
+
 def test_safe_cleanup_with_retry():
     pts = PyramidTilesStack()
     pts.print_message = MagicMock()
@@ -645,6 +712,7 @@ def test_auto_fallback_keeps_output_filename(example_images):
     stack.set_process(process)
     stack.init(example_images)
     stack.set_output_filename('stack_0000_pyram.jpg')
+    stack._estimate_memory_memory = MagicMock(return_value=stack.memory_limit)
     stack._implementation.focus_stack = MagicMock(
         side_effect=InsufficientTileDiskSpaceError('test'))
     stack.focus_stack()

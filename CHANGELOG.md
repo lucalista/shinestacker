@@ -6,12 +6,14 @@
 - package the amber flies sample images as a downloadable release asset (#110)
 
 ### Changed
+- reduce tiled pyramid worker count when its estimated full-frame buffers exceed the configured memory budget, without changing tile selection or image calculations
 - expanded tests for OpenCL SIFT, focus stacking and JPEG EXIF metadata
 - vectorised the local entropy and deviation used to fuse the coarsest pyramid level (`get_fused_base`): same output, ~200x faster for this step, no meaningful memory change
 - reduced temporary memory during pyramid fusion by selecting focus-energy winners without stacking all frames at each level
 - project and settings files are written with the standard `json` module (atomic write) instead of `jsonpickle`; project file version 2. Version 1 files are still readable, legacy `py/tuple` and `py/set` tags are converted to lists, files requiring object instantiation are rejected; `jsonpickle` dependency removed
 
 ### Fixed
+- avoid falling back to an in-memory pyramid above the configured memory estimate when temporary disk space is insufficient
 - use overlapping tiles during pyramid fusion to avoid boundary artifacts; preserve full-image base fusion even when all pyramid levels are configured for tiling
 - abort tiled pyramid stacking on failed frames or missing tiles instead of producing an incomplete image; preserve cancellation and clean up temporary files after workers finish
 - report an actionable error when the pyramid memory limit is too small for a full floating-point image, instead of failing while calculating tile size

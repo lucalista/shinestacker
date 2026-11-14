@@ -94,7 +94,7 @@ Arguments for the constructor are, in addition to the ones for ```PyramidStack``
 
 Arguments for the constructor are, in addition to the ones for ```PyramidTilesStack```:
    * ```mode``` (optional, default: ```auto```): can be ```auto```, ```memory``` or ```tiled```.
-   * ```memory_limit``` (optional, default: 8 GiB): memory limit used to determine optimal processing parameters
+   * ```memory_limit``` (optional, default: 8 GiB): approximate memory budget used to select processing parameters. Tiled mode may reduce the number of workers based on estimated full-frame buffers; the estimate does not enforce a hard limit on process memory. If one worker is estimated to exceed the budget, processing continues with a warning. A low-disk-space fallback to in-memory processing is refused when its estimate exceeds the budget.
 
 
 The constructor accepts the same arguments as ```PyramidStack```, plus:

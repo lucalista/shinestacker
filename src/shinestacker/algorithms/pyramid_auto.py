@@ -10,6 +10,9 @@ from .base_stack_algo import BaseStackAlgo
 from .pyramid import PyramidStack
 from .pyramid_tiles import PyramidTilesStack, InsufficientTileDiskSpaceError
 
+# Conservative allowance for full-frame pyramids and temporary arrays per worker.
+PYRAMID_WORKER_IMAGE_BUFFERS = 8
+
 
 class PyramidAutoStack(BaseStackAlgo):
     supports_alpha = True
@@ -63,6 +66,7 @@ class PyramidAutoStack(BaseStackAlgo):
             self.print_message(": using memory-based pyramid stacking")
         else:
             optimal_params = self._find_optimal_tile_params()
+            num_threads = self._tile_worker_count()
             self._implementation = PyramidTilesStack(
                 min_size=self.min_size,
                 kernel_size=self.kernel_size,
@@ -70,12 +74,12 @@ class PyramidAutoStack(BaseStackAlgo):
                 float_type=self.float_type_opt,
                 tile_size=optimal_params['tile_size'],
                 n_tiled_layers=optimal_params['n_tiled_layers'],
-                max_threads=self.num_threads
+                max_threads=num_threads
             )
             self.print_message(f": using tile-based pyramid stacking, "
                                f"tile size: {optimal_params['tile_size']}, "
                                f"n. tiled layers: {optimal_params['n_tiled_layers']}, "
-                               f"{self.num_threads} cores.")
+                               f"{num_threads} cores.")
         self.init_implementation(self._implementation)
 
     def init_implementation(self, impl):
@@ -94,6 +98,23 @@ class PyramidAutoStack(BaseStackAlgo):
             total_memory += h * w * self.bytes_per_pixel
             h, w = max(1, h // 2), max(1, w // 2)
         return self.overhead * total_memory * self.n_frames
+
+    def _tile_worker_count(self):
+        h, w = self.shape[:2]
+        estimated_per_worker = h * w * self.bytes_per_pixel * PYRAMID_WORKER_IMAGE_BUFFERS
+        workers = max(1, min(self.num_threads, self.n_frames,
+                             int(self.memory_limit // estimated_per_worker)))
+        if estimated_per_worker > self.memory_limit:
+            self.print_message(
+                f": estimated memory for one pyramid worker is "
+                f"{estimated_per_worker / constants.ONE_GIGA:.2f} GiB, "
+                f"above the configured limit of {self.memory_limit / constants.ONE_GIGA:.2f} GiB; "
+                "using one worker may still exceed the limit.", level=logging.WARNING)
+        elif workers < self.num_threads:
+            self.print_message(
+                f": limiting pyramid workers to {workers} for the configured memory limit",
+                level=logging.INFO)
+        return workers
 
     def _find_optimal_tile_params(self):
         h, w = self.shape[:2]
@@ -143,7 +164,11 @@ class PyramidAutoStack(BaseStackAlgo):
             raise RuntimeError("PyramidAutoStack not initialized")
         try:
             return self._implementation.focus_stack()
-        except InsufficientTileDiskSpaceError:
+        except InsufficientTileDiskSpaceError as e:
+            if self._estimate_memory_memory() > self.memory_limit:
+                raise InsufficientTileDiskSpaceError(
+                    f"{e}; in-memory fallback exceeds the configured memory estimate. "
+                    "Free temporary disk space or increase the memory limit.") from e
             self.print_message(
                 color_str(": reverting to sequential processing", constants.LOG_COLOR_WARNING),
                 level=logging.WARNING
