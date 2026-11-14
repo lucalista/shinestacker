@@ -69,11 +69,11 @@ class PyramidTilesStack(PyramidBase, TempDirBase):
         self.level_shapes[img_index] = [level.shape for level in laplacian[::-1]]
         for level_idx, level_data in enumerate(laplacian[::-1]):
             h, w = level_data.shape[:2]
-            if level_idx < self.n_tiled_layers:
+            if level_idx < self.n_tiled_layers and level_idx < len(laplacian) - 1:
                 for y in range(0, h, self.tile_size):
                     for x in range(0, w, self.tile_size):
-                        y_end, x_end = min(y + self.tile_size, h), min(x + self.tile_size, w)
-                        tile = level_data[y:y_end, x:x_end]
+                        y_start, y_end, x_start, x_end = self._tile_bounds(y, x, h, w)
+                        tile = level_data[y_start:y_end, x_start:x_end]
                         self._check_disk_space()
                         np.save(
                             os.path.join(
@@ -87,6 +87,11 @@ class PyramidTilesStack(PyramidBase, TempDirBase):
                     os.path.join(self.temp_dir_path,
                                  f'img_{img_index}_level_{level_idx}.npy'), level_data)
         return len(laplacian)
+
+    def _tile_bounds(self, y, x, h, w):
+        radius = len(self.gen_kernel_1d) // 2
+        return (max(0, y - radius), min(h, y + self.tile_size + radius),
+                max(0, x - radius), min(w, x + self.tile_size + radius))
 
     def load_level_tile(self, img_index, level, y, x):
         return np.load(
@@ -129,7 +134,7 @@ class PyramidTilesStack(PyramidBase, TempDirBase):
             for x in range(0, w, self.tile_size):
                 y_end, x_end = min(y + self.tile_size, h), min(x + self.tile_size, w)
                 self.print_message(f': fusing tile [{x}, {x_end - 1}]×[{y}, {y_end - 1}]')
-                fused_tile = self._process_tile(level, num_images, all_level_counts, y, x)
+                fused_tile = self._process_tile(level, num_images, all_level_counts, y, x, h, w)
                 fused_level[y:y_end, x:x_end] = fused_tile
                 self.after_step(count)
                 self.check_running()
@@ -146,7 +151,7 @@ class PyramidTilesStack(PyramidBase, TempDirBase):
         with ThreadPoolExecutor(max_workers=self.num_threads) as executor:
             future_to_tile = {
                 executor.submit(
-                    self._process_tile, level, num_images, all_level_counts, y, x): (y, x)
+                    self._process_tile, level, num_images, all_level_counts, y, x, h, w): (y, x)
                 for y, x in tiles
             }
             try:
@@ -171,7 +176,7 @@ class PyramidTilesStack(PyramidBase, TempDirBase):
                 raise
         return fused_level, count
 
-    def _process_tile(self, level, num_images, all_level_counts, y, x):
+    def _process_tile(self, level, num_images, all_level_counts, y, x, h, w):
         try:
             laplacians = []
             for img_index in range(num_images):
@@ -186,7 +191,11 @@ class PyramidTilesStack(PyramidBase, TempDirBase):
                             f"failed to load tile for frame {img_index + 1}: {e}") from e
             if not laplacians:
                 raise RuntimeError("no frames available")
-            return self.fuse_laplacian(laplacians)
+            fused = self.fuse_laplacian(laplacians)
+            y_start, _, x_start, _ = self._tile_bounds(y, x, h, w)
+            height, width = min(self.tile_size, h - y), min(self.tile_size, w - x)
+            return fused[y - y_start:y - y_start + height,
+                         x - x_start:x - x_start + width]
         except RunStopException:
             raise
         except Exception as e:
@@ -214,7 +223,7 @@ class PyramidTilesStack(PyramidBase, TempDirBase):
         action_count = 0
         for level in range(n_layers, -1, -1):
             self.print_message(f': fusing pyramids, layer: {level + 1}')
-            if level < self.n_tiled_layers:
+            if level < self.n_tiled_layers and level < max_levels - 1:
                 h, w = None, None
                 for img_index in range(num_images):
                     if level < all_level_counts[img_index]:
@@ -294,38 +303,39 @@ class PyramidTilesStack(PyramidBase, TempDirBase):
     def calculate_max_disk_space_required(self):
         total_size_bytes = 0
         processing_size_bytes = 0
+        bytes_per_value = np.dtype(self.float_type).itemsize
         for _img_index in range(self.num_images()):
-            for level in range(self.n_levels):
-                h = max(1, self.shape[0] // (2 ** level))
-                w = max(1, self.shape[1] // (2 ** level))
-                if level < self.n_tiled_layers:
+            for level in range(self.n_levels + 1):
+                scale = 2 ** level
+                h = max(1, (self.shape[0] + scale - 1) // scale)
+                w = max(1, (self.shape[1] + scale - 1) // scale)
+                if level < self.n_tiled_layers and level < self.n_levels:
                     for y in range(0, h, self.tile_size):
                         for x in range(0, w, self.tile_size):
-                            y_end = min(y + self.tile_size, h)
-                            x_end = min(x + self.tile_size, w)
-                            tile_height = y_end - y
-                            tile_width = x_end - x
-                            tile_size_bytes = tile_height * tile_width * self.n_ch * 4
+                            y_start, y_end, x_start, x_end = self._tile_bounds(y, x, h, w)
+                            tile_height = y_end - y_start
+                            tile_width = x_end - x_start
+                            tile_size_bytes = tile_height * tile_width * self.n_ch * bytes_per_value
                             processing_size_bytes += tile_size_bytes
                 else:
-                    level_size_bytes = h * w * self.n_ch * 4  # float32
+                    level_size_bytes = h * w * self.n_ch * bytes_per_value
                     processing_size_bytes += level_size_bytes
         fusion_size_bytes = 0
         largest_level_size = 0
         for level in range(min(self.n_tiled_layers, self.n_levels)):
-            h = max(1, self.shape[0] // (2 ** level))
-            w = max(1, self.shape[1] // (2 ** level))
+            scale = 2 ** level
+            h = max(1, (self.shape[0] + scale - 1) // scale)
+            w = max(1, (self.shape[1] + scale - 1) // scale)
             level_tiles_size = 0
             for _img_index in range(self.num_images()):
                 for y in range(0, h, self.tile_size):
                     for x in range(0, w, self.tile_size):
-                        y_end = min(y + self.tile_size, h)
-                        x_end = min(x + self.tile_size, w)
-                        tile_height = y_end - y
-                        tile_width = x_end - x
-                        tile_size_bytes = tile_height * tile_width * self.n_ch * 4
+                        y_start, y_end, x_start, x_end = self._tile_bounds(y, x, h, w)
+                        tile_height = y_end - y_start
+                        tile_width = x_end - x_start
+                        tile_size_bytes = tile_height * tile_width * self.n_ch * bytes_per_value
                         level_tiles_size += tile_size_bytes
-            fused_level_size = h * w * self.n_ch * 4
+            fused_level_size = h * w * self.n_ch * bytes_per_value
             total_level_size = level_tiles_size + fused_level_size
             largest_level_size = max(largest_level_size, total_level_size)
         fusion_size_bytes = largest_level_size

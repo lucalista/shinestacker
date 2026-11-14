@@ -12,6 +12,7 @@
 - project and settings files are written with the standard `json` module (atomic write) instead of `jsonpickle`; project file version 2. Version 1 files are still readable, legacy `py/tuple` and `py/set` tags are converted to lists, files requiring object instantiation are rejected; `jsonpickle` dependency removed
 
 ### Fixed
+- use overlapping tiles during pyramid fusion to avoid boundary artifacts; preserve full-image base fusion even when all pyramid levels are configured for tiling
 - abort tiled pyramid stacking on failed frames or missing tiles instead of producing an incomplete image; preserve cancellation and clean up temporary files after workers finish
 - report an actionable error when the pyramid memory limit is too small for a full floating-point image, instead of failing while calculating tile size
 

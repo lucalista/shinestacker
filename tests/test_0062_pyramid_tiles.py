@@ -3,7 +3,9 @@ import numpy as np
 import os
 import threading
 from unittest.mock import MagicMock, patch
+import cv2
 from shinestacker.config.defaults import DEFAULTS
+from shinestacker.algorithms.pyramid import PyramidStack
 from shinestacker.algorithms.pyramid_tiles import PyramidTilesStack, InsufficientTileDiskSpaceError
 from shinestacker.core.exceptions import InvalidOptionError, RunStopException
 
@@ -57,6 +59,85 @@ def test_process_single_image_with_mock(example_images):
         assert level_count == 2
         assert 0 in pts.level_shapes
         assert len(pts.level_shapes[0]) == 2
+
+
+@pytest.mark.parametrize("channels", [3, 4])
+@pytest.mark.parametrize("float_type", ['float-32', 'float-64'])
+@pytest.mark.parametrize("threads", [1, 2])
+@pytest.mark.parametrize("tiled_levels", [2, 10])
+@pytest.mark.parametrize("kernel_length", [5, 7])
+@pytest.mark.parametrize("shape", [(71, 83), (16, 19)])
+@pytest.mark.parametrize("dtype", [np.uint8, np.uint16])
+def test_tiled_stack_matches_full_image_at_tile_boundaries(
+        tmp_path, channels, float_type, threads, tiled_levels, kernel_length, shape, dtype):
+    rng = np.random.default_rng(42)
+    paths = []
+    for i in range(3):
+        image = rng.integers(0, np.iinfo(dtype).max + 1, (*shape, channels), dtype=dtype)
+        path = str(tmp_path / f"frame{i}.tif")
+        assert cv2.imwrite(path, image)
+        paths.append(path)
+
+    memory = PyramidStack(min_size=16, float_type=float_type)
+    tiled = PyramidTilesStack(
+        min_size=16, float_type=float_type, tile_size=19, n_tiled_layers=tiled_levels,
+        max_threads=threads)
+    tiled.num_threads = threads
+    for stack in (memory, tiled):
+        stack.process = MagicMock()
+        stack.print_message = MagicMock()
+        stack.check_running = MagicMock()
+        stack.init(paths)
+        if kernel_length == 7:
+            stack.gen_kernel_1d = np.array([1, 2, 3, 4, 3, 2, 1]) / 16
+    tiled.check_disk_space_before_processing = MagicMock()
+    tiled._check_disk_space = MagicMock()
+
+    expected = memory.focus_stack()
+    actual = tiled.focus_stack()
+    np.testing.assert_array_equal(actual, expected)
+
+
+@pytest.mark.parametrize("parallel", [False, True])
+def test_tiny_tiles_match_full_image_fusion(tmp_path, parallel):
+    pts = PyramidTilesStack(tile_size=1, n_tiled_layers=1, max_threads=2)
+    pts.num_threads = 2
+    pts.temp_dir_path = str(tmp_path)
+    pts.print_message = MagicMock()
+    pts.check_running = MagicMock()
+    pts.after_step = MagicMock()
+    pts._check_disk_space = MagicMock()
+    rng = np.random.default_rng(42)
+    frames = [rng.normal(size=(5, 7, 3)).astype(np.float32) for _ in range(3)]
+    for i, frame in enumerate(frames):
+        pts.single_image_laplacian = MagicMock(return_value=[frame[:3, :4], frame])
+        pts.process_single_image(None, 1, i)
+
+    method = pts._fuse_level_tiles_parallel if parallel else pts._fuse_level_tiles_serial
+    fused, _ = method(0, len(frames), [2] * len(frames), 5, 7, 0)
+    np.testing.assert_array_equal(fused, pts.fuse_laplacian(frames))
+
+
+@pytest.mark.parametrize("float_type", ['float-32', 'float-64'])
+def test_disk_estimate_covers_overlapping_tiles(tmp_path, float_type):
+    pts = PyramidTilesStack(float_type=float_type, tile_size=16, n_tiled_layers=2)
+    pts.shape = (129, 135)
+    pts.n_levels = 2
+    pts.filenames = ['first', 'second']
+    pts.temp_dir_path = str(tmp_path)
+    pts.print_message = MagicMock()
+    pts._check_disk_space = MagicMock()
+    arrays = [np.zeros((33, 34, 3), dtype=pts.float_type),
+              np.zeros((65, 68, 3), dtype=pts.float_type),
+              np.zeros((129, 135, 3), dtype=pts.float_type)]
+    pts.single_image_laplacian = MagicMock(return_value=arrays)
+
+    estimate = pts.calculate_max_disk_space_required() * 1024**3
+    for i in range(len(pts.filenames)):
+        pts.process_single_image(None, pts.n_levels, i)
+
+    actual = sum(path.stat().st_size for path in tmp_path.iterdir())
+    assert estimate >= actual
 
 
 def test_cleanup_temp_files():
@@ -123,7 +204,7 @@ def test_process_tile_method():
     pts.fuse_laplacian = MagicMock(return_value=np.ones((10, 10, 3), dtype=np.float32))
     mock_tile = np.random.rand(10, 10, 3).astype(np.float32)
     with patch.object(pts, 'load_level_tile', return_value=mock_tile):
-        result = pts._process_tile(0, 3, [1, 1, 1], 0, 0)
+        result = pts._process_tile(0, 3, [1, 1, 1], 0, 0, 10, 10)
         assert result.shape == (10, 10, 3)
         assert result.dtype == np.float32
         pts.fuse_laplacian.assert_called_once()
@@ -154,7 +235,7 @@ def test_process_tile_no_laplacians():
     pts.print_message = MagicMock()
     pts.fuse_laplacian = MagicMock()
     with pytest.raises(RuntimeError, match="no frames available"):
-        pts._process_tile(0, 3, [0, 0, 0], 0, 0)
+        pts._process_tile(0, 3, [0, 0, 0], 0, 0, 100, 100)
     pts.fuse_laplacian.assert_not_called()
 
 
@@ -339,13 +420,16 @@ def test_fuse_pyramids_empty_level():
     pts.filenames = ['img1.jpg', 'img2.jpg']
     pts.level_shapes = {0: [(50, 50)], 1: [(50, 50)]}
     pts.num_threads = 2
+    pts.load_level = MagicMock(return_value=np.zeros((50, 50, 3), dtype=np.float32))
+    pts.get_fused_base = MagicMock(return_value=np.zeros((50, 50, 3), dtype=np.float32))
     all_level_counts = [1, 1]  # Both images only have level 0
     with patch.object(pts, '_fuse_level_tiles_serial') as mock_serial, \
          patch.object(pts, '_fuse_level_tiles_parallel') as mock_parallel:
         mock_parallel.return_value = (np.zeros((50, 50, 3)), 0)
         pts.fuse_pyramids(all_level_counts)
         mock_serial.assert_not_called()
-        mock_parallel.assert_called_once()
+        mock_parallel.assert_not_called()
+        pts.get_fused_base.assert_called_once()
 
 
 @pytest.mark.parametrize("threads", [1, 2])
@@ -420,14 +504,16 @@ def test_focus_stack_missing_tile_fails_and_cleans_up(threads):
     pts.filenames = ['first.jpg', 'second.jpg']
     pts.shape = (10, 10, 3)
     pts.dtype = np.uint8
-    pts.level_shapes = {0: [(10, 10, 3)], 1: [(10, 10, 3)]}
+    pts.level_shapes = {0: [(10, 10, 3), (5, 5, 3)], 1: [(10, 10, 3), (5, 5, 3)]}
     pts.check_disk_space_before_processing = MagicMock()
     pts.check_running = MagicMock()
     pts.print_message = MagicMock()
     pts.process = MagicMock()
     pts._safe_cleanup = MagicMock()
     pts.collapse = MagicMock()
-    pts.process_single_image = MagicMock(return_value=1)
+    pts.process_single_image = MagicMock(return_value=2)
+    pts.load_level = MagicMock(return_value=np.zeros((5, 5, 3), dtype=np.float32))
+    pts.get_fused_base = MagicMock(return_value=np.zeros((5, 5, 3), dtype=np.float32))
     pts.load_level_tile = MagicMock(side_effect=FileNotFoundError("missing tile"))
     with patch('shinestacker.algorithms.pyramid_tiles.read_and_validate_img',
                return_value=np.zeros(pts.shape, dtype=pts.dtype)), \
@@ -445,12 +531,14 @@ def test_failed_tiled_stack_does_not_write_output(tmp_path):
     pts.filenames = ['first.jpg', 'second.jpg']
     pts.shape = (10, 10, 3)
     pts.dtype = np.uint8
-    pts.level_shapes = {0: [(10, 10, 3)], 1: [(10, 10, 3)]}
+    pts.level_shapes = {0: [(10, 10, 3), (5, 5, 3)], 1: [(10, 10, 3), (5, 5, 3)]}
     pts.check_disk_space_before_processing = MagicMock()
     pts.check_running = MagicMock()
     pts.print_message = MagicMock()
     pts._safe_cleanup = MagicMock()
-    pts.process_single_image = MagicMock(return_value=1)
+    pts.process_single_image = MagicMock(return_value=2)
+    pts.load_level = MagicMock(return_value=np.zeros((5, 5, 3), dtype=np.float32))
+    pts.get_fused_base = MagicMock(return_value=np.zeros((5, 5, 3), dtype=np.float32))
     pts.load_level_tile = MagicMock(side_effect=FileNotFoundError("missing tile"))
     action = FocusStack('stack', pts)
     action.output_full_path = MagicMock(return_value=str(tmp_path))
