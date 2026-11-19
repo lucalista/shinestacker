@@ -127,9 +127,9 @@ class FocusStackBase(TaskBase, ImageSequenceManager):
             )
             stacked_img = unsharp_mask(
                 stacked_img,
-                self.sharpen_amount,
-                self.sharpen_radius,
-                self.sharpen_threshold,
+                radius=self.sharpen_radius,
+                amount=self.sharpen_amount,
+                threshold=self.sharpen_threshold,
             )
         # Without EXIF copying the colour profile of the source images would be
         # lost (intermediate frames are written without one): embed it directly.

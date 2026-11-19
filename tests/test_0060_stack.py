@@ -36,6 +36,41 @@ def test_jpg_filter():
         assert False
 
 
+@pytest.mark.parametrize(
+    "amount_percent, radius, threshold",
+    [(50, 1.0, 0), (50, 2.0, 10), (100, 1.0, 5), (0, 2.0, 10)],
+)
+def test_focus_stack_sharpen_parameters(tmp_path, monkeypatch, amount_percent, radius, threshold):
+    image = np.zeros((8, 8, 3), dtype=np.uint8)
+    image[2:6, 2:6] = 100
+    monkeypatch.setattr(stack_module, 'read_img', lambda _: image.copy())
+    output = []
+    monkeypatch.setattr(stack_module, 'write_img',
+                        lambda _filename, result, **_kwargs: output.append(result))
+    sharpen = stack_module.unsharp_mask
+    calls = []
+
+    def record_sharpen(img, radius=1.0, amount=1.0, threshold=0.0):
+        calls.append((radius, amount, threshold))
+        return sharpen(img, radius=radius, amount=amount, threshold=threshold)
+
+    monkeypatch.setattr(stack_module, 'unsharp_mask', record_sharpen)
+    action = FocusStack("stack", PyramidStack(), working_path=str(tmp_path), output_path=".",
+                        denoise_amount=0, sharpen_amount_percent=amount_percent,
+                        sharpen_radius=radius, sharpen_threshold=threshold)
+    action.focus_stack([str(tmp_path / "input.png")])
+
+    if amount_percent:
+        assert calls == [(radius, amount_percent / 100.0, threshold)]
+        expected = sharpen(image, radius=radius, amount=amount_percent / 100.0,
+                           threshold=threshold)
+    else:
+        assert calls == []
+        expected = image
+    assert len(output) == 1
+    np.testing.assert_array_equal(output[0], expected)
+
+
 def test_tif():
     try:
         job = StackJob("job", "examples", input_path="input/img-tif")
