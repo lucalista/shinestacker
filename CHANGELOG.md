@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.18.x] - Unreleased
+## [v1.18.1] - Improvements and fixes
 
 ### Added
 - package the amber flies sample images as a downloadable release asset (#110)
