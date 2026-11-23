@@ -1,5 +1,12 @@
 # Changelog
 
+## [v1.18.x] - Unreleased
+
+### Changed
+- standardized release asset filenames as `shinestacker-version-os-arch`
+
+---
+
 ## [v1.18.1] - Improvements and fixes
 
 ### Added
@@ -19,12 +26,16 @@
 - report an actionable error when the pyramid memory limit is too small for a full floating-point image, instead of failing while calculating tile size
 - fixed GUI dialog text size for low resolution screens (#117)
 
+---
+
 ## [v1.18.0] - 2026-11-13
 **Performance improvement: OpenCL SIFT, and output metadata enhancement**
 
 ### Added
 - optional OpenCL SIFT implementation (silx) for alignment: `sift_backend` option, `pip install shinestacker[opencl]`; included in the executables (#100)
 - write a readable ImageDescription for TIFF, JPEG and PNG output EXIF data (#109)
+
+---
 
 ## [v1.17.6] - 2026-11-04
 **Fixes and performance improvements**
