@@ -67,16 +67,16 @@ def build_pyinstaller_command(sys_name, dist_dir, project_name, app_name, hooks_
         ]
 
 
-def package_windows(dist_dir, app_name):
+def package_windows(dist_dir, app_name, asset_name):
     shutil.make_archive(
-        base_name=str(dist_dir / "shinestacker-release"),
+        base_name=str(dist_dir / asset_name),
         format="zip",
         root_dir=dist_dir,
         base_dir=app_name
     )
 
 
-def package_macos(dist_dir, app_name, project_root):
+def package_macos(dist_dir, app_name, project_root, asset_name):
     app_bundle = dist_dir / f"{app_name}.app"
     if not app_bundle.exists():
         print(f"ERROR: .app bundle not found at {app_bundle}")
@@ -103,7 +103,7 @@ def package_macos(dist_dir, app_name, project_root):
         shutil.rmtree(dmg_temp_dir)
     shutil.copytree(app_bundle, dmg_temp_dir / app_bundle.name, symlinks=True)
     os.symlink("/Applications", dmg_temp_dir / "Applications")
-    dmg_path = dist_dir / f"{app_name}-release.dmg"
+    dmg_path = dist_dir / f"{asset_name}.dmg"
     dmg_cmd = [
         "hdiutil", "create",
         "-volname", app_name,
@@ -128,8 +128,8 @@ def package_macos(dist_dir, app_name, project_root):
     shutil.rmtree(dmg_temp_dir)
 
 
-def package_linux(dist_dir, app_name):
-    archive_path = dist_dir / "shinestacker-release.tar.gz"
+def package_linux(dist_dir, app_name, asset_name):
+    archive_path = dist_dir / f"{asset_name}.tar.gz"
     linux_app_dir = dist_dir / app_name
     if linux_app_dir.exists():
         with tarfile.open(archive_path, "w:gz") as tar:
@@ -152,7 +152,17 @@ def get_version(project_root):
     return version
 
 
-def create_windows_installer(project_root, dist_dir):
+def release_asset_name(version, sys_name, machine):
+    os_names = {"linux": "linux", "windows": "windows", "darwin": "macos"}
+    architectures = {
+        "x86_64": "x86_64", "amd64": "x86_64",
+        "arm64": "arm64", "aarch64": "arm64",
+    }
+    return (f"shinestacker-{version.lower().removeprefix('v')}-"
+            f"{os_names[sys_name]}-{architectures[machine.lower()]}")
+
+
+def create_windows_installer(project_root, dist_dir, asset_name):
     inno_paths = [
         r"C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
         r"C:\Program Files (x86)\Inno Setup 5\ISCC.exe",
@@ -187,7 +197,7 @@ def create_windows_installer(project_root, dist_dir):
             iss_content = iss_content.replace(old_version_line, new_version_line)
             with open(iss_script_temp, 'w') as f:
                 f.write(iss_content)
-            subprocess.run([iscc_exe, str(iss_script_temp)], check=True)
+            subprocess.run([iscc_exe, f"/F{asset_name}", str(iss_script_temp)], check=True)
             iss_script_temp.unlink()
             if dist_dir.exists():
                 installer_files = list(dist_dir.glob("*.exe"))
@@ -198,20 +208,21 @@ def create_windows_installer(project_root, dist_dir):
 def main():
     project_root, dist_dir, project_name, app_name = setup_environment()
     sys_name = platform.system().lower()
+    asset_name = release_asset_name(get_version(project_root), sys_name, platform.machine())
     hooks_dir = "scripts/hooks"
     pyinstaller_cmd = build_pyinstaller_command(
         sys_name, dist_dir, project_name, app_name, hooks_dir)
     print(" ".join(pyinstaller_cmd))
     subprocess.run(pyinstaller_cmd, check=True)
     if sys_name == 'windows':
-        package_windows(dist_dir, app_name)
+        package_windows(dist_dir, app_name, asset_name)
     elif sys_name == 'darwin':
-        package_macos(dist_dir, app_name, project_root)
+        package_macos(dist_dir, app_name, project_root, asset_name)
     else:
-        package_linux(dist_dir, app_name)
+        package_linux(dist_dir, app_name, asset_name)
     if sys_name == 'windows':
         print("=== CREATING WINDOWS INSTALLER ===")
-        create_windows_installer(project_root, dist_dir)
+        create_windows_installer(project_root, dist_dir, asset_name)
 
 
 if __name__ == "__main__":
