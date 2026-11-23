@@ -55,11 +55,11 @@ jobs:
         with:
           name: shinestacker-${{ matrix.label }}
           path: |
-            ${{ matrix.os == 'windows-latest' && 'dist/shinestacker-release.zip' || '' }}
-            ${{ matrix.os == 'windows-latest' && 'dist/*.exe' || '' }}
-            ${{ matrix.os == 'ubuntu-latest' && 'dist/shinestacker-release.tar.gz' || '' }}
-            ${{ contains(matrix.label, 'macos') && 'dist/shinestacker-release.dmg' || '' }}
-          if-no-files-found: ignore
+            ${{ matrix.os == 'windows-latest' && 'dist/shinestacker-*.zip' || '' }}
+            ${{ matrix.os == 'windows-latest' && 'dist/shinestacker-*.exe' || '' }}
+            ${{ matrix.os == 'ubuntu-latest' && 'dist/shinestacker-*.tar.gz' || '' }}
+            ${{ contains(matrix.label, 'macos') && 'dist/shinestacker-*.dmg' || '' }}
+          if-no-files-found: error
 
   create-release:
     needs: publish-release
@@ -77,18 +77,7 @@ jobs:
         run: |
           mkdir -p release_assets
           python3 -c 'import shutil; shutil.make_archive("release_assets/amber-flies", "zip", "examples/input/amber-flies")'
-          if [ -f "artifacts/shinestacker-linux/shinestacker-release.tar.gz" ]; then
-            cp artifacts/shinestacker-linux/shinestacker-release.tar.gz release_assets/shinestacker-ubuntu.tar.gz
-          fi
-          if [ -f "artifacts/shinestacker-windows/shinestacker-release.zip" ]; then
-            cp artifacts/shinestacker-windows/shinestacker-release.zip release_assets/shinestacker-windows.zip
-          fi
-          if ls artifacts/shinestacker-windows/shinestacker-setup.exe 1> /dev/null 2>&1; then
-            cp artifacts/shinestacker-windows/shinestacker-setup.exe release_assets/
-          fi
-          if [ -f "artifacts/shinestacker-macos-apple-silicon/shinestacker-release.dmg" ]; then
-            cp artifacts/shinestacker-macos-apple-silicon/shinestacker-release.dmg release_assets/shinestacker-macos-apple-silicon.dmg
-          fi
+          cp artifacts/shinestacker-*/* release_assets/
           echo "Available release assets:"
           ls -la release_assets/
 

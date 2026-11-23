@@ -6,6 +6,7 @@
 - package the amber flies sample images as a downloadable release asset (#110)
 
 ### Changed
+- standardized release asset filenames as `shinestacker-version-os-arch`
 - expanded tests for OpenCL SIFT, focus stacking and JPEG EXIF metadata
 - vectorised the local entropy and deviation used to fuse the coarsest pyramid level (`get_fused_base`): same output, ~200x faster for this step, no meaningful memory change
 - reduced temporary memory during pyramid fusion by selecting focus-energy winners without stacking all frames at each level
